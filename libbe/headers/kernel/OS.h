@@ -5,10 +5,11 @@
 #ifndef _OS_H
 #define _OS_H
 
+#define _GNU_SOURCE
+#include <stdarg.h>
+
 //! Kernel specific structures and functions
 
-#include <pthread.h>
-#include <stdarg.h>
 
 #include <SupportDefs.h>
 //#include <StorageDefs.h>
