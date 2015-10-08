@@ -9,6 +9,7 @@ interfacekit_files = files(
     )
 kernelkit_files = files(
     'src/kits/kernel/thread.c',
+    'src/kits/kernel/time.c',
     )
 
 libbe_inc = include_directories(
