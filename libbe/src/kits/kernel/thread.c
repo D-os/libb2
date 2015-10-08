@@ -41,6 +41,20 @@ static int _thread_wrapper(void *arg)
     return 0;
 }
 
+static status_t _signal_thread(thread_id thread, int sig)
+{
+    if (syscall(SYS_tgkill, getpid(), thread, sig) == 0) {
+        return B_OK;
+    }
+    switch (errno) {
+    case EINVAL:
+    case ESRCH:
+        return B_BAD_THREAD_ID;
+    default:
+        return B_FROM_POSIX_ERROR(errno);
+    }
+}
+
 thread_id spawn_thread(thread_func func, const char *name, int32 priority, void *data)
 {
     (void)priority; /* FIXME: not implemented */
@@ -60,7 +74,7 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
 
             int tid = clone(_thread_wrapper, info->stack + STACK_SIZE,
                             CLONE_THREAD | CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_IO | CLONE_SIGHAND |
-                            CLONE_CHILD_SETTID | CLONE_CHILD_CLEARTID,
+                            CLONE_CHILD_SETTID | CLONE_CHILD_CLEARTID, /* FIXME: CLONE_STOPPED */
                             data, NULL, NULL, info);
             if (tid == -1) {
                 switch (errno) {
@@ -76,7 +90,7 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
             return tid;
         }
 
-        info++;
+        info++; /* check next struct _thread_info */
     }
     return B_NO_MORE_THREADS;
 }
@@ -87,12 +101,39 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
     struct _thread_info *end = _threads + sizeof(_threads)/sizeof(_threads[0]);
     while ( info < end ){
         if (info->tid == thread) {
-            syscall(SYS_tgkill, getpid(), thread, SIGCONT);
-            syscall(SYS_futex, info, FUTEX_WAIT, 0, NULL, NULL, 0);
+            status_t status = _signal_thread(thread, SIGCONT);
+            if (status != B_OK) {
+                return status;
+            }
+            if (syscall(SYS_futex, info, FUTEX_WAIT, 0, NULL, NULL, 0) != 0) {
+                switch (errno) {
+                case EINTR:
+                    return B_INTERRUPTED;
+                case EINVAL:
+                    return B_BAD_THREAD_ID;
+                default:
+                    return B_FROM_POSIX_ERROR(errno);
+                }
+            }
             *exit_value = info->exit;
             return info->dirty ? B_INTERRUPTED : B_OK;
         }
         info++;
     }
     return B_BAD_THREAD_ID;
+}
+
+status_t kill_thread(thread_id thread)
+{
+    return _signal_thread(thread, SIGTERM);
+}
+
+status_t resume_thread(thread_id thread)
+{
+    return _signal_thread(thread, SIGCONT);
+}
+
+status_t suspend_thread(thread_id thread)
+{
+    return _signal_thread(thread, SIGSTOP);
 }
