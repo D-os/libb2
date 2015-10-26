@@ -2,9 +2,9 @@
 
 #include <sched.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/mman.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <signal.h>
@@ -13,17 +13,12 @@
 
 static const int STACK_SIZE = 256 * 1024;
 
-#define BE_THREAD_INFO(info) \
-    ((thread_info) info)
-#define DOS_THREAD_INFO(info) \
-    ((_thread_info) info)
-#define BE_THREAD_INFO_P(info) \
-    ((thread_info*) info)
-#define DOS_THREAD_INFO_P(info) \
-    ((_thread_info*) info)
-
 typedef struct {
-    thread_info		_;
+    pid_t           tid;
+    char			name[B_OS_NAME_LENGTH];
+    int32			priority;
+    void			*stack_base;
+    void			*stack_end;
     thread_func		func;
     void			*data;
     status_t		exit;
@@ -37,7 +32,7 @@ static _thread_info *_find_thread_info(thread_id thread)
     _thread_info *info = _threads;
     _thread_info *end = _threads + sizeof(_threads)/sizeof(_threads[0]);
     while ( info < end ){
-        if (BE_THREAD_INFO_P(info)->thread == thread) {
+        if (info->tid == thread) {
             return info;
         }
         info++;
@@ -49,14 +44,14 @@ static int _thread_wrapper(void *arg)
 {
     _thread_info *info = (_thread_info *)arg;
 
-    prctl(PR_SET_NAME, (unsigned long) BE_THREAD_INFO_P(info)->name, 0, 0, 0);
+    prctl(PR_SET_NAME, (unsigned long) info->name, 0, 0, 0);
 
     /* threads start in suspended state */ //FIXME! potential for race with wait_for_thread()
-    syscall(SYS_tgkill, getpid(), BE_THREAD_INFO_P(info)->thread, SIGSTOP);
+    syscall(SYS_tgkill, getpid(), info->tid, SIGSTOP);
 
     info->exit = info->func(info->data);
 
-    free(BE_THREAD_INFO_P(info)->stack_base);
+    munmap(info->stack_base, STACK_SIZE);
 
     info->dirty = 0;
     return 0;
@@ -85,20 +80,31 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
     }
 
     info->dirty = 1;
-    strncpy(BE_THREAD_INFO_P(info)->name, name, B_OS_NAME_LENGTH);
-    BE_THREAD_INFO_P(info)->stack_base = malloc(STACK_SIZE);
-    if (!BE_THREAD_INFO_P(info)->stack_base) {
-        return B_NO_MEMORY;
+    strncpy(info->name, name, B_OS_NAME_LENGTH);
+    info->stack_base = mmap(NULL, STACK_SIZE,
+                            PROT_READ | PROT_WRITE,
+                            MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT | MAP_STACK | MAP_GROWSDOWN,
+                            -1, 0);
+    if (info->stack_base == MAP_FAILED) {
+        switch (errno) {
+        case EAGAIN:
+        case EINVAL:
+        case ENFILE:
+        case ENOMEM:
+            return B_NO_MEMORY;
+        default:
+            return B_FROM_POSIX_ERROR(errno);
+        }
     }
-    BE_THREAD_INFO_P(info)->stack_end = BE_THREAD_INFO_P(info)->stack_base + STACK_SIZE;
-    BE_THREAD_INFO_P(info)->priority = priority; /* FIXME: not implemented */
+    info->stack_end = info->stack_base + STACK_SIZE;
+    info->priority = priority; /* FIXME: not implemented */
     info->func = func;
     info->data = data;
 
-    int tid = clone(_thread_wrapper, BE_THREAD_INFO_P(info)->stack_end,
+    int tid = clone(_thread_wrapper, info->stack_end,
                     CLONE_THREAD | CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_IO | CLONE_SIGHAND |
                     CLONE_CHILD_SETTID | CLONE_CHILD_CLEARTID, /* FIXME: CLONE_STOPPED */
-                    data, NULL, NULL, info);
+                    info, NULL, NULL, &info->tid);
     if (tid == -1) {
         switch (errno) {
         case EAGAIN:
@@ -149,8 +155,8 @@ thread_id find_thread(const char* name)
     _thread_info *info = _threads;
     _thread_info *end = _threads + sizeof(_threads)/sizeof(_threads[0]);
     while (info < end){
-        if (strncmp(BE_THREAD_INFO_P(info)->name, name, B_OS_NAME_LENGTH) == 0) {
-            return BE_THREAD_INFO_P(info)->thread;
+        if (strncmp(info->name, name, B_OS_NAME_LENGTH) == 0) {
+            return info->tid;
         }
         info++;
     }
@@ -178,7 +184,7 @@ void exit_thread(status_t status)
     assert(info != NULL);
     info->exit = status;
     info->dirty = 0;
-    kill_thread(BE_THREAD_INFO_P(info)->thread);
+    kill_thread(info->tid);
 }
 
 status_t kill_team(team_id team)
