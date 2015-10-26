@@ -11,6 +11,10 @@
 #include <linux/futex.h>
 #include <assert.h>
 
+#include <unistd.h> // FIXME: remove after CLONE_STOPPED gets implemented
+
+#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
+
 static const int STACK_SIZE = 256 * 1024;
 
 typedef struct {
@@ -23,6 +27,11 @@ typedef struct {
     void			*data;
     status_t		exit;
     int				dirty;
+    int             has_data;
+    thread_id       data_sender;
+    int32           data_code;
+    void            *data_buffer;
+    size_t          data_buffer_size;
 } _thread_info;
 
 static _thread_info _threads[256];
@@ -116,6 +125,8 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
         }
     }
 
+    sleep(1); // FIXME: remove after CLONE_STOPPED gets implemented
+
     return tid;
 }
 
@@ -198,4 +209,90 @@ status_t kill_team(team_id team)
         }
     }
     return B_OK;
+}
+
+bool has_data(thread_id thread)
+{
+    _thread_info *info = _find_thread_info(thread);
+    return info && info->has_data;
+}
+
+status_t send_data(thread_id thread, int32 code, const void *buffer, size_t bufferSize)
+{
+    int c;
+
+    _thread_info *info = _find_thread_info(thread);
+
+    if (info == NULL) {
+        return B_BAD_THREAD_ID;
+    }
+
+
+    while (c = cmpxchg(&info->has_data, 0, 1)) {
+        if (syscall(SYS_futex, info->has_data, FUTEX_WAIT_PRIVATE, c, NULL, NULL, 0) != 0) {
+            switch (errno) {
+            case EINTR:
+                return B_INTERRUPTED;
+            default:
+                return B_FROM_POSIX_ERROR(errno);
+            }
+        }
+    }
+
+    /* at this point c (info->has_data) is 1, meaning someone is either consuming or producing message */
+    /* let's produce */
+    info->data_buffer = mmap(NULL, bufferSize,
+                             PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
+                             -1, 0);
+    if (info->data_buffer == MAP_FAILED) {
+        switch (errno) {
+        case EAGAIN:
+        case EINVAL:
+        case ENFILE:
+        case ENOMEM:
+            return B_NO_MEMORY;
+        default:
+            return B_FROM_POSIX_ERROR(errno);
+        }
+    }
+    memcpy(info->data_buffer, buffer, bufferSize);
+    info->data_buffer_size = bufferSize;
+    info->data_code = code;
+    info->data_sender = syscall(SYS_gettid);
+    c = cmpxchg(&info->has_data, 1, 2); /* mark as ready to read */
+    assert(c == 1);
+    if (syscall(SYS_futex, info->has_data, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0) != 0) {
+        switch (errno) {
+        case EINTR:
+            return B_INTERRUPTED;
+        default:
+            return B_FROM_POSIX_ERROR(errno);
+        }
+    }
+    return B_OK;
+}
+
+int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
+{
+    int c;
+
+    _thread_info *info = _find_thread_info(syscall(SYS_gettid));
+    assert(info != NULL);
+
+    while ((c = cmpxchg(&info->has_data, 2, 1)) != 2) {
+        if (syscall(SYS_futex, info->has_data, FUTEX_WAIT_PRIVATE, c, NULL, NULL, 0) != 0) {
+            switch (errno) {
+            case EINTR:
+                return B_INTERRUPTED;
+            default:
+                return B_FROM_POSIX_ERROR(errno);
+            }
+        }
+    }
+
+    *sender = info->data_sender;
+    memcpy(buffer, info->data_buffer, min_c(bufferSize, info->data_buffer_size));
+    munmap(info->data_buffer, info->data_buffer_size);
+
+    return info->data_code;
 }
