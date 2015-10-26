@@ -5,7 +5,9 @@
 #ifndef _OS_H
 #define _OS_H
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include <stdarg.h>
 
 //! Kernel specific structures and functions
