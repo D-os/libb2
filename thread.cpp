@@ -19,10 +19,9 @@ int32 receiver(void *data)
        printf("[thread] got message %d: %s\n", code, buf);
    }
 
-   snooze(100000);
-   printf("[thread] snoozed 100000 - suspending\n");
-   suspend_thread(find_thread(NULL));
-   printf("[thread] returning %d\n", code);
+   printf("[thread] snoozing 2000000\n");
+   snooze(2000000);
+   printf("[thread] snoozed 2000000 - returning %d\n", code);
    return code;
 }
 
@@ -34,10 +33,11 @@ int main(int argc, char **argv) {
     printf("[main] %d:%d ready to spawn thread\n", getpid(), syscall(SYS_gettid));
     other_thread = spawn_thread(receiver, "receiver", 0, NULL);
     printf("[main] spawned thread %d\n", other_thread);
-    send_data(other_thread, code, (void *)buf, strlen(buf));
+    send_data(other_thread, code, (void *)buf, strlen(buf)+1);
     printf("[main] sent data - resuming thread %d\n", other_thread);
     resume_thread(other_thread);
 
+    printf("[main] snoozing 1000000\n");
     snooze(1000000);
     printf("[main] snoozed 1000000 - waiting for thread\n");
     status_t ret;

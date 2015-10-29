@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
@@ -16,11 +17,10 @@
 static const int STACK_SIZE = 256 * 1024;
 
 typedef enum {
-    THREAD_STARTING = 0,
-    THREAD_RUNNING	= 1,
-    THREAD_SUSPEND,
-    THREAD_SUSPENDED,
-    THREAD_DIE
+    THREAD_NEW = 0,
+    THREAD_WAITING,
+    THREAD_RUNNING,
+    THREAD_EXITED
 } _thread_state;
 
 typedef struct {
@@ -32,7 +32,6 @@ typedef struct {
     thread_func		func;
     void			*data;
     status_t		exit;
-    int				dirty;
     _thread_state   state;
     int             has_data;
     thread_id       data_sender;
@@ -58,42 +57,21 @@ static _thread_info *_find_thread_info(thread_id thread)
 
 static void _thread_control(int sig)
 {
-    if (sig != SIGUSR2) return;
+    if (sig == SIGTERM) {
+        syscall(SYS_exit);
+    }
+
     _thread_info *info = _find_thread_info(syscall(SYS_gettid));
     assert(info != NULL);
 
-    if (info->state == THREAD_DIE) syscall(SYS_exit);
-
-    if (info->state == THREAD_SUSPENDED) return;
-    if (info->state == THREAD_SUSPEND) {
-        info->state = THREAD_SUSPENDED;
-        sigset_t wait_mask;
-        sigfillset(&wait_mask);
-        sigdelset(&wait_mask, SIGUSR2);
-        do {
-            sigsuspend(&wait_mask);
-        }
-        while (info->state == THREAD_SUSPENDED);
+    if (sig == SIGCONT && info->state < THREAD_RUNNING) {
+        info->state = THREAD_RUNNING;
     }
 }
 
-static status_t _signal_thread_control(thread_id thread, _thread_state state)
+static status_t _signal_thread(pid_t thread, int sig)
 {
-    _thread_info *info = _find_thread_info(thread);
-
-    if (info == NULL) {
-        return B_BAD_THREAD_ID;
-    }
-
-    if (info->state == state) return B_OK;
-
-    int do_signal = info->state != THREAD_STARTING;
-
-    info->state = state;
-
-    if (!do_signal) return B_OK;
-
-    if (syscall(SYS_tgkill, getpid(), thread, SIGUSR2) == 0) {
+    if (syscall(SYS_tgkill, getpid(), thread, sig) == 0) {
         return B_OK;
     }
     switch (errno) {
@@ -104,24 +82,34 @@ static status_t _signal_thread_control(thread_id thread, _thread_state state)
         return B_FROM_POSIX_ERROR(errno);
     }
 }
+
 static int _thread_wrapper(void *arg)
 {
     struct sigaction sa;
     sigfillset(&sa.sa_mask);
     sa.sa_flags = 0;
     sa.sa_handler = _thread_control;
-    sigaction(SIGUSR2, &sa, NULL);
+    sigaction(SIGCONT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
 
     _thread_info *info = (_thread_info *)arg;
 
     prctl(PR_SET_NAME, (unsigned long) info->name, 0, 0, 0);
 
-    cmpxchg(&info->state, THREAD_STARTING, THREAD_SUSPEND);
-    _thread_control(SIGUSR2);
+    if (cmpxchg(&info->state, THREAD_NEW, THREAD_WAITING) == THREAD_NEW) {
+        sigset_t wait_mask;
+        sigfillset(&wait_mask);
+        sigdelset(&wait_mask, SIGCONT);
+        sigdelset(&wait_mask, SIGTERM);
+        do {
+            sigsuspend(&wait_mask);
+        }
+        while (info->state == THREAD_WAITING);
+    }
 
     info->exit = info->func(info->data);
 
-    info->dirty = 0;
+    info->state = THREAD_EXITED;
     return syscall(SYS_exit);
 }
 
@@ -134,7 +122,8 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
         return B_NO_MORE_THREADS;
     }
 
-    info->dirty = 1;
+    info->state = THREAD_NEW;
+
     strncpy(info->name, name, B_OS_NAME_LENGTH);
 
     if (info->stack_base == NULL) {
@@ -164,7 +153,6 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
     info->func = func;
     info->data = data;
 
-    info->state = THREAD_STARTING;
     info->has_data = 0;
 
     /* finally actually kick the thread */
@@ -193,10 +181,13 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
         return B_BAD_THREAD_ID;
     }
 
-    status_t status = resume_thread(thread);
-    if (status != B_OK) {
-        return status;
+    if (info->state != THREAD_RUNNING) {
+        status_t status = resume_thread(thread);
+        if (status != B_OK) {
+            return status;
+        }
     }
+
     if (syscall(SYS_futex, &info->tid, FUTEX_WAIT, info->tid, NULL, NULL, 0) != 0) {
         switch (errno) {
         case EINTR:
@@ -209,15 +200,19 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
         }
     }
 
-    int dirty = info->dirty;
+    /* FIXME! there is a race to reuse the thread structure! */
+    /* copy-out values ASAP */
+    _thread_state state = info->state;
     status_t exit = info->exit;
-
-    munmap(info->stack_base, STACK_SIZE);
-    info->stack_base = NULL;
+    /* free stack if still not reused */
+    if (!info->tid) {
+        munmap(info->stack_base, STACK_SIZE);
+        info->stack_base = NULL;
+    }
 
     assert(exit_value != NULL);
     *exit_value = exit;
-    return dirty ? B_INTERRUPTED : B_OK;
+    return state == THREAD_EXITED ? B_OK : B_INTERRUPTED;
 }
 
 thread_id find_thread(const char* name)
@@ -239,17 +234,33 @@ thread_id find_thread(const char* name)
 
 status_t kill_thread(thread_id thread)
 {
-    return _signal_thread_control(thread, THREAD_DIE);
+    _thread_info *info = _find_thread_info(thread);
+    if (info == NULL || info->state == THREAD_EXITED) {
+        return B_BAD_THREAD_ID;
+    }
+
+    return _signal_thread(info->tid, SIGTERM);
 }
 
 status_t resume_thread(thread_id thread)
 {
-    return _signal_thread_control(thread, THREAD_RUNNING);
+    _thread_info *info = _find_thread_info(thread);
+    if (info == NULL) {
+        return B_BAD_THREAD_ID;
+    }
+
+    if (cmpxchg(&info->state, THREAD_NEW, THREAD_RUNNING) == THREAD_NEW) {
+        return B_OK;
+    }
+
+    return _signal_thread(info->tid, SIGCONT);
 }
 
 status_t suspend_thread(thread_id thread)
 {
-    return _signal_thread_control(thread, THREAD_SUSPEND);
+    /* suspending thread is not supported */
+    abort();
+    return B_BAD_THREAD_STATE;
 }
 
 void exit_thread(status_t status)
@@ -257,9 +268,8 @@ void exit_thread(status_t status)
     _thread_info *info = _find_thread_info(syscall(SYS_gettid));
     assert(info != NULL);
     info->exit = status;
-    info->dirty = 0;
-    info->state = THREAD_DIE;
-    _thread_control(SIGUSR2);
+    info->state = TASK_EXITED;
+    _thread_control(SIGTERM);
 }
 
 status_t kill_team(team_id team)
