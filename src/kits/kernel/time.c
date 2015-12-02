@@ -19,7 +19,7 @@ bigtime_t real_time_clock_usecs()
     if (clock_gettime(CLOCK_REALTIME, &tm) != 0) {
         return 0;
     }
-    return tm.tv_nsec / 1000;
+    return tm.tv_sec * 1000000 + tm.tv_nsec / 1000;
 }
 
 bigtime_t system_time()
@@ -28,14 +28,14 @@ bigtime_t system_time()
     if (clock_gettime(CLOCK_MONOTONIC, &tm) != 0) {
         return 0;
     }
-    return tm.tv_nsec / 1000;
+    return tm.tv_sec * 1000000 + tm.tv_nsec / 1000;
 }
 
 static status_t _snooze(bigtime_t microseconds, int flags)
 {
     struct timespec tm;
     tm.tv_sec = microseconds / 1000000;
-    tm.tv_nsec = microseconds / 1000;
+    tm.tv_nsec = (microseconds % 1000000) * 1000;
     int ret = clock_nanosleep(CLOCK_MONOTONIC, flags, &tm, NULL);
     if (ret != 0) {
         switch (ret) {

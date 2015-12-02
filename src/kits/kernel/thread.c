@@ -302,7 +302,7 @@ status_t send_data(thread_id thread, int32 code, const void *buffer, size_t buff
     }
 
 
-    while (c = cmpxchg(&info->has_data, 0, 1)) {
+    while ((c = cmpxchg(&info->has_data, 0, 1))) {
         if (syscall(SYS_futex, &info->has_data, FUTEX_WAIT_PRIVATE, c, NULL, NULL, 0) != 0) {
             switch (errno) {
             case EINTR:

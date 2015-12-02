@@ -10,13 +10,13 @@ int32 receiver(void *data)
    int32 code;
    char buf[512];
 
-   printf("[thread] in thread %d:%d\n", getpid(), syscall(SYS_gettid));
+   printf("[thread] in thread %d:%d\n", getpid(), (pid_t)syscall(SYS_gettid));
    code = receive_data(&sender, (void *)buf, sizeof(buf));
    if (code == B_INTERRUPTED) {
        printf("[thread] receive_data interrupted\n");
    }
    else {
-       printf("[thread] got message %d: %s\n", code, buf);
+       printf("[thread] got message from %d - %d: %s\n", sender,  code, buf);
    }
 
    printf("[thread] snoozing 2000000\n");
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     int32 code = 63;
     const char *buf = "Hello";
 
-    printf("[main] %d:%d ready to spawn thread\n", getpid(), syscall(SYS_gettid));
+    printf("[main] %d:%d ready to spawn thread\n", getpid(), (pid_t)syscall(SYS_gettid));
     other_thread = spawn_thread(receiver, "receiver", 0, NULL);
     printf("[main] spawned thread %d\n", other_thread);
     send_data(other_thread, code, (void *)buf, strlen(buf)+1);

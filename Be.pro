@@ -1,17 +1,22 @@
-HEADERS += $$files(libbe/headers/*.h) \
-    $$files(libbe/headers/app/*.h) \
-    $$files(libbe/headers/interface/*.h) \
-    $$files(libbe/headers/kernel/*.h) \
-    $$files(libbe/headers/support/*.h)
+HEADERS += $$files(headers/*.h) \
+    $$files(headers/kernel/*.h) \
+    $$files(headers/support/*.h) \
+    $$files(headers/app/*.h) \
+    $$files(headers/interface/*.h) \
+    $$files(private/shared/*.h) \
+    $$files(private/linux/*.h)
 SOURCES += $$files(*.cpp) \
-    $$files(libbe/src/kits/app/*.cpp) \
-    $$files(libbe/src/kits/interface/*.cpp) \
-    $$files(libbe/src/kits/kernel/*.c)
-INCLUDEPATH += libbe/headers \
-    libbe/headers/app \
-    libbe/headers/interface \
-    libbe/headers/kernel \
-    libbe/headers/support
+    $$files(src/kits/kernel/*.c) \
+    $$files(src/kits/support/*.cpp) \
+    $$files(src/kits/app/*.cpp) \
+    $$files(src/kits/interface/*.cpp) \
+    $$files(src/linux/*.c)
+INCLUDEPATH += headers \
+    headers/app \
+    headers/interface \
+    headers/kernel \
+    headers/support \
+    private/shared \
+    private/linux
 OTHER_FILES += meson.build \
-    libbe/meson.build \
-    libbe/src/kits/kernel/meson.build
+    $$files(docs/*.txt)
