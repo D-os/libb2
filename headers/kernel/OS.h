@@ -9,6 +9,8 @@
 # define _GNU_SOURCE
 #endif
 #include <stdarg.h>
+#include <unistd.h>
+#include <linux/types.h>
 
 //! Kernel specific structures and functions
 
@@ -24,7 +26,7 @@ extern "C" {
 /* System constants */
 
 #define B_OS_NAME_LENGTH	32
-#define B_PAGE_SIZE			4096
+#define B_PAGE_SIZE			getpagesize()
 #define B_INFINITE_TIMEOUT	(9223372036854775807LL)
 
 enum {
@@ -43,14 +45,15 @@ enum {
 
 /* Types */
 
-typedef int32 area_id;
-typedef int32 port_id;
-typedef int32 sem_id;
+//typedef int32 area_id;
+typedef __u64 port_id; // kdbus connection id
+typedef uintptr_t sem_id;
 typedef pid_t team_id;
 typedef pid_t thread_id;
 
 
 /* Areas */
+#if 0
 
 typedef struct area_info {
     area_id		area;
@@ -114,6 +117,7 @@ extern status_t		_get_next_area_info(team_id team, ssize_t *cookie,
     _get_area_info((id), (areaInfo),sizeof(*(areaInfo)))
 #define get_next_area_info(team, cookie, areaInfo) \
     _get_next_area_info((team), (cookie), (areaInfo), sizeof(*(areaInfo)))
+#endif
 
 
 /* Ports */
@@ -206,10 +210,10 @@ enum {
                                            threads waiting */
 };
 
-extern sem_id		create_sem(int32 count, const char *name);
+extern sem_id		create_sem(uint32 count, const char *name);
 extern status_t		delete_sem(sem_id id);
 extern status_t		acquire_sem(sem_id id);
-extern status_t		acquire_sem_etc(sem_id id, int32 count, uint32 flags,
+extern status_t		acquire_sem_etc(sem_id id, uint32 count, uint32 flags,
                         bigtime_t timeout);
 extern status_t		release_sem(sem_id id);
 extern status_t		release_sem_etc(sem_id id, int32 count, uint32 flags);
@@ -241,8 +245,8 @@ typedef struct {
     int32			thread_count;
     int32			image_count;
     int32			area_count;
-    thread_id		debugger_nub_thread;
-    port_id			debugger_nub_port;
+//    thread_id		debugger_nub_thread;
+//    port_id			debugger_nub_port;
     int32			argc;
     char			args[64];
     uid_t			uid;

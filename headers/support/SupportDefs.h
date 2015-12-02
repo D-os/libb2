@@ -18,6 +18,8 @@
 /* Linux specific stuff */
 #include <limits.h>
 #define B_FILE_NAME_LENGTH  PATH_MAX
+typedef unsigned long	haiku_build_addr_t;
+#define addr_t			haiku_build_addr_t
 /* from inttypes.h */
 #define __HAIKU_PRI_PREFIX_32
 #define __HAIKU_PRI_PREFIX_64   __PRI64_PREFIX
