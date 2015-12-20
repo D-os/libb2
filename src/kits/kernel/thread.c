@@ -8,49 +8,38 @@
 #include <sys/mman.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <signal.h>
 #include <linux/futex.h>
 #include <assert.h>
 
-#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
+#include "private.h"
 
 static const int STACK_SIZE = 256 * 1024;
 
-typedef enum {
-    THREAD_NEW = 0,
-    THREAD_WAITING,
-    THREAD_RUNNING,
-    THREAD_EXITED
-} _thread_state;
-
-typedef struct {
-    pid_t           tid;
-    char			name[B_OS_NAME_LENGTH];
-    int32			priority;
-    void			*stack_base;
-    void			*stack_end;
-    thread_func		func;
-    void			*data;
-    status_t		exit;
-    _thread_state   state;
-    int             has_data;
-    thread_id       data_sender;
-    int32           data_code;
-    void            *data_buffer;
-    size_t          data_buffer_size;
-} _thread_info;
-
 static _thread_info _threads[256];
 
-static _thread_info *_find_thread_info(thread_id thread)
+_thread_info *_find_thread_info(thread_id thread)
 {
     _thread_info *info = _threads;
     _thread_info *end = _threads + sizeof(_threads)/sizeof(_threads[0]);
+    if (!likely(_threads[0].tid)) info++;
     while ( info < end ){
         if (info->tid == thread) {
             return info;
         }
         info++;
+    }
+    if (thread == getpid()) {
+        assert(!_threads[0].tid);
+        info = _threads;
+        info->tid = thread;
+        info->task_state = THREAD_RUNNING;
+        info->stack_base = (void*)((addr_t)&info & ~(B_PAGE_SIZE - 1));
+        info->stack_end = info->stack_base + STACK_SIZE;
+        prctl(PR_GET_NAME, (unsigned long) info->name, 0, 0, 0);
+        return info;
     }
     return NULL;
 }
@@ -64,8 +53,8 @@ static void _thread_control(int sig)
     _thread_info *info = _find_thread_info(syscall(SYS_gettid));
     assert(info != NULL);
 
-    if (sig == SIGCONT && info->state < THREAD_RUNNING) {
-        info->state = THREAD_RUNNING;
+    if (sig == SIGCONT && info->task_state < THREAD_RUNNING) {
+        info->task_state = THREAD_RUNNING;
     }
 }
 
@@ -96,7 +85,7 @@ static int _thread_wrapper(void *arg)
 
     prctl(PR_SET_NAME, (unsigned long) info->name, 0, 0, 0);
 
-    if (cmpxchg(&info->state, THREAD_NEW, THREAD_WAITING) == THREAD_NEW) {
+    if (cmpxchg(&info->task_state, THREAD_NEW, THREAD_WAITING) == THREAD_NEW) {
         sigset_t wait_mask;
         sigfillset(&wait_mask);
         sigdelset(&wait_mask, SIGCONT);
@@ -104,12 +93,12 @@ static int _thread_wrapper(void *arg)
         do {
             sigsuspend(&wait_mask);
         }
-        while (info->state == THREAD_WAITING);
+        while (info->task_state == THREAD_WAITING);
     }
 
     info->exit = info->func(info->data);
 
-    info->state = THREAD_EXITED;
+    info->task_state = THREAD_EXITED;
     return syscall(SYS_exit);
 }
 
@@ -122,7 +111,7 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
         return B_NO_MORE_THREADS;
     }
 
-    info->state = THREAD_NEW;
+    info->task_state = THREAD_NEW;
 
     strncpy(info->name, name, B_OS_NAME_LENGTH);
 
@@ -181,7 +170,7 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
         return B_BAD_THREAD_ID;
     }
 
-    if (info->state != THREAD_RUNNING) {
+    if (info->task_state != THREAD_RUNNING) {
         status_t status = resume_thread(thread);
         if (status != B_OK) {
             return status;
@@ -202,7 +191,7 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
 
     /* FIXME! there is a race to reuse the thread structure! */
     /* copy-out values ASAP */
-    _thread_state state = info->state;
+    _thread_state state = info->task_state;
     status_t exit = info->exit;
     /* free stack if still not reused */
     if (!info->tid) {
@@ -235,7 +224,7 @@ thread_id find_thread(const char* name)
 status_t kill_thread(thread_id thread)
 {
     _thread_info *info = _find_thread_info(thread);
-    if (info == NULL || info->state == THREAD_EXITED) {
+    if (info == NULL || info->task_state == THREAD_EXITED) {
         return B_BAD_THREAD_ID;
     }
 
@@ -249,7 +238,7 @@ status_t resume_thread(thread_id thread)
         return B_BAD_THREAD_ID;
     }
 
-    if (cmpxchg(&info->state, THREAD_NEW, THREAD_RUNNING) == THREAD_NEW) {
+    if (cmpxchg(&info->task_state, THREAD_NEW, THREAD_RUNNING) == THREAD_NEW) {
         return B_OK;
     }
 
@@ -268,7 +257,7 @@ void exit_thread(status_t status)
     _thread_info *info = _find_thread_info(syscall(SYS_gettid));
     assert(info != NULL);
     info->exit = status;
-    info->state = TASK_EXITED;
+    info->task_state = THREAD_EXITED;
     _thread_control(SIGTERM);
 }
 
@@ -358,6 +347,8 @@ int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
     _thread_info *info = _find_thread_info(syscall(SYS_gettid));
     assert(info != NULL);
 
+    info->state = B_THREAD_RECEIVING;
+
     while ((c = cmpxchg(&info->has_data, 2, 1)) != 2) {
         if (syscall(SYS_futex, &info->has_data, FUTEX_WAIT_PRIVATE, c, NULL, NULL, 0) != 0) {
             return B_INTERRUPTED;
@@ -373,5 +364,46 @@ int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
         munmap(info->data_buffer, info->data_buffer_size);
     }
 
+    info->state = 0;
+
     return info->data_code;
+}
+
+status_t _get_thread_info(thread_id id, thread_info *info, size_t size)
+{
+    _thread_info *_nfo = _find_thread_info(id);
+
+    if (_nfo == NULL) {
+        return B_BAD_VALUE;
+    }
+
+    memset(info, 0, size);
+    info->thread = id;
+    info->team = getpid();
+    strncpy(info->name, _nfo->name, B_OS_NAME_LENGTH);
+    info->priority = _nfo->priority;
+    info->sem = _nfo->sem;
+    info->stack_base = _nfo->stack_base;
+    info->stack_end = _nfo->stack_end;
+
+    if (_nfo->state) {
+        info->state = _nfo->state;
+    }
+    else switch (_nfo->task_state) {
+    case THREAD_NEW:
+    case THREAD_WAITING:
+        info->state = B_THREAD_SUSPENDED;
+        break;
+    case THREAD_RUNNING:
+    case THREAD_EXITED:
+        info->state = B_THREAD_RUNNING; // FIXME: This could be B_THREAD_READY
+        break;
+    }
+
+    struct rusage usage;
+    getrusage(RUSAGE_THREAD, &usage);
+    info->user_time = usage.ru_utime.tv_sec * 1000000 + usage.ru_utime.tv_usec;
+    info->kernel_time = usage.ru_stime.tv_sec * 1000000 + usage.ru_stime.tv_usec;
+
+    return B_OK;
 }

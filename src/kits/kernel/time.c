@@ -3,6 +3,10 @@
 #include <time.h>
 #include <errno.h>
 #include <assert.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+
+#include "private.h"
 
 uint32 real_time_clock()
 {
@@ -36,7 +40,15 @@ static status_t _snooze(bigtime_t microseconds, int flags)
     struct timespec tm;
     tm.tv_sec = microseconds / 1000000;
     tm.tv_nsec = (microseconds % 1000000) * 1000;
+
+    _thread_info *info = _find_thread_info(syscall(SYS_gettid));
+    assert(info != NULL);
+    info->state = B_THREAD_ASLEEP;
+
     int ret = clock_nanosleep(CLOCK_MONOTONIC, flags, &tm, NULL);
+
+    info->state = 0;
+
     if (ret != 0) {
         switch (ret) {
         case EINTR:
