@@ -1,0 +1,1085 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+<link rel="alternate" type="application/rss+xml" href="/feed.rss" title="Lockless Inc. Articles"/>
+
+<title>Mutexes and Condition Variables using Futexes</title>
+<meta name="description" content="Creating Mutexes and Condition Variables from Futexes" />
+<meta name="robots" content="index,follow" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+<link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico" />
+</head><body>
+
+<div class="header1">
+<a href="/" title="Lockless Inc"><img border="0" src="/images/header_bg.jpg" alt="Lockless Inc"/></a>
+</div>
+
+<table width="100%" cellpadding="0" cellspacing="0">
+	<tr class="header2"><td colspan="3"></td></tr>
+	<tr class="header3"><td colspan="3"></td></tr>
+	<tr>
+		<td class="menu_2" valign="top">
+		<ul>
+		<li><a href="/" title="Lockless Inc">Lockless Inc</a></li>
+		<li><a href="/cindex.shtml">Purchase &#187;</a>
+		<ul>
+			<li><a href="/products/linux.shtml">Linux</a></li>
+			<li><a href="/products/windows.shtml">Windows</a></li>
+			<li><a href="/products/developers.shtml">Developers</a></li>
+		</ul>
+		</li>
+		<li><a href="/benchmarks.shtml">Benchmarks</a></li>
+		<li><a href="/install.shtml">Installation</a></li>
+		<li><a href="/articles/">Articles</a></li>
+		<li><a href="/technical.shtml">Technical</a></li>
+		<li><a href="/downloads/">Downloads</a></li>
+		<li><a href="/man/">Documentation</a></li>
+		<li><a href="/whatsnew.shtml">What's New</a></li>
+		<li><a href="/about.shtml">About Us</a></li>
+		<li><a href="/help.shtml">Help</a></li>
+		</ul>
+		</td>
+		<td class="maintext">
+
+<h1 align="center">Mutexes and Condition Variables using Futexes</h1>
+
+<p>Mutexes and Condition Variables differ from <a href="/articles/locks/">spinlocks and spin read-write locks</a> because they require threads to be able to sleep in some sort of wait-queue.  In order for this to happen, some communication is required with the operating system kernel via system calls.  Since system calls are relatively slow compared to atomic instructions, we would like to minimize their number and avoid as many userspace-kernelspace context switches as possible.  The &quot;futex&quot; API in Linux is aimed at satisfying this goal.</p>
+
+<p>Programming using raw futexes is not simple.  There are many race conditions one needs to be aware of, and part of the API is broken beyond repair.  (Notably the FUTEX_FD option which associates a file descriptor to a futex can miss wakeups.)  Thus wrapping futexes in a highly efficient library which implements the easier to understand and use mutex and condition variable primitives is helpful.</p>
+
+<p>Ulrich Drepper has written a seminal article on the use of futexes called <a href="http://www.akkadia.org/drepper/futex.pdf">Futexes Are Tricky</a>.  It describes how one may construct a mutex library using them, and several of the pitfalls along the way.  However, this document is now out of date due to expansion of the futex API over the past few years.  In addition, the man pages for the futex system call are also out of date.  Instead, to understand what is really available, one needs to investigate the Linux Kernel commit logs in git.</p>
+
+<h3>Futexes are Tricky</h3>
+<p>Implementing mutexes is more complex than spin locks.  A spin lock may only have two states: locked and unlocked.  A mutex must have a third state which describes whether or not the lock is contended, with some threads waiting inside the kernel.  In his article, Ulrich defines these three states to be the integers 0 for unlocked, 1 for locked, and 2 for locked and contended.  By constructing a state diagram we can look at all possible transitions, and thus write some code.</p>
+
+<p>Note that one may naively want to use the faster ticket spinlock algorithm as a base for a mutex implementation.  However, ticket locks are problematic with sleeping waiters.  Since only the &quot;correct&quot; waiter can proceed after an unlock, it prevents any queue-jumping.  Thus the full overhead of a context switch is always required as soon as the lock becomes contended.  A further problem is that the futex implementation doesn't allow one to choose exactly which thread can be woken up.  The best one can do is use the undocumented FUTEX_BITSET flag and have effectively 32 different wait-lists.  Unfortunately, the results are not particularly fast, so a more traditional design is better.</p>
+
+<p>To implement mutexes we firstly require a definition of the kernel syscall interface.  Unfortunately, the futex include file does not have this as futexes are a low-level interface typically used in assembly language.  However, this doesn't stop us making our own:</p>
+
+<pre><code>
+int sys_futex(void *addr1, int op, int val1, struct timespec *timeout, void *addr2, int val3)
+{
+	return syscall(SYS_futex, addr1, op, val1, timeout, addr2, val3);
+}
+</code></pre>
+
+<p>Not all of the parameters are used in every futex operation (which is multiplexed by the &quot;op&quot; parameter.  So this is slightly inefficient, but since system calls are quite slow compared to a few extra asm mov instructions this doesn't matter much.</p>
+
+<p>For data hiding, define a type for the mutex state.  (It needs to be an integer because that's the size of datatype that futexes use.)  Note that the glibc <code>pthread_mutex_t</code> is much more complex.  That needs to worry about multiple different types of mutex such as recursive or error-checking varieties.  Here, we assume that your code only needs the simplest and most common variety, and is process-local.</p>
+
+<pre><code>
+typedef int mutex;
+
+#define MUTEX_INITIALIZER {0}
+
+int mutex_init(mutex *m, const pthread_mutexattr_t *a)
+{
+	(void) a;
+	*m = 0;
+	return 0;
+}
+
+int mutex_destroy(mutex *m)
+{
+	/* Do nothing */
+	(void) m;
+	return 0;
+}
+</code></pre>
+
+<p>Since we only have one type of mutex, we ignore the pthread_mutexattr_t parameter passed in <code>mutex_init</code>.  This also means that <code>mutex_destroy</code> is a no-op since we don't check for the error case of destroying an in-use mutex with waiters.  Since these functions always return 0, you may want to change them to return <code>void</code> if plug-in compatibility with pthreads is not required.</p>
+
+<p>The rest of the code from the article is something much like:</p>
+
+<pre><code>
+int mutex_lock(mutex *m)
+{
+	int i, c;
+	
+	/* Spin and try to take lock */
+	for (i = 0; i &lt; 100; i++)
+	{
+		c = cmpxchg(m, 0, 1);
+		if (!c) return 0;
+		
+		cpu_relax();
+	}
+
+	/* The lock is now contended */
+	if (c == 1) c = xchg_32(m, 2);
+
+	while (c)
+	{
+		/* Wait in the kernel */
+		sys_futex(m, FUTEX_WAIT_PRIVATE, 2, NULL, NULL, 0);
+		c = xchg_32(m, 2);
+	}
+	
+	return 0;
+}
+
+int mutex_unlock(mutex *m)
+{
+	int i;
+	
+	/* Unlock, and if not contended then exit. */
+	if (*m == 2)
+	{
+		*m = 0;
+	}
+	else if (xchg_32(m, 0) == 1) return 0;
+
+	/* Spin and hope someone takes the lock */
+	for (i = 0; i &lt; 200; i++)
+	{
+		if (*m)
+		{
+			/* Need to set to state 2 because there may be waiters */
+			if (cmpxchg(m, 1, 2)) return 0;
+		}
+		cpu_relax();
+	}
+	
+	/* We need to wake someone up */
+	sys_futex(m, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+	
+	return 0;
+}
+
+int mutex_trylock(mutex *m)
+{
+	/* Try to take the lock, if is currently unlocked */
+	unsigned c = cmpxchg(m, 0, 1);
+	if (!c) return 0;
+	return EBUSY;
+}
+</code></pre>
+
+<p>However, the above is a little faster in most cases than the algorithm shown in the &quot;Futexes are Tricky&quot; tutorial.  Here, we try extra hard to avoid going into the kernel in the unlock operation.  By spinning for a short while, we can see if some other thread takes the lock.  If so, we can convert to a contended lock and then exit all without making a context switch.  For some use-cases this is much faster than not spinning.</p>
+
+<p>Note how the above use the FUTEX_PRIVATE version of the wait and wake operations.  This currently undocumented flag converts the operations to be process-local.  Normal futexes need to obtain <code>mmap_sem</code> inside the kernel to compare addresses between processes.  If a futex is process-local, then this semaphore isn't required and a simple comparison of virtual addresses is all that's needed.  Thus using the private flag speeds things up somewhat by reducing in-kernel contention.</p>
+
+<h3>Condition Variables</h3>
+<p>The resulting code above is quite fast, faster than the standard default mutexes in the glibc pthreads library.  However, it isn't as useful as things stand.  To correct that we need to implement the condition variable primitives.  The implementation of those inside glibc is extremely complex due to the extra error-checking done.  The extra state requires a lock to protect it, and a variety of complex futex operations have been added to the kernel to try and avoid some of the overhead introduced by this internal lock.</p>
+
+<p>If we use a similar philosophy to the mutex code above, we can construct much simpler and faster condition variables.  By not checking for errors we can avoid a large amount of overhead.  The only internal state we require is a pointer to the mutex &quot;attached&quot; to the condition variable, and a sequence number that we use as a lock against concurrent wakes and sleeps.</p>
+
+<pre><code>
+typedef struct cv cv;
+struct cv
+{
+	mutex *m;
+	int seq;
+	int pad;
+};
+
+#define PTHREAD_COND_INITIALIZER {NULL, 0, 0}
+
+int cond_init(cv *c, pthread_condattr_t *a)
+{
+	(void) a;
+	
+	c-&gt;m = NULL;
+	
+	/* Sequence variable doesn't actually matter, but keep valgrind happy */
+	c-&gt;seq = 0;
+	
+	return 0;
+}
+
+int cond_destroy(cv *c)
+{
+	/* No need to do anything */
+	(void) c;
+	return 0;
+}
+</code></pre>
+
+<p>A thread waiting on the condition will sleep on the <code>seq</code> sequence-lock.  We can then wake up a single thread in a <code>cond_signal</code> and all the threads in a <code>cond_broadcast</code>.  Since the a <code>cond_wait</code> is specified to return with the mutex locked, we can optimize by transferring the waiters from one wait-queue to another in the broadcast operation.  By always waking up at least one thread, we make sure that the mutex is set into the correct contended state.</p>
+
+<p>The wake-up operations turn into relatively small wrappers over futex system calls:</p>
+
+<pre><code>
+int cond_signal(cv *c)
+{
+	/* We are waking someone up */
+	atomic_add(&amp;c-&gt;seq, 1);
+	
+	/* Wake up a thread */
+	sys_futex(&amp;c-&gt;seq, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+	
+	return 0;
+}
+
+int cond_broadcast(cv *c)
+{
+	mutex *m = c-&gt;m;
+	
+	/* No mutex means that there are no waiters */
+	if (!m) return 0;
+	
+	/* We are waking everyone up */
+	atomic_add(&amp;c-&gt;seq, 1);
+	
+	/* Wake one thread, and requeue the rest on the mutex */
+	sys_futex(&amp;c-&gt;seq, FUTEX_REQUEUE_PRIVATE, 1, (void *) INT_MAX, m, 0);
+	
+	return 0;
+}
+</code></pre>
+
+<p>Every time we do a wake operation, we increment the <code>seq</code> variable.  Thus the only thing we need to do to prevent missed-wakeups is to check that this doesn't change whilst falling to sleep.  This isn't 100% fool-proof.  If 2<sup>32</sup> wake operations can happen between the read of the <code>seq</code> variable and the implementation of the FUTEX_WAIT system call, then we will have a bug.  However, this is extremely unlikely due to amount of time it would take to generate that many calls.</p>
+
+<p>The <code>cond_wait</code> operation is slightly tricky.  We need to make sure that after we wake up that we change the mutex into the contended state.  Thus we cannot use the normal mutex lock function, and have to use an inline version with this constraint.  The only other thing we need to do is save the value of the mutex pointer for later.  This can be done in a lock-free manner with a compare-exchange instruction.</p>
+
+<pre><code>
+int cond_wait(cv *c, mutex *m)
+{
+	int seq = c-&gt;seq;
+
+	if (c-&gt;m != m)
+	{
+		if (c-&gt;m) return EINVAL;
+		
+		/* Atomically set mutex inside cv */
+		cmpxchg(&amp;c-&gt;m, NULL, m);
+		if (c-&gt;m != m) return EINVAL;
+	}
+	
+	mutex_unlock(m);
+	
+	sys_futex(&amp;c-&gt;seq, FUTEX_WAIT_PRIVATE, seq, NULL, NULL, 0);
+	
+	while (xchg_32(m, 2))
+	{
+		sys_futex(m, FUTEX_WAIT_PRIVATE, 2, NULL, NULL, 0);
+	}
+		
+	return 0;
+}
+</code></pre>
+
+<p>This completes a condition variable implementation.  How fast is it?  We can use one of the tests in the glibc source code to benchmark this.  <code>tst-cond18.c</code> implements a job-server like application.  A main thread repeatedly uses <code>pthread_cond_signal</code> and <code>pthread_cond_broadcast</code> to wake up other threads which then unlock and lock the protecting mutex.  It does this for 20 seconds, whilst maintaining a count of the number of successful wakeups.  We can alter the program to print out this number on exit.</p>
+
+<p>The default mutexes in glibc perform 890k operations on this machine in 20 seconds.  The mutex + condition variable implementation above do about 2 million operations in the same time, so we've made a fair amount of improvement.  However, we aren't quite done with optimization...</p>
+
+<h3>Optimized Mutexes</h3>
+<p>We can further improve performance by changing the state diagram for the mutex implementation.  We will add a fourth state: Contended and unlocked.  This fourth state complements the other three, and allows us to specify two bits in the mutex integer.  The first bit states whether or not the mutex is locked.  The second, whether it is contended.</p>
+
+<p>The obvious thing to do now is to change the locked + contended value to 3, and add the new state as the value 2.  However, we can do better.  By moving the two bits into separate bytes, we can more efficiently operate on them by using byte-addressing instructions.  This allows some operations to avoid the lock prefix, and increase performance.</p>
+
+<p>We set the low bit in the least significant byte to hold the lock status.  The low bit in the next most least significant byte in the integer will hold the contended status.  This gives the values of the four states on our little-endian machine as: 0 unlocked + uncontended, 1 locked, 256 unlocked and contended, 257 locked and contended.</p>
+
+<p>To implement this without worrying too much about aliasing problems we use a union.</p>
+
+<pre><code>
+typedef union mutex mutex;
+
+union mutex
+{
+	unsigned u;
+	struct
+	{
+		unsigned char locked;
+		unsigned char contended;
+	} b;
+};
+
+int mutex_init(mutex *m, const pthread_mutexattr_t *a)
+{
+	(void) a;
+	m-&gt;u = 0;
+	return 0;
+}
+
+int mutex_destroy(mutex *m)
+{
+	/* Do nothing */
+	(void) m;
+	return 0;
+}
+</code></pre>
+
+<p>We can thus access the whole integer via <code>u</code>, and the individual bytes via <code>b</code>.  Doing this, the mutex implementation simplifies:</p>
+
+<pre><code>
+int mutex_lock(mutex *m)
+{
+	int i;
+	
+	/* Try to grab lock */
+	for (i = 0; i &lt; 100; i++)
+	{
+		if (!xchg_8(&amp;m-&gt;b.locked, 1)) return 0;
+
+		cpu_relax();
+	}
+
+	/* Have to sleep */
+	while (xchg_32(&amp;m-&gt;u, 257) &amp; 1)
+	{
+		sys_futex(m, FUTEX_WAIT_PRIVATE, 257, NULL, NULL, 0);
+	}
+	
+	return 0;
+}
+
+int mutex_unlock(mutex *m)
+{
+	int i;
+	
+	/* Locked and not contended */
+	if ((m-&gt;u == 1) &amp;&amp; (cmpxchg(&amp;m-&gt;u, 1, 0) == 1)) return 0;
+	
+	/* Unlock */
+	m-&gt;b.locked = 0;
+	
+	barrier();
+	
+	/* Spin and hope someone takes the lock */
+	for (i = 0; i &lt; 200; i++)
+	{
+		if (m-&gt;b.locked) return 0;
+		
+		cpu_relax();
+	}
+	
+	/* We need to wake someone up */
+	m-&gt;b.contended = 0;
+	
+	sys_futex(m, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+	
+	return 0;
+}
+
+int mutex_trylock(mutex *m)
+{
+	unsigned c = xchg_8(&amp;m-&gt;b.locked, 1);
+	if (!c) return 0;
+	return EBUSY;
+}
+</code></pre>
+
+<p>Notice how the unlock operation may not require any interlocked instructions at all under contention.  This can greatly improve performance in that case.  We can also avoid using compare-exchange instructions in the lock operation, and use simpler exchange operations instead.</p>
+
+<p>We can now optimize the condition variable implementation to use the new type of mutexes.  Fortunately, the only code that actually cares about the internals of the mutex type is the <code>cond_wait</code> operation.  We change it from exchanging and waiting on the value 2, to exchanging the value 257:</p>
+
+<pre><code>
+int cond_wait(cv *c, mutex *m)
+{
+	int seq = c-&gt;seq;
+
+	if (c-&gt;m != m)
+	{
+		/* Atomically set mutex inside cv */
+		cmpxchg(&amp;c-&gt;m, NULL, m);
+		if (c-&gt;m != m) return EINVAL;
+	}
+	
+	mutex_unlock(m);
+	
+	sys_futex(&amp;c-&gt;seq, FUTEX_WAIT_PRIVATE, seq, NULL, NULL, 0);
+	
+	while (xchg_32(&amp;m-&gt;b.locked, 257) &amp; 1)
+	{
+		sys_futex(m, FUTEX_WAIT_PRIVATE, 257, NULL, NULL, 0);
+	}
+		
+	return 0;
+}
+</code></pre>
+
+<p>Running the same tst-cond18.c benchmark gives a 4.2million wakeups in 20 seconds.  This is twice as fast as the previous mutex and condition variable code, and more than four times faster than the standard ones in the pthreads library.  However, we still aren't quite done with optimization...</p>
+
+<h3>Mutexes and Condition Variables in Assembly Language</h3>
+<p>Some of the performance in the pthreads library is gained by using assembly language.  We've improved the algorithms pretty much as far as they can go in C, we can now use the same trick of moving to asm to get extra speed.  The most obvious change is that we now don't need to use the <code>syscall</code> C function, and can use the <code>syscall</code> instruction directly.  This allows us to avoid worrying about the values of parameters which aren't required in the futex operations we are using.</p>
+
+<p>The mutex algorithm conversion is relatively straight forward.  (We strictly don't need the initialization and destruction functions in asm as the C compiler will do a good job with them, but it doesn't hurt.)</p>
+
+<pre><code>
+#include &lt;linux/errno.h&gt;
+#include &lt;limits.h&gt;
+
+#  &lt;linux/futex.h&gt; isn't clean for asm inclusion
+#define FUTEX_WAIT_PRIVATE		128
+#define FUTEX_WAKE_PRIVATE		129
+#define FUTEX_REQUEUE_PRIVATE		131
+
+#define SYS_futex 202
+
+#define LOCK_CONTEND	0x0101
+
+
+.globl mutex_init
+.type   mutex_init,@function
+mutex_init:
+	xor		%eax, %eax
+	mov		%eax, (%rdi)
+	ret
+.size	mutex_init, .-mutex_init
+
+.globl mutex_destroy
+.type   mutex_destroy,@function
+mutex_destroy:
+	xor		%eax, %eax
+	ret
+.size	mutex_destroy, .-mutex_destroy
+
+.globl mutex_lock
+.type mutex_lock,@function
+mutex_lock:
+	mov		$100, %rcx
+
+# Spin a bit to try to get lock
+1:	mov		$1, %dl
+	xchgb		(%rdi), %dl
+	test		%dl, %dl
+	jz		4f
+	rep; nop
+	add		$-1, %ecx
+	jnz		1b
+	
+# Set up syscall details
+	mov		$LOCK_CONTEND, %edx
+	mov		$FUTEX_WAIT_PRIVATE, %esi
+	xor		%r10, %r10
+	jmp		3f
+	
+# Wait loop
+2:	mov		$SYS_futex, %eax
+	syscall
+3:	mov		%edx, %eax
+	xchgl		(%rdi), %eax
+	test		$1, %eax
+	jnz		2b
+4:	xor		%eax, %eax
+	ret
+.size	mutex_lock, .-mutex_lock
+
+.globl mutex_unlock
+.type mutex_unlock,@function
+mutex_unlock:
+	cmpl		$1, (%rdi)
+	jne		1f
+	mov		$1, %eax
+	xor		%ecx, %ecx
+	lock; cmpxchgl	%ecx, (%rdi)
+	jz		3f
+1:	movb		$0, (%rdi) 
+
+# Spin, and hope someone takes the lock
+	mov		$200, %ecx
+2:	testb		$1, (%rdi)
+	jnz		3f
+	rep; nop
+	add		$-1, %ecx 
+	jnz		2b
+
+# Wake up someone
+	movb		$0, 1(%rdi)
+	mov		$SYS_futex, %eax
+	mov		$FUTEX_WAKE_PRIVATE, %esi
+	mov		$1, %edx
+	syscall
+	
+3:	xor		%eax, %eax
+	ret
+.size	mutex_unlock, .-mutex_unlock
+
+
+.globl mutex_trylock
+.type mutex_trylock,@function
+mutex_trylock:
+	mov		$1, %eax
+	mov		$EBUSY, %edx
+	xchgb		(%rdi), %al
+	test		%al, %al
+	cmovnz		%edx, %eax
+	retq
+.size	mutex_trylock, .-mutex_trylock
+</code></pre>
+
+<p>The condition variable functions are also all quite simple except for <code>cond_wait</code>.  At least on this machine, it was faster to not inline the call to <code>mutex_unlock</code> within it.  Since we know which registers <code>mutex_unlock</code> will modify, we can hide extra parameters in registers it doesn't touch.  This saves the time it would take to create and tear down a stack frame.</p>
+
+<pre><code>
+.globl cond_init
+.type cond_init,@function
+cond_init:
+	xor		%rax, %rax
+	mov		%rax, (%rdi)
+	mov		%rax, 8(%rdi)
+	ret
+.size	cond_init, .-cond_init
+
+.globl cond_destroy
+.type cond_destroy,@function
+cond_destroy:
+	xor		%eax, %eax
+	ret
+.size	cond_destroy, .-cond_destroy
+
+.globl cond_signal
+.type cond_signal,@function
+cond_signal:
+	lock; addl	$1, (%rdi)
+	mov		$SYS_futex, %eax
+	mov		$FUTEX_WAKE_PRIVATE, %esi
+	mov		$1, %edx
+	syscall
+	xor		%eax, %eax
+	ret 
+.size	cond_signal, .-cond_signal
+
+.globl cond_broadcast
+.type cond_broadcast,@function
+cond_broadcast:
+	mov		8(%rdi), %r8
+	cmpq	$0, %r8
+	je		1f
+	lock; addl	$1, (%rdi)
+	mov		$SYS_futex, %eax
+	mov		$FUTEX_REQUEUE_PRIVATE, %esi
+	mov		$1, %edx
+	mov		$INT_MAX, %r10
+	syscall
+1:	xor		%eax, %eax
+	ret 
+.size	cond_broadcast, .-cond_broadcast
+
+.globl cond_wait
+.type cond_wait,@function
+cond_wait:
+	cmp		8(%rdi), %rsi
+	jne		4f
+
+# Hack, save seq into r8 since unlock doesn't touch it
+1:	movl	(%rdi), %r8d
+
+# Hack, save mutex into r9 (we can be awoken after cond is destroyed)
+	mov		%rsi, %r9
+
+# Unlock
+	push	%rbp
+	mov		%rdi, %rbp
+	mov		%rsi, %rdi
+	call	mutex_unlock
+	mov		%rbp, %rdi
+	pop		%rbp
+
+# Setup for wait on seq	
+	movl	%r8d, %edx
+	mov		$SYS_futex, %eax
+	xor		%r10, %r10
+	mov		$FUTEX_WAIT_PRIVATE, %esi
+	syscall
+	
+# Set up for wait on mutex
+	mov		%r9, %rdi
+	mov		$LOCK_CONTEND, %edx
+	jmp		3f
+	
+# Wait loop
+2:	mov		$SYS_futex, %eax
+	syscall
+3:	mov		%edx, %eax
+	xchgl	(%rdi), %eax
+	test	$1, %eax
+	jnz		2b
+	
+	xor		%eax, %eax
+	ret
+	
+4:	xor		%rax, %rax
+	lock; cmpxchgq %rsi, 8(%rdi)
+	jz		1b
+	cmp		8(%rdi), %rsi
+	je		1b
+5:	mov		$EINVAL, %eax
+	ret	
+.size	cond_wait, .-cond_wait
+</code></pre>
+
+<p>Unfortunately, the speed increase isn't all that much.  The above assembly code does 4.5 million wakeups in the 20 seconds run in tst-cond18.c  This is a few percent faster than the C version.  It seems that gcc optimizes the user-space operations well enough, and the extra code spent in the system call setup is vastly outweighed by the overhead of the system calls themselves.  Anyway, the above code is about 5 times faster in the benchmark than the implementation in glibc.  The disadvantage is that the above is not nearly as flexible, only supporting a single type of mutex.</p>
+
+<h3>Timed Waits</h3>
+<p>Conspicuously absent from the above have been the timed wait operations <code>pthread_mutex_timedlock</code> and <code>pthread_cond_timedwait</code>.  The problem with these is a subtle conflict between the requirements of userspace and kernelspace.  In userspace, one would like the guarantee that an operation could complete before a given time.  This is often a requirement for real-time systems.  The problem with this is that userspace can only obtain the time via another system call.</p>
+
+<p>The <code>gettimeofday</code> function uses a vsyscall, so is quite fast, but the problem is that the process may be scheduled out immediately after obtaining the time.  Since we would like to meet the deadline even if we are scheduled out on the way to waiting, userspace tends to want absolute timeouts.  This is the reason why the timed wait operations in the pthreads API are absolute.</p>
+
+<p>The kernel sees things differently.  There, much effort has gone into making as few kernel-userspace context switches required as possible.  Since a relative timeout means that userspace doesn't need to call <code>gettimeofday</code> in order to use it, it is a more efficient interface.  Thus sleeping calls like <code>select</code>, <code>poll</code> and <code>FUTEX_WAIT</code> use relative timeouts.</p>
+
+<p>Thus there is a mismatch between the pthreads API and the kernel.  An application which wants to wait no more than five seconds for a lock first needs to call <code>gettimeofday</code> once to obtain the time.  Then the pthreads library needs to call it again to convert back to a relative time.  Finally, after the wait, the pthreads library needs to call it a third time to check for timeout.  (The system call may return ETIMEOUT, but it is possible to be scheduled out just after a system call that didn't time out, and then be restarted after the time limit has expired.)</p>
+
+<p>This results in many calls to <code>gettimeofday</code> being executed even for an application that doesn't really care all that much about exactly how long something waits, as long as it doesn't wait too long.  So to keep things simple we've avoided making these functions.  If you want a timed delay, simply pass in a relative time in <code>struct timespec *</code> format for the fourth parameter to FUTEX_WAIT.</p>
+
+<h3>Summary</h3>
+<p>By avoiding much of the complexity introduced by the pthreads library supporting multiple mutex types, we have constructed a single-purpose but extremely fast mutex and condition variable library.  The resulting code is up to five times faster in the contended case.  In constructing the algorithms, we only required the simpler futex operations.  Contrary to the statements in "Futexes are Tricky", FUTEX_CMP_REQUEUE wasn't needed as the use of FUTEX_REQUEUE doesn't have a race in this particular condition variable implementation.</p>
+
+<div class="comments">
+<h2>Comments</h2>
+<span class="name">Dmitry V&apos;jukov</span><span class = "said"> said...</span><div class="comment_text">
+Hi,<br/>
+Thank for the interesting post!<br/>
+<br/>
+In the second mutex implementation you use atomic operations of different sizes, the problem is that Intel IA-32/Intel64 docs prohibit that:<br/>
+<br/>
+3A/I 8.1.2.2<br/>
+&quot;Software should access semaphores (shared memory used for signalling between<br/>
+multiple processors) using identical addresses and operand lengths. For example, if one processor accesses a semaphore using a word access, other processors should not access the semaphore using a byte access.&quot;<br/>
+-----<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for (i = 0; i &lt; 100; i++)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c = cmpxchg(m, 0, 1);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!c) return 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+It&apos;s usually more efficient (at least on synthetic micro-tests) to back-off heavier:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for (i = 0; i &lt; 10; i++)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c = cmpxchg(m, 0, 1);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!c) return 0;<br/>
+                for (j = 0; j &lt; 100; j++)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+-----<br/>
+<br/>
+In the second mutex_unlock() there is a code:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/* We need to wake someone up */<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m-&gt;b.contended = 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sys_futex(m, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);<br/>
+So we reset &apos;contended&apos; and wake-up only single waiter, I do not quite get as to who will wake up other waiters. Since contended==0, some threads can stay blocked. What I am missing?<br/>
+-----<br/>
+<br/>
+Also you may want to try to apply &apos;wakeup throttling&apos; technique to it, it reduces number of syscalls and reduces contention in oversubscribed environment. Google by &apos;wakeup throttling&apos; and you will find that paper on Java locks implementation. In short: if we unblock a waiter, and he is not yet re-acquired the mutex, then we does not unblock other waiters -&gt; we know that there is a thread still coming and he will unblock other waiters if required.<br/>
+<br/>
+I think wakeup throttling + heavier backoff can improve benchmark numbers somehow.<br/>
+<br/>
+Cheers</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+&gt; In the second mutex implementation you use atomic operations of different sizes, the problem is that Intel IA-32/Intel64 docs prohibit that.<br/>
+<br/>
+Hmmm... I haven&apos;t seen that constraint before.  At least in my experimentation, when any access is atomic it synchronizes everything, and you are ok.  The &quot;lock&quot; prefix acts like an mfence instruction.  When two accesses are of different sizes and neither are atomic then there are problems...   I&apos;m guessing the second situation is what that paragraph is trying to describe.  It&apos;d be interesting to see if there is any x86 implementation where this doesn&apos;t work.  The Linux Kernel ticket spinlocks use the multi-sized access trick for unlock as well.  If they didn&apos;t work I&apos;m sure there would be some mention of the problem there.<br/>
+<br/>
+<br/>
+I tried the obvious spin without cmpxchg in testing the algorithm.  I was surprised to find it was actually slower!  I&apos;m not sure why.  This was the C version though... perhaps the asm-only version will have different characteristics.  (In my spinlock article the obvious way is faster though...) <br/>
+<br/>
+<br/>
+The trick with the contended flag is that it is set in the xchg instruction under wakeup in the mutex_lock() function.  If there are no waiters, then it stays unset - which is the correct answer, if there is a waiter it converts back to being in the contended state.  This is the protocol Uli uses in his &quot;Futexes are Tricky&quot; article.<br/>
+<br/>
+<br/>
+The algorithm here has some sort of wakeup throttling already.  Under unlock, it spins a little bit waiting for a locker to appear.  This avoids making a system call if someone grabs the lock in the meantime.  I&apos;m not quite sure how to do the same sort of trick that the java implementation does.  The difference here is that the wait-queue is in kernel space rather than userspace.  We don&apos;t actually know if anyone is really waiting, or if anyone else is just about the acquire the lock.  Counting the number of waiters is possible... but it slows down the important non-contended case in my tests.<br/>
+<br/>
+It&apos;d be interesting to try some of the other ideas though.  :-)  <br/>
+<br/>
+</div>
+
+<span class="name">Dmitry V&apos;jukov</span><span class = "said"> said...</span><div class="comment_text">
+Regarding multi-sized accesses, I don&apos;t know how it possibly can break, but the statement is still there. Perhaps they meant a situation when a variable crosses cache-line boundary.<br/>
+<br/>
+&gt; I tried the obvious spin without cmpxchg in testing the algorithm<br/>
+Mmmm... What algorithm do you mean? And it&apos;s slower than what?<br/>
+<br/>
+&gt; The trick with the contended flag is that <br/>
+Aha! I see.<br/>
+<br/>
+&gt; Counting the number of waiters is possible... but it slows down the important non-contended case in my tests.<br/>
+How can counting of waiters possibly slow-down non-contended case w/o waiters? ;)<br/>
+<br/>
+</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+for (i = 0; i &lt; 100; i++)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c = cmpxchg(m, 0, 1);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!c) return 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+}<br/>
+<br/>
+verses<br/>
+<br/>
+for (i = 0; i &lt; 100; i++)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c = cmpxchg(m, 0, 1);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!c) return 0;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for (;i &lt; 100; i++)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!*m) break;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}<br/>
+<br/>
+Of course the slowdown bug could have been the fact that I didn&apos;t reinitialize c properly.  Hmmm...<br/>
+<br/>
+<br/>
+You are right, if you do the same trick of putting the locked bit and contended counts in different bytes, then it all should work.  I didn&apos;t think of that.  The idea that it was bad to count the contenders came from trying to implement a ticket lock mutex.  That had abysmal performance for all sorts of reasons.<br/>
+<br/>
+It looks like there are a few more low-hanging fruit to be picked.  Perhaps the goal of 6x faster than standard pthreads is obtainable. :-P</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+I just redid the tst-cond18 benchmark with the newer mutex algorithm:<br/>
+<br/>
+This does 4.4 million &quot;spins&quot; in 20 seconds.<br/>
+for (i = 0; i &lt; 100; i++)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!xchg_8(&amp;m-&gt;b.locked, 1)) return 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+}<br/>
+<br/>
+This does 3.6 million &quot;spins&quot;.<br/>
+for (i = 0; i &lt; 100; i++)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!xchg_8(&amp;m-&gt;b.locked, 1)) return 0;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for (;i &lt; 100; i++)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!m-&gt;b.locked) break;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}<br/>
+<br/>
+I really would have thought the second would be better.  Perhaps it just isn&apos;t waiting as long, since the non-locked operations are faster.  Increasing the timeout to 1000 helps... improving to 4.0 million spins, but increasing the timeout further hurts performance.  (Using a timeout of 1000 in the first case also gives about 4 million spins.)</div>
+
+<span class="name">Dmitry V&apos;jukov</span><span class = "said"> said...</span><div class="comment_text">
+&gt; You are right, if you do the same trick of putting the locked bit and contended counts in different bytes, then it all should work. <br/>
+<br/>
+Indeed. It should be something like:<br/>
+struct mutex<br/>
+{<br/>
+&nbsp;&nbsp;uint8_t lock;<br/>
+&nbsp;&nbsp;uint24_t waiters;<br/>
+&nbsp;&nbsp;bool pending; // waiter is woken-up, but not yet re-acquire the mutex<br/>
+};<br/>
+<br/>
+<br/>
+&gt; This does 3.6 million &quot;spins&quot;.<br/>
+<br/>
+The idea is to not touch any shared data during back-off (otherwise it&apos;s not quite a back-off):<br/>
+<br/>
+for (i = 0; i &lt; N; i++)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!xchg_8(&amp;m-&gt;b.locked, 1)) return 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for (j = 0; j &lt; M; j++)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+}<br/>
+<br/>
+</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Since you want to use 32 bits for the lock. (That&apos;s what a futex will address.)  You probably want a layout more like:<br/>
+<br/>
+struct mutex<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;char lock;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;char pending;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unsigned short waiters;<br/>
+};<br/>
+<br/>
+You might also be able to use the lsb of waiters for the pending bit if that works better.  Of course, apparently Microsoft has done some experiments that show that not waiting for the woken-up thread is faster due to the lock-convoy problem...  I guess more benchmarks are on order, since Linux has faster syscalls, and the convoy problem therefore shouldn&apos;t be as bad.<br/>
+<br/>
+<br/>
+Keeping N at 100, I varied M from 1 through to 200 stepping up in powers of two or so.  There was no statistical difference from M=1 up to and including M=20, at M = 40 it was noticeably slower, and kept on getting worse from there.  It looks like cpu_relax() [rep; nop] is a good-enough hardware back-off operation on this machine without a loop.  Surprising, I know. :-/</div>
+
+<span class="name">Chris Anderson</span><span class = "said"> said...</span><div class="comment_text">
+This is slower, it seems, but this should comply with the restraint:  &quot;Software should access semaphores (shared memory used for signalling between multiple processors) using identical addresses and operand lengths.&quot;<br/>
+<br/>
+#define cpu_relax() \<br/>
+&nbsp;&nbsp;__asm__ __volatile__ ( &quot;pause&quot; : : : )<br/>
+<br/>
+typedef unsigned int my_mutex_t;<br/>
+<br/>
+int<br/>
+mutex_lock( my_mutex_t *m )<br/>
+{<br/>
+&nbsp;&nbsp;unsigned int i;<br/>
+<br/>
+&nbsp;&nbsp;/* Try to grab lock */<br/>
+&nbsp;&nbsp;for ( i = 0; i &lt; 100; i++ ) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;if ( ( __sync_fetch_and_or( m, 1U ) &amp; 1U ) == 0 )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 0;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;/* Have to sleep */<br/>
+&nbsp;&nbsp;while ( ( __sync_lock_test_and_set( m, 257U ) &amp; 1U ) == 1U )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;sys_futex( m, FUTEX_WAIT_PRIVATE, 257, NULL, NULL, 0 );<br/>
+<br/>
+&nbsp;&nbsp;return 0;<br/>
+}<br/>
+<br/>
+int<br/>
+mutex_unlock( my_mutex_t *m )<br/>
+{<br/>
+&nbsp;&nbsp;unsigned int i;<br/>
+<br/>
+&nbsp;&nbsp;/* Locked and not contended */<br/>
+&nbsp;&nbsp;if ( *m == 1 )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;if ( __sync_val_compare_and_swap( m, 1U, 0 ) == 1U )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 0;<br/>
+<br/>
+&nbsp;&nbsp;/* Unlock */<br/>
+&nbsp;&nbsp;__sync_fetch_and_and( m, ~1U );<br/>
+&nbsp;&nbsp;__sync_synchronize();<br/>
+<br/>
+&nbsp;&nbsp;/* Spin and hope someone takes the lock */<br/>
+&nbsp;&nbsp;for ( i = 0; i &lt; 200; i++ ) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;if ( ( *m &amp; 1U ) == 1U )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 0;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;/* We need to wake someone up */<br/>
+&nbsp;&nbsp;__sync_fetch_and_and( m, ~256U );<br/>
+&nbsp;&nbsp;sys_futex( m, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0 );<br/>
+<br/>
+&nbsp;&nbsp;return 0;<br/>
+}<br/>
+<br/>
+</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Your code looks good... except for one tiny issue.  You need to alter the cpu_relax() macro to have a dependency on memory otherwise the compiler may turn the loop in mutex_unlock() into an infinite one.<br/>
+<br/>
+Something like:<br/>
+<br/>
+#define cpu_relax() asm volatile(&quot;pause\n&quot;: : :&quot;memory&quot;)<br/>
+<br/>
+will do.</div>
+
+<span class="name">Chris Anderson</span><span class = "said"> said...</span><div class="comment_text">
+Thanks.  In my microbench (8 producer threads feeding 8 consumer threads), this is twice as fast as posix locks, but it depends on heavy contention.  If the contention isn&apos;t there, then the difference isn&apos;t very much.  The spinlock/nanosleep backoff case is better until the contention is insignificant, although spinlock/nanosleep should produces more latency spikes than cond/locking.  I need to measure that at some point,  Code: http://www.eetbeetee.org/pc.c<br/>
+<br/>
+# posix test<br/>
+$ gcc -pthread -O2 pc.c -lrt<br/>
+$ a.out<br/>
+nanosleep 486.943 per elem (0.055)<br/>
+lock_cond 5549.502 per elem (2.190)<br/>
+<br/>
+# customized mutex test (nanosecs per elem transferred producer -&gt; consumer)<br/>
+$ gcc -DNO_POSIX -pthread -O2 pc.c -lrt<br/>
+$ a.out<br/>
+nanosleep 478.618 per elem (0.056)<br/>
+lock_cond 2524.078 per elem (1.115)<br/>
+<br/>
+# posix with consumers doing work<br/>
+$ gcc -DDO_WORK -pthread -O2 pc.c -lrt<br/>
+$ a.out<br/>
+nanosleep 774.093 per elem (0.331)<br/>
+lock_cond 1188.666 per elem (0.530)<br/>
+<br/>
+# custimized mutex with consumers doing work<br/>
+$ gcc -DDO_WORK -DNO_POSIX -pthread -O2 pc.c -lrt<br/>
+$ a.out<br/>
+nanosleep 686.927 per elem (0.334)<br/>
+lock_cond 1045.080 per elem (0.456)<br/>
+</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Right, if there is no contention everyone uses a fast-path where a single locked instruction is executed, so no speed difference should be visible.  (The extra overhead is miniscule compared to the bus-lock time.)<br/>
+<br/>
+The algorithms here, and the one you&apos;ve tested, really shine when there is contention.  The reason for that is the improved unlock logic, where we can avoid calling into the kernel some of the time.  By exploiting the (I think) legal behaviour of using variable-sized memory accesses we can avoid a bus-locked instruction in unlock path further speeding things up.<br/>
+<br/>
+Like you, I get a 2x speedup for the kernel-avoiding unlock, but I also get a 4-5x improvement if the key unlock step is a simple memory store.  (Assuming heavy contention of course.)</div>
+
+<span class="name">Chris Anderson</span><span class = "said"> said...</span><div class="comment_text">
+The voodoo in the unlock...  I think I might try to calculate the 200 loop after the barrier() as a percentage of futex() syscall overhead, see if it matters on different hardware.  Anyway, I&apos;m trying to come closer to the nanosleep spinlock contention case.</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+My guess is that it is hardware and kernel dependent.  On windows, the fastest mutex algorithm I found (using keyed events) doesn&apos;t have the 200-loop spin.</div>
+
+<span class="name">hi</span><span class = "said"> said...</span><div class="comment_text">
+Thanks for the article, but what header to I have to include for all those cmpxchg, xchg_32 etc functions? and how do you link?<br/>
+<br/>
+</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Have a look at the spin lock and read-write lock article, it gives definitions for all of the atomic functions used here in terms of gcc intrinsics and inline asm.  They have been abstracted into functions to make them more compiler-agnostic and the code more readable.</div>
+
+<span class="name">n00b</span><span class = "said"> said...</span><div class="comment_text">
+Hi,<br/>
+<br/>
+I have couple of doubts about above code.<br/>
+1)in cond_signal()<br/>
+Futex_wake is called for cv-&gt;seq + 1<br/>
+In cond_wait()<br/>
+Futex_wait is called for the threads waiting for cv-&gt;seq. how does both point to same set of threads work?<br/>
+<br/>
+2)cv-&gt;seq is an integer.But syscall expects it to be an address which points to the list of threads waiting.Please clarify<br/>
+<br/>
+3)In while (xchg_32(&amp;m-&gt;b.locked, 257) &amp; 1) while locking mutex shouldnt it be <br/>
+while (xchg_32(&amp;m-&gt;u, 257) &amp; 1)  ?<br/>
+<br/>
+thanks in advance!</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+1) cond_signal increments the sequence number so that any threads about to call futex_wait inside cond_wait will no longer match cv-&gt;seq.  Since they don&apos;t match, they will immediately wake up.  (Remember, the futex wait syscall will check the value before sleeping.)  This prevents missed wakeups.<br/>
+<br/>
+2) cv-&gt;seq is indeed an integer.  However, its address is passed to the futex syscall when needed.<br/>
+<br/>
+3) I suppose it should be.  However, because the mutex type is a union, it doesn&apos;t matter in practice because the locked struct member is first.<br/>
+<br/>
+Note that the cv implementation here basically assumes that most cond_signal and cond_broadcast calls will have at least some threads waiting.  If this is not the case, it is possible to have faster code that doesn&apos;t enter the kernel at the cost of an extra atomic instruction.  Have a look at the &quot;events&quot; code to see how this might work.</div>
+
+<span class="name">Samy Al Bahra</span><span class = "said"> said...</span><div class="comment_text">
+&gt; In the second mutex implementation you use atomic operations of different sizes, the problem is that Intel IA-32/Intel64 docs prohibit that.<br/>
+<br/>
+I&apos;ve seen this cause breakage on Nehalem boxes before. You may be able to reproduce this, see http://carte.repnop.org/releases/ck-0.0.1.tar.gz. If you remove the barriers from ck_bytelock.h, you may encounter a race condition after several runs.<br/>
+<br/>
+</div>
+
+<span class="name">Samy Al Bahra</span><span class = "said"> said...</span><div class="comment_text">
+I forgot to mention, a unit test (which should eventually break without barriers) is in regressions/ck_bytelock/validate/validate.c.</div>
+
+<span class="name">Borislav Trifonov</span><span class = "said"> said...</span><div class="comment_text">
+If one is to attempt to modify the above mutex implementation to use FUTEX_LOCK_PI and FUTEX_UNLOCK_PI, does the futex implementation use for TID comparison all bytes of the futex integer?  If so, how do we store the contended flag?<br/>
+Also, it&apos;s not clear how trylock would change to include FUTEX_TRYLOCK_PI</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Have a read of the docs for the priority inheritance version in the kernel.  The upper bit is free for the presence of waiters or not:<br/>
+<br/>
+#define FUTEX_WAITERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0x80000000<br/>
+<br/>
+Unfortunately, this means that the unlock can&apos;t use a simple non-atomic store.  (Which is why the algorithm here is so fast.)</div>
+
+<span class="name">Borislav Trifonov</span><span class = "said"> said...</span><div class="comment_text">
+Can unlock be safely called on an unlocked mutex?  The futex call will get executed even though there are no waiters.</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Double-unlocking a mutex is really dumb.  What happens when another thread locks it in the mean-time?</div>
+
+<span class="name">enosys</span><span class = "said"> said...</span><div class="comment_text">
+What is the pad for in the condition variable? Both the mutex and sequence number are ints, so why the 3-int sizing?</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Assume 64 bits.  The padding makes the size of the structure 16 bytes.  Feel free to remove it for legacy 32 bit code though...<br/>
+<br/>
+However, the real reason it is there though is to have ABI compatibility when Linux finally adds 64bit futexes.  Having a 32bit roll-over problem is rare... a 64bit roll-over bug is basically impossible.</div>
+
+<span class="name">Joseph </span><span class = "said"> said...</span><div class="comment_text">
+I have tried both the ticket spinlock and the mutex described here againts pthreads spinlocks and mutexes, and I don&apos;t see a 5 fold performance improvement.  In fact pthread locks come out faster.  <br/>
+<br/>
+The test locks a spin or mutex increments a counter and unlocks a million times.  Time seems to double for each new thread, and totals are longer than with pthreads.  </div>
+
+<span class="name">Fred Z</span><span class = "said"> said...</span><div class="comment_text">
+Hi,<br/>
+<br/>
+thanks for your articles, it&apos;s the top of what I found on the web 8)<br/>
+<br/>
+I have a question about your union structures, as you use pthread futex &amp; atomic instructions, it&apos;s pretty cross platform, but on big-endian OS, union and 257 value may not work properly ?<br/>
+<br/>
+Thanks by advance.</div>
+
+<span class="name">John J.</span><span class = "said"> said...</span><div class="comment_text">
+Good stuff. I was porting a library from windows to linux pthreads and was disappointed with the mutex/condition performance.  This code is considerably faster.  I&apos;ll need to go over the algorithm thoroughly to reassure myself of the correctness, but so far it appears pretty solid.  Is there a more &quot;correct&quot; version available in light of kernel changes and the comments above?<br/>
+<br/>
+Thanks for making this available.  I&apos;ll have a look at other aspects of the website as well.</div>
+
+<span class="name">Sergei</span><span class = "said"> said...</span><div class="comment_text">
+agree with John J.<br/>
+the same problem .<br/>
+I am porting windows app to linux, using std::mutex and std::condition_variable.<br/>
+on windows it is much faster than on linux, about 4-5 times!<br/>
+on windows it&apos;s implemented with critial section.<br/>
+on linux with pthread.<br/>
+I&apos;ve changed my code on linux to futex using this article code, but get nothing performance improvements compare with std::mutex and std::condition_variable.</div>
+
+<span class="name">test</span><span class = "said"> said...</span><div class="comment_text">
+there is a wake up trouble after a lot of test</div>
+
+
+<form name="input" action="/cgi-bin/comments.cgi" method="post">
+<img src="/cgi-bin/captcha.cgi?Hash=zFTJI_q8SNb6" alt=""/><br/>
+<input type="hidden" name="Hash" value="zFTJI_q8SNb6"/>
+<input type="hidden" name="page" value="mutex_cv_futex"/>
+<input type="hidden" name="page_hash" value="KKCEXX7WI8NUV0RXBF3KZN52M"/>
+Enter the 10 characters above here <input type="text" name="captcha" /><br/><br/>
+<textarea name="comments" rows="20" cols="80">
+Enter your comments here</textarea><br/>
+Name<input type="text" name="name" /><br/>
+<input type="submit" value="Submit" />
+</form>
+
+</div>
+
+<ul class="bread">
+<li><a href="/">Lockless</a></li>
+<li><a href="/articles/">Articles</a></li>
+<li><a href="/articles/mutex_cv_futex/">Mutexes and Condition Variables using Futexes</a></li>
+</ul>
+
+		</td>
+	</tr>
+</table>
+
+<div class="menu_1holder">
+<table class="menu_1" cellpadding="0" cellspacing="0" border="0">
+<tr>
+	<td valign="bottom" align="center"><table cellpadding="0" cellspacing="0"><tr>
+		<td><table cellpadding="0" cellspacing="0"><tr>
+			<td width="1%">
+				<a href="/products/linux.shtml" title="Linux"><img src="/images/menu/menu1_divider_left.gif" border="0" alt="" /></a>
+			</td>
+			<td class="menu_td" align="center">
+				<a href="/products/linux.shtml" title="Linux">Linux</a>
+			</td>
+			<td width="1%">
+				<a href="/products/linux.shtml" title="Linux"><img src="/images/menu/menu1_divider_right.gif" border="0" alt="" /></a>
+			</td>
+		</tr></table></td>
+		<td><table cellpadding="0" cellspacing="0"><tr>
+			<td width="1%">
+				<a href="/products/windows.shtml" title="Windows"><img src="/images/menu/menu1_divider_left.gif" border="0" alt="" /></a>
+			</td>
+			<td class="menu_td" align="center">
+				<a href="/products/windows.shtml" title="Windows">Windows</a>
+			</td>
+			<td width="1%">
+				<a href="/products/windows.shtml" title="Windows"><img src="/images/menu/menu1_divider_right.gif" border="0" alt="" /></a>
+			</td>
+		</tr></table></td>
+		<td><table cellpadding="0" cellspacing="0"><tr>
+			<td width="1%">
+				<a href="/products/developers.shtml" title="Developers"><img src="/images/menu/menu1_divider_left.gif" border="0" alt="" /></a>
+			</td>
+			<td class="menu_td" align="center">
+				<a href="/products/developers.shtml" title="Developers">Developers</a>
+			</td>
+			<td width="1%">
+				<a href="/products/developers.shtml" title="Developers"><img src="/images/menu/menu1_divider_right.gif" border="0" alt="" /></a>
+			</td>
+		</tr></table></td>
+	</tr></table></td>
+</tr>
+</table>
+</div>
+
+<table class="footer1" cellpadding="0" cellspacing="0">
+<tr>
+	<td><a href="/about.shtml">About Us</a></td>
+	<td><a href="/returns.shtml">Returns Policy</a></td>
+	<td><a href="/privacy.shtml">Privacy Policy</a></td>
+	<td><a href="mailto:support@locklessinc.com?subject=Customer%20Feedback%20for%20www.locklessinc.com">Send us Feedback</a></td>
+</tr>
+</table>
+<table class="footer2" cellspacing="0" cellpadding="0"><tr> 
+    <td valign="top" align="center"> 
+    <a href="/about.shtml">Company Info</a> |
+	<a href="/products/">Product Index</a> |
+	<a href="/cindex.shtml">Category Index</a> |
+	<a href="/help.shtml">Help</a> |
+	<a href="/terms.shtml">Terms of Use</a>
+	<br/>
+	<a href="/terms.shtml">Copyright &copy;
+		<script type="text/javascript">document.write((new Date()).getFullYear());</script>
+	Lockless Inc&nbsp;All Rights Reserved.</a>
+	</td>
+</tr></table>
+
+</body></html>
+
+

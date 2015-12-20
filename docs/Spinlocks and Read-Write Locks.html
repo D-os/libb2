@@ -1,0 +1,2314 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+<link rel="alternate" type="application/rss+xml" href="/feed.rss" title="Lockless Inc. Articles"/>
+
+<title>Spinlocks and Read-Write Locks</title>
+<meta name="description" content="Spinlocks and Read-Write Locks" />
+<meta name="robots" content="index,follow" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+<link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico" />
+</head><body>
+
+<div class="header1">
+<a href="/" title="Lockless Inc"><img border="0" src="/images/header_bg.jpg" alt="Lockless Inc"/></a>
+</div>
+
+<table width="100%" cellpadding="0" cellspacing="0">
+	<tr class="header2"><td colspan="3"></td></tr>
+	<tr class="header3"><td colspan="3"></td></tr>
+	<tr>
+		<td class="menu_2" valign="top">
+		<ul>
+		<li><a href="/" title="Lockless Inc">Lockless Inc</a></li>
+		<li><a href="/cindex.shtml">Purchase &#187;</a>
+		<ul>
+			<li><a href="/products/linux.shtml">Linux</a></li>
+			<li><a href="/products/windows.shtml">Windows</a></li>
+			<li><a href="/products/developers.shtml">Developers</a></li>
+		</ul>
+		</li>
+		<li><a href="/benchmarks.shtml">Benchmarks</a></li>
+		<li><a href="/install.shtml">Installation</a></li>
+		<li><a href="/articles/">Articles</a></li>
+		<li><a href="/technical.shtml">Technical</a></li>
+		<li><a href="/downloads/">Downloads</a></li>
+		<li><a href="/man/">Documentation</a></li>
+		<li><a href="/whatsnew.shtml">What's New</a></li>
+		<li><a href="/about.shtml">About Us</a></li>
+		<li><a href="/help.shtml">Help</a></li>
+		</ul>
+		</td>
+		<td class="maintext">
+
+<h1 align="center">Spinlocks and Read-Write Locks</h1>
+
+<p>Most parallel programming in some way will involve the use of locking at the lowest levels.  Locks are primitives that provide mutual exclusion that allow data structures to remain in consistent states.  Without locking, multiple threads of execution may simultaneously modify a data structure.  Without a carefully thought out (and usually complex) lock-free algorithm, the result is usually a crash of hang as unintended program states are entered.  Since the creation of a lock-free algorithm is extremely difficult, most programs use locks.</p>
+
+<p>If updating a data structure is slow, the lock of choice is a mutex of some kind.  These will transfer control to the operating system when they block.  This allows another thread to run, and perhaps make progress whilst the first thread sleeps.  This transfer of control consists of a pair of context switches, which are quite a slow operation.  Thus, if the lock-hold time is expected to be short, then this may not be the fastest method.</p>
+
+<h3>Spinlocks</h3>
+<p>Instead of context switches, a spinlock will &quot;spin&quot;, and repeatedly check to see if the lock is unlocked.  Spinning is very fast, so the latency between an unlock-lock pair is small.  However, spinning doesn't accomplish any work, so may not be as efficient as a sleeping mutex if the time spent becomes significant.</p>
+
+<p>Before we describe the implementation of spin locks, we first need a set of atomic primitives.  Fortunately, gcc provides some of these as built-in functions:</p>
+<pre><code>
+#define atomic_xadd(P, V) __sync_fetch_and_add((P), (V))
+#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
+#define atomic_inc(P) __sync_add_and_fetch((P), 1)
+#define atomic_dec(P) __sync_add_and_fetch((P), -1) 
+#define atomic_add(P, V) __sync_add_and_fetch((P), (V))
+#define atomic_set_bit(P, V) __sync_or_and_fetch((P), 1<<(V))
+#define atomic_clear_bit(P, V) __sync_and_and_fetch((P), ~(1<<(V)))
+</code></pre>
+
+Unfortunately, we will require a few others that are not, and so must be implemented in assembly
+<pre><code>
+/* Compile read-write barrier */
+#define barrier() asm volatile("": : :"memory")
+
+/* Pause instruction to prevent excess processor bus usage */ 
+#define cpu_relax() asm volatile("pause\n": : :"memory")
+
+/* Atomic exchange (of various sizes) */
+static inline void *xchg_64(void *ptr, void *x)
+{
+	__asm__ __volatile__("xchgq %0,%1"
+				:"=r" ((unsigned long long) x)
+				:"m" (*(volatile long long *)ptr), "0" ((unsigned long long) x)
+				:"memory");
+
+	return x;
+}
+
+static inline unsigned xchg_32(void *ptr, unsigned x)
+{
+	__asm__ __volatile__("xchgl %0,%1"
+				:"=r" ((unsigned) x)
+				:"m" (*(volatile unsigned *)ptr), "0" (x)
+				:"memory");
+
+	return x;
+}
+
+static inline unsigned short xchg_16(void *ptr, unsigned short x)
+{
+	__asm__ __volatile__("xchgw %0,%1"
+				:"=r" ((unsigned short) x)
+				:"m" (*(volatile unsigned short *)ptr), "0" (x)
+				:"memory");
+
+	return x;
+}
+
+/* Test and set a bit */
+static inline char atomic_bitsetandtest(void *ptr, int x)
+{
+	char out;
+	__asm__ __volatile__("lock; bts %2,%1\n"
+						"sbb %0,%0\n"
+				:"=r" (out), "=m" (*(volatile long long *)ptr)
+				:"Ir" (x)
+				:"memory");
+
+	return out;
+}
+</code></pre>
+
+<p>A spinlock can be implemented in an obvious way, using the atomic exchange primitive.</p>
+<pre><code>
+#define EBUSY 1
+typedef unsigned spinlock;
+
+static void spin_lock(spinlock *lock)
+{
+	while (1)
+	{
+		if (!xchg_32(lock, EBUSY)) return;
+	
+		while (*lock) cpu_relax();
+	}
+}
+
+static void spin_unlock(spinlock *lock)
+{
+	barrier();
+	*lock = 0;
+}
+
+static int spin_trylock(spinlock *lock)
+{
+	return xchg_32(lock, EBUSY);
+}
+</code></pre>
+<p>So how fast is the above code?  A simple benchmark to test the overhead of a lock is to have a given number of threads attempting to lock and unlock it, doing a fixed amount of work each time.  If the total number of lock-unlock pairs is maintained as the number of threads is increased, it is possible to measure the affect of contention on performance.  A good spinlock implementation will be as fast as possible for any given number of threads attempting to use that lock simultaneously.</p>
+
+<p>The results for the above spinlock implementation are:</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Threads</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>Time (s)</td><td>5.5</td><td>5.6</td><td>5.7</td><td>5.7</td><td>5.7</td></tr>
+</table>
+<p>These results are pretty good, but can be improved.  The problem is that if there are multiple threads contending, then they all attempt to take the lock at the same time once it is released.  This results in a huge amount of processor bus traffic, which is a huge performance killer.  Thus, if we somehow order the lock-takers so that they know who is next in line for the resource we can vastly reduce the amount of bus traffic.</p>
+
+<p>One spinlock algorithm that does this is called the MCS lock.  This uses a list to maintain the order of acquirers.</p>
+<pre><code>
+typedef struct mcs_lock_t mcs_lock_t;
+struct mcs_lock_t
+{
+	mcs_lock_t *next;
+	int spin;
+};
+typedef struct mcs_lock_t *mcs_lock;
+
+static void lock_mcs(mcs_lock *m, mcs_lock_t *me)
+{
+	mcs_lock_t *tail;
+	
+	me->next = NULL;
+	me->spin = 0;
+
+	tail = xchg_64(m, me);
+	
+	/* No one there? */
+	if (!tail) return;
+
+	/* Someone there, need to link in */
+	tail->next = me;
+
+	/* Make sure we do the above setting of next. */
+	barrier();
+	
+	/* Spin on my spin variable */
+	while (!me->spin) cpu_relax();
+	
+	return;
+}
+
+static void unlock_mcs(mcs_lock *m, mcs_lock_t *me)
+{
+	/* No successor yet? */
+	if (!me->next)
+	{
+		/* Try to atomically unlock */
+		if (cmpxchg(m, me, NULL) == me) return;
+	
+		/* Wait for successor to appear */
+		while (!me->next) cpu_relax();
+	}
+
+	/* Unlock next one */
+	me->next->spin = 1;	
+}
+
+static int trylock_mcs(mcs_lock *m, mcs_lock_t *me)
+{
+	mcs_lock_t *tail;
+	
+	me->next = NULL;
+	me->spin = 0;
+	
+	/* Try to lock */
+	tail = cmpxchg(m, NULL, &amp;me);
+	
+	/* No one was there - can quickly return */
+	if (!tail) return 0;
+	
+	return EBUSY;
+}
+</code></pre>
+
+<p>This has quite different timings:</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Threads</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>Time (s)</td><td>3.6</td><td>4.4</td><td>4.5</td><td>4.8</td><td>&gt;1min</td></tr>
+</table>
+<p>The MCS lock takes a hugely longer time when the number of threads is greater than the number of processors (four in this case).  This is because if the next thread in the queue isn't active when the lock is unlocked, then everyone must wait until the operating system scheduler decides to run it.  Every &quot;fair&quot; lock algorithm has this problem.  Thus, the simple unfair spinlock still can be quite useful when you don't know that the number of threads is bounded by the number of cpus.</p>
+
+<p>A bigger problem with the MCS lock is its API.  It requires a second structure to be passed in addition to the address of the lock.  The algorithm uses this second structure to store the information which describes the queue of threads waiting for the lock.  Unfortunately, most code written using spinlocks doesn't have this extra information, so the fact that the MCS algorithm isn't a drop-in replacement to a standard spin lock is a problem.</p>
+
+<p>An IBM working group found a way to improve the MCS algorithm to remove the need to pass the extra structure as a parameter.  Instead, on-stack information was used instead.  The result is the K42 lock algorithm:</p>
+
+<pre><code>
+typedef struct k42lock k42lock;
+struct k42lock
+{
+	k42lock *next;
+	k42lock *tail;
+};
+
+static void k42_lock(k42lock *l)
+{
+	k42lock me;
+	k42lock *pred, *succ;
+	me.next = NULL;
+	
+	barrier();
+	
+	pred = xchg_64(&amp;l->tail, &amp;me);
+	if (pred)
+	{
+		me.tail = (void *) 1;
+		
+		barrier();
+		pred->next = &amp;me;
+		barrier();
+		
+		while (me.tail) cpu_relax();
+	}
+	
+	succ = me.next;
+
+	if (!succ)
+	{
+		barrier();
+		l->next = NULL;
+		
+		if (cmpxchg(&amp;l->tail, &amp;me, &amp;l->next) != &amp;me)
+		{
+			while (!me.next) cpu_relax();
+			
+			l->next = me.next;
+		}
+	}
+	else
+	{
+		l->next = succ;
+	}
+}
+
+
+static void k42_unlock(k42lock *l)
+{
+	k42lock *succ = l->next;
+	
+	barrier();
+	
+	if (!succ)
+	{
+		if (cmpxchg(&amp;l->tail, &amp;l->next, NULL) == (void *) &amp;l->next) return;
+		
+		while (!l->next) cpu_relax();
+		succ = l->next;
+	}
+	
+	succ->tail = NULL;
+}
+
+static int k42_trylock(k42lock *l)
+{
+	if (!cmpxchg(&amp;l->tail, NULL, &amp;l->next)) return 0;
+	
+	return EBUSY;
+}
+</code></pre>
+<p>The timings of the K42 algorithm are as good as, if not better than the MCS lock:</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Threads</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>Time (s)</td><td>3.7</td><td>4.8</td><td>4.5</td><td>4.9</td><td>&gt;1min</td></tr>
+</table>
+<p>Unfortunately, the K42 algorithm has another problem.  It appears that it may be patented by IBM.  Thus it cannot be used either.  (Without perhaps paying royalties to IBM.)</p>
+
+<p>One way around this is to use a different type of list.  The K42 and MCS locks use lists ordered so that finding the next thread to run is easy, and adding to the end is hard.  What about flipping the direction of the pointers so that finding the end is easy, and find who's next hard?  The result is the following algorithm:</p>
+
+<pre><code>
+typedef struct listlock_t listlock_t;
+struct listlock_t
+{
+	listlock_t *next;
+	int spin;
+};
+typedef struct listlock_t *listlock;
+
+#define LLOCK_FLAG	(void *)1
+
+static void listlock_lock(listlock *l)
+{
+	listlock_t me;
+	listlock_t *tail;
+
+	/* Fast path - no users  */
+	if (!cmpxchg(l, NULL, LLOCK_FLAG)) return;
+	
+	me.next = LLOCK_FLAG;
+	me.spin = 0;
+	
+	/* Convert into a wait list */
+	tail = xchg_64(l, &amp;me);
+	
+	if (tail)
+	{
+		/* Add myself to the list of waiters */
+		if (tail == LLOCK_FLAG) tail = NULL;
+		me.next = tail;
+			
+		/* Wait for being able to go */
+		while (!me.spin) cpu_relax();
+		
+		return;
+	}
+	
+	/* Try to convert to an exclusive lock */
+	if (cmpxchg(l, &amp;me, LLOCK_FLAG) == &amp;me) return;
+		
+	/* Failed - there is now a wait list */
+	tail = *l;
+		
+	/* Scan to find who is after me */
+	while (1)
+	{
+		/* Wait for them to enter their next link */
+		while (tail->next == LLOCK_FLAG) cpu_relax();
+			
+		if (tail->next == &amp;me)
+		{
+			/* Fix their next pointer */
+			tail->next = NULL;
+			
+			return;
+		}
+			
+		tail = tail->next;
+	}
+}
+
+static void listlock_unlock(listlock *l)
+{
+	listlock_t *tail;
+	listlock_t *tp;
+	
+	while (1)
+	{
+		tail = *l;
+		
+		barrier();
+	
+		/* Fast path */
+		if (tail == LLOCK_FLAG)
+		{
+			if (cmpxchg(l, LLOCK_FLAG, NULL) == LLOCK_FLAG) return;
+		
+			continue;
+		}
+				
+		tp = NULL;
+		
+		/* Wait for partially added waiter */
+		while (tail->next == LLOCK_FLAG) cpu_relax();
+		
+		/* There is a wait list */
+		if (tail->next) break;
+		
+		/* Try to convert to a single-waiter lock */
+		if (cmpxchg(l, tail, LLOCK_FLAG) == tail)
+		{
+			/* Unlock */
+			tail->spin = 1;
+				
+			return;
+		}
+			
+		cpu_relax();
+	}
+		
+	/* A long list */
+	tp = tail;
+	tail = tail->next;
+	
+	/* Scan wait list */
+	while (1)
+	{
+		/* Wait for partially added waiter */
+		while (tail->next == LLOCK_FLAG) cpu_relax();
+			
+		if (!tail->next) break;
+			
+		tp = tail;
+		tail = tail->next;
+	}
+	
+	tp->next = NULL;
+		
+	barrier();
+	
+	/* Unlock */
+	tail->spin = 1;
+}
+
+static int listlock_trylock(listlock *l)
+{
+	/* Simple part of a spin-lock */
+	if (!cmpxchg(l, NULL, LLOCK_FLAG)) return 0;
+	
+	/* Failure! */
+	return EBUSY;
+}
+</code></pre>
+<p>This unfortunately is extremely complex, and doesn't perform well either:</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Threads</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>Time (s)</td><td>3.6</td><td>5.1</td><td>5.8</td><td>6.3</td><td>&gt;1min</td></tr>
+</table>
+<p>It is still faster than the standard spinlock when contention is low, but once more than two threads are attempting to lock at the same time it is worse, and gets slower from there on.</p>
+
+<p>Another possible trick is to use a spinlock within a spinlock.  The first lock can be very light weight since we know it will only be held for a short time.  It can then control the locking for the wait list describing the acquirers of the real spinlock.  If done right, the number of waiters on the sub-lock can be kept low, and thus minimize bus traffic.  The result is:</p>
+<pre><code>
+typedef struct bitlistlock_t bitlistlock_t;
+struct bitlistlock_t
+{
+	bitlistlock_t *next;
+	int spin;
+};
+
+typedef bitlistlock_t *bitlistlock;
+
+#define BLL_USED	((bitlistlock_t *) -2LL)
+
+static void bitlistlock_lock(bitlistlock *l)
+{
+	bitlistlock_t me;
+	bitlistlock_t *tail;
+	
+	/* Grab control of list */
+	while (atomic_bitsetandtest(l, 0)) cpu_relax();
+	
+	/* Remove locked bit */
+	tail = (bitlistlock_t *) ((uintptr_t) *l &amp; ~1LL);
+	
+	/* Fast path, no waiters */
+	if (!tail)
+	{
+		/* Set to be a flag value */
+		*l = BLL_USED;
+		return;
+	}
+	
+	if (tail == BLL_USED) tail = NULL;
+	me.next = tail;
+	me.spin = 0;
+	
+	barrier();
+	
+	/* Unlock, and add myself to the wait list */
+	*l = &amp;me;
+	
+	/* Wait for the go-ahead */
+	while (!me.spin) cpu_relax();
+}
+
+static void bitlistlock_unlock(bitlistlock *l)
+{
+	bitlistlock_t *tail;
+	bitlistlock_t *tp;
+	
+	/* Fast path - no wait list */
+	if (cmpxchg(l, BLL_USED, NULL) == BLL_USED) return;
+	
+	/* Grab control of list */
+	while (atomic_bitsetandtest(l, 0)) cpu_relax();
+	
+	tp = *l;
+	
+	barrier();
+	
+	/* Get end of list */
+	tail = (bitlistlock_t *) ((uintptr_t) tp &amp; ~1LL);
+	
+	/* Actually no users? */
+	if (tail == BLL_USED)
+	{
+		barrier();
+		*l = NULL;
+		return;
+	}
+	
+	/* Only one entry on wait list? */
+	if (!tail->next)
+	{
+		barrier();
+		
+		/* Unlock bitlock */
+		*l = BLL_USED;
+		
+		barrier();
+		
+		/* Unlock lock */
+		tail->spin = 1;
+		
+		return;
+	}
+	
+	barrier();
+
+	/* Unlock bitlock */
+	*l = tail;
+	
+	barrier();
+		
+	/* Scan wait list for start */
+	do
+	{
+		tp = tail;
+		tail = tail->next;
+	}
+	while (tail->next);
+	
+	tp->next = NULL;
+	
+	barrier();
+	
+	/* Unlock */
+	tail->spin = 1;
+}
+
+static int bitlistlock_trylock(bitlistlock *l)
+{
+	if (!*l &amp;&amp; (cmpxchg(l, NULL, BLL_USED) == NULL)) return 0;
+	
+	return EBUSY;
+}
+</code></pre>
+<p>Unfortunately, this is even worse than the previous listlock algorithm.  This is only good for the uncontended case.</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Threads</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>Time (s)</td><td>3.6</td><td>5.3</td><td>6.3</td><td>6.8</td><td>&gt;1min</td></tr>
+</table>
+
+<p>Another possibility is to modify some other type of locking algorithm to be a spinlock.  The read-write locks from Reactos are designed to be scale extremely well.  If the &quot;read&quot; part of them is removed, then the mutual exclusion between the writers will act just like a spinlock.  Doing this yields:</p>
+<pre><code>
+/* Bit-lock for editing the wait block */
+#define SLOCK_LOCK			 	1
+#define SLOCK_LOCK_BIT			0
+
+/* Has an active user */
+#define SLOCK_USED				2
+
+#define SLOCK_BITS				3
+
+typedef struct slock slock;
+struct slock
+{
+	uintptr_t p;
+};
+
+typedef struct slock_wb slock_wb;
+struct slock_wb
+{
+	/*
+	 * last points to the last wait block in the chain.
+	 * The value is only valid when read from the first wait block.
+	 */
+	slock_wb *last;
+
+	/* next points to the next wait block in the chain. */
+	slock_wb *next;
+		
+	/* Wake up? */
+	int wake;
+};
+
+/* Wait for control of wait block */
+static slock_wb *slockwb(slock *s)
+{
+	uintptr_t p;
+
+	/* Spin on the wait block bit lock */
+	while (atomic_bitsetandtest(&amp;s->p, SLOCK_LOCK_BIT))
+	{
+		cpu_relax();
+	}
+
+	p = s->p;
+
+	if (p <= SLOCK_BITS)
+	{
+		/* Oops, looks like the wait block was removed. */
+		atomic_dec(&amp;s->p);
+		return NULL;
+	}
+
+	return (slock_wb *)(p - SLOCK_LOCK);
+}
+
+static void slock_lock(slock *s)
+{
+	slock_wb swblock;
+	
+	/* Fastpath - no other readers or writers */
+	if (!s->p &amp;&amp; (cmpxchg(&amp;s->p, 0, SLOCK_USED) == 0)) return;
+	
+	/* Initialize wait block */
+	swblock.next = NULL;
+	swblock.last = &amp;swblock;
+	swblock.wake = 0;
+
+	while (1)
+	{
+		uintptr_t p = s->p;
+			
+		cpu_relax();
+		
+		/* Fastpath - no other readers or writers */
+		if (!p)
+		{
+			if (cmpxchg(&amp;s->p, 0, SLOCK_USED) == 0) return;
+			continue;
+		}
+		
+		if (p > SLOCK_BITS)
+		{
+			slock_wb *first_wb, *last;
+
+			first_wb = slockwb(s);
+			if (!first_wb) continue;
+					
+			last = first_wb->last;
+			last->next = &amp;swblock;
+			first_wb->last = &amp;swblock;
+			
+			/* Unlock */
+			barrier();
+			s->p &amp;= ~SLOCK_LOCK;
+
+			break;
+		}
+
+		/* Try to add the first wait block */
+		if (cmpxchg(&amp;s->p, p, (uintptr_t)&amp;swblock) == p) break;
+	}
+	
+	/* Wait to acquire exclusive lock */
+	while (!swblock.wake) cpu_relax();
+}
+
+
+static void slock_unlock(slock *s)
+{
+	slock_wb *next;
+	slock_wb *wb;
+	uintptr_t np;
+	
+	while (1)
+	{
+		uintptr_t p = s->p;
+		
+		/* This is the fast path, we can simply clear the SRWLOCK_USED bit. */
+		if (p == SLOCK_USED)
+		{
+			if (cmpxchg(&amp;s->p, SLOCK_USED, 0) == SLOCK_USED) return;
+			continue;
+		}
+	
+		/* There's a wait block, we need to wake the next pending user */
+		wb = slockwb(s);
+		if (wb) break;
+		
+		cpu_relax();
+	}
+			
+	next = wb->next;
+	if (next)
+	{
+		/*
+		 * There's more blocks chained, we need to update the pointers
+		 * in the next wait block and update the wait block pointer.
+		 */
+		np = (uintptr_t) next;
+	
+		next->last = wb->last;
+	}
+	else
+	{
+		/* Convert the lock to a simple lock. */
+		np = SLOCK_USED;
+	}
+
+	barrier();
+	/* Also unlocks lock bit */
+	s->p = np;
+	barrier();
+
+	/* Notify the next waiter */
+	wb->wake = 1;
+
+	/* We released the lock */
+}
+
+static int slock_trylock(slock *s)
+{
+	/* No other readers or writers? */
+	if (!s->p &amp;&amp; (cmpxchg(&amp;s->p, 0, SLOCK_USED) == 0)) return 0;
+	
+	return EBUSY;
+}
+</code></pre>
+<p>Again, this algorithm disappoints.  The results are similar to the bitlistlock algorithm.  This isn't surprising, as the wait-block that controls the waiter list is synchronized by a bit lock.</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Threads</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>Time (s)</td><td>3.7</td><td>5.1</td><td>5.8</td><td>6.5</td><td>&gt;1min</td></tr>
+</table>
+<p> Time to think laterally.  One of the problems with the above algorithms is synchronization of the wait list.  The core issue is that we need some way to recognize the head and tail of that list.  The head of the list is needed to add a new waiter.  The tail is needed to decide who is to go next.  The MCS lock used the extra structure information so that the list tail could be quickly found.  The K42 Lock used the patented method of storing the tail in a second list pointer within the lock itself.</p>
+
+<p>There is another trick we can do though.  If the extra information is allocated on the stack, then it may be possible to recognize that a pointer is pointing within our own stack frame.  If so, then we can use that information within the algorithm to decide where the wait list ends.  The result is the stack-lock algorithm:</p>
+
+<pre><code>
+typedef struct stlock_t stlock_t;
+struct stlock_t
+{
+	stlock_t *next;
+};
+
+typedef struct stlock_t *stlock;
+
+static __attribute__((noinline)) void stlock_lock(stlock *l)
+{
+	stlock_t *me = NULL;
+	
+	barrier();
+	me = xchg_64(l, &amp;me);
+	
+	/* Wait until we get the lock */
+	while (me) cpu_relax();
+}
+
+#define MAX_STACK_SIZE	(1<<12)
+
+static __attribute__((noinline)) int on_stack(void *p)
+{
+	int x;
+	
+	uintptr_t u = (uintptr_t) &amp;x;
+	
+	return ((u - (uintptr_t)p + MAX_STACK_SIZE) < MAX_STACK_SIZE * 2);
+}
+
+static __attribute__((noinline)) void stlock_unlock(stlock *l)
+{
+	stlock_t *tail = *l;
+	barrier();
+		
+	/* Fast case */
+	if (on_stack(tail))
+	{
+		/* Try to remove the wait list */
+		if (cmpxchg(l, tail, NULL) == tail) return;
+		
+		tail = *l;
+	}
+	
+	/* Scan wait list */
+	while (1)
+	{
+		/* Wait for partially added waiter */
+		while (!tail->next) cpu_relax();
+		
+		if (on_stack(tail->next)) break;
+		
+		tail = tail->next;
+	}
+		
+	barrier();
+	
+	/* Unlock */
+	tail->next = NULL;
+}
+
+static int stlock_trylock(stlock *l)
+{
+	stlock_t me;
+	
+	if (!cmpxchg(l, NULL, &amp;me)) return 0;
+	
+	return EBUSY;
+}
+</code></pre>
+<p>This algorithm is quite a bit simpler if you know that a thread's stack is aligned a certain way.  (Then the stack-check turns into an XOR and a mask operation.)  Unfortunately, it is still quite slow.</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Threads</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>Time (s)</td><td>3.6</td><td>5.3</td><td>5.7</td><td>6.2</td><td>&gt;1min</td></tr>
+</table>
+
+<p>The lock operation above looks to be fairly efficient, it is the unlock routine that is slow and complex.  Perhaps if we save a little more information within the lock itself, then the unlock operation can be made faster.  Since quite a bit of time seems to be spent finding the previous node to ourselves (which is the one to wake up), it might be better to do that while we are spinning waiting for our turn to take the lock.  If we save this previous point within the lock, we then will not need to calculate it within the unlock routine.</p>
+
+<pre><code>
+typedef struct plock_t plock_t;
+struct plock_t
+{
+	plock_t *next;
+};
+
+typedef struct plock plock;
+struct plock
+{
+	plock_t *next;
+	plock_t *prev;
+	plock_t *last;
+};
+
+static void plock_lock(plock *l)
+{
+	plock_t *me = NULL;
+	plock_t *prev;
+	
+	barrier();
+	me = xchg_64(l, &amp;me);
+	
+	prev = NULL;
+	
+	/* Wait until we get the lock */
+	while (me)
+	{
+		/* Scan wait list for my previous */
+		if (l->next != (plock_t *) &amp;me)
+		{
+			plock_t *t = l->next;
+			
+			while (me)
+			{
+				if (t->next == (plock_t *) &amp;me)
+				{
+					prev = t;
+				
+					while (me) cpu_relax();
+					
+					goto done;
+				}
+				
+				if (t->next) t = t->next;
+				cpu_relax();
+			}
+		}
+		cpu_relax();
+	}
+	
+done:	
+	l->prev = prev;
+	l->last = (plock_t *) &amp;me;
+}
+
+static void plock_unlock(plock *l)
+{
+	plock_t *tail;
+	
+	/* Do I know my previous? */
+	if (l->prev)
+	{
+		/* Unlock */
+		l->prev->next = NULL;
+		return;
+	}
+	
+	tail = l->next;
+	barrier();
+	
+	/* Fast case */
+	if (tail == l->last)
+	{
+		/* Try to remove the wait list */
+		if (cmpxchg(&amp;l->next, tail, NULL) == tail) return;
+		
+		tail = l->next;
+	}
+	
+	/* Scan wait list */
+	while (1)
+	{
+		/* Wait for partially added waiter */
+		while (!tail->next) cpu_relax();
+		
+		if (tail->next == l->last) break;
+		
+		tail = tail->next;
+	}
+		
+	barrier();
+	
+	/* Unlock */
+	tail->next = NULL;
+}
+
+static int plock_trylock(plock *l)
+{
+	plock_t me;
+	
+	if (!cmpxchg(&amp;l->next, NULL, &amp;me))
+	{
+		l->last = &amp;me;
+		return 0;
+	}
+	
+	return EBUSY;
+}
+</code></pre> 
+<p>This starts regaining some of the speed we have lost, but still isn't quite as good as the K42 algorithm.  (It is however, always faster than the original naive spinlock provided that the number of threads is less than the number of processors.)</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Threads</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>Time (s)</td><td>3.7</td><td>5.1</td><td>5.3</td><td>5.4</td><td>&gt;1min</td></tr>
+</table>
+
+<p>A careful reading of the plock algorithm shows that it can be improved even more.  We don't actually need to know the pointer value of the next waiter.  Some other unique value will do instead.  Instead of saving a pointer, we can use a counter that we increment.  If a waiter knows which counter value corresponds to its turn, then it just needs to wait until that value appears.  The result is called the ticket lock algorithm:</p>
+
+<pre><code>
+typedef union ticketlock ticketlock;
+
+union ticketlock
+{
+	unsigned u;
+	struct
+	{
+		unsigned short ticket;
+		unsigned short users;
+	} s;
+};
+
+static void ticket_lock(ticketlock *t)
+{
+	unsigned short me = atomic_xadd(&amp;t->s.users, 1);
+	
+	while (t->s.ticket != me) cpu_relax();
+}
+
+static void ticket_unlock(ticketlock *t)
+{
+	barrier();
+	t->s.ticket++;
+}
+
+static int ticket_trylock(ticketlock *t)
+{
+	unsigned short me = t->s.users;
+	unsigned short menew = me + 1;
+	unsigned cmp = ((unsigned) me << 16) + me;
+	unsigned cmpnew = ((unsigned) menew << 16) + me;
+
+	if (cmpxchg(&amp;t->u, cmp, cmpnew) == cmp) return 0;
+	
+	return EBUSY;
+}
+
+static int ticket_lockable(ticketlock *t)
+{
+	ticketlock u = *t;
+	barrier();
+	return (u.s.ticket == u.s.users);
+}
+</code></pre>
+<p>The above algorithm is extremely fast, and beats all the other fair-locks described.</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Threads</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>Time (s)</td><td>3.6</td><td>4.4</td><td>4.5</td><td>4.8</td><td>&gt;1min</td></tr>
+</table>
+<p>In fact, this is the spinlock algorithm used in the Linux kernel, although for extra speed, the kernel version is written in assembly language rather than the semi-portable C shown above.  Also note that the above code depends on the endianness of the computer architecture.  It is designed for little-endian machines.  Big endian processors will require a swap of the two fields within the structure in the union.</p>
+
+<p>The ticket lock shows that an oft-repeated fallacy is untrue.  Many of the above fair-lock algorithms are meant to scale well because the waiters are spinning on different memory locations.  This is meant to reduce bus traffic and thus increase performance.  However, it appears that that effect is small.  The more important thing is to make sure that the waiters are ordered by who gets to take the lock next.  This is what the ticket lock does admirably.  The fact that multiple waiters are spinning on the same ticket lock location does not seem to be a performance drain.</p>
+
+<h3>Read Write Locks</h3>
+<p>Quite often, some users of a data structure will make no modifications to it.  They just require read access to its fields to do their work.  If multiple threads require read access to the same data, there is no reason why they should not be able to execute simultaneously.  Spinlocks don't differentiate between read and read/write access.  Thus spinlocks do not exploit this potential parallelism.  To do so, read-write locks are required.</p>
+
+<p>The simplest read-write lock uses a spinlock to control write access, and a counter field for the readers.</p>
+<pre><code>
+typedef struct dumbrwlock dumbrwlock;
+struct dumbrwlock
+{
+	spinlock lock;
+	unsigned readers;
+};
+
+static void dumb_wrlock(dumbrwlock *l)
+{
+	/* Get write lock */
+	spin_lock(&amp;l->lock);
+	
+	/* Wait for readers to finish */
+	while (l->readers) cpu_relax();
+}
+
+static void dumb_wrunlock(dumbrwlock *l)
+{
+	spin_unlock(&amp;l->lock);
+}
+
+static int dumb_wrtrylock(dumbrwlock *l)
+{
+	/* Want no readers */
+	if (l->readers) return EBUSY;
+	
+	/* Try to get write lock */
+	if (spin_trylock(&amp;l->lock)) return EBUSY;
+	
+	if (l->readers)
+	{
+		/* Oops, a reader started */
+		spin_unlock(&amp;l->lock);
+		return EBUSY;
+	}
+	
+	/* Success! */
+	return 0;
+}
+
+static void dumb_rdlock(dumbrwlock *l)
+{
+	while (1)
+	{
+		/* Speculatively take read lock */
+		atomic_inc(&amp;l->readers);
+		
+		/* Success? */
+		if (!l->lock) return;
+		
+		/* Failure - undo, and wait until we can try again */
+		atomic_dec(&amp;l->readers);
+		while (l->lock) cpu_relax();
+	}
+}
+
+static void dumb_rdunlock(dumbrwlock *l)
+{
+	atomic_dec(&amp;l->readers);
+}
+
+static int dumb_rdtrylock(dumbrwlock *l)
+{
+	/* Speculatively take read lock */
+	atomic_inc(&amp;l->readers);
+		
+	/* Success? */
+	if (!l->lock) return 0;
+	
+	/* Failure - undo */
+	atomic_dec(&amp;l->readers);
+	
+	return EBUSY;
+}
+
+static int dumb_rdupgradelock(dumbrwlock *l)
+{
+	/* Try to convert into a write lock */
+	if (spin_trylock(&amp;l->lock)) return EBUSY;
+	
+	/* I'm no longer a reader */
+	atomic_dec(&amp;l->readers);
+	
+	/* Wait for all other readers to finish */
+	while (l->readers) cpu_relax();
+	
+	return 0;
+}
+</code></pre>
+
+<p>The benchmark the above code, we need a little more information than the spinlock case.  The fraction of readers is important.  The more readers, the more parallelism we should get, and the faster the code should run.  It is also important to have a random distribution of readers and writers, just like real-world situations.  Thus a <a href="/articles/prng/">parallel random number generator</a> is used.  By selecting a random byte, and choosing 1, 25, 128, or 250 out of 256 possibilities to be a writer we can explore the mostly-reader case through to where most users of the lock are writers.  Finally, it is important to find out the effects of contention.  In general, read-write locks tend to be used where contention is high, so we will mostly look at the case where the number of threads is equal to the number of processors.</p>
+
+<p>The dumb lock above performs fairly poorly when there is no contention.  If one thread is used we get:</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Writers per 256</td><td>1</td><td>25</td><td>128</td><td>250</td></tr>
+<tr><td>Time (s)</td><td>3.7</td><td>3.8</td><td>4.6</td><td>5.4</td></tr>
+</table>
+<p>As expected, we asymptote to the relatively slow timings of the standard spinlock algorithm as the write fraction increases.  If there is contention, however, the dumb lock actually performs quite well.  Using four threads:</p>  
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Writers per 256</td><td>1</td><td>25</td><td>128</td><td>250</td></tr>
+<tr><td>Time (s)</td><td>1.1</td><td>1.9</td><td>4.4</td><td>5.7</td></tr>
+</table>
+
+<p>The obvious thing to do to try to gain speed would be to replace the slow spinlock with a ticketlock algorithm.  If this is done, we have:</p>
+<pre><code>
+typedef struct dumbtrwlock dumbtrwlock;
+struct dumbtrwlock
+{
+	ticketlock lock;
+	unsigned readers;
+};
+
+static void dumbt_wrlock(dumbtrwlock *l)
+{
+	/* Get lock */
+	ticket_lock(&amp;l->lock);
+	
+	/* Wait for readers to finish */
+	while (l->readers) cpu_relax();
+}
+
+static void dumbt_wrunlock(dumbtrwlock *l)
+{
+	ticket_unlock(&amp;l->lock);
+}
+
+static int dumbt_wrtrylock(dumbtrwlock *l)
+{
+	/* Want no readers */
+	if (l->readers) return EBUSY;
+	
+	/* Try to get write lock */
+	if (ticket_trylock(&amp;l->lock)) return EBUSY;
+	
+	if (l->readers)
+	{
+		/* Oops, a reader started */
+		ticket_unlock(&amp;l->lock);
+		return EBUSY;
+	}
+	
+	/* Success! */
+	return 0;
+}
+
+static void dumbt_rdlock(dumbtrwlock *l)
+{
+	while (1)
+	{
+		/* Success? */
+		if (ticket_lockable(&amp;l->lock))
+		{
+			/* Speculatively take read lock */
+			atomic_inc(&amp;l->readers);
+		
+			/* Success? */
+			if (ticket_lockable(&amp;l->lock)) return;
+		
+			/* Failure - undo, and wait until we can try again */
+			atomic_dec(&amp;l->readers);
+		}
+		
+		while (!ticket_lockable(&amp;l->lock)) cpu_relax();
+	}
+}
+
+static void dumbt_rdunlock(dumbtrwlock *l)
+{
+	atomic_dec(&amp;l->readers);
+}
+
+static int dumbt_rdtrylock(dumbtrwlock *l)
+{
+	/* Speculatively take read lock */
+	atomic_inc(&amp;l->readers);
+		
+	/* Success? */
+	if (ticket_lockable(&amp;l->lock)) return 0;
+	
+	/* Failure - undo */
+	atomic_dec(&amp;l->readers);
+	
+	return EBUSY;
+}
+
+static int dumbt_rdupgradelock(dumbtrwlock *l)
+{
+	/* Try to convert into a write lock */
+	if (ticket_trylock(&amp;l->lock)) return EBUSY;
+	
+	/* I'm no longer a reader */
+	atomic_dec(&amp;l->readers);
+	
+	/* Wait for all other readers to finish */
+	while (l->readers) cpu_relax();
+	
+	return 0;
+}
+</code></pre>
+<p>This performs much better in the uncontended case, taking 3.7 seconds for all write fractions.  It is surprising that it doesn't beat the contended case though:</p>
+
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Writers per 256</td><td>1</td><td>25</td><td>128</td><td>250</td></tr>
+<tr><td>Time (s)</td><td>2.0</td><td>2.5</td><td>3.7</td><td>4.5</td></tr>
+</table>
+<p>This is slower for low write fractions, and faster for large write fractions.  Since most of the time we use a read-write lock when the write fraction is low, this is really bad for this algorithm, which can be twice as slow as its competitor.</p>
+
+<p>To try to reduce contention, and to gain speed, lets explore the rather complex algorithm used in Reactos to emulate Microsoft Window's slim read-write (SRW) locks.  This uses a wait list, with a bitlock to control access to the wait list data structure.  It is designed so that waiters will spin on separate memory locations for extra scalability.</p>
+
+<pre><code>
+/* Have a wait block */
+#define SRWLOCK_WAIT					1
+
+/* Users are readers */
+#define SRWLOCK_SHARED					2
+
+/* Bit-lock for editing the wait block */
+#define SRWLOCK_LOCK					4
+#define SRWLOCK_LOCK_BIT				2
+
+/* Mask for the above bits */
+#define SRWLOCK_MASK					7
+
+/* Number of current users * 8 */
+#define SRWLOCK_USERS					8
+
+typedef struct srwlock srwlock;
+struct srwlock
+{
+	uintptr_t p;
+};
+
+typedef struct srw_sw srw_sw;
+struct srw_sw
+{
+	uintptr_t spin;
+	srw_sw *next;
+};
+
+typedef struct srw_wb srw_wb;
+struct srw_wb
+{
+	/* s_count is the number of shared acquirers * SRWLOCK_USERS. */
+	uintptr_t s_count;
+
+	/* Last points to the last wait block in the chain. The value
+	   is only valid when read from the first wait block. */
+	srw_wb *last;
+
+	/* Next points to the next wait block in the chain. */
+	srw_wb *next;
+
+	/* The wake chain is only valid for shared wait blocks */
+	srw_sw *wake;
+	srw_sw *last_shared;
+
+	int ex;
+};
+
+/* Wait for control of wait block */
+static srw_wb *lock_wb(srwlock *l)
+{
+	uintptr_t p;
+	
+	/* Spin on the wait block bit lock */
+	while (atomic_bitsetandtest(&amp;l->p, SRWLOCK_LOCK_BIT)) cpu_relax();
+
+	p = l->p;
+	barrier();
+
+	if (!(p &amp; SRWLOCK_WAIT))
+	{
+		/* Oops, looks like the wait block was removed. */
+		atomic_clear_bit(&amp;l->p, SRWLOCK_LOCK_BIT);
+		return NULL;
+	}
+
+	return (srw_wb *)(p &amp; ~SRWLOCK_MASK);
+}
+
+static void srwlock_init(srwlock *l)
+{
+	l->p = 0;
+}
+
+static void srwlock_rdlock(srwlock *l)
+{
+	srw_wb swblock;
+	srw_sw sw;
+	uintptr_t p;
+	srw_wb *wb, *shared;
+
+	while (1)
+	{
+		barrier();
+		p = l->p;
+	
+		cpu_relax();
+	
+		if (!p)
+		{
+			/* This is a fast path, we can simply try to set the shared count to 1 */
+			if (!cmpxchg(&amp;l->p, 0, SRWLOCK_USERS | SRWLOCK_SHARED)) return;
+			
+			continue;
+		}
+		
+		/* Don't interfere with locking */
+		if (p &amp; SRWLOCK_LOCK) continue;
+
+		if (p &amp; SRWLOCK_SHARED)
+		{
+			if (!(p &amp; SRWLOCK_WAIT))
+			{
+				/* This is a fast path, just increment the number of current shared locks */
+				if (cmpxchg(&amp;l->p, p, p + SRWLOCK_USERS) == p) return;
+			}
+			else
+			{
+				/* There's other waiters already, lock the wait blocks and increment the shared count */
+				wb = lock_wb(l);
+				if (wb) break;
+			}
+		
+			continue;
+		}
+		
+		/* Initialize wait block */
+		swblock.ex = FALSE;
+		swblock.next = NULL;
+		swblock.last = &amp;swblock;
+		swblock.wake = &amp;sw;
+		
+		sw.next = NULL;
+		sw.spin = 0;
+	
+		if (!(p &amp; SRWLOCK_WAIT))
+		{
+			/*
+			 * We need to setup the first wait block.
+			 * Currently an exclusive lock is held, change the lock to contended mode.
+			 */
+			swblock.s_count = SRWLOCK_USERS;
+			swblock.last_shared = &amp;sw;
+
+			if (cmpxchg(&amp;l->p, p, (uintptr_t)&amp;swblock | SRWLOCK_WAIT) == p)
+			{
+				while (!sw.spin) cpu_relax();
+				return;
+			}
+		
+			continue;
+		}
+		
+		/* Handle the contended but not shared case */
+
+		/*
+		 * There's other waiters already, lock the wait blocks and increment the shared count.
+		 * If the last block in the chain is an exclusive lock, add another block.
+		 */
+		swblock.s_count = 0;
+
+		wb = lock_wb(l);
+		if (!wb) continue;
+		
+		shared = wb->last;
+		if (shared->ex)
+		{
+			shared->next = &amp;swblock;
+			wb->last = &amp;swblock;
+
+			shared = &amp;swblock;
+		}
+		else
+		{
+			shared->last_shared->next = &amp;sw;
+		}
+			
+		shared->s_count += SRWLOCK_USERS;
+		shared->last_shared = &amp;sw;
+
+		/* Unlock */
+		barrier();
+		l->p &amp;= ~SRWLOCK_LOCK;
+			
+		/* Wait to be woken */
+		while (!sw.spin) cpu_relax();
+		
+		return;
+	}
+	
+	/* The contended and shared case */
+	sw.next = NULL;
+	sw.spin = 0;
+	
+	if (wb->ex)
+	{
+		/*
+		 * We need to setup a new wait block.
+		 * Although we're currently in a shared lock and we're acquiring
+		 * a shared lock, there are exclusive locks queued in between.
+		 * We need to wait until those are released.
+		 */
+		shared = wb->last;
+
+		if (shared->ex)
+		{
+			swblock.ex = FALSE;
+			swblock.s_count = SRWLOCK_USERS;
+			swblock.next = NULL;
+			swblock.last = &amp;swblock;
+			swblock.wake = &amp;sw;
+			swblock.last_shared = &amp;sw;
+
+			shared->next = &amp;swblock;
+			wb->last = &amp;swblock;
+		}
+		else
+		{
+			shared->last_shared->next = &amp;sw;
+			shared->s_count += SRWLOCK_USERS;
+			shared->last_shared = &amp;sw;
+		}
+	}
+	else
+	{
+		wb->last_shared->next = &amp;sw;
+		wb->s_count += SRWLOCK_USERS;
+		wb->last_shared = &amp;sw;
+	}
+
+	/* Unlock */
+	barrier();
+	l->p &amp;= ~SRWLOCK_LOCK;
+	
+	/* Wait to be woken */
+	while (!sw.spin) cpu_relax();
+}
+
+
+static void srwlock_rdunlock(srwlock *l)
+{
+	uintptr_t p, np;
+	srw_wb *wb;
+	srw_wb *next;
+
+	while (1)
+	{
+		barrier();
+		p = l->p;
+	
+		cpu_relax();
+		
+		if (p &amp; SRWLOCK_WAIT)
+		{
+			/*
+			 * There's a wait block, we need to wake a pending exclusive acquirer,
+			 * if this is the last shared release.
+			 */
+			wb = lock_wb(l);
+			if (wb) break;
+
+			continue;
+		}
+		
+		/* Don't interfere with locking */
+		if (p &amp; SRWLOCK_LOCK) continue;
+		
+		/*
+		 * This is a fast path, we can simply decrement the shared
+		 * count and store the pointer
+		 */
+		np = p - SRWLOCK_USERS;
+		
+		/* If we are the last reader, then the lock is unused */
+		if (np == SRWLOCK_SHARED) np = 0;
+	
+		/* Try to release the lock */
+		if (cmpxchg(&amp;l->p, p, np) == p) return;
+	}
+
+	wb->s_count -= SRWLOCK_USERS;
+
+	if (wb->s_count)
+	{
+		/* Unlock */
+		barrier();
+		l->p &amp;= ~SRWLOCK_LOCK;
+		return;
+	}
+	
+	next = wb->next;
+	if (next)
+	{
+		/*
+		 * There's more blocks chained, we need to update the pointers
+		 * in the next wait block and update the wait block pointer.
+		 */
+		np = (uintptr_t)next | SRWLOCK_WAIT;
+
+		next->last = wb->last;
+	}
+	else
+	{
+		/* Convert the lock to a simple exclusive lock. */
+		np = SRWLOCK_USERS;
+	}
+
+	barrier();
+	/* This also unlocks wb lock bit */
+	l->p = np;
+	barrier();
+	wb->wake = (void *) 1;
+	barrier();
+
+	/* We released the lock */
+}
+
+static int srwlock_rdtrylock(srwlock *s)
+{
+	uintptr_t p = s->p;
+	
+	barrier();
+	
+	/* This is a fast path, we can simply try to set the shared count to 1 */
+	if (!p &amp;&amp; (cmpxchg(&amp;s->p, 0, SRWLOCK_USERS | SRWLOCK_SHARED) == 0)) return 0;
+	
+	if ((p &amp; (SRWLOCK_SHARED | SRWLOCK_WAIT)) == SRWLOCK_SHARED)
+	{
+		/* This is a fast path, just increment the number of current shared locks */
+		if (cmpxchg(&amp;s->p, p, p + SRWLOCK_USERS) == p) return 0;
+	}
+			
+	return EBUSY;
+}
+
+
+static void srwlock_wrlock(srwlock *l)
+{
+	srw_wb swblock;
+	uintptr_t p, np;
+
+	/* Fastpath - no other readers or writers */
+	if (!l->p &amp;&amp; (!cmpxchg(&amp;l->p, 0, SRWLOCK_USERS))) return;
+
+	/* Initialize wait block */
+	swblock.ex = TRUE;
+	swblock.next = NULL;
+	swblock.last = &amp;swblock;
+	swblock.wake = NULL;
+
+	while (1)
+	{
+		barrier();
+		p = l->p;
+		cpu_relax();
+	
+		if (p &amp; SRWLOCK_WAIT)
+		{
+			srw_wb *wb = lock_wb(l);
+			if (!wb) continue;
+		
+			/* Complete Initialization of block */
+			swblock.s_count = 0;
+		
+			wb->last->next = &amp;swblock;
+			wb->last = &amp;swblock;
+			
+			/* Unlock */
+			barrier();
+			l->p &amp;= ~SRWLOCK_LOCK;
+			
+			/* Has our wait block became the first one in the chain? */
+			while (!swblock.wake) cpu_relax();
+
+			return;
+		}
+		
+		/* Fastpath - no other readers or writers */
+		if (!p)
+		{
+			if (!cmpxchg(&amp;l->p, 0, SRWLOCK_USERS)) return;
+			continue;
+		}
+		
+		/* Don't interfere with locking */
+		if (p &amp; SRWLOCK_LOCK) continue;
+		
+		/* There are no wait blocks so far, we need to add ourselves as the first wait block. */
+		if (p &amp; SRWLOCK_SHARED)
+		{
+			swblock.s_count = p &amp; ~SRWLOCK_MASK;
+			np = (uintptr_t)&amp;swblock | SRWLOCK_SHARED | SRWLOCK_WAIT;
+		}
+		else
+		{
+			swblock.s_count = 0;
+			np = (uintptr_t)&amp;swblock | SRWLOCK_WAIT;
+		}
+		
+		/* Try to make change */
+		if (cmpxchg(&amp;l->p, p, np) == p) break;
+	}
+	
+	/* Has our wait block became the first one in the chain? */
+	while (!swblock.wake) cpu_relax();
+}
+
+
+static void srwlock_wrunlock(srwlock *l)
+{
+	uintptr_t p, np;
+	srw_wb *wb;
+	srw_wb *next;
+	srw_sw *wake, *wake_next;
+
+	while (1)
+	{
+		barrier();
+		p = l->p;
+		cpu_relax();
+		
+		if (p == SRWLOCK_USERS)
+		{
+			/*
+			 * This is the fast path, we can simply clear the SRWLOCK_USERS bit.
+			 * All other bits should be 0 now because this is a simple exclusive lock,
+			 * and no one else is waiting.
+			 */
+
+			if (cmpxchg(&amp;l->p, SRWLOCK_USERS, 0) == SRWLOCK_USERS) return;
+		
+			continue;
+		}
+	
+		/* There's a wait block, we need to wake the next pending acquirer */
+		wb = lock_wb(l);
+		if (wb) break;
+	}
+
+	next = wb->next;
+	if (next)
+	{
+		/*
+		 * There's more blocks chained, we need to update the pointers
+		 * in the next wait block and update the wait block pointer.
+		 */
+		np = (uintptr_t)next | SRWLOCK_WAIT;
+		if (!wb->ex)
+		{
+			/* Save the shared count */
+			next->s_count = wb->s_count;
+
+			np |= SRWLOCK_SHARED;
+		}
+
+		next->last = wb->last;
+	}
+	else
+	{
+		/* Convert the lock to a simple lock. */
+		if (wb->ex)
+		{
+			np = SRWLOCK_USERS;
+		}
+		else
+		{
+			np = wb->s_count | SRWLOCK_SHARED;
+		}
+	}
+	
+	barrier();
+	/* Also unlocks lock bit */
+	l->p = np;
+	barrier();
+
+	if (wb->ex)
+	{
+		barrier();
+		/* Notify the next waiter */
+		wb->wake = (void *) 1;
+		barrier();
+		return;
+	}
+
+	/* We now need to wake all others required. */
+	for (wake = wb->wake; wake; wake = wake_next)
+	{
+		barrier();
+		wake_next = wake->next;
+		barrier();
+		wake->spin = 1;
+		barrier();
+	}
+}
+
+static int srwlock_wrtrylock(srwlock *s)
+{
+	/* No other readers or writers? */
+	if (!s->p &amp;&amp; (cmpxchg(&amp;s->p, 0, SRWLOCK_USERS) == 0)) return 0;
+	
+	return EBUSY;
+}
+</code></pre>
+
+<p>The above code is not exactly the code in Reactos.  It has been simplified and cleaned up somewhat.  One of the controlling bit flags has been removed, and replaced with altered control flow.  So how does it perform?  In the uncontended case, it is just like the dumb ticket-based read-write lock, and takes 3.7 seconds for all cases.  For the contended case with four threads:</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Writers per 256</td><td>1</td><td>25</td><td>128</td><td>250</td></tr>
+<tr><td>Time (s)</td><td>2.2</td><td>3.2</td><td>5.7</td><td>6.4</td></tr>
+</table>
+<p>This is quite bad, slower than the dumb lock in all contended cases.  The extra complexity simply isn't worth any performance gain.</p>
+
+<p>Another possibility is to combine the reader count with some bits describing the state of the writers.  A similar technique is used by the Linux kernel to describe its (reader-preferring) read-write locks.  Making the lock starvation-proof for writers instead, yields something like the following:</p>
+<pre><code>
+#define RW_WAIT_BIT		0
+#define RW_WRITE_BIT	1
+#define RW_READ_BIT		2
+
+#define RW_WAIT		1
+#define RW_WRITE	2
+#define RW_READ		4
+
+typedef unsigned rwlock;
+
+static void wrlock(rwlock *l)
+{
+	while (1)
+	{
+		unsigned state = *l;
+	
+		/* No readers or writers? */
+		if (state < RW_WRITE)
+		{
+			/* Turn off RW_WAIT, and turn on RW_WRITE */
+			if (cmpxchg(l, state, RW_WRITE) == state) return;
+			
+			/* Someone else got there... time to wait */
+			state = *l;
+		}
+		
+		/* Turn on writer wait bit */
+		if (!(state &amp; RW_WAIT)) atomic_set_bit(l, RW_WAIT_BIT);
+	
+		/* Wait until can try to take the lock */
+		while (*l > RW_WAIT) cpu_relax();
+	}
+}
+
+static void wrunlock(rwlock *l)
+{
+	atomic_add(l, -RW_WRITE);
+}
+
+static int wrtrylock(rwlock *l)
+{
+	unsigned state = *l;
+	
+	if ((state < RW_WRITE) &amp;&amp; (cmpxchg(l, state, state + RW_WRITE) == state)) return 0;
+	
+	return EBUSY;
+}
+
+static void rdlock(rwlock *l)
+{
+	while (1)
+	{
+		/* A writer exists? */
+		while (*l &amp; (RW_WAIT | RW_WRITE)) cpu_relax();
+		
+		/* Try to get read lock */
+		if (!(atomic_xadd(l, RW_READ) &amp; (RW_WAIT | RW_WRITE))) return;
+			
+		/* Undo */
+		atomic_add(l, -RW_READ);
+	}
+}
+
+static void rdunlock(rwlock *l)
+{
+	atomic_add(l, -RW_READ);
+}
+
+static int rdtrylock(rwlock *l)
+{
+	/* Try to get read lock */
+	unsigned state = atomic_xadd(l, RW_READ);
+			
+	if (!(state &amp; (RW_WAIT | RW_WRITE))) return 0;
+			
+	/* Undo */
+	atomic_add(l, -RW_READ);
+		
+	return EBUSY;
+}
+
+/* Get a read lock, even if a writer is waiting */
+static int rdforcelock(rwlock *l)
+{
+	/* Try to get read lock */
+	unsigned state = atomic_xadd(l, RW_READ);
+	
+	/* We succeed even if a writer is waiting */
+	if (!(state &amp; RW_WRITE)) return 0;
+			
+	/* Undo */
+	atomic_add(l, -RW_READ);
+		
+	return EBUSY;
+}
+
+/* Try to upgrade from a read to a write lock atomically */
+static int rdtryupgradelock(rwlock *l)
+{
+	/* Someone else is trying (and will succeed) to upgrade to a write lock? */
+	if (atomic_bitsetandtest(l, RW_WRITE_BIT)) return EBUSY;
+	
+	/* Don't count myself any more */
+	atomic_add(l, -RW_READ);
+	
+	/* Wait until there are no more readers */
+	while (*l > (RW_WAIT | RW_WRITE)) cpu_relax();
+	
+	return 0;
+}
+</code></pre>
+
+<p>This lock unfortunately, has a similar performance to the dumb lock using a ticket lock as its spinlock.</p>
+
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Writers per 256</td><td>1</td><td>25</td><td>128</td><td>250</td></tr>
+<tr><td>Time (s)</td><td>2.0</td><td>3.4</td><td>3.9</td><td>4.6</td></tr>
+</table>
+
+<p>The version in the Linux kernel is written in assembler, so may be a fair bit faster.  It uses the fact that the atomic add instruction can set the zero flag.  This means that the slower add-and-test method isn't needed, and a two-instruction fast path is used instead.</p>
+
+<p>Sticking to semi-portable C code, we can still do a little better.  There exists a form of the ticket lock that is designed for read-write locks.  An example written in assembly was posted to the Linux kernel mailing list in 2002 by David Howells from RedHat.  This was a highly optimized version of a read-write ticket lock developed at IBM in the early 90's by Joseph Seigh.  Note that a similar (but not identical) algorithm was published by John Mellor-Crummey and Michael Scott in their landmark paper "Scalable Reader-Writer Synchronization for Shared-Memory Multiprocessors".  Converting the algorithm from assembly language to C yields:</p>
+
+<pre><code>
+typedef union rwticket rwticket;
+
+union rwticket
+{
+	unsigned u;
+	unsigned short us;
+	__extension__ struct
+	{
+		unsigned char write;
+		unsigned char read;
+		unsigned char users;
+	} s;
+};
+
+static void rwticket_wrlock(rwticket *l)
+{
+	unsigned me = atomic_xadd(&amp;l->u, (1<<16));
+	unsigned char val = me >> 16;
+	
+	while (val != l->s.write) cpu_relax();
+}
+
+static void rwticket_wrunlock(rwticket *l)
+{
+	rwticket t = *l;
+	
+	barrier();
+
+	t.s.write++;
+	t.s.read++;
+	
+	*(unsigned short *) l = t.us;
+}
+
+static int rwticket_wrtrylock(rwticket *l)
+{
+	unsigned me = l-&gt;s.users;
+	unsigned char menew = me + 1;
+	unsigned read = l-&gt;s.read &lt;&lt; 8;
+	unsigned cmp = (me &lt;&lt; 16) + read + me;
+	unsigned cmpnew = (menew &lt;&lt; 16) + read + me;
+
+	if (cmpxchg(&amp;l-&gt;u, cmp, cmpnew) == cmp) return 0;
+	
+	return EBUSY;
+}
+
+static void rwticket_rdlock(rwticket *l)
+{
+	unsigned me = atomic_xadd(&amp;l->u, (1<<16));
+	unsigned char val = me >> 16;
+	
+	while (val != l->s.read) cpu_relax();
+	l->s.read++;
+}
+
+static void rwticket_rdunlock(rwticket *l)
+{
+	atomic_inc(&amp;l->s.write);
+}
+
+static int rwticket_rdtrylock(rwticket *l)
+{
+	unsigned me = l-&gt;s.users;
+	unsigned write = l-&gt;s.write;
+	unsigned char menew = me + 1;
+	unsigned cmp = (me &lt;&lt; 16) + (me &lt;&lt; 8) + write;
+	unsigned cmpnew = ((unsigned) menew &lt;&lt; 16) + (menew &lt;&lt; 8) + write;
+
+	if (cmpxchg(&amp;l-&gt;u, cmp, cmpnew) == cmp) return 0;
+	
+	return EBUSY;
+}
+</code></pre>
+<p>This read-write lock performs extremely well.  It is as fast as the dumb spinlock rwlock for low writer fraction, and nearly as fast as the dumb ticketlock rwlock for large number of writers.  It also doesn't suffer any slowdown when there is no contention, taking 3.7 seconds for all cases.  With contention:</p>
+<table border="1" cellpadding="5" cellspacing="0" >
+<tr style="background-color:#eeeeee"><td>Writers per 256</td><td>1</td><td>25</td><td>128</td><td>250</td></tr>
+<tr><td>Time (s)</td><td>1.1</td><td>1.8</td><td>3.9</td><td>4.7</td></tr>
+</table>
+
+<p>This algorithm is five times faster than using a simple spin lock for the reader-dominated case.  Its only drawback is that it is difficult to upgrade read locks into write locks atomically.  (It can be done, but then <code>rwticket_wrunlock()</code> needs to use an atomic instruction, and the resulting code becomes quite a bit slower.)  This drawback is the reason why this algorithm is not used within the Linux kernel.  Some parts depend on the fact that if you have a read lock, then acquiring a new read lock recursively will always succeed.  However, if that requirement were to be removed, this algorithm probably would be a good replacement.</p>
+
+<p>One final thing to note is that the read-write ticket lock is not optimal.  The problem is the situation where readers and writers alternate in the wait queue: writer (executing), reader 1, writer, reader 2.  The two reader threads can be shuffled so that they execute in parallel.  i.e. the second reader should probably not have to wait until the second writer finishes to execute.  Fortunately, this situation is encountered rarely when the thread count is low.  For four processors and threads, this happens one time in 16 if readers and writers are equally likely, and less often otherwise.  Unfortunately, as the number of threads increases this will lead to an asymptotic factor of two slowdown compared with the optimal ordering.</p>
+
+<p>The obvious thing to do to fix this is to add a test to see if readers should be reordered in wait-order.  However, since the effect is so rare with four concurrent threads, it is extremely hard (if not impossible) to add the check with a low enough overhead that the result is a performance win.  Thus it seems that the problem of exactly which algorithm is best will need to be revisited when larger multicore machines become common.</p>
+
+
+<div class="comments">
+<h2>Comments</h2>
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+The article has been updated to improve the reference to the creation of the read-write ticket lock algorithm.  Also some extra discussion of the non-optimality of the algorithm is added at the end.</div>
+
+<span class="name">Cory</span><span class = "said"> said...</span><div class="comment_text">
+In the function &quot;static int ticket_trylock(ticketlock *t)&quot;, should the following line of code changed from:<br/>
+<br/>
+unsigned cmpnew = ((unsigned) me &lt;&lt; 16) + menew;<br/>
+<br/>
+to be<br/>
+<br/>
+unsigned cmpnew = ((unsigned) menew &lt;&lt; 16) + me;<br/>
+<br/>
+I think it is to update the &quot;users&quot; part with the increased 1, right?</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Oops, you are right.  I didn&apos;t check the trylock routines nearly as well as the lock+unlock ones. :-/   I&apos;ve updated the article with the fix.</div>
+
+<span class="name">Cory</span><span class = "said"> said...</span><div class="comment_text">
+In fact this document is quite good for me to understand these locks. I thus tried the ticket based reader/writer lock, but it seems it has some problems also. The following is the test code that I use:<br/>
+<br/>
+rwticket ticket;<br/>
+<br/>
+int main (void)<br/>
+{<br/>
+rwticket_init(&amp;ticket);<br/>
+rwticket_rdtrylock(&amp;ticket);//should ok<br/>
+rwticket_wrtrylock(&amp;ticket);//should fail<br/>
+rwticket_rdunlock(&amp;ticket);<br/>
+rwticket_wrtrylock(&amp;ticket);//should ok<br/>
+rwticket_rdtrylock(&amp;ticket);//should fail<br/>
+rwticket_wrtrylock(&amp;ticket);//should fail<br/>
+rwticket_wrunlock(&amp;ticket);<br/>
+rwticket_wrtrylock(&amp;ticket);//should ok<br/>
+rwticket_wrlock(&amp;ticket);//should wait<br/>
+}<br/>
+<br/>
+and the following is the output:<br/>
+<br/>
+coryxie@coryxie-t60:~/test-code$ ./rwlock <br/>
+rwticket_rdtrylock OK, users 1, readers 1, writers 0<br/>
+rwticket_wrtrylock BUSY, users 1, readers 1, writers 0<br/>
+rwticket_rdunlock, users 1, readers 1, writers 1<br/>
+rwticket_wrtrylock OK, users 1, readers 1, writers 2 &lt;===should OK, actual OK<br/>
+rwticket_rdtrylock OK, users 2, readers 2, writers 2 &lt;===should fail, actual OK<br/>
+rwticket_wrtrylock OK, users 2, readers 2, writers 3 &lt;===should fail, actual OK<br/>
+rwticket_wrunlock, users 2, readers 3, writers 4<br/>
+rwticket_wrtrylock BUSY, users 2, readers 3, writers 4<br/>
+rwticket_wrlock enter, users 2, readers 3, writers 4<br/>
+rwticket_wrlock wait, users 3, readers 3, writers 4<br/>
+<br/>
+I think once any rwticket_rdtrylock() or rwticket_wrtrylock() succeed to gain the lock, any other tries for the writer lock (wr, lock, try lock) should either fail or wait.<br/>
+<br/>
+And once a writer lock is taken by someone, then rwticket_rdtrylock() should fail, and rwticket_rdlock() should wait.<br/>
+<br/>
+However the results shows that once the rwticket_wrtrylock get the writer lock, the rwticket_rdtrylock() and rwticket_wrtrylock() are still OK to get the lock, which seems incorrect.<br/>
+<br/>
+</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Yep, the code for rwticket_wrtrylock had a bug.  &quot;me&quot; and &quot;menew&quot; were swapped in the calculation of cmpnew.  The code has been fixed in the article.<br/>
+<br/>
+Thanks for spotting this!  I really should have tested the trylock routines more...  It wouldn&apos;t surprise me if there were latent bugs in a few of the others as well.</div>
+
+<span class="name"></span><span class = "said"> said...</span><div class="comment_text">
+Regarding the ticket lock&apos;s use of atomic_xadd: so 2-byte alignment is sufficient for 16-bit interlocked operations?  I found note for this in documentation for neither __sync_fetch_and_add() nor Windows&apos; _InterlockedExchangeAdd16().</div>
+
+<span class="name">Borislav Trifonov</span><span class = "said"> said...</span><div class="comment_text">
+One way to do a ticket_timedlock lock would be to loop on the ticket_trylock, but I wonder if it&apos;s safe to loop as in ticket_lock and unlock when it times out, to avoid the cmpxchg of ticket_trylock<br/>
+static void ticket_timedlock(ticketlock *t, unsigned long delay)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (ticket_trylock(t)) return 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unsigned long tEnd = current_time() + delay;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unsigned short me = atomic_xadd(&amp;t-&gt;s.users, 1);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while (t-&gt;s.ticket != me)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu_relax();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (current_time() &gt; tEnd)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ticket_unlock(t);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return ETIMEDOUT;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 0;<br/>
+}<br/>
+</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+It is safe to do locked operations with any alignment.  I know this perhaps used to be documented as unsafe by Microsoft... but Intel disagrees.  You just have to make sure that the underlying instruction exists in the x86 instruction set for the compiler to emit.<br/>
+<br/>
+Unfortunately, I don&apos;t think you can implement ticket_timedlock() like that.  The unlock code assumes that the unlocking thread actually has the lock.  The above will cause all sorts of problems due to the ticket&lt;-&gt;thread relationships being moved out of step. </div>
+
+<span class="name">Borislav Trifonov</span><span class = "said"> said...</span><div class="comment_text">
+Ah, I see that now.  Would an atomic decrement on _users in place of the unlock work?  I only did limited testing but I didn&apos;t encounter any problems.</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Imagine you are at a local shop that uses a ticket system.<br/>
+<br/>
+The number of the customer that is currently being served is 25.  You pull a ticket, number 40.<br/>
+<br/>
+You wait for a few minutes, but the checkout is slow, and the server is up to number 30.  You want to leave.  However, in that time a few other people have arrived, and the ticket dispenser is up to number 45.<br/>
+<br/>
+What can you do?  If you leave, when the checkout reaches number 40 no one will have that number.  In the real world, the server will wait for a few seconds to see if anyone with number 40 is there.  If not, he/she will skip to number 41.  The computer is different.  It will wait forever, causing a deadlock.<br/>
+<br/>
+Another option is to try to decrement the value of the ticket dispenser.  i.e. change it from 45 to 44.  Now what happens?  Unfortunately, the same deadlock.  You haven&apos;t fixed the problem that no one has number 40 except you, and you have left.  (Plus there is a further problem when a new customer arrives and takes 44.  Two customers will have the same number - causing chaos at the checkout when 44 is reached.)<br/>
+<br/>
+What you need to do is find some way to give your ticket to some other new customer who hasn&apos;t yet grabbed a ticket.  This isn&apos;t as easy as it sounds.  What happens if no new customer arrives?  What happens if multiple people want to leave their ticket behind?<br/>
+<br/>
+This complexity is why the current algorithm of only grabbing a ticket in the trylock routine if you know for certain that you will immediately succeed in getting the lock is what I implemented.  Perhaps there is another way... but it isn&apos;t nearly as easy to show to be correct.</div>
+
+<span class="name">Samy Al Bahra</span><span class = "said"> said...</span><div class="comment_text">
+said, regarding alignment. It is to use any alignment for atomic operations except for cmpxchg8b and cmpxchg16b. These generally require 8 and 16 byte alignment respectively. However, if your target is not aligned then it is would likely require a split transaction. On the IA32 implementations I am familiar with this usually means you will revert to bus locking and will lose any of the benefits of cache locking. Bus locking is extremely expensive and can starve your software stack from bus access. If possible, align your atomics targets.</div>
+
+<span class="name">Arto N</span><span class = "said"> said...</span><div class="comment_text">
+Thanks for a very good article. Nice to see that even these days there are people trying to avoid poor performing code if you &quot;easily&quot; can do better.<br/>
+<br/>
+Concerning the examples I have two questions which based my understanding are possible race conditions: In ticket_unlock method you are using &apos;t-&gt;s.ticket++&apos; and in rwticket_rdlock you are using &apos;l-&gt;s.read++&apos;. I have understood that Intel guarantees that 8/16/32/64 bit loads and stores are atomic without &apos;lock&apos; prefix (assuming the vars are properly aligned or fitting into cache pipeline) but increments (like decrement) are not.<br/>
+<br/>
+So, is there some even deeper trick in your code or should these inc operations be done using atomic_inc to really get them atomic?</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Think about ownership...  at those given points only one thread can modify those variables.  So doing a simple non-atomic read, modify, write sequence is perfectly okay.  It also is much much faster than doing an atomic increment.  This is one of the advantages of a ticket lock: less bus contention.<br/>
+<br/>
+The only &quot;deep&quot; trick is that the Intel memory model requires the store in the non-atomic increment to eventually be visible to other threads.  This may not be the case on other architectures, and some sort of cache-synchronization instruction may be required.</div>
+
+<span class="name">Arto N</span><span class = "said"> said...</span><div class="comment_text">
+Hi,<br/>
+<br/>
+Of course. Especially in the case of SCHED_FIFO threads. But not necessarily for SCHED_OTHER or SCHED_RR. But in general, spinning locks do not behave that well if timeslicing is allowed so you have perhaps assumed that there shall not be any preemptive context swithches...<br/>
+<br/>
+</div>
+
+<span class="name">mohammed shahid</span><span class = "said"> said...</span><div class="comment_text">
+Hi sfuerst,<br/>
+<br/>
+Very great utility for those analysing the performance of mutual exclusion algorithms in an actual system.<br/>
+<br/>
+With regards to both MCS and IBM&apos;s MCS called K42, there are variants which use only fetch-and-store rather than compare-and-swap (eg. Craig, MLH locks).<br/>
+<br/>
+Since they use a simpler instruction, is it likely that these variants would be better in time-terms ?<br/>
+<br/>
+regards,<br/>
+-shahid.</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Arto:  No such assumptions are needed.  Try drawing the possible state transitions in a diagram.  As long as only a single thread is modifying a given memory location, that thread doesn&apos;t need to use atomic instructions.  (Again assuming Intel memory orderings where no store-store barrier is needed.)<br/>
+<br/>
+mohammed: I didn&apos;t know about those types of locks when creating this article a year or so ago.  Perhaps the other variants are faster...  However, if they fall under the patent, the average person still can&apos;t use them. :-(<br/>
+<br/>
+Note that the list of lock types here is obviously incomplete.  The major one missing is that using the bit test-and-set instructions.</div>
+
+<span class="name">Samy Al Bahra</span><span class = "said"> said...</span><div class="comment_text">
+Mohammed, MCS and CLH are both great in that they minimize cache coherence traffic. However, they are both arbitrating (fair) spinlocks. These tend to perform terribly under contention in a highly preemptive environment (without much additional complexity and slower fast paths). I&apos;ve uploaded some data I generated some years ago at<br/>
+<br/>
+http://repnop.org/t/unfair.png<br/>
+http://repnop.org/t/fair.png<br/>
+<br/>
+These are the results of a benchmark run on a 4-socket quad-core AMD Opteron 8350 in user-space under Linux. With preemption disabled, the ball game changes. Under preemption, as you can see it is not very fair to compare to fair spinlocks under contention.<br/>
+<br/>
+You can view the fast path latency for these various spinlocks at http://concurrencykit.org/doc/appendixZ.html (these are approximate measurements).</div>
+
+<span class="name">utehute</span><span class = "said"> said...</span><div class="comment_text">
+Thanks for a very informative article. It was fun to read. However, I am unable to recreate your results. I tried comparing the basic spinlock algorithm to the fast ticketlock algorithm. I found that the basic algorithm is a touch faster than the ticketlock algorithm, although the ticketlock is very much a fair algorithm. I am having a hard time explaining this. It is possible that my CPU bus easily handles all traffic generated from the 8 threads I am running. My testing method is this.<br/>
+<br/>
+for i=0 to 8:<br/>
+&nbsp;&nbsp;pthread_create(..., work)<br/>
+<br/>
+work() {<br/>
+start = gettimeofday<br/>
+acquire_lock()<br/>
+traverse vector<br/>
+release_lock<br/>
+end = gettimeofday<br/>
+}<br/>
+<br/>
+I then compare the results and find the basic spinlock to be just a touch faster. Here are the results (per thread) that I get.<br/>
+ticketlock:<br/>
+0::lock: 7.273 seconds.<br/>
+1::lock: 7.27306 seconds.<br/>
+2::lock: 7.27305 seconds.<br/>
+3::lock: 7.2731 seconds.<br/>
+4::lock: 7.2731 seconds.<br/>
+5::lock: 7.27309 seconds.<br/>
+6::lock: 7.27308 seconds.<br/>
+7::lock: 7.27308 seconds.<br/>
+<br/>
+spinlock:<br/>
+0::lock: 0.876959 seconds.<br/>
+1::lock: 4.84771 seconds.<br/>
+2::lock: 6.99854 seconds.<br/>
+3::lock: 6.85127 seconds.<br/>
+4::lock: 4.29035 seconds.<br/>
+5::lock: 1.75049 seconds.<br/>
+6::lock: 6.42732 seconds.<br/>
+7::lock: 2.62516 seconds.<br/>
+<br/>
+To me this makes sense. In the basic algorithm, the threads finish more quickly. So there is less work for the scheduler, which would reduce processing time.<br/>
+<br/>
+Can you tell me if I might have made a mistake here?</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+Your results are what you might expect under extreme unfairness.  How &quot;unfair&quot; the locked xchg operation is depends on the underlying hardware implementation, and how long the lock is held.<br/>
+<br/>
+The test results here use a small loop to wait whilst the lock is held to make sure other threads have had time to touch the lock&apos;s cache line.  Remember, under real-world conditions the lock is taken to do work.  Not modelling that correctly changes the timings...</div>
+
+<span class="name">Peppe</span><span class = "said"> said...</span><div class="comment_text">
+In your ticket-lock example users and tickets are both SHORT&apos;s which mean the can only acquire a maximum value of 65535. The lock can only be locked 65535, which amounts to 18 hours and 12 minutes if locking and unlocking once a second. Many applications receiving data that should be analysed receives data several times a second and should run for months without rebooting, even using INT instead of short might be insufficient.</div>
+
+<span class="a_name">sfuerst</span><span class = "said"> said...</span><div class="comment_text">
+They are unsigned shorts.  That means that their behaviour on overflow is well defined.  So the lock can be taken way more than 2^16 times without issue.<br/>
+<br/>
+The limitation is that no more than 65535 threads can attempt to take the lock simultaneously.  If you use more threads than that, then yes, you can replace the underlying types with a pair of 32-bit unsigned integers inside a 64-bit one.<br/>
+</div>
+
+<span class="name">Peppe</span><span class = "said"> said...</span><div class="comment_text">
+Every time you call ticket_lock you increase users and every time you call ticket_unlock, you increase ticket. You never decrease any of them? So if you are using the same lock a lot of times, I would argue that you would run out of numbers.</div>
+
+                                         
+                                         
+<span class="name">moses</span><span class = "said"> said...</span><div class="comment_text">
+@Peppe, it will overflow.<br/>
+unsigned short x = 65535;<br/>
+++x;<br/>
+// x is now 0</div>
+
+                                         
+<span class="name">Alex</span><span class = "said"> said...</span><div class="comment_text">
+Fantastic article. Thank you.</div>
+
+<span class="name">loan</span><span class = "said"> said...</span><div class="comment_text">
+Some time before, I did need to buy a good car for my firm but I did not earn enough money and could not buy anything. Thank heaven my father suggested to try to get the loan from reliable bank. So, I acted so and was satisfied with my auto loan. </div>
+
+<span class="name">Kike</span><span class = "said"> said...</span><div class="comment_text">
+This function should never returns but does:<br/>
+<br/>
+void main()<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rwticket t = {0};<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;for(int i = 0; i &lt; 255; i++)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rwticket_rdlock(&amp;t);<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rwticket_wrlock(&amp;t);<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;// should be never here<br/>
+}</div>
+
+<span class="name">Martin</span><span class = "said"> said...</span><div class="comment_text">
+How is it possible that the MCS and subequent locks are faster than the binary spinlock in case of a single thread, given that the binary spinlock only executes a single xchg operation? Two reasons I can think of: a) the 32-bit version of xchg is somehow slower than the 64-bit version, and/or b) the binary spinlock has a miss on branch prediction, while the later locks have hits? Or am I missing something else?</div>
+
+<span class="name">Chris</span><span class = "said"> said...</span><div class="comment_text">
+Interesting stuff :-)<br/>
+<br/>
+The very first spinlock uses:<br/>
+<br/>
+&nbsp;&nbsp;if (!xchg_32(lock, EBUSY)) return;<br/>
+<br/>
+to test/set the lock.  And the MCS version does:<br/>
+<br/>
+&nbsp;&nbsp;tail = xchg_64(m, me);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;/* No one there? */<br/>
+&nbsp;&nbsp;if (!tail) return;<br/>
+<br/>
+For 1 thread the times shown are 5.5 and 3.6 seconds, respectively.<br/>
+<br/>
+For 1 thread the spinlock should succeed first time, every time, surely ?<br/>
+<br/>
+So how come the big timing difference ?<br/>
+<br/>
+</div>
+
+<span class="name">Keith</span><span class = "said"> said...</span><div class="comment_text">
+I think there&apos;s a bug in the final version: after 255 locks the read-lock code (unsigned me = atomic_xadd(&amp;l-&gt;u, (1&lt;&lt;16));&quot; overflows into the 4th, unnamed byte of the rwticket structure, and the trylock routines need to take that byte into account when building cmp/cmpnew.</div>
+
+<span class="name">Keith</span><span class = "said"> said...</span><div class="comment_text">
+It&apos;s also worth noting this algorithm will wrap (granting write locks to two waiters simultaneously), if there are more than 256 waiting write lockers, which isn&apos;t insane for a heavily-threaded application. I think the algorithm continues to work, just change all of the fields to 2B, the atomic operations to 8B, and so on.</div>
+
+<span class="name">Keith</span><span class = "said"> said...</span><div class="comment_text">
+There&apos;s some public domain code that implements the final version, with the overflow bug fix and 2B fields/8B atomic operations, at https://github.com/wiredtiger/wiredtiger/blob/develop/src/os_posix/os_mtx_rw.c.</div>
+
+<span class="name">Richard</span><span class = "said"> said...</span><div class="comment_text">
+The second half of this article (about rwlocks, and IMHO, the most interesting part) seems to have disappeared. You can still find it on the wayback machine:<br/>
+<br/>
+https://web.archive.org/web/20150419055236/http://locklessinc.com/articles/locks/</div>
+
+<span class="name">Kavya</span><span class = "said"> said...</span><div class="comment_text">
+witness() n4st(n-1)=2^s*ttB(n) aB(n)2an-21: a^tmodn=12: i0&lt;=i&lt;sa^((2^i)*t) mod n=n-1n a2n-1aB(n)naB(n)na()annwitness(an){ //ntruen  s0 t n-1 //t      repeat         s++t  tf72  until t mod 2 = 1 //n-1=2st     t         x a^t mod n  if x=1 or x=n-1 then  rrtuen true    //or  for i 1 to s-1 do{         x x2 mod n         if x=n-1 then rrtuen true //  }  rrtuen false}</div>
+
+
+<form name="input" action="/cgi-bin/comments.cgi" method="post">
+<img src="/cgi-bin/captcha.cgi?Hash=u3zbGOZqE@B2" alt=""/><br/>
+<input type="hidden" name="Hash" value="u3zbGOZqE@B2"/>
+<input type="hidden" name="page" value="locks"/>
+<input type="hidden" name="page_hash" value="IMYMPW0WDP1HK963QU6AF14W9"/>
+Enter the 10 characters above here <input type="text" name="captcha" /><br/><br/>
+<textarea name="comments" rows="20" cols="80">
+Enter your comments here</textarea><br/>
+Name<input type="text" name="name" /><br/>
+<input type="submit" value="Submit" />
+</form>
+
+</div>
+
+<ul class="bread">
+<li><a href="/">Lockless</a></li>
+<li><a href="/articles/">Articles</a></li>
+<li><a href="/articles/locks/">Spinlocks and Read-Write Locks</a></li>
+</ul>
+
+		</td>
+	</tr>
+</table>
+
+<div class="menu_1holder">
+<table class="menu_1" cellpadding="0" cellspacing="0" border="0">
+<tr>
+	<td valign="bottom" align="center"><table cellpadding="0" cellspacing="0"><tr>
+		<td><table cellpadding="0" cellspacing="0"><tr>
+			<td width="1%">
+				<a href="/products/linux.shtml" title="Linux"><img src="/images/menu/menu1_divider_left.gif" border="0" alt="" /></a>
+			</td>
+			<td class="menu_td" align="center">
+				<a href="/products/linux.shtml" title="Linux">Linux</a>
+			</td>
+			<td width="1%">
+				<a href="/products/linux.shtml" title="Linux"><img src="/images/menu/menu1_divider_right.gif" border="0" alt="" /></a>
+			</td>
+		</tr></table></td>
+		<td><table cellpadding="0" cellspacing="0"><tr>
+			<td width="1%">
+				<a href="/products/windows.shtml" title="Windows"><img src="/images/menu/menu1_divider_left.gif" border="0" alt="" /></a>
+			</td>
+			<td class="menu_td" align="center">
+				<a href="/products/windows.shtml" title="Windows">Windows</a>
+			</td>
+			<td width="1%">
+				<a href="/products/windows.shtml" title="Windows"><img src="/images/menu/menu1_divider_right.gif" border="0" alt="" /></a>
+			</td>
+		</tr></table></td>
+		<td><table cellpadding="0" cellspacing="0"><tr>
+			<td width="1%">
+				<a href="/products/developers.shtml" title="Developers"><img src="/images/menu/menu1_divider_left.gif" border="0" alt="" /></a>
+			</td>
+			<td class="menu_td" align="center">
+				<a href="/products/developers.shtml" title="Developers">Developers</a>
+			</td>
+			<td width="1%">
+				<a href="/products/developers.shtml" title="Developers"><img src="/images/menu/menu1_divider_right.gif" border="0" alt="" /></a>
+			</td>
+		</tr></table></td>
+	</tr></table></td>
+</tr>
+</table>
+</div>
+
+<table class="footer1" cellpadding="0" cellspacing="0">
+<tr>
+	<td><a href="/about.shtml">About Us</a></td>
+	<td><a href="/returns.shtml">Returns Policy</a></td>
+	<td><a href="/privacy.shtml">Privacy Policy</a></td>
+	<td><a href="mailto:support@locklessinc.com?subject=Customer%20Feedback%20for%20www.locklessinc.com">Send us Feedback</a></td>
+</tr>
+</table>
+<table class="footer2" cellspacing="0" cellpadding="0"><tr> 
+    <td valign="top" align="center"> 
+    <a href="/about.shtml">Company Info</a> |
+	<a href="/products/">Product Index</a> |
+	<a href="/cindex.shtml">Category Index</a> |
+	<a href="/help.shtml">Help</a> |
+	<a href="/terms.shtml">Terms of Use</a>
+	<br/>
+	<a href="/terms.shtml">Copyright &copy;
+		<script type="text/javascript">document.write((new Date()).getFullYear());</script>
+	Lockless Inc&nbsp;All Rights Reserved.</a>
+	</td>
+</tr></table>
+
+</body></html>
+

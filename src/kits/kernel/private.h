@@ -37,5 +37,13 @@ typedef struct {
     size_t          data_buffer_size;
 } _thread_info;
 
+typedef struct {
+    int             count; // futex
+    team_id         team;
+    char			name[B_OS_NAME_LENGTH];
+    thread_id       latest_holder;
+    // TODO: double-link list for get_next_sem_info()
+} _sem_info;
+
 
 _thread_info *_find_thread_info(thread_id thread);
