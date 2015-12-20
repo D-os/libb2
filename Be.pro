@@ -4,7 +4,8 @@ HEADERS += $$files(headers/*.h) \
     $$files(headers/app/*.h) \
     $$files(headers/interface/*.h) \
     $$files(private/shared/*.h) \
-    $$files(private/linux/*.h)
+    $$files(private/linux/*.h) \
+    $$files(src/kits/kernel/*.h)
 SOURCES += $$files(*.cpp) \
     $$files(src/kits/kernel/*.c) \
     $$files(src/kits/support/*.cpp) \
