@@ -12,11 +12,11 @@
 #define unlikely(x)  __builtin_expect (!!(x), 0)
 
 typedef enum {
-    THREAD_NEW = 0,
-    THREAD_WAITING,
-    THREAD_RUNNING,
-    THREAD_EXITED
-} _thread_state;
+    TASK_NEW = 0,
+    TASK_WAITING,
+    TASK_RUNNING,
+    TASK_EXITED
+} _task_state;
 
 typedef struct {
     pid_t           tid;
@@ -29,7 +29,7 @@ typedef struct {
     thread_func		func;
     void			*data;
     status_t		exit;
-    _thread_state   task_state;
+    _task_state     task_state;
     int             has_data;
     thread_id       data_sender;
     int32           data_code;

@@ -24,7 +24,7 @@ static void _thread_init(int argc, char* argv[], char* envp[])
 {
     _thread_info *info = _threads;
     info->tid = getpid();
-    info->task_state = THREAD_RUNNING;
+    info->task_state = TASK_RUNNING;
     info->stack_base = (void*)((addr_t)&info & ~(B_PAGE_SIZE - 1));
     info->stack_end = info->stack_base + STACK_SIZE;
     prctl(PR_GET_NAME, (unsigned long) info->name, 0, 0, 0);
@@ -53,8 +53,8 @@ static void _thread_control(int sig)
     _thread_info *info = _find_thread_info(syscall(SYS_gettid));
     assert(info != NULL);
 
-    if (sig == SIGCONT && info->task_state < THREAD_RUNNING) {
-        info->task_state = THREAD_RUNNING;
+    if (sig == SIGCONT && info->task_state < TASK_RUNNING) {
+        info->task_state = TASK_RUNNING;
     }
 }
 
@@ -85,7 +85,7 @@ static int _thread_wrapper(void *arg)
 
     prctl(PR_SET_NAME, (unsigned long) info->name, 0, 0, 0);
 
-    if (cmpxchg(&info->task_state, THREAD_NEW, THREAD_WAITING) == THREAD_NEW) {
+    if (cmpxchg(&info->task_state, TASK_NEW, TASK_WAITING) == TASK_NEW) {
         sigset_t wait_mask;
         sigfillset(&wait_mask);
         sigdelset(&wait_mask, SIGCONT);
@@ -93,12 +93,12 @@ static int _thread_wrapper(void *arg)
         do {
             sigsuspend(&wait_mask);
         }
-        while (info->task_state == THREAD_WAITING);
+        while (info->task_state == TASK_WAITING);
     }
 
     info->exit = info->func(info->data);
 
-    info->task_state = THREAD_EXITED;
+    info->task_state = TASK_EXITED;
     return syscall(SYS_exit);
 }
 
@@ -111,7 +111,7 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
         return B_NO_MORE_THREADS;
     }
 
-    info->task_state = THREAD_NEW;
+    info->task_state = TASK_NEW;
 
     strncpy(info->name, name, B_OS_NAME_LENGTH);
 
@@ -170,7 +170,7 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
         return B_BAD_THREAD_ID;
     }
 
-    if (info->task_state != THREAD_RUNNING) {
+    if (info->task_state != TASK_RUNNING) {
         status_t status = resume_thread(thread);
         if (status != B_OK) {
             return status;
@@ -191,7 +191,7 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
 
     /* FIXME! there is a race to reuse the thread structure! */
     /* copy-out values ASAP */
-    _thread_state state = info->task_state;
+    _task_state state = info->task_state;
     status_t exit = info->exit;
     /* free stack if still not reused */
     if (!info->tid) {
@@ -201,7 +201,7 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
 
     assert(exit_value != NULL);
     *exit_value = exit;
-    return state == THREAD_EXITED ? B_OK : B_INTERRUPTED;
+    return state == TASK_EXITED ? B_OK : B_INTERRUPTED;
 }
 
 thread_id find_thread(const char* name)
@@ -224,7 +224,7 @@ thread_id find_thread(const char* name)
 status_t kill_thread(thread_id thread)
 {
     _thread_info *info = _find_thread_info(thread);
-    if (info == NULL || info->task_state == THREAD_EXITED) {
+    if (info == NULL || info->task_state == TASK_EXITED) {
         return B_BAD_THREAD_ID;
     }
 
@@ -238,7 +238,7 @@ status_t resume_thread(thread_id thread)
         return B_BAD_THREAD_ID;
     }
 
-    if (cmpxchg(&info->task_state, THREAD_NEW, THREAD_RUNNING) == THREAD_NEW) {
+    if (cmpxchg(&info->task_state, TASK_NEW, TASK_RUNNING) == TASK_NEW) {
         return B_OK;
     }
 
@@ -257,7 +257,7 @@ void exit_thread(status_t status)
     _thread_info *info = _find_thread_info(syscall(SYS_gettid));
     assert(info != NULL);
     info->exit = status;
-    info->task_state = THREAD_EXITED;
+    info->task_state = TASK_EXITED;
     _thread_control(SIGTERM);
 }
 
@@ -390,12 +390,12 @@ status_t _get_thread_info(thread_id id, thread_info *info, size_t size)
         info->state = _nfo->state;
     }
     else switch (_nfo->task_state) {
-    case THREAD_NEW:
-    case THREAD_WAITING:
+    case TASK_NEW:
+    case TASK_WAITING:
         info->state = B_THREAD_SUSPENDED;
         break;
-    case THREAD_RUNNING:
-    case THREAD_EXITED:
+    case TASK_RUNNING:
+    case TASK_EXITED:
         info->state = B_THREAD_RUNNING; // FIXME: This could be B_THREAD_READY
         break;
     }
@@ -406,4 +406,18 @@ status_t _get_thread_info(thread_id id, thread_info *info, size_t size)
     info->kernel_time = usage.ru_stime.tv_sec * 1000000 + usage.ru_stime.tv_usec;
 
     return B_OK;
+}
+
+status_t _get_next_thread_info(team_id team, int32 *cookie, thread_info *info, size_t size)
+{
+    if (team != 0 && team != getpid()) {
+        // do not support getting threads of other team
+        return B_BAD_VALUE;
+    }
+
+    while (*cookie < sizeof(_threads)/sizeof(_threads[0]) && _threads[*cookie].task_state != TASK_RUNNING) (*cookie)++;
+
+    if (*cookie >= sizeof(_threads)/sizeof(_threads[0])) return B_BAD_VALUE;
+
+    return _get_thread_info(_threads[(*cookie)++].tid, info, size);
 }
