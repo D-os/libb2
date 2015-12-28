@@ -20,26 +20,26 @@ static const int STACK_SIZE = 256 * 1024;
 
 static _thread_info _threads[256];
 
+static void _thread_init(int argc, char* argv[], char* envp[])
+{
+    _thread_info *info = _threads;
+    info->tid = getpid();
+    info->task_state = THREAD_RUNNING;
+    info->stack_base = (void*)((addr_t)&info & ~(B_PAGE_SIZE - 1));
+    info->stack_end = info->stack_base + STACK_SIZE;
+    prctl(PR_GET_NAME, (unsigned long) info->name, 0, 0, 0);
+}
+__attribute__((section(".init_array"))) void (* p_thread_init)(int,char*[],char*[]) = &_thread_init;
+
 _thread_info *_find_thread_info(thread_id thread)
 {
     _thread_info *info = _threads;
     _thread_info *end = _threads + sizeof(_threads)/sizeof(_threads[0]);
-    if (!likely(_threads[0].tid)) info++;
-    while ( info < end ){
+    while (info < end){
         if (info->tid == thread) {
             return info;
         }
         info++;
-    }
-    if (thread == getpid()) {
-        assert(!_threads[0].tid);
-        info = _threads;
-        info->tid = thread;
-        info->task_state = THREAD_RUNNING;
-        info->stack_base = (void*)((addr_t)&info & ~(B_PAGE_SIZE - 1));
-        info->stack_end = info->stack_base + STACK_SIZE;
-        prctl(PR_GET_NAME, (unsigned long) info->name, 0, 0, 0);
-        return info;
     }
     return NULL;
 }
