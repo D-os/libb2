@@ -27,6 +27,7 @@ kernelkit_files = files(
     'src/kits/kernel/sem.c',
     'src/kits/kernel/thread.c',
     'src/kits/kernel/time.c',
+    'src/kits/kernel/debug.c',
     )
 
 be_inc = include_directories(
