@@ -34,9 +34,22 @@ __attribute__((section(".init_array"))) void (* p_thread_init)(int,char*[],char*
 _thread_info *_find_thread_info(thread_id thread)
 {
     _thread_info *info = _threads;
-    _thread_info *end = _threads + sizeof(_threads)/sizeof(_threads[0]);
-    while (info < end){
+    _thread_info *fin = _threads + B_COUNT_OF(_threads);
+    while (info < fin){
         if (info->tid == thread) {
+            return info;
+        }
+        info++;
+    }
+    return NULL;
+}
+
+static _thread_info *_acquire_thread_info()
+{
+    _thread_info *info = _threads;
+    _thread_info *fin = _threads + B_COUNT_OF(_threads);
+    while (info < fin){
+        if (cmpxchg(&info->tid, 0, -1) == 0) {
             return info;
         }
         info++;
@@ -105,7 +118,7 @@ static int _thread_wrapper(void *arg)
 
 thread_id spawn_thread(thread_func func, const char *name, int32 priority, void *data)
 {
-    _thread_info *info = _find_thread_info(0);
+    _thread_info *info = _acquire_thread_info();
 
     if (info == NULL) {
         return B_NO_MORE_THREADS;
