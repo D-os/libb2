@@ -258,6 +258,48 @@ extern void*	get_stack_frame(void);
 #	define TRUE		1
 #endif
 
+#ifdef __cplusplus
+/* C++ programming patterns helper macros */
+
+/* Pimped Pimpl
+ * https://marcmutz.wordpress.com/translated-articles/pimp-my-pimpl/
+ * https://marcmutz.wordpress.com/translated-articles/pimp-my-pimpl-%E2%80%94-reloaded/
+ * https://wiki.qt.io/D-Pointer
+ * https://techbase.kde.org/Policies/Library_Code_Policy#D-Pointers
+ */
+
+template <typename T> static inline T *qGetPtrHelper(T *ptr) { return ptr; }
+template <typename Wrapper> static inline typename Wrapper::pointer qGetPtrHelper(const Wrapper &p) { return p.get(); }
+
+#define B_DECLARE_PRIVATE \
+    class Private; \
+    inline Private* d_func() { return reinterpret_cast<Private *>(qGetPtrHelper(d_ptr)); } \
+    inline const Private* d_func() const { return reinterpret_cast<const Private *>(qGetPtrHelper(d_ptr)); } \
+    friend class Private;
+
+#define B_DECLARE_PUBLIC(Class) \
+    inline Class* q_func() { return static_cast<Class *>(q_ptr); } \
+    inline const Class* q_func() const { return static_cast<const Class *>(q_ptr); } \
+    friend class Class;
+
+#define B_D Private * const d = d_func()
+#define B_Q(Class) Class * const q = q_func()
+
+/*
+   Some classes do not permit copies to be made of an object. These
+   classes contain a private copy constructor and assignment
+   operator to disable copying (the compiler gives an error message).
+*/
+#define D_DISABLE_COPY(Class) \
+    Class(const Class &); \
+    Class &operator=(const Class &);
+
+#endif
+
+#ifndef va_copy
+/* va_copy is not ANSI standard but is always available as __va_copy */
+#define va_copy __va_copy
+#endif
 
 /* Use the built-in atomic functions, if requested and available. */
 
