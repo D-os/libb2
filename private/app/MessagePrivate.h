@@ -43,10 +43,14 @@ enum {
 
 namespace BPrivate {
     class MessageAdapter;
+    namespace Archiving {
+        class BManagerBase;
+    }
 }
 
 class BMessage::Private {
     friend class BPrivate::MessageAdapter;
+    friend class BPrivate::Archiving::BManagerBase;
 
 public:
     struct field_header {

@@ -51,11 +51,15 @@ enum {
 
 namespace BPrivate {
     class MessageAdapter;
+    namespace Archiving {
+        class BManagerBase;
+    }
 }
 
 class BMessage {
     friend class BMessenger;
     friend class BPrivate::MessageAdapter;
+    friend class BPrivate::Archiving::BManagerBase;
 public:
             uint32				what;
 

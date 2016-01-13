@@ -7,6 +7,7 @@ HEADERS += $$files(headers/*.h) \
     $$files(private/interface/*.h) \
     $$files(private/shared/*.h) \
     $$files(private/support/*.h) \
+    $$files(private/binary_compatibility/*.h) \
     $$files(private/linux/*.h) \
     $$files(src/kits/kernel/*.h)
 SOURCES += $$files(*.cpp) \
@@ -20,6 +21,7 @@ INCLUDEPATH += headers \
     headers/interface \
     headers/kernel \
     headers/support \
+    private \
     private/app \
     private/interface \
     private/shared \
