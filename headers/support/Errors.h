@@ -15,9 +15,9 @@
 #define B_APP_ERROR_BASE			(B_GENERAL_ERROR_BASE + 0x2000)
 #define B_INTERFACE_ERROR_BASE		(B_GENERAL_ERROR_BASE + 0x3000)
 #define B_MEDIA_ERROR_BASE			(B_GENERAL_ERROR_BASE + 0x4000)
-										/* - 0x41ff */
+                                        /* - 0x41ff */
 #define B_TRANSLATION_ERROR_BASE	(B_GENERAL_ERROR_BASE + 0x4800)
-										/* - 0x48ff */
+                                        /* - 0x48ff */
 #define B_MIDI_ERROR_BASE			(B_GENERAL_ERROR_BASE + 0x5000)
 #define B_STORAGE_ERROR_BASE		(B_GENERAL_ERROR_BASE + 0x6000)
 #define B_POSIX_ERROR_BASE			(B_GENERAL_ERROR_BASE + 0x7000)
@@ -100,7 +100,7 @@
 /* Storage Kit/File System Errors */
 #define B_FILE_ERROR						(B_STORAGE_ERROR_BASE + 0)
 #define B_FILE_NOT_FOUND					(B_STORAGE_ERROR_BASE + 1)
-			/* deprecated: use B_ENTRY_NOT_FOUND instead */
+            /* deprecated: use B_ENTRY_NOT_FOUND instead */
 #define B_FILE_EXISTS						(B_STORAGE_ERROR_BASE + 2)
 #define B_ENTRY_NOT_FOUND					(B_STORAGE_ERROR_BASE + 3)
 #define B_NAME_TOO_LONG						(B_STORAGE_ERROR_BASE + 4)
@@ -127,6 +127,10 @@
 #	define B_FROM_POSIX_ERROR(error)	(error)
 #endif
 
+
+#ifdef __unix__
+#include <errno.h>
+#else
 #define B_POSIX_ENOMEM	B_TO_POSIX_ERROR(B_POSIX_ERROR_BASE + 0)
 #define E2BIG			B_TO_POSIX_ERROR(B_POSIX_ERROR_BASE + 1)
 #define ECHILD			B_TO_POSIX_ERROR(B_POSIX_ERROR_BASE + 2)
@@ -221,6 +225,7 @@
 #define ELOOP			B_TO_POSIX_ERROR(B_LINK_LIMIT)
 #define ENOEXEC			B_TO_POSIX_ERROR(B_NOT_AN_EXECUTABLE)
 #define EPIPE			B_TO_POSIX_ERROR(B_BUSTED_PIPE)
+#endif
 
 /* new error codes that can be mapped to POSIX errors */
 #define	B_BUFFER_OVERFLOW			B_FROM_POSIX_ERROR(EOVERFLOW)

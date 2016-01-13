@@ -3,7 +3,8 @@ add_global_arguments('-std=c99', '-Wno-multichar', language : 'c')
 add_global_arguments('-std=c++98', '-Wno-multichar', language : 'cpp')
 
 supportkit_files = files(
-    #'src/kits/support/Archivable.cpp',
+    'src/kits/support/Archivable.cpp',
+    'src/kits/support/ArchivingManagers.cpp',
     'src/kits/support/ByteOrder.cpp',
     'src/kits/support/DataIO.cpp',
     'src/kits/support/Flattenable.cpp',
@@ -43,6 +44,7 @@ be_inc = include_directories(
     'headers/support',
     )
 priv_inc = include_directories(
+    'private',
     'private/app',
     'private/interface',
     'private/shared',
