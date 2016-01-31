@@ -49,6 +49,8 @@ namespace BPrivate {
 }
 
 class BMessage::Private {
+    friend class BMessageQueue;
+    friend class BLooper;
     friend class BPrivate::MessageAdapter;
     friend class BPrivate::Archiving::BManagerBase;
 

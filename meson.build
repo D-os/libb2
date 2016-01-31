@@ -9,19 +9,25 @@ supportkit_files = files(
     'src/kits/support/DataIO.cpp',
     'src/kits/support/Flattenable.cpp',
     'src/kits/support/List.cpp',
+    'src/kits/support/Locker.cpp',
     'src/kits/support/String.cpp',
     'src/kits/support/StringList.cpp',
     )
 appkit_files = files(
-    #'src/kits/app/AppDefs.cpp',
+    'src/kits/app/AppDefs.cpp',
     'src/kits/app/AppMisc.cpp',
     #'src/kits/app/Application.cpp',
-    #'src/kits/app/Handler.cpp',
-    #'src/kits/app/Looper.cpp',
+    'src/kits/app/DirectMessageTarget.cpp',
+    'src/kits/app/Handler.cpp',
+    'src/kits/app/Looper.cpp',
+    'src/kits/app/LooperList.cpp',
     'src/kits/app/Message.cpp',
     'src/kits/app/MessageAdapter.cpp',
+    'src/kits/app/MessageFilter.cpp',
+    'src/kits/app/MessageQueue.cpp',
     'src/kits/app/MessageUtils.cpp',
     'src/kits/app/Messenger.cpp',
+    'src/kits/app/TokenSpace.cpp',
     )
 interfacekit_files = files(
     #'src/kits/interface/InterfaceDefs.cpp',
