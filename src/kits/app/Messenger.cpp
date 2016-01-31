@@ -25,7 +25,7 @@
 
 #include <AppMisc.h>
 //#include <LaunchRoster.h>
-//#include <LooperList.h>
+#include <LooperList.h>
 //#include <MessagePrivate.h>
 //#include <MessageUtils.h>
 #include <TokenSpace.h>
@@ -40,8 +40,8 @@
     debug_printf("STUBBED! %s %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
     abort();
 
-//using BPrivate::gDefaultTokens;
-//using BPrivate::gLooperList;
+using BPrivate::gDefaultTokens;
+using BPrivate::gLooperList;
 using BPrivate::BLooperList;
 
 enum {
@@ -99,17 +99,18 @@ BMessenger::IsTargetLocal() const
 BHandler*
 BMessenger::Target(BLooper** _looper) const
 {
+    const B_D;
     BHandler* handler = NULL;
-    STUB;
-//    if (IsTargetLocal()
-//        && (d->fHandlerToken > B_NULL_TOKEN
-//            || d->fHandlerToken == B_PREFERRED_TOKEN)) {
-//        gDefaultTokens.GetToken(d->fHandlerToken, B_HANDLER_TOKEN,
-//            (void**)&handler);
+    if (IsTargetLocal()
+        && (d->fHandlerToken > B_NULL_TOKEN
+            || d->fHandlerToken == B_PREFERRED_TOKEN)) {
+        gDefaultTokens.GetToken(d->fHandlerToken, B_HANDLER_TOKEN,
+            (void**)&handler);
+        STUB;
 //        if (_looper)
 //            *_looper = BPrivate::gLooperList.LooperForPort(fPort);
-//    } else if (_looper)
-//        *_looper = NULL;
+    } else if (_looper)
+        *_looper = NULL;
 
     return handler;
 }

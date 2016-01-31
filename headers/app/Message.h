@@ -58,6 +58,8 @@ namespace BPrivate {
 
 class BMessage {
     friend class BMessenger;
+    friend class BMessageQueue;
+    friend class BLooper;
     friend class BPrivate::MessageAdapter;
     friend class BPrivate::Archiving::BManagerBase;
 public:

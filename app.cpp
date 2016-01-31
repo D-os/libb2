@@ -1,6 +1,7 @@
 #include <Message.h>
 #include <Archivable.h>
 #include <String.h>
+#include <Handler.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,6 +90,9 @@ int main(int argc, char **argv) {
 //    if (uitest) {
 //        printf("Test(%s, %d)\n", uitest->string.String(), uitest->number);
 //    }
+
+    // --- handler
+    BHandler handler;
 
     return EXIT_SUCCESS;
 }
