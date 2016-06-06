@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <unistd.h>
-#include <sys/syscall.h>
+#include <pthread.h>
 
 #include "private.h"
 
@@ -41,7 +41,7 @@ static status_t _snooze(bigtime_t microseconds, int flags)
     tm.tv_sec = microseconds / 1000000;
     tm.tv_nsec = (microseconds % 1000000) * 1000;
 
-    _thread_info *info = _find_thread_info(syscall(SYS_gettid));
+    _thread_info *info = _find_thread_info(pthread_self());
     assert(info != NULL);
     info->state = B_THREAD_ASLEEP;
 

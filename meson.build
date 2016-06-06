@@ -39,7 +39,8 @@ be_inc = include_directories(
     )
 
 libroot = shared_library('root', kernelkit_files, 'src/linux/bus.c',
-    include_directories : [be_inc, include_directories('private/linux')])
+    include_directories : [be_inc, include_directories('private/linux')],
+    link_args: '-pthread')
 
 #libbe = shared_library('be', supportkit_files, appkit_files,
 #    include_directories : [be_inc, include_directories('private/shared')],

@@ -19,7 +19,7 @@ typedef enum {
 } _task_state;
 
 typedef struct {
-    pid_t           tid;
+    pthread_t       thread;
     char			name[B_OS_NAME_LENGTH];
     int32			priority;
     thread_state	state;
@@ -28,7 +28,6 @@ typedef struct {
     void			*stack_end;
     thread_func		func;
     void			*data;
-    status_t		exit;
     _task_state     task_state;
     int             has_data;
     thread_id       data_sender;
