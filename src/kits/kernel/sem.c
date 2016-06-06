@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <sched.h>
+#include <pthread.h>
 #include <linux/futex.h>
 #include <assert.h>
 
@@ -84,7 +85,7 @@ status_t acquire_sem_etc(sem_id sem, uint32 count, uint32 flags, bigtime_t timeo
 
     int i, a, b, c;
     bool syscall_ok = false;
-    pid_t tid;
+    pthread_t thread = 0;
     _thread_info *info;
 
     struct timespec *to = NULL;
@@ -125,8 +126,8 @@ again:
                      * you can use this field as a hint while debugging, you shouldn't
                      * take it too seriously. Love, Mom.
                      */
-                    tid = syscall(SYS_gettid);
-                    ((_sem_info *)sem)->latest_holder = tid;
+                    thread = pthread_self();
+                    ((_sem_info *)sem)->latest_holder = thread;
                     info->state = 0;
                     info->sem = 0;
                 }
@@ -138,7 +139,8 @@ again:
     }
 
     syscall_ok = true;
-    info = _find_thread_info(syscall(SYS_gettid));
+    if (!thread) thread = pthread_self();
+    info = _find_thread_info(thread);
     if (info == NULL) {
         return B_BAD_THREAD_ID;
     }

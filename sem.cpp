@@ -17,7 +17,7 @@ int32 worker(void *data)
 {
     thread_info t;
     get_thread_info(find_thread(NULL), &t);
-    printf("[%s] in thread %d:%d\n", t.name, getpid(), (pid_t)syscall(SYS_gettid));
+    printf("[%s] in thread %d:%lu\n", t.name, getpid(), find_thread(NULL));
     for (int i = 10; i > 0; i--) {
         status_t ret = acquire_sem(sem);
         if (ret != B_NO_ERROR) {
@@ -36,18 +36,18 @@ int main(int argc, char **argv) {
 
     number = 0;
 
-    printf("[main] %d:%d creating semaphore\n", getpid(), (pid_t)syscall(SYS_gettid));
+    printf("[main] %d:%lu creating semaphore\n", getpid(), find_thread(NULL));
     if ((sem = create_sem(number, "number")) < B_NO_ERROR) {
         printf("[main] failed creating semaphore: %ld\n", (ulong)sem);
         return EXIT_FAILURE;
     }
 
-    printf("[main] %d:%d spawning 99 workers\n", getpid(), (pid_t)syscall(SYS_gettid));
+    printf("[main] %d:%lu spawning 99 workers\n", getpid(), find_thread(NULL));
     for (int i = 1; i <= 99; i++) {
         sprintf(buf, "worker%02d", i);
         thread_id thread = spawn_thread(worker, buf, 0, NULL);
         if (thread < 0) {
-            printf("[main] error spawning thread %d: %d\n", i, thread);
+            printf("[main] error spawning thread %d: %lu\n", i, thread);
             return EXIT_FAILURE;
         }
         resume_thread(thread);

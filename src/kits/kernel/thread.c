@@ -1,6 +1,6 @@
 #include <OS.h>
 
-#include <sched.h>
+#include <pthread.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -16,18 +16,19 @@
 
 #include "private.h"
 
-static const int STACK_SIZE = 256 * 1024;
-
 static _thread_info _threads[256];
 
 static void _thread_init(int argc, char* argv[], char* envp[])
 {
     _thread_info *info = _threads;
-    info->tid = getpid();
+    info->thread = pthread_self();
     info->task_state = TASK_RUNNING;
-    info->stack_base = (void*)((addr_t)&info & ~(B_PAGE_SIZE - 1));
-    info->stack_end = info->stack_base + STACK_SIZE;
     prctl(PR_GET_NAME, (unsigned long) info->name, 0, 0, 0);
+    pthread_attr_t attr;
+    pthread_getattr_np(info->thread, &attr);
+    size_t size;
+    pthread_attr_getstack(&attr, &info->stack_base, &size);
+    info->stack_end = info->stack_base + size;
 }
 __attribute__((section(".init_array"))) void (* p_thread_init)(int,char*[],char*[]) = &_thread_init;
 
@@ -36,7 +37,7 @@ _thread_info *_find_thread_info(thread_id thread)
     _thread_info *info = _threads;
     _thread_info *fin = _threads + B_COUNT_OF(_threads);
     while (info < fin){
-        if (info->tid == thread) {
+        if (info->thread == thread) {
             return info;
         }
         info++;
@@ -49,7 +50,7 @@ static _thread_info *_acquire_thread_info()
     _thread_info *info = _threads;
     _thread_info *fin = _threads + B_COUNT_OF(_threads);
     while (info < fin){
-        if (cmpxchg(&info->tid, 0, -1) == 0) {
+        if (cmpxchg(&info->thread, 0, -1) == 0) {
             return info;
         }
         info++;
@@ -57,13 +58,13 @@ static _thread_info *_acquire_thread_info()
     return NULL;
 }
 
-static void _thread_control(int sig)
+static void _sigaction_handler(int sig)
 {
     if (sig == SIGTERM) {
-        syscall(SYS_exit);
+        pthread_exit((void*)(intptr_t)(0x80 + sig));
     }
 
-    _thread_info *info = _find_thread_info(syscall(SYS_gettid));
+    _thread_info *info = _find_thread_info(pthread_self());
     assert(info != NULL);
 
     if (sig == SIGCONT && info->task_state < TASK_RUNNING) {
@@ -71,32 +72,24 @@ static void _thread_control(int sig)
     }
 }
 
-static status_t _signal_thread(pid_t thread, int sig)
+static void* _thread_wrapper(void *arg)
 {
-    if (syscall(SYS_tgkill, getpid(), thread, sig) == 0) {
-        return B_OK;
-    }
-    switch (errno) {
-    case EINVAL:
-    case ESRCH:
-        return B_BAD_THREAD_ID;
-    default:
-        return B_FROM_POSIX_ERROR(errno);
-    }
-}
+    _thread_info *info = (_thread_info *)arg;
 
-static int _thread_wrapper(void *arg)
-{
     struct sigaction sa;
     sigfillset(&sa.sa_mask);
     sa.sa_flags = 0;
-    sa.sa_handler = _thread_control;
+    sa.sa_handler = _sigaction_handler;
     sigaction(SIGCONT, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
 
-    _thread_info *info = (_thread_info *)arg;
-
     prctl(PR_SET_NAME, (unsigned long) info->name, 0, 0, 0);
+
+    pthread_attr_t attr;
+    pthread_getattr_np(info->thread, &attr);
+    size_t size;
+    pthread_attr_getstack(&attr, &info->stack_base, &size);
+    info->stack_end = info->stack_base + size;
 
     if (cmpxchg(&info->task_state, TASK_NEW, TASK_WAITING) == TASK_NEW) {
         sigset_t wait_mask;
@@ -109,15 +102,15 @@ static int _thread_wrapper(void *arg)
         while (info->task_state == TASK_WAITING);
     }
 
-    info->exit = info->func(info->data);
-
+    status_t exit = info->func(info->data);
     info->task_state = TASK_EXITED;
-    return syscall(SYS_exit);
+    return (void*)(intptr_t)exit;
 }
 
 
 thread_id spawn_thread(thread_func func, const char *name, int32 priority, void *data)
 {
+    pthread_attr_t attr;
     _thread_info *info = _acquire_thread_info();
 
     if (info == NULL) {
@@ -126,31 +119,39 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
 
     info->task_state = TASK_NEW;
 
-    strncpy(info->name, name, B_OS_NAME_LENGTH);
-
-    if (info->stack_base == NULL) {
-        info->stack_base = mmap(NULL, STACK_SIZE,
-                                PROT_READ | PROT_WRITE,
-                                MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT | MAP_STACK | MAP_GROWSDOWN,
-                                -1, 0);
-        if (info->stack_base == MAP_FAILED) {
-            switch (errno) {
-            case EAGAIN:
-            case EINVAL:
-            case ENFILE:
-            case ENOMEM:
-                return B_NO_MEMORY;
-            default:
-                return B_FROM_POSIX_ERROR(errno);
-            }
-        }
-        info->stack_end = info->stack_base + STACK_SIZE;
+    if (name) {
+        strncpy(info->name, name, B_OS_NAME_LENGTH);
     }
     else {
-        memset(info->stack_base, 0, STACK_SIZE);
+        info->name[0] = 0;
     }
 
-    info->priority = priority; /* FIXME: not implemented */
+    if (pthread_attr_init(&attr) != 0) {
+        return B_NO_MEMORY;
+    }
+
+    if (pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED) != 0) {
+        return B_NO_MORE_THREADS;
+    }
+
+    if (priority > 99) {
+        if (pthread_attr_setschedpolicy(&attr, SCHED_RR) != 0) {
+            return B_NO_MORE_THREADS;
+        }
+        struct sched_param schedparam;
+        schedparam.sched_priority = priority - 99;
+        if (schedparam.sched_priority > 99) schedparam.sched_priority = 99;
+        if (pthread_attr_setschedparam(&attr, &schedparam) != 0) {
+            return B_NO_MORE_THREADS;
+        }
+    }
+    else {
+        /* FIXME! use BFS SCHED_ scheduling! */
+        if (pthread_attr_setschedpolicy(&attr, SCHED_OTHER) != 0) {
+            return B_NO_MORE_THREADS;
+        }
+    }
+    info->priority = priority;
 
     info->func = func;
     info->data = data;
@@ -158,21 +159,24 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
     info->has_data = 0;
 
     /* finally actually kick the thread */
-    info->tid = clone(_thread_wrapper, info->stack_end,
-                    CLONE_THREAD | CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_IO | CLONE_SIGHAND | CLONE_CHILD_CLEARTID,
-                    info, NULL, NULL, &info->tid);
-    if (info->tid == -1) {
-        switch (errno) {
+    int s = pthread_create(&info->thread, &attr, _thread_wrapper, info);
+    if (s != 0) {
+        info->thread = 0;
+        switch (s) {
         case EAGAIN:
             return B_NO_MORE_THREADS;
         case ENOMEM:
             return B_NO_MEMORY;
+        case EPERM:
+            return B_PERMISSION_DENIED;
         default:
-            return B_FROM_POSIX_ERROR(errno);
+            return B_FROM_POSIX_ERROR(s);
         }
     }
 
-    return info->tid;
+    pthread_attr_destroy(&attr);
+
+    return info->thread;
 }
 
 status_t wait_for_thread(thread_id thread, status_t* exit_value)
@@ -190,44 +194,38 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
         }
     }
 
-    if (syscall(SYS_futex, &info->tid, FUTEX_WAIT, info->tid, NULL, NULL, 0) != 0) {
-        switch (errno) {
+    void *exit = 0;
+    int s = pthread_join(info->thread, &exit);
+    if (s != 0) {
+        switch (s) {
         case EINTR:
+        case EDEADLK:
             return B_INTERRUPTED;
         case EINVAL:
-        case EAGAIN:
+        case ESRCH:
             return B_BAD_THREAD_ID;
         default:
-            return B_FROM_POSIX_ERROR(errno);
+            return B_FROM_POSIX_ERROR(s);
         }
     }
 
-    /* FIXME! there is a race to reuse the thread structure! */
-    /* copy-out values ASAP */
     _task_state state = info->task_state;
-    status_t exit = info->exit;
-    /* free stack if still not reused */
-    if (!info->tid) {
-        munmap(info->stack_base, STACK_SIZE);
-        info->stack_base = NULL;
-    }
-
-    assert(exit_value != NULL);
-    *exit_value = exit;
+    info->thread = 0; /* free task structure for reuse */
+    *exit_value = (intptr_t)exit;
     return state == TASK_EXITED ? B_OK : B_INTERRUPTED;
 }
 
 thread_id find_thread(const char* name)
 {
     if (name == NULL) {
-        return syscall(SYS_gettid);
+        return pthread_self();
     }
 
     _thread_info *info = _threads;
     _thread_info *end = _threads + sizeof(_threads)/sizeof(_threads[0]);
     while (info < end){
         if (strncmp(info->name, name, B_OS_NAME_LENGTH) == 0) {
-            return info->tid;
+            return info->thread;
         }
         info++;
     }
@@ -241,7 +239,7 @@ status_t kill_thread(thread_id thread)
         return B_BAD_THREAD_ID;
     }
 
-    return _signal_thread(info->tid, SIGTERM);
+    return B_FROM_POSIX_ERROR(pthread_kill(info->thread, SIGTERM));
 }
 
 status_t resume_thread(thread_id thread)
@@ -255,7 +253,7 @@ status_t resume_thread(thread_id thread)
         return B_OK;
     }
 
-    return _signal_thread(info->tid, SIGCONT);
+    return B_FROM_POSIX_ERROR(pthread_kill(info->thread, SIGCONT));
 }
 
 status_t suspend_thread(thread_id thread)
@@ -265,13 +263,12 @@ status_t suspend_thread(thread_id thread)
     return B_BAD_THREAD_STATE;
 }
 
-void exit_thread(status_t status)
+inline void exit_thread(status_t status)
 {
-    _thread_info *info = _find_thread_info(syscall(SYS_gettid));
+    _thread_info *info = _find_thread_info(pthread_self());
     assert(info != NULL);
-    info->exit = status;
     info->task_state = TASK_EXITED;
-    _thread_control(SIGTERM);
+    pthread_exit(&status);
 }
 
 status_t kill_team(team_id team)
@@ -339,7 +336,7 @@ status_t send_data(thread_id thread, int32 code, const void *buffer, size_t buff
     }
     info->data_buffer_size = bufferSize;
     info->data_code = code;
-    info->data_sender = syscall(SYS_gettid);
+    info->data_sender = pthread_self();
     c = cmpxchg(&info->has_data, 1, 2); /* mark as ready to read */
     assert(c == 1);
     if (syscall(SYS_futex, &info->has_data, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0) != 0) {
@@ -357,7 +354,7 @@ int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
 {
     int c;
 
-    _thread_info *info = _find_thread_info(syscall(SYS_gettid));
+    _thread_info *info = _find_thread_info(pthread_self());
     assert(info != NULL);
 
     info->state = B_THREAD_RECEIVING;
@@ -432,5 +429,5 @@ status_t _get_next_thread_info(team_id team, int32 *cookie, thread_info *info, s
 
     if (*cookie >= sizeof(_threads)/sizeof(_threads[0])) return B_BAD_VALUE;
 
-    return _get_thread_info(_threads[(*cookie)++].tid, info, size);
+    return _get_thread_info(_threads[(*cookie)++].thread, info, size);
 }
