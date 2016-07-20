@@ -36,9 +36,9 @@
 
 
 // debugging
-//#define DBG(x) x
-#define DBG(x)	;
-#define PRINT(x)	DBG({ printf("[%6ld] ", find_thread(NULL)); printf x; })
+#define DBG(x) x
+//#define DBG(x)	;
+#define PRINT(x)	DBG({ printf("[%6lu] ", find_thread(NULL)); printf x; })
 
 #define STUB \
     debug_printf("STUBBED! %s %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
@@ -552,7 +552,7 @@ PRINT(("BLooper::Unlock()\n"));
 
     //	Decrement fOwnerCount
     --fOwnerCount;
-PRINT(("  fOwnerCount now: %ld\n", fOwnerCount));
+PRINT(("  fOwnerCount now: %d\n", fOwnerCount));
     //	Check to see if the owner still wants a lock
     if (fOwnerCount == 0) {
         //	Set fOwner to invalid thread_id (< 0)
@@ -562,7 +562,7 @@ PRINT(("  fOwnerCount now: %ld\n", fOwnerCount));
 #if DEBUG < 1
         //	Decrement requested lock count (using fAtomicCount for this)
         int32 atomicCount = atomic_add(&fAtomicCount, -1);
-PRINT(("  fAtomicCount now: %ld\n", fAtomicCount));
+PRINT(("  fAtomicCount now: %d\n", fAtomicCount));
 
         // Check if anyone is waiting for a lock
         // and release if it's the case
@@ -876,7 +876,7 @@ BLooper::_PostMessage(BMessage* msg, BHandler* handler, BHandler* replyTo)
 status_t
 BLooper::_Lock(BLooper* looper, port_id port, bigtime_t timeout)
 {
-    PRINT(("BLooper::_Lock(%p, %lx)\n", looper, port));
+    PRINT(("BLooper::_Lock(%p, %llx)\n", looper, port));
 
     //	Check params (loop, port)
     if (looper == NULL && port < 0) {
@@ -909,7 +909,7 @@ BLooper::_Lock(BLooper* looper, port_id port, bigtime_t timeout)
         // Check for nested lock attempt
         if (currentThread == looper->fOwner) {
             ++looper->fOwnerCount;
-            PRINT(("BLooper::_Lock() done 5: fOwnerCount: %ld\n", loop->fOwnerCount));
+            PRINT(("BLooper::_Lock() done 5: fOwnerCount: %d\n", looper->fOwnerCount));
             return B_OK;
         }
 
@@ -950,7 +950,7 @@ BLooper::_LockComplete(BLooper* looper, int32 oldCount, thread_id thread,
         looper->fOwnerCount = 1;
     }
 
-    PRINT(("BLooper::_LockComplete() done: %lx\n", err));
+    PRINT(("BLooper::_LockComplete() done: %x\n", err));
     return err;
 }
 
@@ -1042,7 +1042,7 @@ BLooper::_task0_(void* arg)
         delete looper;
     }
 
-    PRINT(("LOOPER: _task0_() done: thread %ld\n", find_thread(NULL)));
+    PRINT(("LOOPER: _task0_() done: thread %lu\n", find_thread(NULL)));
     return B_OK;
 }
 
@@ -1080,10 +1080,10 @@ BLooper::ReadRawFromPort(int32* msgCode, bigtime_t timeout)
         return NULL;
     }
 
-    PRINT(("BLooper::ReadRawFromPort() read: %.4s, %p (%d bytes)\n",
+    PRINT(("BLooper::ReadRawFromPort() read: %.4s, %p (%zd bytes)\n",
         (char*)msgCode, buffer, bufferSize));
-
 #endif
+
     return buffer;
 }
 
@@ -1180,7 +1180,7 @@ BLooper::task_looper()
                 // dispatch loop.
                 dispatchNextMessage = false;
             } else {
-                PRINT(("LOOPER: fLastMessage: 0x%lx: %.4s\n", fLastMessage->what,
+                PRINT(("LOOPER: fLastMessage: 0x%x: %.4s\n", fLastMessage->what,
                     (char*)&fLastMessage->what));
                 DBG(fLastMessage->PrintToStream());
 
@@ -1202,7 +1202,7 @@ BLooper::task_looper()
                     if (handler != NULL && handler->Looper() != this)
                         handler = NULL;
 
-                    PRINT(("LOOPER: use %ld, handler: %p, this: %p\n",
+                    PRINT(("LOOPER: use %d, handler: %p, this: %p\n",
                         message_d->GetTarget(), handler, this));
                 }
 

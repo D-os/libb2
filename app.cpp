@@ -2,9 +2,14 @@
 #include <Archivable.h>
 #include <String.h>
 #include <Handler.h>
+#include <Looper.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <Application.h>
+#include <Messenger.h>
+BMessenger be_app_messenger;
 
 class Test : public BArchivable {
 public:
@@ -93,6 +98,18 @@ int main(int argc, char **argv) {
 
     // --- handler
     BHandler handler;
+    handler.SetName(test.string);
+    printf("Handler: %s\n", handler.Name());
+
+    // --- looper
+    BLooper looper;
+    thread_id tid = looper.Run();
+    printf("Looper thread_id: %lu\n", tid);
+
+    looper.PostMessage(&msg);
+
+    snooze(1000000);
+    looper.Quit();
 
     return EXIT_SUCCESS;
 }

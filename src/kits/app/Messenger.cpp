@@ -306,7 +306,7 @@ BMessenger::HashValue() const
     \param port The target looper port.
     \param token The target handler token.
 */
-inline
+//inline
 void
 BMessenger::Private::SetTo(team_id team, port_id port, int32 token)
 {
@@ -406,8 +406,6 @@ void
 BMessenger::Private::InitData(const BHandler* handler, const BLooper* looper,
     status_t* _result)
 {
-    STUB;
-#if 0
     status_t result = handler || looper != NULL ? B_OK : B_BAD_VALUE;
     if (result == B_OK) {
         if (handler != NULL) {
@@ -438,7 +436,6 @@ BMessenger::Private::InitData(const BHandler* handler, const BLooper* looper,
 
     if (_result != NULL)
         *_result = result;
-#endif
 }
 
 

@@ -18,6 +18,8 @@ class BHandler;
 class BLooper;
 
 class BMessenger {
+    friend class BMessage::Private;
+
 public:
                                     BMessenger();
                                     BMessenger(const char* signature,
