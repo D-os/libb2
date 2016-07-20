@@ -12,13 +12,13 @@
 #include <MessagePrivate.h>
 //#include <MessageUtils.h>
 
-//#include <DirectMessageTarget.h>
-//#include <MessengerPrivate.h>
+#include <DirectMessageTarget.h>
+#include <MessengerPrivate.h>
 #include <TokenSpace.h>
 //#include <util/KMessage.h>
 
 //#include <Alignment.h>
-//#include <Application.h>
+#include <Application.h>
 #include <AppDefs.h>
 #include <AppMisc.h>
 //#include <BlockCache.h>
@@ -49,19 +49,19 @@
 #define VERBOSE_DEBUG_OUTPUT
 #ifdef VERBOSE_DEBUG_OUTPUT
 #define DEBUG_FUNCTION_ENTER	\
-    debug_printf("msg thread: %d; this: %p; header: %p; fields: %p;" \
+    debug_printf("msg thread: %lu; this: %p; header: %p; fields: %p;" \
         " data: %p; what: 0x%08x '%.4s'; line: %d; func: %s\n", \
         find_thread(NULL), this, d_ptr->fHeader, d_ptr->fFields, d_ptr->fData, \
         what, (char*)&what, __LINE__, __PRETTY_FUNCTION__);
 
 #define DEBUG_FUNCTION_ENTER_PRIVATE	\
-    debug_printf("msg thread: %d; this: %p; header: %p; fields: %p;" \
+    debug_printf("msg thread: %lu; this: %p; header: %p; fields: %p;" \
         " data: %p; line: %d; func: %s\n", \
         find_thread(NULL), this, fHeader, fFields, fData, \
         __LINE__, __PRETTY_FUNCTION__);
 
 #define DEBUG_FUNCTION_ENTER2	\
-    debug_printf("msg thread: %d; line: %d: func: %s\n", find_thread(NULL), \
+    debug_printf("msg thread: %lu; line: %d: func: %s\n", find_thread(NULL), \
         __LINE__, __PRETTY_FUNCTION__);
 #else
 #define DEBUG_FUNCTION_ENTER	/* nothing */
@@ -173,7 +173,7 @@ BMessage::BMessage(uint32 _what) : d_ptr(new Private(this))
 }
 
 
-BMessage::BMessage(const BMessage& other) : d_ptr(new Private(this))
+BMessage::BMessage(const BMessage& other) : d_ptr(new Private(*other.d_ptr))
 {
     DEBUG_FUNCTION_ENTER;
     *this = other;
@@ -2085,13 +2085,12 @@ BMessage::Private::SendMessage(port_id port, team_id portOwner, int32 token,
     bigtime_t timeout, bool replyRequired, BMessenger& replyTo) const
 {
     DEBUG_FUNCTION_ENTER_PRIVATE;
-    STUB;
-    return B_NOT_SUPPORTED;
-#if 0
     ssize_t size = 0;
     char* buffer = NULL;
     Private::message_header* header = NULL;
     status_t result = B_OK;
+
+    B_Q(const BMessage);
 
     BPrivate::BDirectMessageTarget* direct = NULL;
     BMessage* copy = NULL;
@@ -2102,15 +2101,15 @@ BMessage::Private::SendMessage(port_id port, team_id portOwner, int32 token,
         // We have a direct local message target - we can just enqueue the
         // message in its message queue. This will also prevent possible
         // deadlocks when the queue is full.
-        copy = new BMessage(*this);
+        copy = new BMessage(*q);
         if (copy != NULL) {
-            header = copy->fHeader;
+            header = copy->d_func()->fHeader;
             header->flags = fHeader->flags;
         } else {
             direct->Release();
             return B_NO_MEMORY;
         }
-#ifndef HAIKU_TARGET_PLATFORM_LIBBE_TEST
+#if 0 //ndef HAIKU_TARGET_PLATFORM_LIBBE_TEST
     } else if ((fHeader->flags & MESSAGE_FLAG_REPLY_AS_KMESSAGE) != 0) {
         KMessage toMessage;
         result = BPrivate::MessageAdapter::ConvertToKMessage(this, toMessage);
@@ -2153,12 +2152,12 @@ BMessage::Private::SendMessage(port_id port, team_id portOwner, int32 token,
         }
 #endif
     } else {
-        size = FlattenedSize();
+        size = q->FlattenedSize();
         buffer = (char*)malloc(size);
         if (buffer == NULL)
             return B_NO_MEMORY;
 
-        result = Flatten(buffer, size);
+        result = q->Flatten(buffer, size);
         if (result != B_OK) {
             free(buffer);
             return result;
@@ -2168,14 +2167,14 @@ BMessage::Private::SendMessage(port_id port, team_id portOwner, int32 token,
     }
 
     if (!replyTo.IsValid()) {
-        BMessenger::Private(replyTo).SetTo(fHeader->reply_team,
+        replyTo.d_func()->SetTo(fHeader->reply_team,
             fHeader->reply_port, fHeader->reply_target);
 
         if (!replyTo.IsValid())
             replyTo = be_app_messenger;
     }
 
-    BMessenger::Private replyToPrivate(replyTo);
+    BMessenger::Private & replyToPrivate = *replyTo.d_func();
 
     if (replyRequired) {
         header->flags |= MESSAGE_FLAG_REPLY_REQUIRED;
@@ -2194,12 +2193,13 @@ BMessage::Private::SendMessage(port_id port, team_id portOwner, int32 token,
             char(what >> 24), char(what >> 16), char(what >> 8), (char)what);
 
         do {
-            result = write_port_etc(port, kPortMessageCode, (void*)buffer,
-                size, B_RELATIVE_TIMEOUT, timeout);
+            STUB;
+            //result = write_port_etc(port, kPortMessageCode, (void*)buffer,
+            //    size, B_RELATIVE_TIMEOUT, timeout);
         } while (result == B_INTERRUPTED);
     }
 
-    if (result == B_OK && IsSourceWaiting()) {
+    if (result == B_OK && q->IsSourceWaiting()) {
         // the forwarded message will handle the reply - we must not do
         // this anymore
         fHeader->flags |= MESSAGE_FLAG_REPLY_DONE;
@@ -2216,17 +2216,17 @@ BMessage::Private::SendMessage(port_id port, team_id portOwner, int32 token,
 
         // this is a local message transmission
         direct->AddMessage(copy);
-        if (direct->Queue()->IsNextMessage(copy) && port_count(port) <= 0) {
+        if (direct->Queue()->IsNextMessage(copy) /*&& port_count(port) <= 0*/) {
             // there is currently no message waiting, and we need to wakeup the
             // looper
-            write_port_etc(port, 0, NULL, 0, B_RELATIVE_TIMEOUT, 0);
+            STUB;
+            //write_port_etc(port, 0, NULL, 0, B_RELATIVE_TIMEOUT, 0);
         }
         direct->Release();
     }
 
     free(buffer);
     return result;
-#endif
 }
 
 

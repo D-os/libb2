@@ -20,7 +20,7 @@
 #define MAX_FIELD_PREALLOCATION			50
 
 
-//static const int32 kPortMessageCode = 'pjpp';
+static const int32 kPortMessageCode = 'pjpp';
 
 
 enum {

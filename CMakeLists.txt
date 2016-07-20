@@ -24,7 +24,7 @@ add_library(root SHARED
 )
 target_sources(root PRIVATE
     headers/KernelKit.h headers/kernel/OS.h headers/kernel/image.h
-    src/kits/kernel/private.h src/linux/bus.c private/linux/kdbus.h private/linux/kdbus-api.h
+    src/kits/kernel/private.h
 )
 target_include_directories(root PUBLIC headers headers/support headers/kernel PRIVATE private/linux)
 target_link_libraries(root PUBLIC pthread)
@@ -61,6 +61,7 @@ target_sources(be PRIVATE
 
     headers/AppKit.h
     headers/app/AppDefs.h
+    headers/app/Application.h
     headers/app/Handler.h
     headers/app/Looper.h
     headers/app/MessageFilter.h
