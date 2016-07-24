@@ -15,47 +15,87 @@
 #include <assert.h>
 
 #include "private.h"
+#include "utlist.h" // https://troydhanson.github.io/uthash/utlist.html
 
-static _thread_info _threads[256];
+/* current thread info */
+__thread _thread_info *_info = NULL;
+
+/* head of linked list of all _thread_info */
+static _thread_info *_threads = NULL;
+static unsigned _threads_lock = 1; // read-write lock futex
+const static unsigned _threads_lock_open = 1;
+const static unsigned _threads_lock_wlocked = 0;
+
+static void _threads_unlock()
+{
+    unsigned current, wanted;
+    do {
+        current = _threads_lock;
+        if (current == _threads_lock_open) return;
+        if (current == _threads_lock_wlocked) {
+            wanted = _threads_lock_open;
+        } else {
+            wanted = current - 1;
+        }
+    } while (cmpxchg(&_threads_lock, current, wanted) != current);
+    syscall(SYS_futex, &_threads_lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+}
+
+static void _threads_rlock()
+{
+    unsigned current;
+    while ((current = _threads_lock) == _threads_lock_wlocked || cmpxchg(&_threads_lock, current, current + 1) != current) {
+        while (syscall(SYS_futex, &_threads_lock, FUTEX_WAIT_PRIVATE, current, NULL, NULL, 0) != 0) {
+            cpu_relax();
+            if (_threads_lock >= _threads_lock_open) break;
+        }
+        // will be able to acquire rlock no matter what unlock woke us
+    }
+}
+
+static void _threads_wlock()
+{
+    unsigned current;
+    while ((current = cmpxchg(&_threads_lock, _threads_lock_open, _threads_lock_wlocked)) != _threads_lock_open) {
+        while (syscall(SYS_futex, &_threads_lock, FUTEX_WAIT_PRIVATE, current, NULL, NULL, 0) != 0) {
+            cpu_relax();
+            if (_threads_lock == _threads_lock_open) break;
+        }
+        if (_threads_lock != _threads_lock_open) {
+            // in rlock - won't be able to acquire lock - wake someone else
+            syscall(SYS_futex, &_threads_lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+        }
+    }
+}
 
 static void _thread_init(int argc, char* argv[], char* envp[])
 {
-    _thread_info *info = _threads;
-    info->thread = pthread_self();
-    info->task_state = TASK_RUNNING;
-    prctl(PR_GET_NAME, (unsigned long) info->name, 0, 0, 0);
+    /* fill main thread info */
+    _info = calloc(1, sizeof(_thread_info));
+    _info->pthread = pthread_self();
+    _info->tid = syscall(SYS_gettid);
+    _info->team = getpid();
+    _info->task_state = TASK_RUNNING;
+    prctl(PR_GET_NAME, (unsigned long) _info->name, 0, 0, 0);
     pthread_attr_t attr;
-    pthread_getattr_np(info->thread, &attr);
+    pthread_getattr_np(_info->pthread, &attr);
     size_t size;
-    pthread_attr_getstack(&attr, &info->stack_base, &size);
-    info->stack_end = info->stack_base + size;
+    pthread_attr_getstack(&attr, &_info->stack_base, &size);
+    _info->stack_end = _info->stack_base + size;
+    /* add it as first thread */
+    _threads_wlock();
+    DL_APPEND(_threads, _info);
+    _threads_unlock();
 }
 __attribute__((section(".init_array"))) void (* p_thread_init)(int,char*[],char*[]) = &_thread_init;
 
+/* WARNING! you need to lock _threads in caller function! */
 _thread_info *_find_thread_info(thread_id thread)
 {
-    _thread_info *info = _threads;
-    _thread_info *fin = _threads + B_COUNT_OF(_threads);
-    while (info < fin){
-        if (info->thread == thread) {
-            return info;
-        }
-        info++;
-    }
-    return NULL;
-}
-
-static _thread_info *_acquire_thread_info()
-{
-    _thread_info *info = _threads;
-    _thread_info *fin = _threads + B_COUNT_OF(_threads);
-    while (info < fin){
-        if (cmpxchg(&info->thread, 0, -1) == 0) {
-            return info;
-        }
-        info++;
-    }
-    return NULL;
+    if (_info->tid == thread) return _info;
+    _thread_info *info;
+    DL_SEARCH_SCALAR(_threads, info, tid, thread);
+    return info;
 }
 
 static void _sigaction_handler(int sig)
@@ -64,17 +104,31 @@ static void _sigaction_handler(int sig)
         pthread_exit((void*)(intptr_t)(0x80 + sig));
     }
 
-    _thread_info *info = _find_thread_info(pthread_self());
-    assert(info != NULL);
-
-    if (sig == SIGCONT && info->task_state < TASK_RUNNING) {
-        info->task_state = TASK_RUNNING;
+    if (sig == SIGCONT && _info->task_state < TASK_RUNNING) {
+        _info->task_state = TASK_RUNNING;
     }
 }
 
+static status_t _suspend_thread(_thread_info *info, _task_state state)
+{
+    sigset_t wait_mask;
+    sigfillset(&wait_mask);
+    sigdelset(&wait_mask, SIGCONT);
+    sigdelset(&wait_mask, SIGTERM);
+    if (cmpxchg(&info->task_state, state, TASK_PAUSED) == state) {
+        do {
+            sigsuspend(&wait_mask);
+        }
+        while (info->task_state == TASK_PAUSED);
+        return B_OK;
+    }
+    return B_BAD_THREAD_ID;
+}
+
+#include <stdio.h>
 static void* _thread_wrapper(void *arg)
 {
-    _thread_info *info = (_thread_info *)arg;
+    _info = arg;
 
     struct sigaction sa;
     sigfillset(&sa.sa_mask);
@@ -83,40 +137,45 @@ static void* _thread_wrapper(void *arg)
     sigaction(SIGCONT, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
 
-    prctl(PR_SET_NAME, (unsigned long) info->name, 0, 0, 0);
+    _info->tid = syscall(SYS_gettid);
+    prctl(PR_SET_NAME, (unsigned long) _info->name, 0, 0, 0);
 
     pthread_attr_t attr;
-    pthread_getattr_np(info->thread, &attr);
+    pthread_getattr_np(_info->pthread, &attr);
     size_t size;
-    pthread_attr_getstack(&attr, &info->stack_base, &size);
-    info->stack_end = info->stack_base + size;
+    pthread_attr_getstack(&attr, &_info->stack_base, &size);
+    _info->stack_end = _info->stack_base + size;
 
-    if (cmpxchg(&info->task_state, TASK_NEW, TASK_WAITING) == TASK_NEW) {
-        sigset_t wait_mask;
-        sigfillset(&wait_mask);
-        sigdelset(&wait_mask, SIGCONT);
-        sigdelset(&wait_mask, SIGTERM);
-        do {
-            sigsuspend(&wait_mask);
-        }
-        while (info->task_state == TASK_WAITING);
-    }
+    /* init done - release spawning thread */
+    syscall(SYS_futex, &_info->tid, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
 
-    status_t exit = info->func(info->data);
-    info->task_state = TASK_EXITED;
+    _suspend_thread(_info, TASK_NEW);
+
+    status_t exit = _info->func(_info->data);
+
+    _info->task_state = TASK_EXITED;
+    if (_info->task_state_copy) *_info->task_state_copy = _info->task_state;
+
+    _threads_wlock();
+    DL_DELETE(_threads, _info);
+    _threads_unlock();
+    free(_info);
+
     return (void*)(intptr_t)exit;
 }
 
 
 thread_id spawn_thread(thread_func func, const char *name, int32 priority, void *data)
 {
+    thread_id ret;
     pthread_attr_t attr;
-    _thread_info *info = _acquire_thread_info();
+    _thread_info *info = calloc(1, sizeof(_thread_info));
 
     if (info == NULL) {
         return B_NO_MORE_THREADS;
     }
 
+    info->team = _info->team;
     info->task_state = TASK_NEW;
 
     if (name) {
@@ -127,28 +186,33 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
     }
 
     if (pthread_attr_init(&attr) != 0) {
-        return B_NO_MEMORY;
+        ret = B_NO_MEMORY;
+        goto error1;
     }
 
     if (pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED) != 0) {
-        return B_NO_MORE_THREADS;
+        ret = B_NO_MORE_THREADS;
+        goto error2;
     }
 
     if (priority > 99) {
         if (pthread_attr_setschedpolicy(&attr, SCHED_RR) != 0) {
-            return B_NO_MORE_THREADS;
+            ret = B_NO_MORE_THREADS;
+            goto error2;
         }
         struct sched_param schedparam;
         schedparam.sched_priority = priority - 99;
         if (schedparam.sched_priority > 99) schedparam.sched_priority = 99;
         if (pthread_attr_setschedparam(&attr, &schedparam) != 0) {
-            return B_NO_MORE_THREADS;
+            ret = B_NO_MORE_THREADS;
+            goto error2;
         }
     }
     else {
         /* FIXME! use BFS SCHED_ scheduling! */
         if (pthread_attr_setschedpolicy(&attr, SCHED_OTHER) != 0) {
-            return B_NO_MORE_THREADS;
+            ret = B_NO_MORE_THREADS;
+            goto error2;
         }
     }
     info->priority = priority;
@@ -159,44 +223,71 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
     info->has_data = 0;
 
     /* finally actually kick the thread */
-    int s = pthread_create(&info->thread, &attr, _thread_wrapper, info);
+    int s = pthread_create(&info->pthread, &attr, _thread_wrapper, info);
     if (s != 0) {
-        info->thread = 0;
+        info->pthread = 0;
         switch (s) {
         case EAGAIN:
-            return B_NO_MORE_THREADS;
+            ret = B_NO_MORE_THREADS;
+            goto error2;
         case ENOMEM:
-            return B_NO_MEMORY;
+            ret = B_NO_MEMORY;
+            goto error2;
         case EPERM:
-            return B_PERMISSION_DENIED;
+            ret = B_PERMISSION_DENIED;
+            goto error2;
         default:
-            return B_FROM_POSIX_ERROR(s);
+            ret = B_FROM_POSIX_ERROR(s);
+            goto error2;
         }
     }
 
     pthread_attr_destroy(&attr);
 
-    return info->thread;
+    /* wait for new thread initialisation function */
+    syscall(SYS_futex, &info->tid, FUTEX_WAIT_PRIVATE, 0, NULL, NULL, 0);
+
+    _threads_wlock();
+    DL_APPEND(_threads, info);
+    _threads_unlock();
+
+    return info->tid;
+error2:
+    pthread_attr_destroy(&attr);
+error1:
+    free(info);
+    return ret;
 }
 
 status_t wait_for_thread(thread_id thread, status_t* exit_value)
 {
+    _threads_rlock();
     _thread_info *info = _find_thread_info(thread);
+    status_t status = B_OK;
+    int s;
+    void *exit = 0;
+    _task_state state;
 
     if (info == NULL) {
-        return B_BAD_THREAD_ID;
+        status = B_BAD_THREAD_ID;
+        goto exit;
     }
 
     if (info->task_state != TASK_RUNNING) {
-        status_t status = resume_thread(thread);
+        status = resume_thread(thread);
         if (status != B_OK) {
-            return status;
+            goto exit;
         }
     }
 
-    void *exit = 0;
-    int s = pthread_join(info->thread, &exit);
+    info->task_state_copy = &state;
+    _threads_unlock();
+    s = pthread_join(info->pthread, &exit);
     if (s != 0) {
+        _threads_rlock();
+        info = _find_thread_info(thread);
+        if (info) info->task_state_copy = NULL;
+        _threads_unlock();
         switch (s) {
         case EINTR:
         case EDEADLK:
@@ -209,65 +300,79 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
         }
     }
 
-    _task_state state = info->task_state;
-    info->thread = 0; /* free task structure for reuse */
     *exit_value = (intptr_t)exit;
     return state == TASK_EXITED ? B_OK : B_INTERRUPTED;
+
+exit:
+    _threads_unlock();
+    return status;
 }
 
 thread_id find_thread(const char* name)
 {
     if (name == NULL) {
-        return pthread_self();
+        return _info->tid;
     }
 
-    _thread_info *info = _threads;
-    _thread_info *end = _threads + sizeof(_threads)/sizeof(_threads[0]);
-    while (info < end){
+    thread_id ret = B_NAME_NOT_FOUND;
+    _thread_info *info;
+    _threads_rlock();
+    DL_FOREACH(_threads, info) {
         if (strncmp(info->name, name, B_OS_NAME_LENGTH) == 0) {
-            return info->thread;
+            ret = info->tid;
+            break;
         }
-        info++;
     }
-    return B_NAME_NOT_FOUND;
+    _threads_unlock();
+    return ret;
 }
 
 status_t kill_thread(thread_id thread)
 {
+    _threads_rlock();
     _thread_info *info = _find_thread_info(thread);
     if (info == NULL || info->task_state == TASK_EXITED) {
+        _threads_unlock();
         return B_BAD_THREAD_ID;
     }
 
-    return B_FROM_POSIX_ERROR(pthread_kill(info->thread, SIGTERM));
+    pthread_t pthread = info->pthread;
+    _threads_unlock();
+    return B_FROM_POSIX_ERROR(pthread_kill(pthread, SIGTERM));
 }
 
 status_t resume_thread(thread_id thread)
 {
+    _threads_rlock();
     _thread_info *info = _find_thread_info(thread);
     if (info == NULL) {
+        _threads_unlock();
         return B_BAD_THREAD_ID;
     }
 
     if (cmpxchg(&info->task_state, TASK_NEW, TASK_RUNNING) == TASK_NEW) {
+        _threads_unlock();
         return B_OK;
     }
 
-    return B_FROM_POSIX_ERROR(pthread_kill(info->thread, SIGCONT));
+    pthread_t pthread = info->pthread;
+    _threads_unlock();
+    return B_FROM_POSIX_ERROR(pthread_kill(pthread, SIGCONT));
 }
 
 status_t suspend_thread(thread_id thread)
 {
-    /* suspending thread is not supported */
+    if (_info->tid == thread) {
+        return _suspend_thread(_info, TASK_RUNNING);
+    }
+    /* suspending other threads is not supported */
     abort();
-    return B_BAD_THREAD_STATE;
+    return B_NOT_SUPPORTED;
 }
 
 inline void exit_thread(status_t status)
 {
-    _thread_info *info = _find_thread_info(pthread_self());
-    assert(info != NULL);
-    info->task_state = TASK_EXITED;
+    _info->task_state = TASK_EXITED;
     pthread_exit(&status);
 }
 
@@ -293,11 +398,14 @@ bool has_data(thread_id thread)
 status_t send_data(thread_id thread, int32 code, const void *buffer, size_t bufferSize)
 {
     int c;
+    status_t status = B_OK;
 
+    _threads_rlock();
     _thread_info *info = _find_thread_info(thread);
 
     if (info == NULL) {
-        return B_BAD_THREAD_ID;
+        status = B_BAD_THREAD_ID;
+        goto exit;
     }
 
 
@@ -305,9 +413,11 @@ status_t send_data(thread_id thread, int32 code, const void *buffer, size_t buff
         if (syscall(SYS_futex, &info->has_data, FUTEX_WAIT_PRIVATE, c, NULL, NULL, 0) != 0) {
             switch (errno) {
             case EINTR:
-                return B_INTERRUPTED;
+                status = B_INTERRUPTED;
+                goto exit;
             default:
-                return B_FROM_POSIX_ERROR(errno);
+                status = B_FROM_POSIX_ERROR(errno);
+                goto exit;
             }
         }
     }
@@ -324,9 +434,11 @@ status_t send_data(thread_id thread, int32 code, const void *buffer, size_t buff
             case EINVAL:
             case ENFILE:
             case ENOMEM:
-                return B_NO_MEMORY;
+                status = B_NO_MEMORY;
+                goto exit;
             default:
-                return B_FROM_POSIX_ERROR(errno);
+                status = B_FROM_POSIX_ERROR(errno);
+                goto exit;
             }
         }
         memcpy(info->data_buffer, buffer, bufferSize);
@@ -336,60 +448,58 @@ status_t send_data(thread_id thread, int32 code, const void *buffer, size_t buff
     }
     info->data_buffer_size = bufferSize;
     info->data_code = code;
-    info->data_sender = pthread_self();
+    info->data_sender = _info->tid;
     c = cmpxchg(&info->has_data, 1, 2); /* mark as ready to read */
     assert(c == 1);
     if (syscall(SYS_futex, &info->has_data, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0) != 0) {
         switch (errno) {
         case EINTR:
-            return B_INTERRUPTED;
+            status = B_INTERRUPTED;
+            goto exit;
         default:
-            return B_FROM_POSIX_ERROR(errno);
+            status = B_FROM_POSIX_ERROR(errno);
+            goto exit;
         }
     }
-    return B_OK;
+exit:
+    _threads_unlock();
+    return status;
 }
 
 int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
 {
     int c;
 
-    _thread_info *info = _find_thread_info(pthread_self());
-    assert(info != NULL);
+    _info->state = B_THREAD_RECEIVING;
 
-    info->state = B_THREAD_RECEIVING;
-
-    while ((c = cmpxchg(&info->has_data, 2, 1)) != 2) {
-        if (syscall(SYS_futex, &info->has_data, FUTEX_WAIT_PRIVATE, c, NULL, NULL, 0) != 0) {
+    while ((c = cmpxchg(&_info->has_data, 2, 1)) != 2) {
+        if (syscall(SYS_futex, &_info->has_data, FUTEX_WAIT_PRIVATE, c, NULL, NULL, 0) != 0) {
             return B_INTERRUPTED;
         }
     }
 
     assert(sender != NULL);
-    *sender = info->data_sender;
+    *sender = _info->data_sender;
     if (buffer && bufferSize) {
-        memcpy(buffer, info->data_buffer, min_c(bufferSize, info->data_buffer_size));
+        memcpy(buffer, _info->data_buffer, min_c(bufferSize, _info->data_buffer_size));
     }
-    if (info->data_buffer && info->data_buffer_size) {
-        munmap(info->data_buffer, info->data_buffer_size);
+    if (_info->data_buffer && _info->data_buffer_size) {
+        munmap(_info->data_buffer, _info->data_buffer_size);
     }
 
-    info->state = 0;
+    _info->state = 0;
 
-    return info->data_code;
+    return _info->data_code;
 }
 
-status_t _get_thread_info(thread_id id, thread_info *info, size_t size)
+/** WARNING! you need to lock _threads in caller function! */
+static status_t _fill_thread_info(thread_info *info, _thread_info *_nfo, size_t size)
 {
-    _thread_info *_nfo = _find_thread_info(id);
-
-    if (_nfo == NULL) {
-        return B_BAD_VALUE;
-    }
+    if (!info || !_nfo) return B_BAD_VALUE;
 
     memset(info, 0, size);
-    info->thread = id;
-    info->team = getpid();
+    info->thread = _nfo->tid;
+    info->team = _nfo->team;
     strncpy(info->name, _nfo->name, B_OS_NAME_LENGTH);
     info->priority = _nfo->priority;
     info->sem = _nfo->sem;
@@ -401,7 +511,7 @@ status_t _get_thread_info(thread_id id, thread_info *info, size_t size)
     }
     else switch (_nfo->task_state) {
     case TASK_NEW:
-    case TASK_WAITING:
+    case TASK_PAUSED:
         info->state = B_THREAD_SUSPENDED;
         break;
     case TASK_RUNNING:
@@ -418,16 +528,45 @@ status_t _get_thread_info(thread_id id, thread_info *info, size_t size)
     return B_OK;
 }
 
+status_t _get_thread_info(thread_id id, thread_info *info, size_t size)
+{
+    _threads_rlock();
+    _thread_info *_nfo = _find_thread_info(id);
+    if (!_nfo) return B_BAD_VALUE;
+    status_t ret = _fill_thread_info(info, _nfo, size);
+    _threads_unlock();
+    return ret;
+}
+
 status_t _get_next_thread_info(team_id team, int32 *cookie, thread_info *info, size_t size)
 {
-    if (team != 0 && team != getpid()) {
+    if (team != 0 && team != _info->team) {
         // do not support getting threads of other team
         return B_BAD_VALUE;
     }
 
-    while (*cookie < sizeof(_threads)/sizeof(_threads[0]) && _threads[*cookie].task_state != TASK_RUNNING) (*cookie)++;
+    status_t ret = B_OK;
 
-    if (*cookie >= sizeof(_threads)/sizeof(_threads[0])) return B_BAD_VALUE;
+    _thread_info *_nfo;
+    _threads_rlock();
+    if (*cookie) {
+        DL_SEARCH_SCALAR(_threads, _nfo, tid, *cookie);
+        if (!_nfo) {
+            ret = B_BAD_VALUE;
+            goto exit;
+        }
+        _nfo = _nfo->next;
+        if (!_nfo) {
+            ret = B_BAD_VALUE;
+            goto exit;
+        }
+    } else {
+        _nfo = _info;
+    }
 
-    return _get_thread_info(_threads[(*cookie)++].thread, info, size);
+    *cookie = _nfo->tid;
+    ret = _fill_thread_info(info, _nfo, size);
+exit:
+    _threads_unlock();
+    return ret;
 }

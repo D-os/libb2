@@ -29,7 +29,7 @@ sem_id create_sem(uint32 thread_count, const char * name)
 
     strncpy(info->name, name, B_OS_NAME_LENGTH);
     info->count = thread_count;
-    info->team = getpid();
+    info->team = _info->team;
 
     return (sem_id)info;
 }
@@ -38,7 +38,7 @@ status_t delete_sem(sem_id sem)
 {
     const _sem_info *info = (_sem_info *)sem;
 
-    if (info->team != getpid()) {
+    if (info->team != _info->team) {
         return B_BAD_SEM_ID;
     }
 
@@ -84,9 +84,6 @@ status_t acquire_sem_etc(sem_id sem, uint32 count, uint32 flags, bigtime_t timeo
     }
 
     int i, a, b, c;
-    bool syscall_ok = false;
-    pthread_t thread = 0;
-    _thread_info *info;
 
     struct timespec *to = NULL;
     struct timespec tm;
@@ -119,18 +116,15 @@ again:
             c = cmpxchg((int*)sem, a, b);
             /* managed to take what we wanted? */
             if (c == a) {
-                if (syscall_ok) {
-                    /* BeBook: Warning:
-                     * The lastest_holder field is highly undependable; in some cases,
-                     * the kernel doesn't even record the semaphore acquirer. Although
-                     * you can use this field as a hint while debugging, you shouldn't
-                     * take it too seriously. Love, Mom.
-                     */
-                    thread = pthread_self();
-                    ((_sem_info *)sem)->latest_holder = thread;
-                    info->state = 0;
-                    info->sem = 0;
-                }
+                /* BeBook: Warning:
+                 * The lastest_holder field is highly undependable; in some cases,
+                 * the kernel doesn't even record the semaphore acquirer. Although
+                 * you can use this field as a hint while debugging, you shouldn't
+                 * take it too seriously. Love, Mom.
+                 */
+                ((_sem_info *)sem)->latest_holder = _info->tid;
+                _info->state = 0;
+                _info->sem = 0;
                 return B_NO_ERROR;
             }
         }
@@ -138,14 +132,8 @@ again:
         cpu_relax();
     }
 
-    syscall_ok = true;
-    if (!thread) thread = pthread_self();
-    info = _find_thread_info(thread);
-    if (info == NULL) {
-        return B_BAD_THREAD_ID;
-    }
-    info->state = B_THREAD_WAITING;
-    info->sem = sem;
+    _info->state = B_THREAD_WAITING;
+    _info->sem = sem;
 
     while (*((int*)sem) < count)
     {

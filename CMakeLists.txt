@@ -24,7 +24,7 @@ add_library(root SHARED
 )
 target_sources(root PRIVATE
     headers/KernelKit.h headers/kernel/OS.h headers/kernel/image.h
-    src/kits/kernel/private.h
+    src/kits/kernel/private.h src/kits/kernel/utlist.h
 )
 target_include_directories(root PUBLIC headers headers/support headers/kernel PRIVATE private/linux)
 target_link_libraries(root PUBLIC pthread)

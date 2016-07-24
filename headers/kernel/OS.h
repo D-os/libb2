@@ -50,7 +50,7 @@ enum {
 typedef __u64 port_id; // kdbus connection id
 typedef uintptr_t sem_id;
 typedef pid_t team_id;
-typedef pthread_t thread_id;
+typedef pid_t thread_id;
 
 
 /* Areas */
