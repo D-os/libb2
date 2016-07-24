@@ -3,6 +3,7 @@
 /* Pause instruction to prevent excess processor bus usage */
 #define cpu_relax() __builtin_ia32_pause()
 
+// stdatomics.h ??!
 #define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
 #define atomic_add(P, V) __sync_add_and_fetch((P), (V))
 #define atomic_sub(P, V) __sync_add_and_fetch((P), -(V))
@@ -13,13 +14,15 @@
 
 typedef enum {
     TASK_NEW = 0,
-    TASK_WAITING,
+    TASK_PAUSED,
     TASK_RUNNING,
     TASK_EXITED
 } _task_state;
 
-typedef struct {
-    pthread_t       thread;
+typedef struct _thread_info_struct {
+    pthread_t       pthread;
+    pid_t           tid;
+    team_id         team;
     char			name[B_OS_NAME_LENGTH];
     int32			priority;
     thread_state	state;
@@ -34,6 +37,9 @@ typedef struct {
     int32           data_code;
     void            *data_buffer;
     size_t          data_buffer_size;
+    _task_state     *task_state_copy;
+    struct _thread_info_struct *next;
+    struct _thread_info_struct *prev;
 } _thread_info;
 
 typedef struct {
@@ -45,4 +51,5 @@ typedef struct {
 } _sem_info;
 
 
+extern __thread _thread_info *_info; // current thread info
 _thread_info *_find_thread_info(thread_id thread);

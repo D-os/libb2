@@ -41,13 +41,11 @@ static status_t _snooze(bigtime_t microseconds, int flags)
     tm.tv_sec = microseconds / 1000000;
     tm.tv_nsec = (microseconds % 1000000) * 1000;
 
-    _thread_info *info = _find_thread_info(pthread_self());
-    assert(info != NULL);
-    info->state = B_THREAD_ASLEEP;
+    _info->state = B_THREAD_ASLEEP;
 
     int ret = clock_nanosleep(CLOCK_MONOTONIC, flags, &tm, NULL);
 
-    info->state = 0;
+    _info->state = 0;
 
     if (ret != 0) {
         switch (ret) {
