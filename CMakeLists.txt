@@ -17,6 +17,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 add_library(root SHARED
+    src/kits/kernel/area.c
     src/kits/kernel/sem.c
     src/kits/kernel/thread.c
     src/kits/kernel/time.c
@@ -128,6 +129,9 @@ target_link_libraries(thread root)
 
 add_executable(sem sem.cpp)
 target_link_libraries(sem root)
+
+add_executable(area area.cpp)
+target_link_libraries(area root)
 
 add_executable(app app.cpp)
 target_link_libraries(app be)
