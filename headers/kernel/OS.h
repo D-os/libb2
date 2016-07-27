@@ -46,7 +46,7 @@ enum {
 
 /* Types */
 
-//typedef int32 area_id;
+typedef int32 area_id;
 typedef __u64 port_id; // kdbus connection id
 typedef uintptr_t sem_id;
 typedef pid_t team_id;
@@ -54,7 +54,6 @@ typedef pid_t thread_id;
 
 
 /* Areas */
-#if 0
 
 typedef struct area_info {
     area_id		area;
@@ -118,7 +117,6 @@ extern status_t		_get_next_area_info(team_id team, ssize_t *cookie,
     _get_area_info((id), (areaInfo),sizeof(*(areaInfo)))
 #define get_next_area_info(team, cookie, areaInfo) \
     _get_next_area_info((team), (cookie), (areaInfo), sizeof(*(areaInfo)))
-#endif
 
 
 /* Ports */
