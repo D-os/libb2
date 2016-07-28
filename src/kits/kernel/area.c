@@ -11,7 +11,7 @@
 area_id create_area(const char *name, void **startAddress, uint32 addressSpec,
                     size_t size, uint32 lock, uint32 protection)
 {
-    int shmid = shmget(IPC_PRIVATE, size, IPC_CREAT | 0666);
+    int shmid = shmget(IPC_PRIVATE, size, IPC_CREAT | 0600);
     if (shmid < 0) {
         switch (errno) {
         case EINVAL:
