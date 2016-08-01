@@ -16,57 +16,14 @@
 
 #include "private.h"
 #include "utlist.h" // https://troydhanson.github.io/uthash/utlist.html
+#include "rwlock.h"
 
 /* current thread info */
 __thread _thread_info *_info = NULL;
 
 /* head of linked list of all _thread_info */
 static _thread_info *_threads = NULL;
-static unsigned _threads_lock = 1; // read-write lock futex
-const static unsigned _threads_lock_open = 1;
-const static unsigned _threads_lock_wlocked = 0;
-
-static void _threads_unlock()
-{
-    unsigned current, wanted;
-    do {
-        current = _threads_lock;
-        if (current == _threads_lock_open) return;
-        if (current == _threads_lock_wlocked) {
-            wanted = _threads_lock_open;
-        } else {
-            wanted = current - 1;
-        }
-    } while (cmpxchg(&_threads_lock, current, wanted) != current);
-    syscall(SYS_futex, &_threads_lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
-}
-
-static void _threads_rlock()
-{
-    unsigned current;
-    while ((current = _threads_lock) == _threads_lock_wlocked || cmpxchg(&_threads_lock, current, current + 1) != current) {
-        while (syscall(SYS_futex, &_threads_lock, FUTEX_WAIT_PRIVATE, current, NULL, NULL, 0) != 0) {
-            cpu_relax();
-            if (_threads_lock >= _threads_lock_open) break;
-        }
-        // will be able to acquire rlock no matter what unlock woke us
-    }
-}
-
-static void _threads_wlock()
-{
-    unsigned current;
-    while ((current = cmpxchg(&_threads_lock, _threads_lock_open, _threads_lock_wlocked)) != _threads_lock_open) {
-        while (syscall(SYS_futex, &_threads_lock, FUTEX_WAIT_PRIVATE, current, NULL, NULL, 0) != 0) {
-            cpu_relax();
-            if (_threads_lock == _threads_lock_open) break;
-        }
-        if (_threads_lock != _threads_lock_open) {
-            // in rlock - won't be able to acquire lock - wake someone else
-            syscall(SYS_futex, &_threads_lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
-        }
-    }
-}
+RWLOCK(_threads) // read-write lock futex
 
 static void _thread_init(int argc, char* argv[], char* envp[])
 {
