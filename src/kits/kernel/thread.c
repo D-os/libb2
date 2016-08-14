@@ -15,7 +15,7 @@
 #include <assert.h>
 
 #include "private.h"
-#include "utlist.h" // https://troydhanson.github.io/uthash/utlist.html
+#include "utlist.h"
 #include "rwlock.h"
 
 /* current thread info */
@@ -23,7 +23,7 @@ __thread _thread_info *_info = NULL;
 
 /* head of linked list of all _thread_info */
 static _thread_info *_threads = NULL;
-RWLOCK(_threads) // read-write lock futex
+RWLOCK(_threads)
 
 static void _thread_init(int argc, char* argv[], char* envp[])
 {
@@ -139,7 +139,7 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
         strncpy(info->name, name, B_OS_NAME_LENGTH);
     }
     else {
-        info->name[0] = 0;
+        info->name[0] = '\0';
     }
 
     if (pthread_attr_init(&attr) != 0) {

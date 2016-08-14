@@ -5,23 +5,23 @@
 
 int32 receiver(void *data)
 {
-   thread_id sender;
-   int32 code;
-   char buf[512];
+    thread_id sender;
+    int32 code;
+    char buf[512];
 
-   printf("[thread] in thread %d:%d\n", getpid(), find_thread(NULL));
-   code = receive_data(&sender, (void *)buf, sizeof(buf));
-   if (code == B_INTERRUPTED) {
-       printf("[thread] receive_data interrupted\n");
-   }
-   else {
-       printf("[thread] got message from %d - %d: %s\n", sender,  code, buf);
-   }
+    printf("[thread] in thread %d:%d\n", getpid(), find_thread(NULL));
+    code = receive_data(&sender, (void *)buf, sizeof(buf));
+    if (code == B_INTERRUPTED) {
+        printf("[thread] receive_data interrupted\n");
+    }
+    else {
+        printf("[thread] got message from %d - %d: %s\n", sender,  code, buf);
+    }
 
-   printf("[thread] snoozing 2000000\n");
-   snooze(2000000);
-   printf("[thread] snoozed 2000000 - returning %d\n", code);
-   return code;
+    printf("[thread] snoozing 2000000\n");
+    snooze(2000000);
+    printf("[thread] snoozed 2000000 - returning %d\n", code);
+    return code;
 }
 
 int main(int argc, char **argv) {
@@ -33,9 +33,9 @@ int main(int argc, char **argv) {
     other_thread = spawn_thread(receiver, "receiver", 0, NULL);
     printf("[main] spawned thread %d\n", other_thread);
     printf("[main] sending data to thread %d: %d\n", other_thread,
-    send_data(other_thread, code, (void *)buf, strlen(buf)+1));
+           send_data(other_thread, code, (void *)buf, strlen(buf)+1));
     printf("[main] resuming thread %d: %d\n", other_thread,
-    resume_thread(other_thread));
+           resume_thread(other_thread));
 
     printf("[main] snoozing 1000000\n");
     snooze(1000000);

@@ -47,7 +47,7 @@ enum {
 /* Types */
 
 typedef int32 area_id;
-typedef __u64 port_id; // kdbus connection id
+typedef int port_id;
 typedef uintptr_t sem_id;
 typedef pid_t team_id;
 typedef pid_t thread_id;
@@ -159,25 +159,6 @@ extern status_t		_get_next_port_info(team_id team, int32 *cookie,
     _get_port_info((port), (info), sizeof(*(info)))
 #define get_next_port_info(team, cookie, info) \
     _get_next_port_info((team), (cookie), (info), sizeof(*(info)))
-
-
-/* WARNING: The following is Haiku experimental API. It might be removed or
-   changed in the future. */
-
-typedef struct port_message_info {
-    size_t		size;
-    uid_t		sender;
-    gid_t		sender_group;
-    team_id		sender_team;
-} port_message_info;
-
-/* similar to port_buffer_size_etc(), but returns (more) info */
-extern status_t		_get_port_message_info_etc(port_id port,
-                        port_message_info *info, size_t infoSize, uint32 flags,
-                        bigtime_t timeout);
-
-#define get_port_message_info_etc(port, info, flags, timeout) \
-    _get_port_message_info_etc((port), (info), sizeof(*(info)), flags, timeout)
 
 
 /* Semaphores */

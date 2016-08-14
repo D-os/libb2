@@ -18,6 +18,7 @@ endif()
 
 add_library(root SHARED
     src/kits/kernel/area.c
+    src/kits/kernel/port.c
     src/kits/kernel/sem.c
     src/kits/kernel/thread.c
     src/kits/kernel/time.c
@@ -133,6 +134,9 @@ target_link_libraries(sem root)
 
 add_executable(area area.cpp)
 target_link_libraries(area root)
+
+add_executable(port port.cpp)
+target_link_libraries(port root)
 
 add_executable(app app.cpp)
 target_link_libraries(app be)
