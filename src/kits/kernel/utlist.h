@@ -21,6 +21,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* https://troydhanson.github.io/uthash/utlist.html */
+
 #ifndef UTLIST_H
 #define UTLIST_H
 

@@ -58,9 +58,9 @@ static status_t _snooze(bigtime_t microseconds, int flags)
     return B_OK;
 }
 
-status_t snooze(bigtime_t amount)
+status_t snooze(bigtime_t microseconds)
 {
-    return _snooze(amount, 0);
+    return _snooze(microseconds, 0);
 }
 
 status_t snooze_until(bigtime_t time, int timeBase)

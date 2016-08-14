@@ -246,12 +246,14 @@ extern void*	get_stack_frame(void);
 #endif
 
 /* Count items in an array, count_of is a common define */
-#define B_COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+#ifndef count_of
+#define count_of(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 /* 0[array] is equivalent to array[0] on plain arrays,
  * but will fail to compile if array happens to be a C++ type that overloads operator[]()
  * The division causes a divide-by-zero operation (that should be caught at compile time
  * since it's a compile-time constant expression) for many (but not all) situations
  * where a pointer is passed as the array parameter. */
+#endif
 
 
 /* Obsolete or discouraged API */
