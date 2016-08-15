@@ -18,69 +18,82 @@ class BHandler;
 class BLooper;
 
 class BMessenger {
-    friend class BMessage::Private;
-
 public:
-                                    BMessenger();
-                                    BMessenger(const char* signature,
-                                        team_id team = -1,
-                                        status_t* result = NULL);
-                                    BMessenger(const BHandler* handler,
-                                        const BLooper* looper = NULL,
-                                        status_t* result = NULL);
-                                    BMessenger(const BMessenger& other);
-                                    ~BMessenger();
+									BMessenger();
+									BMessenger(const char* signature,
+										team_id team = -1,
+										status_t* result = NULL);
+									BMessenger(const BHandler* handler,
+										const BLooper* looper = NULL,
+										status_t* result = NULL);
+									BMessenger(const BMessenger& other);
+									~BMessenger();
 
-    // Target
+	// Target
 
-            bool					IsTargetLocal() const;
-            BHandler*				Target(BLooper **looper) const;
-            bool					LockTarget() const;
-            status_t				LockTargetWithTimeout(
-                                        bigtime_t timeout) const;
+			bool					IsTargetLocal() const;
+			BHandler*				Target(BLooper **looper) const;
+			bool					LockTarget() const;
+			status_t				LockTargetWithTimeout(
+										bigtime_t timeout) const;
 
-    // Message sending
+	// Message sending
 
-            status_t				SendMessage(uint32 command,
-                                        BHandler* replyTo = NULL) const;
-            status_t				SendMessage(BMessage* message,
-                                        BHandler* replyTo = NULL,
-                                        bigtime_t timeout
-                                            = B_INFINITE_TIMEOUT) const;
-            status_t				SendMessage(BMessage* message,
-                                        BMessenger replyTo,
-                                        bigtime_t timeout
-                                            = B_INFINITE_TIMEOUT) const;
-            status_t				SendMessage(uint32 command,
-                                        BMessage* reply) const;
-            status_t				SendMessage(BMessage* message,
-                                        BMessage* reply,
-                                        bigtime_t deliveryTimeout
-                                            = B_INFINITE_TIMEOUT,
-                                        bigtime_t replyTimeout
-                                            = B_INFINITE_TIMEOUT) const;
+			status_t				SendMessage(uint32 command,
+										BHandler* replyTo = NULL) const;
+			status_t				SendMessage(BMessage* message,
+										BHandler* replyTo = NULL,
+										bigtime_t timeout
+											= B_INFINITE_TIMEOUT) const;
+			status_t				SendMessage(BMessage* message,
+										BMessenger replyTo,
+										bigtime_t timeout
+											= B_INFINITE_TIMEOUT) const;
+			status_t				SendMessage(uint32 command,
+										BMessage* reply) const;
+			status_t				SendMessage(BMessage* message,
+										BMessage* reply,
+										bigtime_t deliveryTimeout
+											= B_INFINITE_TIMEOUT,
+										bigtime_t replyTimeout
+											= B_INFINITE_TIMEOUT) const;
+	
+	// Operators and misc
 
-    // Operators and misc
+			status_t				SetTo(const char* signature,
+										team_id team = -1);
+			status_t				SetTo(const BHandler* handler,
+										const BLooper* looper = NULL);
 
-            status_t				SetTo(const char* signature,
-                                        team_id team = -1);
-            status_t				SetTo(const BHandler* handler,
-                                        const BLooper* looper = NULL);
+			BMessenger&				operator=(const BMessenger& other);
+			bool					operator==(const BMessenger& other) const;
 
-            BMessenger&				operator=(const BMessenger& other);
-            bool					operator==(const BMessenger& other) const;
+			bool					IsValid() const;
+			team_id					Team() const;
 
-            bool					IsValid() const;
-            team_id					Team() const;
+			uint32					HashValue() const;
 
-            uint32					HashValue() const;
+	//----- Private or reserved -----------------------------------------
+
+	class Private;
 
 private:
-            B_DECLARE_PRIVATE
-            Private *d_ptr;
+	friend class Private;
 
-            friend bool operator<(const BMessenger& _a, const BMessenger& _b);
-            friend status_t swap_data(type_code type, void *_data, size_t length, swap_action action);
+			void					_SetTo(team_id team, port_id port,
+										int32 token);
+			void					_InitData(const char* signature,
+										team_id team, status_t* result);
+			void					_InitData(const BHandler* handler,
+										const BLooper *looper,
+										status_t* result);
+
+private:
+			port_id					fPort;
+			int32					fHandlerToken;
+			team_id					fTeam;
+
+			int32					_reserved[3];
 };
 
 bool operator<(const BMessenger& a, const BMessenger& b);
