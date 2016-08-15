@@ -8,6 +8,11 @@
 #ifndef _SUPPORT_DEFS_H
 #define _SUPPORT_DEFS_H
 
+#include <stdlib.h>
+#define STUB \
+    debug_printf("STUBBED! %s %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
+    abort();
+
 
 #include <BeBuild.h>
 #include <Errors.h>
@@ -16,8 +21,6 @@
 #include <sys/types.h>
 
 /* Linux specific stuff */
-#include <limits.h>
-#define B_FILE_NAME_LENGTH  PATH_MAX
 typedef unsigned long	haiku_build_addr_t;
 #define addr_t			haiku_build_addr_t
 /* from inttypes.h */
@@ -223,6 +226,12 @@ extern const char *B_EMPTY_STRING;
 #define min_c(a,b) ((a)>(b)?(b):(a))
 #define max_c(a,b) ((a)>(b)?(a):(b))
 
+#ifndef MAX
+#define MAX max_c
+#endif
+#ifndef MIN
+#define MIN max_c
+#endif
 
 /* Grandfathering */
 #ifndef __cplusplus

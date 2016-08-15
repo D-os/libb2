@@ -27,3 +27,11 @@
 # IDE stuff
 *.pro.user
 CMakeLists.txt.user
+
+# CMake/Ninja stuff
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+build.ninja
+rules.ninja
+

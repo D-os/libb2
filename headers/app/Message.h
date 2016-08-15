@@ -8,26 +8,27 @@
 #ifndef _MESSAGE_H
 #define _MESSAGE_H
 
-//#include <BeBuild.h>
-#include <OS.h>
-class BDataIO;
-//#include <Flattenable.h>
-class BFlattenable;
-#include <Rect.h>
-//#include <Size.h>
 
-//#include <AppDefs.h>		/* For convenience */
-//#include <TypeConstants.h>	/* For convenience */
+#include <new>
+
+#include <BeBuild.h>
+#include <DataIO.h>
+#include <Flattenable.h>
+#include <OS.h>
+#include <Rect.h>
+#include <Size.h>
+
+#include <AppDefs.h>		/* For convenience */
+#include <TypeConstants.h>	/* For convenience */
 
 
 class BAlignment;
-//class BBlockCache;
+class BBlockCache;
 class BMessenger;
 class BHandler;
 class BString;
 class BStringList;
 struct entry_ref;
-
 
 
 // Name lengths and Scripting specifiers
@@ -49,19 +50,7 @@ enum {
 };
 
 
-namespace BPrivate {
-    class MessageAdapter;
-    namespace Archiving {
-        class BManagerBase;
-    }
-}
-
 class BMessage {
-    friend class BMessenger;
-    friend class BMessageQueue;
-    friend class BLooper;
-    friend class BPrivate::MessageAdapter;
-    friend class BPrivate::Archiving::BManagerBase;
 public:
             uint32				what;
 
@@ -69,6 +58,8 @@ public:
                                 BMessage(uint32 what);
                                 BMessage(const BMessage& other);
     virtual						~BMessage();
+
+            BMessage&			operator=(const BMessage& other);
 
     // Statistics and misc info
             status_t			GetInfo(type_code typeRequested, int32 index,
@@ -167,7 +158,7 @@ public:
                                     const void* pointer);
             status_t			AddMessenger(const char* name,
                                     BMessenger messenger);
-            status_t			AddRef(const char* name, const entry_ref* ref);
+//			status_t			AddRef(const char* name, const entry_ref* ref);
             status_t			AddMessage(const char* name,
                                     const BMessage* message);
             status_t			AddFlat(const char* name, BFlattenable* object,
@@ -258,9 +249,9 @@ public:
                                     BMessenger* messenger) const;
             status_t			FindMessenger(const char* name, int32 index,
                                     BMessenger* messenger) const;
-            status_t			FindRef(const char* name, entry_ref* ref) const;
-            status_t			FindRef(const char* name, int32 index,
-                                    entry_ref* ref) const;
+//            status_t			FindRef(const char* name, entry_ref* ref) const;
+//            status_t			FindRef(const char* name, int32 index,
+//                                    entry_ref* ref) const;
             status_t			FindMessage(const char* name,
                                     BMessage* message) const;
             status_t			FindMessage(const char* name, int32 index,
@@ -341,10 +332,10 @@ public:
                                     BMessenger messenger);
             status_t			ReplaceMessenger(const char* name, int32 index,
                                     BMessenger messenger);
-            status_t			ReplaceRef(const char* name,
-                                    const entry_ref* ref);
-            status_t			ReplaceRef(const char* name, int32 index,
-                                    const entry_ref* ref);
+//            status_t			ReplaceRef(const char* name,
+//                                    const entry_ref* ref);
+//            status_t			ReplaceRef(const char* name, int32 index,
+//                                    const entry_ref* ref);
             status_t			ReplaceMessage(const char* name,
                                     const BMessage* message);
             status_t			ReplaceMessage(const char* name, int32 index,
@@ -359,45 +350,56 @@ public:
                                     int32 index, const void* data,
                                     ssize_t numBytes);
 
-//    // Private, reserved, or obsolete
-//            bool				HasAlignment(const char* name,
-//                                    int32 n = 0) const;
-//            bool				HasRect(const char* name, int32 n = 0) const;
-//            bool				HasPoint(const char* name, int32 n = 0) const;
-//            bool				HasSize(const char* name, int32 n = 0) const;
-//            bool				HasString(const char* name, int32 n = 0) const;
-//            bool				HasInt8(const char* name, int32 n = 0) const;
-//            bool				HasUInt8(const char* name, int32 n = 0) const;
-//            bool				HasInt16(const char* name, int32 n = 0) const;
-//            bool				HasUInt16(const char* name, int32 n = 0) const;
-//            bool				HasInt32(const char* name, int32 n = 0) const;
-//            bool				HasUInt32(const char* name, int32 n = 0) const;
-//            bool				HasInt64(const char* name, int32 n = 0) const;
-//            bool				HasUInt64(const char* name, int32 n = 0) const;
-//            bool				HasBool(const char* name, int32 n = 0) const;
-//            bool				HasFloat(const char* name, int32 n = 0) const;
-//            bool				HasDouble(const char* name, int32 n = 0) const;
-//            bool				HasPointer(const char* name, int32 n = 0) const;
-//            bool				HasMessenger(const char* name,
-//                                    int32 n = 0) const;
-//            bool				HasRef(const char* name, int32 n = 0) const;
-//            bool				HasMessage(const char* name, int32 n = 0) const;
-//            bool				HasFlat(const char* name,
-//                                    const BFlattenable* object) const;
-//            bool				HasFlat(const char* name, int32 n,
-//                                    const BFlattenable* object) const;
-//            bool				HasData(const char* name, type_code ,
-//                                    int32 n = 0) const;
-//            BRect				FindRect(const char* name, int32 n = 0) const;
-//            BPoint				FindPoint(const char* name, int32 n = 0) const;
-//            const char*			FindString(const char* name, int32 n = 0) const;
-//            int8				FindInt8(const char* name, int32 n = 0) const;
-//            int16				FindInt16(const char* name, int32 n = 0) const;
-//            int32				FindInt32(const char* name, int32 n = 0) const;
-//            int64				FindInt64(const char* name, int32 n = 0) const;
-//            bool				FindBool(const char* name, int32 n = 0) const;
-//            float				FindFloat(const char* name, int32 n = 0) const;
-//            double				FindDouble(const char* name, int32 n = 0) const;
+    // Comparing data - Haiku experimental API
+            bool				HasSameData(const BMessage& other,
+                                    bool ignoreFieldOrder = true,
+                                    bool deep = false) const;
+
+            void*				operator new(size_t size);
+            void*				operator new(size_t, void* pointer);
+            void*				operator new(size_t,
+                                    const std::nothrow_t& noThrow);
+            void				operator delete(void* pointer, size_t size);
+
+    // Private, reserved, or obsolete
+            bool				HasAlignment(const char* name,
+                                    int32 n = 0) const;
+            bool				HasRect(const char* name, int32 n = 0) const;
+            bool				HasPoint(const char* name, int32 n = 0) const;
+            bool				HasSize(const char* name, int32 n = 0) const;
+            bool				HasString(const char* name, int32 n = 0) const;
+            bool				HasInt8(const char* name, int32 n = 0) const;
+            bool				HasUInt8(const char* name, int32 n = 0) const;
+            bool				HasInt16(const char* name, int32 n = 0) const;
+            bool				HasUInt16(const char* name, int32 n = 0) const;
+            bool				HasInt32(const char* name, int32 n = 0) const;
+            bool				HasUInt32(const char* name, int32 n = 0) const;
+            bool				HasInt64(const char* name, int32 n = 0) const;
+            bool				HasUInt64(const char* name, int32 n = 0) const;
+            bool				HasBool(const char* name, int32 n = 0) const;
+            bool				HasFloat(const char* name, int32 n = 0) const;
+            bool				HasDouble(const char* name, int32 n = 0) const;
+            bool				HasPointer(const char* name, int32 n = 0) const;
+            bool				HasMessenger(const char* name,
+                                    int32 n = 0) const;
+            bool				HasRef(const char* name, int32 n = 0) const;
+            bool				HasMessage(const char* name, int32 n = 0) const;
+            bool				HasFlat(const char* name,
+                                    const BFlattenable* object) const;
+            bool				HasFlat(const char* name, int32 n,
+                                    const BFlattenable* object) const;
+            bool				HasData(const char* name, type_code ,
+                                    int32 n = 0) const;
+            BRect				FindRect(const char* name, int32 n = 0) const;
+            BPoint				FindPoint(const char* name, int32 n = 0) const;
+            const char*			FindString(const char* name, int32 n = 0) const;
+            int8				FindInt8(const char* name, int32 n = 0) const;
+            int16				FindInt16(const char* name, int32 n = 0) const;
+            int32				FindInt32(const char* name, int32 n = 0) const;
+            int64				FindInt64(const char* name, int32 n = 0) const;
+            bool				FindBool(const char* name, int32 n = 0) const;
+            float				FindFloat(const char* name, int32 n = 0) const;
+            double				FindDouble(const char* name, int32 n = 0) const;
 
     // Convenience methods
             bool				GetBool(const char* name,
@@ -490,11 +492,86 @@ public:
                                     const void* data, ssize_t numBytes,
                                     bool fixedSize = true, int count = 1);
 
-            BMessage&			operator=(const BMessage& other);
+    class Private;
+    struct message_header;
+    struct field_header;
 
 private:
-            B_DECLARE_PRIVATE
-            Private *d_ptr;
+    friend class Private;
+    friend class BMessageQueue;
+
+            status_t			_InitCommon(bool initHeader);
+            status_t			_InitHeader();
+            status_t			_Clear();
+
+            status_t			_FlattenToArea(message_header** _header) const;
+            status_t			_CopyForWrite();
+            status_t			_Reference();
+            status_t			_Dereference();
+
+            status_t			_ValidateMessage();
+
+            void				_UpdateOffsets(uint32 offset, int32 change);
+            status_t			_ResizeData(uint32 offset, int32 change);
+
+            uint32				_HashName(const char* name) const;
+            status_t			_FindField(const char* name, type_code type,
+                                    field_header** _result) const;
+            status_t			_AddField(const char* name, type_code type,
+                                    bool isFixedSize, field_header** _result);
+            status_t			_RemoveField(field_header* field);
+
+            void				_PrintToStream(const char* indent) const;
+
+private:
+                                BMessage(BMessage* message);
+                                    // deprecated
+
+    virtual	void				_ReservedMessage1();
+    virtual	void				_ReservedMessage2();
+    virtual	void				_ReservedMessage3();
+
+            status_t			_SendMessage(port_id port, team_id portOwner,
+                                    int32 token, bigtime_t timeout,
+                                    bool replyRequired,
+                                    BMessenger& replyTo) const;
+            status_t			_SendMessage(port_id port, team_id portOwner,
+                                    int32 token, BMessage* reply,
+                                    bigtime_t sendTimeout,
+                                    bigtime_t replyTimeout) const;
+    static	status_t			_SendFlattenedMessage(void* data, int32 size,
+                                    port_id port, int32 token,
+                                    bigtime_t timeout);
+
+    static	void				_StaticInit();
+    static	void				_StaticReInitForkedChild();
+    static	void				_StaticCleanup();
+    static	void				_StaticCacheCleanup();
+    static	int32				_StaticGetCachedReplyPort();
+
+private:
+            message_header*		fHeader;
+            field_header*		fFields;
+            uint8*				fData;
+
+            uint32				fFieldsAvailable;
+            size_t				fDataAvailable;
+
+            mutable	BMessage*	fOriginal;
+
+            BMessage*			fQueueLink;
+                // fQueueLink is used by BMessageQueue to build a linked list
+
+            void*				fArchivingPointer;
+
+            uint32				fReserved[8];
+
+            enum				{ sNumReplyPorts = 3 };
+    static	port_id				sReplyPorts[sNumReplyPorts];
+    static	int32				sReplyPortInUse[sNumReplyPorts];
+    static	int32				sGetCachedReplyPort();
+
+    static	BBlockCache*		sMsgCache;
 };
 
 
