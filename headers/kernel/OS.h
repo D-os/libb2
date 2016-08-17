@@ -46,7 +46,7 @@ enum {
 
 /* Types */
 
-typedef int32 area_id;
+typedef intptr_t area_id;
 typedef int port_id;
 typedef uintptr_t sem_id;
 typedef pid_t team_id;
