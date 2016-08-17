@@ -53,3 +53,7 @@ typedef struct {
 
 extern __thread _thread_info *_info; // current thread info
 _thread_info *_find_thread_info(thread_id thread);
+
+#include <string.h>
+#define COPY_OS_NAME_LENGTH(dest, src) \
+    if (src) strncpy(dest, src, B_OS_NAME_LENGTH); else dest[0] = '\0';
