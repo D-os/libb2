@@ -134,13 +134,7 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
 
     info->team = _info->team;
     info->task_state = TASK_NEW;
-
-    if (name) {
-        strncpy(info->name, name, B_OS_NAME_LENGTH);
-    }
-    else {
-        info->name[0] = '\0';
-    }
+    COPY_OS_NAME_LENGTH(info->name, name);
 
     if (pthread_attr_init(&attr) != 0) {
         ret = B_NO_MEMORY;
@@ -457,7 +451,7 @@ static status_t _fill_thread_info(thread_info *info, _thread_info *_nfo, size_t 
     memset(info, 0, size);
     info->thread = _nfo->tid;
     info->team = _nfo->team;
-    strncpy(info->name, _nfo->name, B_OS_NAME_LENGTH);
+    COPY_OS_NAME_LENGTH(info->name, _nfo->name);
     info->priority = _nfo->priority;
     info->sem = _nfo->sem;
     info->stack_base = _nfo->stack_base;

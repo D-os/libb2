@@ -27,7 +27,7 @@ sem_id create_sem(uint32 thread_count, const char * name)
         return B_NO_MEMORY;
     }
 
-    strncpy(info->name, name, B_OS_NAME_LENGTH);
+    COPY_OS_NAME_LENGTH(info->name, name);
     info->count = thread_count;
     info->team = _info->team;
 
@@ -66,7 +66,7 @@ status_t _get_sem_info(sem_id sem, struct sem_info *info, size_t infoSize)
     info->latest_holder = _info->latest_holder;
     info->team = _info->team;
     info->sem = sem;
-    strncpy(info->name, _info->name, B_OS_NAME_LENGTH);
+    COPY_OS_NAME_LENGTH(info->name, _info->name);
 
     return B_NO_ERROR;
 }

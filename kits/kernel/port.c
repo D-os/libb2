@@ -296,7 +296,7 @@ port_id create_port(int32 capacity, const char *name)
 
     _port_info *info = calloc(1, sizeof(_port_info));
     info->fd = fd;
-    size_t len = strlen(name);
+    size_t len = name ? strlen(name) : 0;
     info->namelen = min_c(len, B_OS_NAME_LENGTH);
     strncpy(info->name, name, info->namelen);
     info->capacity = capacity;
@@ -356,6 +356,11 @@ status_t close_port(port_id port)
     return B_OK;
 }
 
+status_t set_port_owner(port_id port, team_id team)
+{
+    return team == _info->team ? B_OK : B_BAD_TEAM_ID;
+}
+
 status_t _get_port_info(port_id port, port_info *portInfo, size_t portInfoSize)
 {
     _ports_rlock();
@@ -367,7 +372,7 @@ status_t _get_port_info(port_id port, port_info *portInfo, size_t portInfoSize)
     memset(portInfo, 0, portInfoSize);
     portInfo->port = port;
     portInfo->team = _info->team;
-    strncpy(portInfo->name, info->name, B_OS_NAME_LENGTH);
+    COPY_OS_NAME_LENGTH(portInfo->name, info->name);
     portInfo->capacity = info->capacity;
     portInfo->queue_count = (int32) port_count(port);
 //    portInfo->total_count =
