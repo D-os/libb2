@@ -3,6 +3,7 @@ add_library(root SHARED
         kernel/area.c
         kernel/port.c
         kernel/sem.c
+        kernel/team.c
         kernel/thread.c
         kernel/time.c
         kernel/debug.c

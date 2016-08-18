@@ -327,19 +327,6 @@ inline void exit_thread(status_t status)
     pthread_exit(&status);
 }
 
-status_t kill_team(team_id team)
-{
-    if (kill(team, SIGKILL) != 0) {
-        switch (errno) {
-        case ESRCH:
-            return B_BAD_TEAM_ID;
-        default:
-            return B_FROM_POSIX_ERROR(errno);
-        }
-    }
-    return B_OK;
-}
-
 bool has_data(thread_id thread)
 {
     _thread_info *info = _find_thread_info(thread);
