@@ -10,6 +10,7 @@
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <linux/futex.h>
 #include <assert.h>
@@ -214,21 +215,36 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
 {
     _threads_rlock();
     _thread_info *info = _find_thread_info(thread);
+
     status_t status = B_OK;
     int s;
     void *exit = 0;
     _task_state state;
 
-    if (info == NULL) {
-        status = B_BAD_THREAD_ID;
-        goto exit;
-    }
-
-    if (info->task_state != TASK_RUNNING) {
+    if (info == NULL || info->task_state != TASK_RUNNING) {
         status = resume_thread(thread);
         if (status != B_OK) {
             goto exit;
         }
+    }
+
+    if (info == NULL) {
+        /* have to assume that thread is the main thread of team */
+        int wstatus;
+        if (waitpid(thread, &wstatus, 0) < 0) {
+            switch (errno) {
+            case ECHILD:
+                return B_BAD_THREAD_ID;
+            case EINTR:
+                return B_INTERRUPTED;
+            default:
+                return B_ERROR;
+            }
+        }
+        if (WIFEXITED(wstatus)) {
+            *exit_value = WEXITSTATUS(wstatus);
+        }
+        return WIFSIGNALED(wstatus) ? B_INTERRUPTED : B_OK;
     }
 
     info->task_state_copy = &state;
@@ -298,7 +314,19 @@ status_t resume_thread(thread_id thread)
     _thread_info *info = _find_thread_info(thread);
     if (info == NULL) {
         _threads_unlock();
-        return B_BAD_THREAD_ID;
+        /* soo... it is not is this team... just SIG it... */
+        if (syscall(SYS_tkill, thread, SIGCONT) != 0) {
+            switch (errno) {
+            case EINVAL:
+            case ESRCH:
+                return B_BAD_THREAD_ID;
+            case EPERM:
+                return B_PERMISSION_DENIED;
+            default:
+                return B_ERROR;
+            }
+        }
+        return B_OK;
     }
 
     if (cmpxchg(&info->task_state, TASK_NEW, TASK_RUNNING) == TASK_NEW) {
