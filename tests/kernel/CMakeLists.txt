@@ -12,3 +12,6 @@ target_link_libraries(area root)
 
 add_executable(port port.cpp)
 target_link_libraries(port root)
+
+add_executable(image image.cpp)
+target_link_libraries(image root)

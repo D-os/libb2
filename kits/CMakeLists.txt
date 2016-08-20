@@ -1,6 +1,7 @@
 # Build libroot.
 add_library(root SHARED
         kernel/area.c
+        kernel/image.c
         kernel/port.c
         kernel/sem.c
         kernel/team.c
