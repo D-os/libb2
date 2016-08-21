@@ -10,7 +10,7 @@
 #include <sys/param.h>
 
 
-typedef	int32 image_id;
+typedef	intptr_t image_id;
 
 typedef enum {
     B_APP_IMAGE			= 1,
