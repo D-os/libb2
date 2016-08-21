@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
+#include <dlfcn.h>
 
 static __thread int _resumed;
 
@@ -50,4 +51,23 @@ thread_id load_image(int32 argc, const char **argv, const char **environ)
 
     execve(*argv, (char * const *)argv, (char * const *)environ);
     exit(-1);
+}
+
+image_id load_add_on(const char *path)
+{
+    void *addr = dlopen(path, RTLD_LAZY|RTLD_GLOBAL);
+    return addr == NULL ? B_ERROR : (intptr_t)addr;
+}
+
+status_t unload_add_on(image_id image)
+{
+    return dlclose((void *)image) ? B_ERROR : B_OK;
+}
+
+status_t get_image_symbol(image_id image, const char *name, int32 symbolType,
+                          void **_symbolLocation)
+{
+    dlerror();
+    *_symbolLocation = dlsym((void*)image, name);
+    return dlerror() ? B_BAD_VALUE : B_OK;
 }

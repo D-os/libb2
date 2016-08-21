@@ -12,7 +12,7 @@ add_library(root SHARED
 target_sources(root PRIVATE
         kernel/private.h kernel/utlist.h kernel/rwlock.h kernel/rwlock.c
 )
-target_link_libraries(root PUBLIC pthread)
+target_link_libraries(root PUBLIC pthread dl)
 
 # Build libbe.
 add_library(be SHARED "")
