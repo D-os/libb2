@@ -45,6 +45,7 @@ target_sources(be PRIVATE
         app/Messenger.cpp
         app/PropertyInfo.cpp
         app/TokenSpace.cpp
+        app/InitTerminateLibBe.cpp
 
 ##	interface/InterfaceDefs.cpp
         interface/Point.cpp

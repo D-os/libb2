@@ -270,6 +270,8 @@ extern status_t		_get_team_usage_info(team_id team, int32 who,
 #define get_team_usage_info(team, who, info) \
     _get_team_usage_info((team), (who), (info), sizeof(*(info)))
 
+extern int atfork(void (*func)(void));
+
 
 /* Threads */
 
