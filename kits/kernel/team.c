@@ -8,8 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-#include "private.h"
+#include <pthread.h>
 
 status_t kill_team(team_id team)
 {
@@ -66,4 +65,9 @@ status_t _get_team_info(team_id id, team_info *info, size_t size)
     if (count < 0) return B_BAD_VALUE;
 
     return B_OK;
+}
+
+int atfork(void (*fun)(void))
+{
+    return pthread_atfork(NULL, NULL, fun);
 }

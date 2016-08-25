@@ -26,7 +26,7 @@ __thread _thread_info *_info = NULL;
 static _thread_info *_threads = NULL;
 RWLOCK(_threads)
 
-static void _thread_init(int argc, char* argv[], char* envp[])
+static void _thread_init(void)
 {
     /* fill main thread info */
     _info = calloc(1, sizeof(_thread_info));
@@ -45,7 +45,7 @@ static void _thread_init(int argc, char* argv[], char* envp[])
     DL_APPEND(_threads, _info);
     _threads_unlock();
 }
-__attribute__((section(".init_array"))) void (* p_thread_init)(int,char*[],char*[]) = &_thread_init;
+__attribute__((section(".init_array"))) void (* p_thread_init)(void) = &_thread_init;
 
 /* WARNING! you need to lock _threads in caller function! */
 _thread_info *_find_thread_info(thread_id thread)
