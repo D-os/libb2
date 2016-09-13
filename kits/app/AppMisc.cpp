@@ -14,6 +14,7 @@
 #include <string.h>
 #include <sys/utsname.h>
 #include <unistd.h>
+#include <stdio.h>
 
 //#include <Entry.h>
 #include <image.h>
@@ -49,20 +50,49 @@ get_app_path(team_id team, char *buffer)
     if (!buffer)
         return B_BAD_VALUE;
 
-    STUB;
 #if 0
     image_info info;
     int32 cookie = 0;
 
     while (get_next_image_info(team, &cookie, &info) == B_OK) {
         if (info.type == B_APP_IMAGE) {
-            strlcpy(buffer, info.name, B_PATH_NAME_LENGTH - 1);
+            strncpy(buffer, info.name, B_PATH_NAME_LENGTH - 2);
+            buffer[B_PATH_NAME_LENGTH - 1] = '\0';
             return B_OK;
         }
     }
-#endif
 
     return B_ENTRY_NOT_FOUND;
+#else
+    char *exe;
+    asprintf(&exe, "/proc/%d/exe", team);
+    ssize_t ret = readlink(exe, buffer, B_PATH_NAME_LENGTH);
+    int link_errno = errno;
+    free(exe);
+    if (ret < 0) {
+        buffer[0] = '\0';
+
+        switch (link_errno) {
+        case EACCES:
+            return B_PERMISSION_DENIED;
+        case EFAULT:
+        case EINVAL:
+        case ENOTDIR:
+            return B_BAD_VALUE;
+        case ENOENT:
+            return B_ENTRY_NOT_FOUND;
+        case ENOMEM:
+            return B_NO_MEMORY;
+        case EIO:
+        case ELOOP:
+        case ENAMETOOLONG:
+        default:
+            return B_ERROR;
+        }
+    }
+    buffer[B_PATH_NAME_LENGTH - 1] = '\0';
+    return B_OK;
+#endif
 }
 
 

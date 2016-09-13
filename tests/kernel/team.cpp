@@ -29,7 +29,9 @@ int32 status(void *data)
 
     return EXIT_SUCCESS;
 }
-int main(int argc, char **argv) {
+
+int main(int argc, char **argv)
+{
     setbuf(stdout, NULL); // do not buffer
 
     thread_id other_thread = spawn_thread(status, "status", 0, NULL);

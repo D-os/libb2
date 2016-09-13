@@ -24,7 +24,8 @@ int32 receiver(void *data)
     return code;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     setbuf(stdout, NULL); // do not buffer
 
     thread_id other_thread;

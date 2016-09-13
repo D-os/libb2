@@ -67,6 +67,7 @@ status_t unload_add_on(image_id image)
 status_t get_image_symbol(image_id image, const char *name, int32 symbolType,
                           void **_symbolLocation)
 {
+    if (image == -1) image = (image_id)RTLD_DEFAULT;
     dlerror();
     *_symbolLocation = dlsym((void*)image, name);
     return dlerror() ? B_BAD_VALUE : B_OK;

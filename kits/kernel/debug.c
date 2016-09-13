@@ -24,3 +24,10 @@ void debugger(const char *message)
     dprintf(2, "%s\n", message);
     abort();
 }
+
+int _debuggerAssert(const char *file, int line, const char *message)
+{
+        debug_printf("%" B_PRId32 ": ASSERT: %s:%d %s\n",
+                     find_thread(NULL), file, line, message);
+        abort();
+}

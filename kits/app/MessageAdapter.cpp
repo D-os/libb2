@@ -671,6 +671,8 @@ MessageAdapter::_UnflattenR5Message(uint32 format, BMessage *into,
                 }
             }
         } else {
+            STUB;
+#if 0
             for (int32 i = 0; i < itemCount; i++) {
                 if (!fixedSize) {
                     itemSize = __swap_int32(*(int32 *)pointer);
@@ -693,6 +695,7 @@ MessageAdapter::_UnflattenR5Message(uint32 format, BMessage *into,
                         - sizeof(int32);
                 }
             }
+#endif
         }
 
         free(buffer);

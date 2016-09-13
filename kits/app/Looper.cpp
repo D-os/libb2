@@ -35,20 +35,18 @@
 
 
 // debugging
-//#define DBG(x) x
-#define DBG(x)	;
-#define PRINT(x)	DBG({ printf("[%6ld] ", find_thread(NULL)); printf x; })
+#define DBG(x) x
+//#define DBG(x)	;
+//#define PRINT(x)	DBG({ printf("[%6ld] ", find_thread(NULL)); printf x; })
 
-/*
 #include <Autolock.h>
 #include <Locker.h>
 static BLocker sDebugPrintLocker("BLooper debug print");
 #define PRINT(x)	DBG({						\
     BAutolock _(sDebugPrintLocker);				\
-    debug_printf("[%6ld] ", find_thread(NULL));	\
+    debug_printf("[%6d] ", find_thread(NULL));	\
     debug_printf x;								\
 })
-*/
 
 
 #define FILTER_LIST_BLOCK_SIZE	5
@@ -252,7 +250,7 @@ BLooper::PostMessage(BMessage* message, BHandler* handler, BHandler* replyTo)
 void
 BLooper::DispatchMessage(BMessage* message, BHandler* handler)
 {
-    PRINT(("BLooper::DispatchMessage(%.4s)\n", (char*)&message->what));
+    PRINT(("BLooper::DispatchMessage(%.4s, %p[%s])\n", (char*)&message->what, handler, handler->Name()));
 
     switch (message->what) {
         case _QUIT_:
@@ -537,7 +535,7 @@ PRINT(("BLooper::Unlock()\n"));
 
     //	Decrement fOwnerCount
     --fOwnerCount;
-PRINT(("  fOwnerCount now: %ld\n", fOwnerCount));
+PRINT(("  fOwnerCount now: %d\n", fOwnerCount));
     //	Check to see if the owner still wants a lock
     if (fOwnerCount == 0) {
         //	Set fOwner to invalid thread_id (< 0)
@@ -855,7 +853,7 @@ BLooper::_PostMessage(BMessage* msg, BHandler* handler, BHandler* replyTo)
 status_t
 BLooper::_Lock(BLooper* looper, port_id port, bigtime_t timeout)
 {
-    PRINT(("BLooper::_Lock(%p, %lx)\n", looper, port));
+    PRINT(("BLooper::_Lock(%p, %x)\n", looper, port));
 
     //	Check params (loop, port)
     if (looper == NULL && port < 0) {
@@ -888,7 +886,7 @@ BLooper::_Lock(BLooper* looper, port_id port, bigtime_t timeout)
         // Check for nested lock attempt
         if (currentThread == looper->fOwner) {
             ++looper->fOwnerCount;
-            PRINT(("BLooper::_Lock() done 5: fOwnerCount: %ld\n", loop->fOwnerCount));
+            PRINT(("BLooper::_Lock() done 5: fOwnerCount: %d\n", looper->fOwnerCount));
             return B_OK;
         }
 
@@ -929,7 +927,7 @@ BLooper::_LockComplete(BLooper* looper, int32 oldCount, thread_id thread,
         looper->fOwnerCount = 1;
     }
 
-    PRINT(("BLooper::_LockComplete() done: %lx\n", err));
+    PRINT(("BLooper::_LockComplete() done: %x\n", err));
     return err;
 }
 
@@ -1018,7 +1016,7 @@ BLooper::_task0_(void* arg)
         delete looper;
     }
 
-    PRINT(("LOOPER: _task0_() done: thread %ld\n", find_thread(NULL)));
+    PRINT(("LOOPER: _task0_() done: thread %d\n", find_thread(NULL)));
     return B_OK;
 }
 
@@ -1054,7 +1052,7 @@ BLooper::ReadRawFromPort(int32* msgCode, bigtime_t timeout)
         return NULL;
     }
 
-    PRINT(("BLooper::ReadRawFromPort() read: %.4s, %p (%d bytes)\n",
+    PRINT(("BLooper::ReadRawFromPort() read: %.4s, %p (%zd bytes)\n",
         (char*)msgCode, buffer, bufferSize));
 
     return buffer;
@@ -1152,7 +1150,7 @@ BLooper::task_looper()
                 // dispatch loop.
                 dispatchNextMessage = false;
             } else {
-                PRINT(("LOOPER: fLastMessage: 0x%lx: %.4s\n", fLastMessage->what,
+                PRINT(("LOOPER: fLastMessage: 0x%x: %.4s\n", fLastMessage->what,
                     (char*)&fLastMessage->what));
                 DBG(fLastMessage->PrintToStream());
 
@@ -1162,8 +1160,8 @@ BLooper::task_looper()
                 bool usePreferred = messagePrivate.UsePreferredTarget();
 
                 if (usePreferred) {
-                    PRINT(("LOOPER: use preferred target\n"));
                     handler = fPreferred;
+                    PRINT(("LOOPER: use preferred target %p\n", handler));
                     if (handler == NULL)
                         handler = this;
                 } else {
@@ -1174,7 +1172,7 @@ BLooper::task_looper()
                     if (handler != NULL && handler->Looper() != this)
                         handler = NULL;
 
-                    PRINT(("LOOPER: use %ld, handler: %p, this: %p\n",
+                    PRINT(("LOOPER: use %d, handler: %p, this: %p\n",
                         messagePrivate.GetTarget(), handler, this));
                 }
 
