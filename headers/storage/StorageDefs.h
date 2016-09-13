@@ -17,7 +17,7 @@
 #define B_PATH_NAME_LENGTH		MAXPATHLEN
 #define B_ATTR_NAME_LENGTH		(B_FILE_NAME_LENGTH - 1)
 #define B_MIME_TYPE_LENGTH		(B_ATTR_NAME_LENGTH - 15)
-#define B_MAX_SYMLINKS			SYMLOOP_MAX
+#define B_MAX_SYMLINKS			_POSIX_SYMLOOP_MAX
 
 // Open Modes
 #define B_READ_ONLY			O_RDONLY	// read only
@@ -31,10 +31,10 @@
 
 // Node Flavors
 enum node_flavor {
-	B_FILE_NODE			= 0x01,
-	B_SYMLINK_NODE		= 0x02,
-	B_DIRECTORY_NODE	= 0x04,
-	B_ANY_NODE			= 0x07
+    B_FILE_NODE			= 0x01,
+    B_SYMLINK_NODE		= 0x02,
+    B_DIRECTORY_NODE	= 0x04,
+    B_ANY_NODE			= 0x07
 };
 
 

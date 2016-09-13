@@ -207,8 +207,10 @@ status_t write_port_etc(port_id port, int32 code, const void *buffer,
 
     _ports_rlock();
     _port_info *info = _find_port_info(port);
-    msg.msg_namelen = _fill_sockaddr(&address, info);
-    if (info) fd = info->fd;
+    if (info) {
+        fd = info->fd;
+        msg.msg_namelen = _fill_sockaddr(&address, info);
+    }
     _ports_unlock();
     if (fd < 0) return B_BAD_PORT_ID;
 

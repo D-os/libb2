@@ -10,5 +10,6 @@ add_executable(check
 target_link_libraries(check gtest_main gtest gmock)
 
 #add_subdirectory(kernel)
+add_subdirectory(storage)
 #add_subdirectory(app)
 #add_subdirectory(interface)

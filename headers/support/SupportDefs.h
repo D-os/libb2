@@ -8,12 +8,6 @@
 #ifndef _SUPPORT_DEFS_H
 #define _SUPPORT_DEFS_H
 
-#include <stdlib.h>
-#define STUB \
-    debug_printf("STUBBED! %s %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
-    abort();
-
-
 #include <BeBuild.h>
 #include <Errors.h>
 
@@ -23,11 +17,22 @@
 /* Linux specific stuff */
 typedef unsigned long	haiku_build_addr_t;
 #define addr_t			haiku_build_addr_t
+#define O_NOTRAVERSE    O_NOFOLLOW
+#define S_IUMSK         ALLPERMS
+#define O_RWMASK        O_ACCMODE
 /* from inttypes.h */
 #define __HAIKU_PRI_PREFIX_32
 #define __HAIKU_PRI_PREFIX_64   __PRI64_PREFIX
 #define __HAIKU_PRI_PREFIX_ADDR __PRIPTR_PREFIX
 #define __HAIKU_PRI_PREFIX_GENERIC_ADDR __HAIKU_PRI_PREFIX_ADDR
+/* and OpenBSD's strlcpy - but puhhhlease... http://blog.liw.fi/posts/strncpy/ */
+extern
+#ifdef __cplusplus
+"C"
+#endif
+size_t strlcpy(char *dst, const char *src, size_t siz);
+/* and some internal Haiku ones */
+#define B_STAT_SIZE_INSECURE	0x2000
 
 
 /* fixed-size integer types */
@@ -182,8 +187,8 @@ typedef uint32					perform_code;
 #define B_SCNxOFF		B_SCNx64
 
 /* dev_t */
-#define B_PRIdDEV		B_PRId32
-#define B_PRIiDEV		B_PRIi32
+#define B_PRIdDEV		PRIdMAX
+#define B_PRIiDEV		PRIiMAX
 
 /* ino_t */
 #define B_PRIdINO		B_PRId64

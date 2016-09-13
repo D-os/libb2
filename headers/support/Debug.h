@@ -98,4 +98,14 @@ extern "C" {
 	} while (false)
 
 
+/* D/os additions */
+#define F_WHAT_FORMAT       "'%c%c%c%c'"
+#define F_WHAT_VALUES(what) char(what >> 24), char(what >> 16), char(what >> 8), char(what)
+#define F_WHAT_SFORMAT      "%.4s"
+#define F_WHAT_SVALUE(what) (char*)&what
+
+#define STUB \
+    debug_printf("STUBBED! %s %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
+    abort();
+
 #endif	/* _DEBUG_H */
