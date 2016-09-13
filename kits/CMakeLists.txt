@@ -49,7 +49,7 @@ target_sources(be PRIVATE
 
         app/AppDefs.cpp
         app/AppMisc.cpp
-##	app/Application.cpp
+#	app/Application.cpp
         app/DirectMessageTarget.cpp
         app/Handler.cpp
         app/Looper.cpp

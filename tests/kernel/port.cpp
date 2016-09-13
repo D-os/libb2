@@ -53,7 +53,8 @@ status_t send_message(port_id port, int32 code, const char *message)
     return status;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     setbuf(stdout, NULL); // do not buffer
 
     port_id port = create_port(123, "test");

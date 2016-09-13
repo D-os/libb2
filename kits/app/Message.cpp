@@ -36,19 +36,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+#warning REMOVEME
+BApplication* be_app;
+BMessenger be_app_messenger;
+
 //#include "tracing_config.h"
     // kernel tracing configuration
 
 //#define VERBOSE_DEBUG_OUTPUT
 #ifdef VERBOSE_DEBUG_OUTPUT
 #define DEBUG_FUNCTION_ENTER	\
-    debug_printf("msg thread: %ld; this: %p; header: %p; fields: %p;" \
-        " data: %p; what: 0x%08lx '%.4s'; line: %d; func: %s\n", \
+    debug_printf("msg thread: %d; this: %p; header: %p; fields: %p;" \
+        " data: %p; what: 0x%08x '%.4s'; line: %d; func: %s\n", \
         find_thread(NULL), this, fHeader, fFields, fData, what, (char*)&what, \
         __LINE__, __PRETTY_FUNCTION__);
 
 #define DEBUG_FUNCTION_ENTER2	\
-    debug_printf("msg thread: %ld; line: %d: func: %s\n", find_thread(NULL), \
+    debug_printf("msg thread: %d; line: %d: func: %s\n", find_thread(NULL), \
         __LINE__, __PRETTY_FUNCTION__);
 #else
 #define DEBUG_FUNCTION_ENTER	/* nothing */
@@ -56,6 +60,7 @@
 #endif
 
 #if BMESSAGE_TRACING
+#   define ktrace_printf debug_printf
 #	define KTRACE(format...)	ktrace_printf(format)
 #else
 #	define KTRACE(format...)	;
@@ -916,6 +921,7 @@ BMessage::SendReply(BMessage* reply, BMessenger replyTo, bigtime_t timeout)
     BMessenger::Private messengerPrivate(messenger);
     messengerPrivate.SetTo(fHeader->reply_team, fHeader->reply_port,
         fHeader->reply_target);
+    KTRACE("reply_team %d, reply_port %d, reply_target %d, flags %x\n", fHeader->reply_team, fHeader->reply_port, fHeader->reply_target, fHeader->flags);
     if ((fHeader->flags & MESSAGE_FLAG_REPLY_AS_KMESSAGE) != 0)
         reply->fHeader->flags |= MESSAGE_FLAG_REPLY_AS_KMESSAGE;
 
@@ -2119,6 +2125,7 @@ BMessage::_SendMessage(port_id port, team_id portOwner, int32 token,
 
     BPrivate::BDirectMessageTarget* direct = NULL;
     BMessage* copy = NULL;
+    KTRACE("BMessage token: %d\n", token);
     if (portOwner == BPrivate::current_team())
         BPrivate::gDefaultTokens.AcquireHandlerTarget(token, &direct);
 
@@ -2167,6 +2174,11 @@ BMessage::_SendMessage(port_id port, team_id portOwner, int32 token,
                 target = info.team;
             }
 
+            STUB;
+            // if anyone is going to argue that an OS feature allowing
+            // inserting memory pages into some random process memory space
+            // is a good idea, just bring the straitjacket
+#if 0
             void* address = NULL;
             area_id transfered = _kern_transfer_area(header->message_area,
                 &address, B_ANY_ADDRESS, target);
@@ -2177,6 +2189,7 @@ BMessage::_SendMessage(port_id port, team_id portOwner, int32 token,
             }
 
             header->message_area = transfered;
+#endif
         }
 #endif
     } else {
@@ -2216,7 +2229,7 @@ BMessage::_SendMessage(port_id port, team_id portOwner, int32 token,
     header->flags |= MESSAGE_FLAG_WAS_DELIVERED;
 
     if (direct == NULL) {
-        KTRACE("BMessage send remote: team: %ld, port: %ld, token: %ld, "
+        KTRACE("BMessage send remote: team: %d, port: %d, token: %d, "
             "message: '%c%c%c%c'", portOwner, port, token,
             char(what >> 24), char(what >> 16), char(what >> 8), (char)what);
 
@@ -2237,7 +2250,7 @@ BMessage::_SendMessage(port_id port, team_id portOwner, int32 token,
     // target looper. Thus we don't want to do any ops that depend on
     // members of this after the enqueue.
     if (direct != NULL) {
-        KTRACE("BMessage send direct: port: %ld, token: %ld, "
+        KTRACE("BMessage send direct: port: %d, token: %d, "
             "message: '%c%c%c%c'", port, token,
             char(what >> 24), char(what >> 16), char(what >> 8), (char)what);
 
@@ -2268,6 +2281,7 @@ BMessage::_SendMessage(port_id port, team_id portOwner, int32 token,
     }
 
     DEBUG_FUNCTION_ENTER;
+    KTRACE("BMessage::_SendMessage token %d", token);
     const int32 cachedReplyPort = _StaticGetCachedReplyPort();
     port_id replyPort = B_BAD_PORT_ID;
     status_t result = B_OK;

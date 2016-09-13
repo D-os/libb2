@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     setbuf(stdout, NULL); // do not buffer
 
     void *addr = (void *)(intptr_t)(B_PAGE_SIZE * 0x80);

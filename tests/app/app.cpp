@@ -9,19 +9,20 @@
 
 #include <Application.h>
 #include <Messenger.h>
-BMessenger be_app_messenger;
+//BApplication *be_app = NULL;
+//BMessenger be_app_messenger;
 
-class Test : public BArchivable {
+class TestArchivable : public BArchivable {
 public:
     BString string;
     int32 number;
-    Test() : number(0) {}
-    Test(BMessage* archive);
+    TestArchivable() : number(0) {}
+    TestArchivable(BMessage* archive);
     static BArchivable* Instantiate(BMessage *archive);
-    status_t Archive(BMessage* archive,bool deep = true) const;
+    status_t Archive(BMessage* archive, bool deep = true) const;
 };
 
-status_t Test::Archive(BMessage* archive, bool deep) const
+status_t TestArchivable::Archive(BMessage* archive, bool deep) const
 {
     BArchivable::Archive(archive, deep);
     status_t ret = archive->AddString("test:string", string);
@@ -29,7 +30,7 @@ status_t Test::Archive(BMessage* archive, bool deep) const
     return archive->AddInt32("test:number", number);
 }
 
-Test::Test(BMessage *archive)
+TestArchivable::TestArchivable(BMessage *archive)
 {
     BString string;
     if (archive->FindString("test:string", &string) == B_OK)
@@ -39,17 +40,29 @@ Test::Test(BMessage *archive)
         this->number = number;
 }
 
-BArchivable* Test::Instantiate(BMessage* archive)
+BArchivable* TestArchivable::Instantiate(BMessage* archive)
 {
     if (validate_instantiation(archive, "TheClass"))
-        return new Test(archive);
+        return new TestArchivable(archive);
     return NULL;
 }
 
-int main(int argc, char **argv) {
+class TestLooper : public BLooper {
+public:
+    void MessageReceived(BMessage *message);
+};
+
+void TestLooper::MessageReceived(BMessage *message) {
+    printf("TestLooper::MessageReceived %.4s\n", (char*)&message->what);
+    BLooper::MessageReceived(message);
+}
+
+int main(int argc, char **argv)
+{
     setbuf(stdout, NULL); // do not buffer
 
     BMessage msg('MSG_');
+    printf("BMessage->what: %.4s\n", (char*)&msg.what);
 
     printf("IsSystem: %d\n", msg.IsSystem());
 
@@ -83,14 +96,14 @@ int main(int argc, char **argv) {
     unf.PrintToStream();
 
     // --- archiving
-    Test test;
+    TestArchivable test;
     test.string = "FooBar";
     test.number = 42;
     BMessage archive;
     test.Archive(&archive);
     archive.PrintToStream();
 
-    Test utest(&archive);
+    TestArchivable utest(&archive);
     printf("Test(%s, %d)\n", utest.string.String(), utest.number);
 
 //    Test *uitest = dynamic_cast<Test *>(instantiate_object(&archive));
@@ -104,14 +117,20 @@ int main(int argc, char **argv) {
     printf("Handler: %s\n", handler.Name());
 
     // --- looper
-    BLooper looper;
-    thread_id tid = looper.Run();
-    printf("Looper thread_id: %d\n", tid);
+    BLooper *looper = new TestLooper();
+    thread_id tid = looper->Run();
+    printf("Looper %p thread_id: %d\n", looper, tid);
 
-    looper.PostMessage(&msg);
+    printf("PostMessage: %d\n", looper->PostMessage(&msg));
 
-    snooze(1000000);
-    looper.Quit();
+    // --- application
+//    new BApplication("application/x-vnd.test-app");
+//    be_app->Run();
+//    delete be_app;
+
+//    snooze(1000000);
+//    looper->Lock();
+//    looper->Quit();
 
     return EXIT_SUCCESS;
 }

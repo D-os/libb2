@@ -40,7 +40,8 @@ int32 worker(void *data)
     return EXIT_SUCCESS;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     setbuf(stdout, NULL); // do not buffer
 
     char buf[255];

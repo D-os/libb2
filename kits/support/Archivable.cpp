@@ -194,6 +194,7 @@ add_private_namespace(BString& name)
 }
 
 
+#if 0
 static instantiation_func
 find_function_in_image(BString& funcName, image_id id, status_t& err)
 {
@@ -205,6 +206,7 @@ find_function_in_image(BString& funcName, image_id id, status_t& err)
 
     return instantiationFunc;
 }
+#endif
 
 
 static status_t
@@ -266,6 +268,7 @@ find_instantiation_func(const char* className, const char* signature,
         BString funcName;
         build_function_name(name, funcName);
 
+#if 0
         // for each image_id in team_id
         int32 cookie = 0;
         while (instantiationFunc == NULL
@@ -274,6 +277,10 @@ find_instantiation_func(const char* className, const char* signature,
             instantiationFunc = find_function_in_image(funcName, imageInfo.id,
                 err);
         }
+#else
+        if (get_image_symbol(-1, funcName, B_SYMBOL_TYPE_TEXT, (void**)&instantiationFunc) != B_OK)
+            instantiationFunc = NULL;
+#endif
         if (instantiationFunc != NULL) {
             // if requested, save the image id in
             // which the function was found
@@ -640,7 +647,7 @@ instantiate_object(BMessage* archive, image_id* _id)
     status_t statusBuffer;
     status_t* status = &statusBuffer;
     if (_id != NULL)
-        status = _id;
+        status = (status_t*)_id;
 
     // Check our params
     if (archive == NULL) {

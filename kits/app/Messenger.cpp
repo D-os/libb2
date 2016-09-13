@@ -422,6 +422,7 @@ BMessenger::_InitData(const BHandler* handler, const BLooper* looper,
                 result = B_BAD_VALUE;
         }
     }
+    fprintf(stderr,"BMessenger::_InitData %p %x : %p %p\n", this, result, handler, looper);
 
     if (_result != NULL)
         *_result = result;
