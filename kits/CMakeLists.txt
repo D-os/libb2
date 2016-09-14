@@ -64,25 +64,38 @@ target_sources(be PRIVATE
         app/TokenSpace.cpp
         app/InitTerminateLibBe.cpp
 
-##	interface/InterfaceDefs.cpp
+#        interface/InterfaceDefs.cpp
+        interface/Bitmap.cpp
+        interface/ColorConversion.cpp
         interface/Point.cpp
         interface/Rect.cpp
 #   #	interface/Size.cpp
 
-#	private/app/AppMisc.h
-#	private/app/DirectMessageTarget.h
-#	private/app/LooperList.h
-#	private/app/MessageAdapter.h
-#	private/app/MessagePrivate.h
-#	private/app/MessageUtils.h
-#	private/app/MessengerPrivate.h
-#	private/app/TokenSpace.h
-#	private/binary_compatibility/Global.h
-#	private/binary_compatibility/Interface.h
-#	private/binary_compatibility/Support.h
-#	private/interface/utf8_functions.h
-#	private/shared/AutoLocker.h
-#	private/support/StringPrivate.h
+        # HVIF: Haiku Vector Icon Format
+        private/icon/IconUtils.cpp
+        private/icon/Icon.cpp
+#        private/icon/IconRenderer.cpp
+#        private/icon/flat_icon/FlatIconFormat.cpp
+#        private/icon/flat_icon/FlatIconImporter.cpp
+#        private/icon/flat_icon/LittleEndianBuffer.cpp
+#        private/icon/flat_icon/PathCommandQueue.cpp
+#        private/icon/message/Defines.cpp
+#        private/icon/message/MessageImporter.cpp
+        private/icon/shape/PathContainer.cpp
+#        private/icon/shape/Shape.cpp
+        private/icon/shape/ShapeContainer.cpp
+#        private/icon/shape/VectorPath.cpp
+#        private/icon/style/GradientTransformable.cpp
+#        private/icon/style/Style.cpp
+        private/icon/style/StyleContainer.cpp
+#        private/icon/transformable/Transformable.cpp
+#        private/icon/transformer/AffineTransformer.cpp
+#        private/icon/transformer/ContourTransformer.cpp
+#        private/icon/transformer/PathSource.cpp
+#        private/icon/transformer/PerspectiveTransformer.cpp
+#        private/icon/transformer/StrokeTransformer.cpp
+#        private/icon/transformer/Transformer.cpp
+#        private/icon/transformer/TransformerFactory.cpp
 
 )
 
@@ -97,6 +110,14 @@ target_include_directories(be PRIVATE
         private/shared
         private/storage
         private/support
+        private/icon
+        private/icon/flat_icon
+        private/icon/message
+        private/icon/shape
+        private/icon/style
+        private/icon/transformable
+        private/icon/transformer
+
 )
 
 target_link_libraries(be PUBLIC root)
