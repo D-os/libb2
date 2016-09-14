@@ -10,6 +10,7 @@ add_library(root SHARED
         kernel/debug.c
         kernel/syscalls.c
         kernel/attr.c
+        kernel/info.c
         private/strlcpy.c
 )
 target_sources(root PRIVATE

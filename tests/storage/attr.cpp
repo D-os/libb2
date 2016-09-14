@@ -42,7 +42,7 @@ int main(int argc, char **argv)
         ret = EXIT_FAILURE;
         goto exit;
     }
-    written = fs_write_attr(fd, "user:/.%!mode", B_ANY_TYPE, 0, "\0\0\0\0\0", 5);
+    written = fs_write_attr(fd, "user.:/%!mode", B_ANY_TYPE, 0, "\0\0\0\0\0", 5);
     if (written < 0) {
         fprintf(stderr, "Error writing attribute 'user.mode': %d %s\n", errno, strerror(errno));
         ret = EXIT_FAILURE;
