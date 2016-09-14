@@ -41,9 +41,9 @@ typedef struct fs_info {
 extern "C" {
 #endif
 
-extern dev_t	dev_for_path(const char *path);
-extern dev_t	next_dev(int32 *pos);
-extern int		fs_stat_dev(dev_t dev, fs_info *info);
+extern long 	dev_for_path(const char *path);
+extern long 	next_dev(int32 *pos);
+extern int      fs_stat_dev(dev_t dev, fs_info *info);
 
 #ifdef  __cplusplus
 }
