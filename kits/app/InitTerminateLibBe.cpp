@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <execinfo.h>
 
 #include <AppMisc.h>
 #include <LooperList.h>
@@ -28,6 +30,27 @@
 #define DBG(x)
 #endif
 #define OUT	printf
+
+static void
+_crash_sigaction(int signum, siginfo_t *info, void *ucontext)
+{
+    void *array[64];
+    int size;
+
+    fprintf(stderr, "=== SIGNAL %d (%s), ADDR %p\n",
+            signum, strsignal(signum), info->si_addr);
+
+    size = backtrace(array, count_of(array));
+
+    /* skip first stack frames (points here, pthread and sigaction) */
+    const int before = 4;
+    /* skip last frames (_start entries) */
+    const int after = 2;
+    backtrace_symbols_fd(array + before, size - before - after, STDERR_FILENO);
+
+    /* restore default handler and return to call it */
+    signal(signum, SIG_DFL);
+}
 
 
 static void
@@ -51,6 +74,19 @@ initialize_before()
 
     BMessage::Private::StaticInit();
 //    BRoster::Private::InitBeRoster();
+
+    /* setup crash handler */
+    struct sigaction sigact;
+    sigact.sa_sigaction = _crash_sigaction;
+    sigact.sa_flags = SA_RESTART | SA_SIGINFO;
+    int sigs[] = {SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV};
+    for (unsigned i = 0; i < count_of(sigs); i++) {
+        if (sigaction(sigs[i], &sigact, (struct sigaction *)NULL) != 0) {
+            fprintf(stderr, "error setting signal handler for %d (%s)\n",
+                    sigs[i], strsignal(sigs[i]));
+            exit(EXIT_FAILURE);
+        }
+    }
 
     atfork(initialize_forked_child);
 
