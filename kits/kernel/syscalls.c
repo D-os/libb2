@@ -40,6 +40,9 @@ struct linux_dirent {
     if (ret < 0) return B_FROM_POSIX_ERROR(errno); \
     return ret;
 
+#define CHECK_BAD_LEAF(path) \
+    (path == NULL || path[0] == '\0' || strchr(path, '/') != NULL)
+
 
 int _kern_dup(int fd)
 {
@@ -53,6 +56,7 @@ status_t _kern_close(int fd)
 
 status_t _kern_unlink(int fd, const char *path)
 {
+    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
     WRAP_POSIX_CALL(unlinkat(fd, path, 0));
 }
 
@@ -65,6 +69,7 @@ status_t _kern_rename(int oldDir, const char *oldpath,
 status_t _kern_read_stat(int fd, const char *path, bool traverseLink,
                          struct stat *stat, size_t statSize)
 {
+    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
     int flags = 0;
     if (!traverseLink) {
         flags |= AT_SYMLINK_NOFOLLOW;
@@ -75,6 +80,7 @@ status_t _kern_read_stat(int fd, const char *path, bool traverseLink,
 status_t _kern_read_link(int fd, const char *path,
                          char *buffer, size_t *_bufferSize)
 {
+    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
     ssize_t written = readlinkat(fd, path, buffer, *_bufferSize);
     if (written < 0) {
         return B_FROM_POSIX_ERROR(errno);
@@ -121,23 +127,28 @@ status_t _kern_rewind_dir(int fd)
 status_t _kern_create_symlink(int fd, const char *path,
                               const char *toPath, int mode)
 {
+    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
     WRAP_POSIX_CALL(symlinkat(toPath, fd, path));
 }
 
 int _kern_open(int fd, const char *path, int openMode, int perms)
 {
+    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
     WRAP_POSIX_RETURN(int, openat(fd, path, openMode, perms));
 }
 int _kern_open_entry_ref(int reffd, const char *leaf, int openMode, int perms)
 {
+    if(CHECK_BAD_LEAF(leaf)) return B_BAD_VALUE;
     return _kern_open(reffd, leaf, openMode, perms);
 }
 
 int _kern_open_dir(int fd, const char *path)
 {
+    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
     WRAP_POSIX_RETURN(int, openat(fd, path, O_DIRECTORY | O_CLOEXEC));
 }
-int _kern_open_dir_entry_ref(int reffd, const char *name) {
+int _kern_open_dir_entry_ref(int reffd, const char *name)
+{
     return _kern_open_dir(reffd, name);
 }
 
@@ -170,6 +181,7 @@ int _kern_open_parent_dir(int fd, char *name, size_t nameLength)
 
 status_t _kern_create_dir(int fd, const char *path, int perms)
 {
+    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
     WRAP_POSIX_CALL(mkdirat(fd, path, (mode_t)perms));
 }
 status_t _kern_create_dir_entry_ref(int reffd, const char *leaf, int perms)
@@ -179,6 +191,7 @@ status_t _kern_create_dir_entry_ref(int reffd, const char *leaf, int perms)
 
 status_t _kern_remove_dir(int fd, const char *path)
 {
+    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
     WRAP_POSIX_CALL(unlinkat(fd, path, AT_REMOVEDIR));
 }
 
@@ -212,6 +225,8 @@ ssize_t _kern_write(int fd, off_t pos, const void *buffer, size_t bufferSize)
 status_t _kern_entry_ref_to_path(int reffd, const char *leaf,
                                  char *userPath, size_t pathLength)
 {
+    if(CHECK_BAD_LEAF(leaf)) return B_BAD_VALUE;
+
     struct stat statorig;
     if (fstatat(reffd, "", &statorig, AT_EMPTY_PATH) < 0) return B_BAD_VALUE;
 
@@ -271,4 +286,8 @@ status_t _kern_unlock_node(int fd)
 
 status_t _kern_write_stat(int fd, const char *path,
                           bool traverseLink, const struct stat *stat,
-                          size_t statSize, int statMask) {STUB; return 0;}
+                          size_t statSize, int statMask)
+{
+    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
+    STUB;return 0;
+}
