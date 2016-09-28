@@ -34,6 +34,7 @@ typedef struct fs_info {
 	char	device_name[128];					/* device holding fs */
 	char	volume_name[B_FILE_NAME_LENGTH];	/* volume name */
 	char	fsh_name[B_OS_NAME_LENGTH];			/* name of fs handler */
+    char    mount_point[B_PATH_NAME_LENGTH];    /* mount point (D/os) */
 } fs_info;
 
 
