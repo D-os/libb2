@@ -130,9 +130,10 @@ int fs_stat_dev(dev_t dev, fs_info *info)
         info->free_blocks = vb.f_bfree;
         info->total_nodes = vb.f_files;
         info->free_nodes = vb.f_ffree;
-        strncpy(info->device_name, device, 128);
+        strlcpy(info->device_name, device, 128);
 //        char	volume_name[B_FILE_NAME_LENGTH];	/* volume name */
-        strncpy(info->fsh_name, fs, B_OS_NAME_LENGTH);
+        strlcpy(info->fsh_name, fs, B_OS_NAME_LENGTH);
+        strlcpy(info->mount_point, path, B_PATH_NAME_LENGTH);
 
         return B_OK;
     }

@@ -11,7 +11,9 @@ add_library(root SHARED
         kernel/syscalls.c
         kernel/attr.c
         kernel/info.c
+        private/strlcat.c
         private/strlcpy.c
+        private/find_directory.c
 )
 target_sources(root PRIVATE
         root.map kernel/private.h kernel/utlist.h kernel/rwlock.h kernel/rwlock.c
@@ -30,23 +32,36 @@ target_sources(be PRIVATE
         support/ArchivingManagers.cpp
         support/ArchivingManagers.h
         support/BlockCache.cpp
-#	support/ByteOrder.cpp
+        support/ByteOrder.cpp
         support/DataIO.cpp
         support/Flattenable.cpp
         support/List.cpp
         support/Locker.cpp
+        support/PointerList.cpp
         support/String.cpp
         support/StringList.cpp
 
+        storage/AppFileInfo.cpp
         storage/Directory.cpp
         storage/Entry.cpp
         storage/EntryList.cpp
         storage/File.cpp
+        storage/FindDirectory.cpp
+        storage/MimeType.cpp
         storage/Node.cpp
+        storage/NodeInfo.cpp
+        storage/OffsetFile.cpp
         storage/Path.cpp
+        storage/ResourceFile.cpp
+        storage/ResourceItem.cpp
+        storage/Resources.cpp
+        storage/ResourcesContainer.cpp
         storage/Statable.cpp
         storage/SymLink.cpp
+        storage/Volume.cpp
         storage/storage_support.cpp
+        storage/mime/DatabaseLocation.cpp
+        storage/mime/database_support.cpp
 
         app/AppDefs.cpp
         app/AppMisc.cpp
@@ -65,9 +80,10 @@ target_sources(be PRIVATE
         app/TokenSpace.cpp
         app/InitTerminateLibBe.cpp
 
-#        interface/InterfaceDefs.cpp
+        interface/InterfaceDefs.cpp
         interface/Bitmap.cpp
         interface/ColorConversion.cpp
+        interface/GraphicsDefs.cpp
         interface/Point.cpp
         interface/Rect.cpp
 #   #	interface/Size.cpp
@@ -107,6 +123,7 @@ target_sources(be PRIVATE be.map ${privateHeaders})
 target_include_directories(be PRIVATE
         private
         private/app
+        private/input
         private/interface
         private/shared
         private/storage
@@ -118,7 +135,6 @@ target_include_directories(be PRIVATE
         private/icon/style
         private/icon/transformable
         private/icon/transformer
-
 )
 
 target_link_libraries(be PUBLIC root)

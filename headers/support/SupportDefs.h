@@ -25,12 +25,15 @@ typedef unsigned long	haiku_build_addr_t;
 #define __HAIKU_PRI_PREFIX_64   __PRI64_PREFIX
 #define __HAIKU_PRI_PREFIX_ADDR __PRIPTR_PREFIX
 #define __HAIKU_PRI_PREFIX_GENERIC_ADDR __HAIKU_PRI_PREFIX_ADDR
-/* and OpenBSD's strlcpy - but puhhhlease... http://blog.liw.fi/posts/strncpy/ */
-extern
+/* and OpenBSD's strl* - but puhhhlease... http://blog.liw.fi/posts/strncpy/ */
 #ifdef __cplusplus
-"C"
+extern "C" {
 #endif
+size_t strlcat(char *dst, const char *src, size_t siz);
 size_t strlcpy(char *dst, const char *src, size_t siz);
+#ifdef __cplusplus
+}
+#endif
 /* and some internal Haiku ones */
 #define B_STAT_SIZE_INSECURE	0x2000
 
