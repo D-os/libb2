@@ -48,7 +48,7 @@ Chunker::~Chunker()
 	}
 }
 
-void Chunker::Reset(uint32_t size)
+void Chunker::Reset(size_t size)
 {
 	Chunk *p=m_freeList,*n;
 	while (p) {
@@ -101,7 +101,7 @@ bool Chunker::Alloc(uint32_t start, uint32_t size)
 	return true;
 }
 
-uint32_t Chunker::PreAbuttance(uint32_t addr)
+uintptr_t Chunker::PreAbuttance(uintptr_t addr)
 {
 	Chunk **p=&m_freeList;
 	while (*p && (((*p)->start + (*p)->size) != addr)) p = &(*p)->next;
@@ -109,7 +109,7 @@ uint32_t Chunker::PreAbuttance(uint32_t addr)
 	return (*p)->size;
 }
 
-uint32_t Chunker::PostAbuttance(uint32_t addr)
+uintptr_t Chunker::PostAbuttance(uintptr_t addr)
 {
 	Chunk **p=&m_freeList;
 	while (*p && ((*p)->start != addr)) p = &(*p)->next;
@@ -117,7 +117,7 @@ uint32_t Chunker::PostAbuttance(uint32_t addr)
 	return (*p)->size;
 }
 
-uint32_t Chunker::Alloc(uint32_t &size, bool takeBest, uint32_t atLeast)
+uintptr_t Chunker::Alloc(size_t &size, bool takeBest, uint32_t atLeast)
 {
 	Chunk **p=&m_freeList,*it,**c;
 	uint32_t s=size,start;
@@ -164,7 +164,7 @@ uint32_t Chunker::Alloc(uint32_t &size, bool takeBest, uint32_t atLeast)
 	return start;
 }
 
-Chunk const * const Chunker::Free(uint32_t start, uint32_t size)
+Chunk const * const Chunker::Free(uintptr_t start, size_t size)
 {
 	Chunk *n;
 	Chunk *dummy = NULL;
@@ -263,10 +263,10 @@ void Chunker::SpewChunks()
 #endif
 }
 
-uint32_t Chunker::TotalChunkSpace()
+size_t Chunker::TotalChunkSpace()
 {
 	Chunk *p=m_freeList;
-	uint32_t total=0;
+	size_t total=0;
 	
 	while (p) {
 		total += p->size;
@@ -276,7 +276,7 @@ uint32_t Chunker::TotalChunkSpace()
 	return total;
 }
 
-uint32_t Chunker::LargestChunk()
+size_t Chunker::LargestChunk()
 {
 	Chunk *p=m_freeList;
 	Chunk *l=p;
@@ -335,7 +335,7 @@ void HashTable::Remove(uint32_t key)
 	m_stash.Free(it);
 }
 
-uint32_t HashTable::Hash(uint32_t address)
+uintptr_t HashTable::Hash(uintptr_t address)
 {
 	return address % m_buckets;
 }
@@ -378,7 +378,7 @@ void Hasher::Insert(uint32_t address, uint32_t size)
 	m_hashTable[bucket] = n;
 }
 
-void Hasher::Retrieve(uint32_t address, uint32_t **ptrToSize)
+void Hasher::Retrieve(uintptr_t address, size_t **ptrToSize)
 {
 	uint32_t bucket = Hash(address);
 	Chunk **p = &m_hashTable[bucket];
@@ -535,19 +535,19 @@ void Area::BasePtrUnlock()
 	m_basePtrLock.ReadUnlock();
 }
 
-uint32_t Area::ResizeTo(uint32_t newSize, bool acceptBest)
+size_t Area::ResizeTo(size_t newSize, bool acceptBest)
 {
 	(void)newSize; (void)acceptBest;
 	return B_UNSUPPORTED;
 }
 
-status_t Area::Map(uint32_t ptr, uint32_t size)
+status_t Area::Map(uintptr_t ptr, size_t size)
 {
 	/* Fixme: probably madvise to verify pages will be available */
 	return errNone;
 }
 
-status_t Area::Unmap(uint32_t ptr, uint32_t size)
+status_t Area::Unmap(uintptr_t ptr, size_t size)
 {
 	/* Fixme: probably madvise to say the pages can be discarded */
 	return errNone;
@@ -555,17 +555,17 @@ status_t Area::Unmap(uint32_t ptr, uint32_t size)
 
 /******* Heaping *********/
 
-uint32_t Heap::Alloc(uint32_t size)
+uintptr_t Heap::Alloc(size_t size)
 {
-	return (uint32_t)malloc(size);
+	return (uintptr_t)malloc(size);
 }
 
-uint32_t Heap::Realloc(uint32_t ptr, uint32_t newSize)
+uintptr_t Heap::Realloc(uintptr_t ptr, size_t newSize)
 {
-	return (uint32_t)realloc((void*)ptr,newSize);
+	return (uintptr_t)realloc((void*)ptr,newSize);
 }
 
-void Heap::Free(uint32_t ptr)
+void Heap::Free(uintptr_t ptr)
 {
 	free((void*)ptr);
 }
@@ -578,12 +578,12 @@ void Heap::Unlock()
 {
 }
 
-uint32_t Heap::Offset(void *ptr)
+uintptr_t Heap::Offset(void *ptr)
 {
-	return (uint32_t)ptr;
+	return (uintptr_t)ptr;
 }
 
-void * Heap::Ptr(uint32_t offset)
+void * Heap::Ptr(uintptr_t offset)
 {
 	return (void *)offset;
 }
@@ -591,14 +591,14 @@ void * Heap::Ptr(uint32_t offset)
 /******************************************/
 
 DPT(HA_HeapArea);
-HeapArea::HeapArea(const char *name, uint32_t size, uint32_t quantum, bool mapped) :
+HeapArea::HeapArea(const char *name, size_t size, uint32_t quantum, bool mapped) :
 	Area(name,size,mapped), m_freeList(&m_stash,this->Size(),quantum), m_allocs(&m_stash), m_size(0), m_mapped(0)
 {
 	DAP(HA_HeapArea);
 	if (!mapped)
 	{
 		m_size = ((Size() / PAGE_SIZE) + 31) / 32;
-		m_mapped = new uint32_t [m_size];
+		m_mapped = new uintptr_t [m_size];
 		for (uint32_t i = 0; i < m_size; i++) m_mapped[i] = 0;
 	}
 #define HEAP_TORTURE_TEST 0
@@ -625,7 +625,7 @@ HeapArea::HeapArea(const char *name, uint32_t size, uint32_t quantum, bool mappe
 }
 
 DPT(HA_MapRequired);
-status_t HeapArea::MapRequired(uint32_t ptr, uint32_t size)
+status_t HeapArea::MapRequired(uintptr_t ptr, size_t size)
 {
 	DAP(HA_MapRequired);
 	status_t result = errNone;
@@ -674,7 +674,7 @@ error0:
 }
 
 DPT(HA_UnmapRequired);
-status_t HeapArea::UnmapRequired(uint32_t ptr, uint32_t size)
+status_t HeapArea::UnmapRequired(uintptr_t ptr, size_t size)
 {
 	DAP(HA_UnmapRequired);
 	status_t result = errNone;
@@ -723,12 +723,13 @@ error0:
 }
 
 DPT(HA_Alloc);
-uint32_t HeapArea::Alloc(uint32_t size)
+uintptr_t HeapArea::Alloc(size_t size)
 {
 	DAP(HA_Alloc);
 	m_heapLock.Lock();
 
-	uint32_t s,p,abutt,i;
+	size_t s;
+	uint32_t p,abutt,i;
 	s = size;
 	p = m_freeList.Alloc(s);
 	if (s < size) {
@@ -779,12 +780,13 @@ uint32_t HeapArea::Alloc(uint32_t size)
 }
 
 DPT(HA_Realloc);
-uint32_t HeapArea::Realloc(uint32_t ptr, uint32_t newSize)
+uintptr_t HeapArea::Realloc(uintptr_t ptr, size_t newSize)
 {
 	DAP(HA_Realloc);
 	if (ptr == NONZERO_NULL) return Alloc(newSize);
 	m_heapLock.Lock();
-	uint32_t *size,r = NONZERO_NULL;
+	size_t *size;
+	uint32_t r = NONZERO_NULL;
 	m_allocs.Retrieve(ptr,&size);
 	if (*size != 0) {
 		uint32_t quantizedSize =	(newSize + m_freeList.m_quantum) &
@@ -815,7 +817,7 @@ uint32_t HeapArea::Realloc(uint32_t ptr, uint32_t newSize)
 }
 
 DPT(HA_Free);
-void HeapArea::Free(uint32_t ptr)
+void HeapArea::Free(uintptr_t ptr)
 {
 	DAP(HA_Free);
 	if (ptr == NONZERO_NULL) return;
@@ -843,12 +845,12 @@ void HeapArea::Unlock()
 	BasePtrUnlock();
 }
 
-uint32_t HeapArea::Offset(void *ptr)
+uintptr_t HeapArea::Offset(void *ptr)
 {
 	return Ptr2Offset(ptr);
 }
 
-void * HeapArea::Ptr(uint32_t offset)
+void * HeapArea::Ptr(uintptr_t offset)
 {
 	return Offset2Ptr(offset);
 }
@@ -870,12 +872,12 @@ void HeapArea::Reset()
 	m_heapLock.Unlock();
 }
 
-uint32_t HeapArea::FreeSpace()
+size_t HeapArea::FreeSpace()
 {
 	return m_freeList.TotalChunkSpace();
 }
 
-uint32_t HeapArea::LargestFree()
+size_t HeapArea::LargestFree()
 {
 	return m_freeList.LargestChunk();
 }

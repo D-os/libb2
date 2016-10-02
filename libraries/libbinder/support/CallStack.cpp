@@ -50,7 +50,7 @@ struct symbol
 	uint32_t	name;
 };
 
-const char* lookup_symbol(uint32_t addr, uint32_t *offset, char* name, size_t bufSize);
+const char* lookup_symbol(intptr_t addr, off_t *offset, char* name, size_t bufSize);
 
 #if _SUPPORTS_NAMESPACE
 } // namespace Priv
@@ -280,7 +280,7 @@ void SCallStack::LongPrint(const sptr<ITextOutput>& io, b_demangle_func demangle
 	char tmp[256];
 	char tmp1[32];
 	char tmp2[32];
-	uint32_t offs;
+	off_t offs;
 
 #if TARGET_HOST == TARGET_HOST_LINUX
 	if (!demangler) demangler = linux_gcc_demangler;
@@ -294,8 +294,8 @@ void SCallStack::LongPrint(const sptr<ITextOutput>& io, b_demangle_func demangle
 			name = tmp;
 		}
 				
-		sprintf(tmp1, "0x%08x: <", m_caller[i]);
-		sprintf(tmp2, ">+0x%08x", offs);
+		sprintf(tmp1, "0x%08zx: <", m_caller[i]);
+		sprintf(tmp2, ">+0x%08zx", offs);
 		
 		io << tmp1 << name << tmp2 << endl;
 	}
@@ -346,22 +346,22 @@ void SCallTreeNode::ShortReport(const sptr<ITextOutput>& io)
 	parent->ShortReport(io);
 	
 	if (parent->parent)
-		sprintf(tmp, ", %08x", addr);
+		sprintf(tmp, ", %08zx", addr);
 	else
-		sprintf(tmp, "%08x", addr);
+		sprintf(tmp, "%08zx", addr);
 		
 	io << tmp;
 };
 
 void SCallTreeNode::LongReport(const sptr<ITextOutput>& io, b_demangle_func demangler,
-							   char *buffer, int32_t bufferSize)
+							   char *buffer, size_t bufferSize)
 {
 	char namebuf[1024];
 	char tmp1[32];
 	char tmp2[32];
 	const char* name;
 	
-	uint32_t offs;
+	off_t offs;
 	if (!parent) return;
 
 #if TARGET_HOST == TARGET_HOST_LINUX
@@ -375,8 +375,8 @@ void SCallTreeNode::LongReport(const sptr<ITextOutput>& io, b_demangle_func dema
 		name = buffer;
 	}
 	
-	sprintf(tmp1, "  0x%08x: <", addr);
-	sprintf(tmp2, ">+0x%08x", offs);
+	sprintf(tmp1, "  0x%08zx: <", addr);
+	sprintf(tmp2, ">+0x%08zx", offs);
 	
 	io << tmp1 << name << tmp2 << endl;
 };
@@ -607,12 +607,12 @@ const char* lookup_symbol(uint32_t addr, uint32_t *offset, char* name, size_t bu
 #elif TARGET_HOST == TARGET_HOST_LINUX
 //#define _GNU_SOURCE
 #include <dlfcn.h>
-const char *lookup_symbol(uint32_t addr, uint32_t *offset, char* name, size_t bufSize)
+const char *lookup_symbol(intptr_t addr, off_t *offset, char* name, size_t bufSize)
 {
 	Dl_info info;
 
 	if (dladdr((void*)addr, &info)) {
-		*offset = (uint32_t)info.dli_saddr;
+		*offset = (uintptr_t)info.dli_saddr;
 		return info.dli_sname;
 	}
 	return 0;

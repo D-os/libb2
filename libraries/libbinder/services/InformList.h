@@ -220,7 +220,7 @@ operator << (const sptr<ITextOutput>& os, const CallbackInfo &info)
 {
 	os << "target: " << info.Target();
 	os << " method: \"" << info.Method().AsString();
-	os << "\" flags: " << (void*)info.Flags();
+	os << "\" flags: " << (void*)(uintptr_t)info.Flags();
 	os << " cookie: " << info.Cookie();
 	return os;
 }
@@ -405,7 +405,7 @@ operator << (const sptr<ITextOutput>& os, const CreationInfo &info)
 	os << " component: " << info.Component();
 	os << " interface: " << info.Interface();
 	os << " method: " << info.Method();
-	os << " flags: " << (void*)info.Flags();
+	os << " flags: " << (void*)(uintptr_t)info.Flags();
 	os << " cookie: " << info.Cookie();
 	return os;
 }

@@ -150,7 +150,9 @@ public:
 	{
 		if (msg.What() == 'asyn')
 		{
-			SKeyedVector<sptr<IBinder>, SValue>* sendThese = (SKeyedVector<sptr<IBinder>, SValue>*)((void*)msg[B_0_INT32].AsInt32());
+			uintptr_t group = ((uintptr_t)msg[B_0_INT32].AsInt32()) << 32;
+			group |= (uint32_t)msg[B_1_INT32].AsInt32();
+			SKeyedVector<sptr<IBinder>, SValue>* sendThese = (SKeyedVector<sptr<IBinder>, SValue>*)((void*)group);
 			do_push(*sendThese);
 			delete sendThese;
 			sendThese = NULL;
@@ -1414,9 +1416,11 @@ PushMaps::DoPush(const sptr<AsyncHandler>& handler)
 #if !LIBBE_BOOTSTRAP			
 		SMessage msg('asyn', SLooper::ThreadPriority());
 		// This is the stuff to push.
-		msg.JoinItem(B_0_INT32, SSimpleValue<int32_t>((int32_t)m_asyncGroup));
+		uintptr_t asyncGroup = (uintptr_t)m_asyncGroup;
+		msg.JoinItem(B_0_INT32, SSimpleValue<int32_t>((int32_t)(asyncGroup>>32)));
+		msg.JoinItem(B_1_INT32, SSimpleValue<int32_t>((int32_t)asyncGroup));
 		// Make sure the handler doesn't go away until this message is processed.
-		msg.JoinItem(B_1_INT32, SValue::Atom(handler.ptr()));
+		msg.JoinItem(B_2_INT32, SValue::Atom(handler.ptr()));
 		if (handler == NULL || (err=handler->PostMessage(msg)) != B_OK) {
 			// Error!
 			if (handler == NULL) err = B_NO_MEMORY;

@@ -352,36 +352,36 @@ namespace palmos {
 namespace support {
 #endif
 
-inline void init_gehnaphore(volatile int32_t* value, const char* name = "gehnaphore")
+inline void init_gehnaphore(volatile intptr_t* value, const char* name = "gehnaphore")
 {
-	if (!LockDebugLevel()) *value = (int32_t)sysCriticalSectionInitializer;
-	else *value = reinterpret_cast<int32_t>(new(B_SNS(std::) nothrow) DebugLock("SLocker", (const void*)value, name));
+	if (!LockDebugLevel()) *value = (intptr_t)sysCriticalSectionInitializer;
+	else *value = reinterpret_cast<intptr_t>(new(B_SNS(std::) nothrow) DebugLock("SLocker", (const void*)value, name));
 }
 
-inline void fini_gehnaphore(volatile int32_t* value)
+inline void fini_gehnaphore(volatile intptr_t* value)
 {
 	if (!LockDebugLevel()) ;
 	else if (*value) reinterpret_cast<DebugLock*>(*value)->Delete();
 }
 
-inline void lock_gehnaphore(volatile int32_t* value)
+inline void lock_gehnaphore(volatile intptr_t* value)
 {
 	if (!LockDebugLevel()) SysCriticalSectionEnter((SysCriticalSectionType*)value);
 	else if (*value) reinterpret_cast<DebugLock*>(*value)->Lock();
 }
 
-inline void unlock_gehnaphore(volatile int32_t* value)
+inline void unlock_gehnaphore(volatile intptr_t* value)
 {
 	if (!LockDebugLevel()) SysCriticalSectionExit((SysCriticalSectionType*)value);
 	else if (*value) reinterpret_cast<DebugLock*>(*value)->Unlock();
 }
 
-inline void restore_ownership_gehnaphore(volatile int32_t* value)
+inline void restore_ownership_gehnaphore(volatile intptr_t* value)
 {
 	if (LockDebugLevel() && *value) reinterpret_cast<DebugLock*>(*value)->RestoreOwnership();
 }
 
-inline volatile int32_t* remove_ownership_gehnaphore(volatile int32_t* value)
+inline volatile intptr_t* remove_ownership_gehnaphore(volatile intptr_t* value)
 {
 	if (!LockDebugLevel()) return value;
 	else if (*value) return reinterpret_cast<DebugLock*>(*value)->RemoveOwnership();
@@ -390,21 +390,21 @@ inline volatile int32_t* remove_ownership_gehnaphore(volatile int32_t* value)
 
 // We export these for lock debugging, so it can use
 // gehnaphores as well.
-extern void dbg_init_gehnaphore(volatile int32_t* value);
-extern void dbg_lock_gehnaphore(volatile int32_t* value);
-extern void dbg_unlock_gehnaphore(volatile int32_t* value);
+extern void dbg_init_gehnaphore(volatile intptr_t* value);
+extern void dbg_lock_gehnaphore(volatile intptr_t* value);
+extern void dbg_unlock_gehnaphore(volatile intptr_t *value);
 
-void dbg_init_gehnaphore(volatile int32_t* value)
+void dbg_init_gehnaphore(volatile intptr_t *value)
 {
 	*value = (int32_t)sysCriticalSectionInitializer;
 }
 
-void dbg_lock_gehnaphore(volatile int32_t* value)
+void dbg_lock_gehnaphore(volatile intptr_t* value)
 {
 	SysCriticalSectionEnter((SysCriticalSectionType*)value);
 }
 
-void dbg_unlock_gehnaphore(volatile int32_t* value)
+void dbg_unlock_gehnaphore(volatile intptr_t* value)
 {
 	SysCriticalSectionExit((SysCriticalSectionType*)value);
 }
@@ -479,7 +479,7 @@ void SLocker::RestoreOwnership()
 	restore_ownership_gehnaphore(&m_lockValue);
 }
 
-volatile int32_t* SLocker::RemoveOwnership()
+volatile intptr_t* SLocker::RemoveOwnership()
 {
 	return remove_ownership_gehnaphore(&m_lockValue);
 }

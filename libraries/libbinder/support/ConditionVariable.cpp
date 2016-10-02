@@ -92,37 +92,37 @@ static inline void broadcast_cv(volatile int32_t* value)
 
 // No debugging implemented yet.  Boo hoo!
 
-static inline void init_cv(volatile int32_t* value)
+static inline void init_cv(volatile intptr_t* value)
 {
 	*value = sysConditionVariableInitializer;
 }
 
-static inline void init_cv(volatile int32_t* value, const char* /*name*/)
+static inline void init_cv(volatile intptr_t* value, const char* /*name*/)
 {
 	*value = sysConditionVariableInitializer;
 }
 
-static inline void fini_cv(volatile int32_t* value)
+static inline void fini_cv(volatile intptr_t* value)
 {
 	(void)value;
 }
 
-static inline void wait_cv(volatile int32_t* value, volatile int32_t* critSec)
+static inline void wait_cv(volatile intptr_t* value, volatile intptr_t* critSec)
 {
 	SysConditionVariableWait((SysConditionVariableType*)value, (SysCriticalSectionType*)critSec);
 }
 
-static inline void open_cv(volatile int32_t* value)
+static inline void open_cv(volatile intptr_t* value)
 {
 	SysConditionVariableOpen((SysConditionVariableType*)value);
 }
 
-static inline void close_cv(volatile int32_t* value)
+static inline void close_cv(volatile intptr_t* value)
 {
 	SysConditionVariableClose((SysConditionVariableType*)value);
 }
 
-static inline void broadcast_cv(volatile int32_t* value)
+static inline void broadcast_cv(volatile intptr_t* value)
 {
 	SysConditionVariableBroadcast((SysConditionVariableType*)value);
 }

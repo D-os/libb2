@@ -318,12 +318,12 @@ void SHandler::FilterMessages(filter_func func, uint32_t flags, void* data,
 
 static SHandler::filter_action clear_func(const SMessage* msg, void* data)
 {
-	return (msg->What() == (uint32_t)data) ? SHandler::FILTER_REMOVE : SHandler::FILTER_KEEP;
+	return (msg->What() == (uintptr_t)data) ? SHandler::FILTER_REMOVE : SHandler::FILTER_KEEP;
 }
 
 void SHandler::RemoveMessages(uint32_t what, uint32_t flags, SMessageList* removed)
 {
-	FilterMessages(clear_func, flags, (void*)what, removed);
+	FilterMessages(clear_func, flags, (void*)(uintptr_t)what, removed);
 }
 
 void SHandler::RemoveAllMessages(SMessageList* outRemoved)

@@ -38,7 +38,7 @@ class BRangedVector
 {
 public:
 	void		AddItem(uint32_t start, uint32_t end, const SString &value);
-	SString		FindItem(uint32_t key, bool *found) const;
+	SString		FindItem(uintptr_t key, bool *found) const;
 	
 	struct range
 	{
@@ -163,7 +163,7 @@ BRangedVector::AddItem(uint32_t start, uint32_t end, const SString &value)
 }
 
 SString
-BRangedVector::FindItem(uint32_t key, bool *found) const
+BRangedVector::FindItem(uintptr_t key, bool *found) const
 {
 	size_t i, count=m_ranges.CountItems();
 	for (i=0; i<count; i++) {
@@ -239,7 +239,7 @@ lookup_debug(const void *key, bool padding)
 {
 	SString str;
 	bool found;
-	str = g_debugData.FindItem((uint32_t)key, &found);
+	str = g_debugData.FindItem((uintptr_t)key, &found);
 	if (!found) {
 		char buf[12];
 		sprintf(buf, "%p", key);

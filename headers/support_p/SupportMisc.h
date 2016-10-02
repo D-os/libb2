@@ -62,9 +62,9 @@ void __terminate_looper(void);
 #endif
 
 // Low-level locking primitive.
-void dbg_init_gehnaphore(volatile int32_t* value);
-void dbg_lock_gehnaphore(volatile int32_t* value);
-void dbg_unlock_gehnaphore(volatile int32_t* value);
+void dbg_init_gehnaphore(volatile intptr_t* value);
+void dbg_lock_gehnaphore(volatile intptr_t* value);
+void dbg_unlock_gehnaphore(volatile intptr_t* value);
 
 // Cleanup helpers.
 typedef void (*binder_cleanup_func)();

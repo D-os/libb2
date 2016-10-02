@@ -540,10 +540,10 @@ public:
 
 	SString 			&operator<<(int);
 	SString 			&operator<<(unsigned int);
-	SString 			&operator<<(unsigned long);
 	SString 			&operator<<(long);
-	SString 			&operator<<(uint64_t);
-	SString 			&operator<<(int64_t);
+	SString 			&operator<<(unsigned long);
+	SString 			&operator<<(long long);
+	SString 			&operator<<(unsigned long long);
 			//!	Float output hardcodes %.2f style formatting.
 	SString				&operator<<(float);
 

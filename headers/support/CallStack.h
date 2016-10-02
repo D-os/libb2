@@ -92,7 +92,7 @@ public:
 			void			PruneNode();
 			void			ShortReport(const sptr<ITextOutput>& io);
 			void			LongReport(const sptr<ITextOutput>& io, b_demangle_func demangler=NULL,
-									   char *buffer=NULL, int32_t bufferSize=0);
+									   char *buffer=NULL, size_t bufferSize=0);
 	
 private:
 							SCallTreeNode(const SCallTreeNode& o);

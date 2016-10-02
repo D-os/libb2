@@ -70,7 +70,7 @@ private:
 							SConditionVariable(const SConditionVariable&);
 		SConditionVariable& operator = (const SConditionVariable&);
 
-		volatile int32_t				m_var;
+		volatile intptr_t				m_var;
 };
 
 /*-------------------------------------------------------------*/

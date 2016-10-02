@@ -943,12 +943,12 @@ void SAtom::base_data::unlink()
 	base_data* pos = (base_data*)g_threadDirectFuncs.tsdGet(gAtomBaseIndex);
 	if (pos == this) {
 		printf("Unlinking %p from top!\n", this);
-		g_threadDirectFuncs.tsdSet(gAtomBaseIndex, (void*)(pos->pending&~1));
+		g_threadDirectFuncs.tsdSet(gAtomBaseIndex, (void*)(intptr_t)(pos->pending&~1U));
 		return;
 	}
 
 	while (pos->next) {
-		base_data* after = (base_data*)(pos->pending&~1);
+		base_data* after = (base_data*)(intptr_t)(pos->pending&~1U);
 		if (after == this) {
 			printf("Unlinking %p from %p!\n", this, pos);
 			pos->next = after->next;
@@ -983,7 +983,7 @@ void* SAtom::operator new(size_t size)
 				printf("...previous %p\n", pos);
 			}
 #endif
-			ptr->next = (base_data*)(((uint32_t)prev)|1);
+			ptr->next = (base_data*)(((intptr_t)prev)|1);
 		} else {
 			ptr->next = NULL;
 		}
@@ -1027,7 +1027,7 @@ void* SAtom::operator new(size_t size, const B_SNS(std::)nothrow_t&) throw()
 				printf("...previous %p\n", pos);
 			}
 #endif
-			ptr->next = (base_data*)(((uint32_t)prev)|1);
+			ptr->next = (base_data*)(((intptr_t)prev)|1);
 		} else {
 			ptr->next = NULL;
 		}
@@ -1108,7 +1108,7 @@ SAtom::SAtom()
 	while ( pos && (this < ((void*)pos) || this >= ((void*)(((char*)pos)+pos->size))) ) {
 		// Not this one...  try the next!
 		prev = pos;
-		pos = (base_data*)(pos->pending&~1);
+		pos = (base_data*)(intptr_t)(pos->pending&~1U);
 	}
 
 	DbgOnlyFatalErrorIf(pos == NULL,
@@ -1122,7 +1122,7 @@ SAtom::SAtom()
 #endif
 
 	m_base = pos;
-	if (!prev) g_threadDirectFuncs.tsdSet(gAtomBaseIndex, (void*)(pos->pending&~1));
+	if (!prev) g_threadDirectFuncs.tsdSet(gAtomBaseIndex, (void*)(intptr_t)(pos->pending&~1U));
 	else prev->next = pos->next;
 
 	pos->atom = this;

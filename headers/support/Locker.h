@@ -66,14 +66,14 @@ private:
 		friend class	SConditionVariable;
 
 		// For use by SConditionVariable.
-		void			RestoreOwnership();
-		volatile int32_t*			RemoveOwnership();
+		void				RestoreOwnership();
+		volatile intptr_t*	RemoveOwnership();
 
 		// Blocker can't be copied
 						SLocker(const SLocker&);
 		SLocker& 		operator = (const SLocker&);
 
-		volatile int32_t			m_lockValue;
+		volatile intptr_t			m_lockValue;
 };
 
 /*-------------------------------------------------------------*/
@@ -121,7 +121,7 @@ private:
 
 static	void			_UnlockFunc(SNestedLocker* l);
 
-		volatile int32_t			m_lockValue;
+		volatile intptr_t	m_lockValue;
 		int32_t			m_owner;
 		int32_t			m_ownerCount;
 };

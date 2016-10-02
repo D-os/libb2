@@ -59,7 +59,7 @@ SValue AtomCommand::Run(const ArgList& args)
 		if (atom == NULL) atom = arg2.AsWeakAtom();
 		if (atom == NULL) atom = ArgToBinder(arg2).ptr();
 		if (atom == NULL) {
-			SAtom* raw = (SAtom*)(arg2.AsInt32());
+			SAtom* raw = (SAtom*)(arg2.AsInt64());
 			if (SAtom::ExistsAndIncWeak(raw)) {
 				atom = raw;
 				raw->DecWeak(raw);
@@ -68,7 +68,7 @@ SValue AtomCommand::Run(const ArgList& args)
 		if (atom != NULL) {
 			atom.unsafe_ptr_access()->Report(out);
 		} else {
-			SLightAtom* raw = (SLightAtom*)(arg2.AsInt32());
+			SLightAtom* raw = (SLightAtom*)(arg2.AsInt64());
 			if (SLightAtom::ExistsAndIncStrong(raw)) {
 				raw->Report(out);
 				raw->DecStrong(raw);
@@ -136,7 +136,7 @@ SValue AtomCommand::Run(const ArgList& args)
 
 		N = lightAtoms.CountItems();
 		for (i=0; i<N; i++) {
-			result.JoinItem(SValue::Int32(i), SValue::Int32((int32_t)lightAtoms[i].ptr()));
+			result.JoinItem(SValue::Int64(i), SValue::Int64((intptr_t)lightAtoms[i].ptr()));
 		}
 
 		return result;

@@ -1400,7 +1400,7 @@ SValue BinderPerformance::RunLibcTest()
 	size_t const size = 1024*1024;
 	void * r;
 	void * const buffer = malloc(size+128*32+32+32);
-	const void *src = (const void *)((((uint32_t)buffer + 31)&~31) + 8);
+	const void *src = (const void *)((((uintptr_t)buffer + 31)&~uintptr_t(31)) + 8);
 	void *dst = (int8_t*)src + size/2 + 127*32 + 4;
 
 	if (!buffer) {
@@ -1482,7 +1482,7 @@ SValue BinderPerformance::RunLibcTest()
 
 	// strlen uncached tests
 	for(size_t i= 0; i< num_strlen_alignments; i++) {
-		char *bbb= reinterpret_cast<char*>((31+uint32_t(buffer))&~31);
+		char *bbb= reinterpret_cast<char*>((31+uintptr_t(buffer))&~uintptr_t(31));
 		char *base_ptr= bbb+strlen_alignments[i];
 
 		TextOutput() << "strlen (uncached, alignment=" << strlen_alignments[i] << "), MB/s " << endl;
@@ -1510,7 +1510,7 @@ SValue BinderPerformance::RunLibcTest()
 
 	// strlen cached tests
 	for(size_t i= 0; i< num_strlen_alignments; i++) {
-		char *bbb= reinterpret_cast<char*>((31+uint32_t(buffer))&~31);
+		char *bbb= reinterpret_cast<char*>((31+uintptr_t(buffer))&~uintptr_t(31));
 		char *base_ptr= bbb+strlen_alignments[i];
 
 		TextOutput() << "strlen (cached, alignment=" << strlen_alignments[i] << "), MB/s " << endl;

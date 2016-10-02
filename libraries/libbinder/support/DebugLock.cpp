@@ -111,7 +111,7 @@ int32_t LockDebugLevelSlow() {
 // ----- Graph management and access protection
 //#pragma mark -
 
-static volatile int32_t gGraphLock = 0;
+static volatile intptr_t gGraphLock = 0;
 static SysHandle gGraphHolder = B_NO_INIT;
 static int32_t gGraphNesting = 0;
 static int32_t gHasGraphSem = 0;
@@ -244,7 +244,7 @@ static void AllocGraphLock() {
 // ----- Lock contention tracking
 //#pragma mark -
 
-static volatile int32_t gContentionLock = 0;
+static volatile intptr_t gContentionLock = 0;
 static int32_t gHasContentionSem = 0;
 static SVector<DebugLockNode*>* gHighContention = NULL;
 static int32_t gMinContention = 1;
@@ -1000,7 +1000,7 @@ void DebugLock::RestoreOwnership()
 	do_lock(B_TIMEOUT, B_INFINITE_TIMEOUT, 0, true);
 }
 
-volatile int32_t* DebugLock::RemoveOwnership()
+volatile intptr_t* DebugLock::RemoveOwnership()
 {
 	do_unlock(true);
 	return &m_gehnaphore;

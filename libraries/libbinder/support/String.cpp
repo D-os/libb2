@@ -3158,7 +3158,7 @@ SString::operator<<(unsigned long num)
 }
 
 SString &
-SString::operator<<(int64_t num)
+SString::operator<<(long long num)
 {
 	int32_t length = Length();
 	char *buffer = (LockBuffer(Length() + 64) + length);
@@ -3169,7 +3169,7 @@ SString::operator<<(int64_t num)
 }
 
 SString &
-SString::operator<<(uint64_t num)
+SString::operator<<(unsigned long long num)
 {
 	int32_t length = Length();
 	char *buffer = (LockBuffer(Length() + 64) + length);

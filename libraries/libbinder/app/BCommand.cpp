@@ -603,13 +603,13 @@ SString BCommand::CurDir() const
 int BCommand::FILERead(void *cookie, char *buf, int n)
 {
 	// only stdin can be read
-	uint32_t which = (((uint32_t)cookie) & 0x3);
+	uintptr_t which = (((uintptr_t)cookie) & (uintptr_t)0x3);
 	if (which != 0) {
 		errno = EBADF;
 		return -1;
 	}
 
-	BCommand* This = reinterpret_cast<BCommand*>(((uint32_t)cookie) & ~0x3);
+	BCommand* This = reinterpret_cast<BCommand*>(((uintptr_t)cookie) & ~(uintptr_t)0x3);
 
 	// because our 'stdin' FILE is unbuffered, 'n' will always
 	// be one - just read a character
@@ -628,13 +628,13 @@ int BCommand::FILERead(void *cookie, char *buf, int n)
 int BCommand::FILEWrite(void *cookie, const char *buf, int n)
 {
 	// only stdout/stderr can be written
-	uint32_t which = (((uint32_t)cookie) & 0x3);
+	uintptr_t which = (((uintptr_t)cookie) & (uintptr_t)0x3);
 	if (which == 0) {
 		errno = EBADF;
 		return -1;
 	}
 
-	BCommand* This = reinterpret_cast<BCommand*>(((uint32_t)cookie) & ~0x3);
+	BCommand* This = reinterpret_cast<BCommand*>(((uintptr_t)cookie) & ~(uintptr_t)0x3);
 	sptr<IByteOutput> out = (which == 1 ? This->ByteOutput() : This->ByteError());
 
 	ssize_t res = out->Write(buf, n, 0);

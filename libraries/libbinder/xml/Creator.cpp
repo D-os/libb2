@@ -159,7 +159,7 @@ BCreatorParseContext::OnProcessingInstruction(SString		& target,
 status_t
 BCreatorParseContext::OnError(status_t error, bool fatal, int32_t debugLineNo, uint32_t code, void * data)
 {
-	bout << "XML parse error: " << (fatal ? "fatal " : "non-fatal ") << (void*)error << " at ParseXML.cpp:" << debugLineNo << endl;
+	bout << "XML parse error: " << (fatal ? "fatal " : "non-fatal ") << (void*)(intptr_t)error << " at ParseXML.cpp:" << debugLineNo << endl;
 	bout << "    Look near line " << line << ", column " << column << " in the XML source." << endl;
 	return error;
 }

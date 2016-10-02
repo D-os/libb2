@@ -926,7 +926,7 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, unsigned long n
 	return io;
 }
 
-const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, int64_t num)
+const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, long long num)
 {
 #if SUPPORTS_TEXT_STREAM
 	char buffer[64];
@@ -938,7 +938,7 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, int64_t num)
 	return io;
 }
 
-const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, uint64_t num)
+const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, unsigned long long num)
 {
 #if SUPPORTS_TEXT_STREAM
 	char buffer[64];
@@ -1137,7 +1137,7 @@ SString SStatus::AsString() const
 		if (result == "") result = "Unknown error";
 		result += " (";
 		char buffer[64];
-		sprintf(buffer, "%p", (void*)m_status);
+		sprintf(buffer, "%p", (void*)(intptr_t)m_status);
 		result += buffer;
 		result += ")";
 		return result;

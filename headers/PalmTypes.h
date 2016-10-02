@@ -113,10 +113,10 @@ typedef int16_t				SignedEnum16;
 typedef void *				MemPtr;		// global pointer
 typedef struct _opaque *	MemHandle;	// global handle
 
-typedef uint32_t			VAddr;		// Virtual Address
-typedef uint32_t			SysHandle;	// Virtual Address
+typedef uintptr_t			VAddr;		// Virtual Address
+typedef uintptr_t			SysHandle;	// Virtual Address
 
-typedef int32_t (*ProcPtr)();
+typedef intptr_t (*ProcPtr)();
 
 
 /************************************************************

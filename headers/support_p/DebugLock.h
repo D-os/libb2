@@ -183,7 +183,7 @@ public:
 
 			// For use by SConditionVariable::Wait().
 			void				RestoreOwnership();
-			volatile int32_t*				RemoveOwnership();
+			volatile intptr_t*	RemoveOwnership();
 			
 protected:
 	virtual						~DebugLock();
@@ -195,7 +195,7 @@ private:
 			status_t			do_unlock(bool removeOnly = false);
 
 	// Lock-specific information.  Protected by the lock itself.
-			volatile int32_t		m_gehnaphore;	// implementation of this lock
+			volatile intptr_t	m_gehnaphore;	// implementation of this lock
 			sem_id				m_sem;			// alternate implementation
 			int32_t				m_held;			// lock implementation validation
 			SysHandle			m_owner;		// who currently holds the lock

@@ -823,8 +823,8 @@ SLooper::_HandleCommand(int32_t cmd)
 		case brOK: {
 		} break;
 		case brACQUIRE: {
-			ptr = (BBinder*)m_in.ReadInt32();
-			atom = (SAtom*)m_in.ReadInt32();
+			ptr = (BBinder*)m_in.ReadInt64();
+			atom = (SAtom*)m_in.ReadInt64();
 			//fprintf(stderr, "brACQUIRE: ptr=%p, atom=%p\n", ptr, atom);
 			//if (ptr != atom) {
 			//	fprintf(stderr, "Failing with bad cookie: got %p, expected %p, object %p\n", atom, static_cast<SAtom*>(ptr), ptr);
@@ -842,12 +842,12 @@ SLooper::_HandleCommand(int32_t cmd)
 			berr << "IncStrong() result on " << ptr << ": " << r << endl;
 			#endif
 			m_out.WriteInt32(bcACQUIRE_DONE);
-			m_out.WriteInt32((int32_t)ptr);
-			m_out.WriteInt32((int32_t)atom);
+			m_out.WriteInt64((int64_t)ptr);
+			m_out.WriteInt64((int64_t)atom);
 		} break;
 		case brRELEASE: {
-			ptr = (BBinder*)m_in.ReadInt32();
-			atom = (SAtom*)m_in.ReadInt32();
+			ptr = (BBinder*)m_in.ReadInt64();
+			atom = (SAtom*)m_in.ReadInt64();
 			//fprintf(stderr, "brRELEASE: ptr=%p, atom=%p\n", ptr, atom);
 			//if (ptr != atom) {
 			//	fprintf(stderr, "Failing with bad cookie: got %p, expected %p, object %p\n", atom, static_cast<SAtom*>(ptr), ptr);
@@ -865,8 +865,8 @@ SLooper::_HandleCommand(int32_t cmd)
 		} break;
 		case brATTEMPT_ACQUIRE: {
 			m_priority = m_in.ReadInt32();
-			ptr = (BBinder*)m_in.ReadInt32();
-			atom = (SAtom*)m_in.ReadInt32();
+			ptr = (BBinder*)m_in.ReadInt64();
+			atom = (SAtom*)m_in.ReadInt64();
 			#if BINDER_REFCOUNT_MSGS
 			berr << "Calling AttemptIncStrong() on " << ptr << " " << typeid(*ptr).name()
 				<< " (atom " << atom << ")" << endl;
@@ -884,8 +884,8 @@ SLooper::_HandleCommand(int32_t cmd)
 			#endif
 		} break;
 		case brINCREFS: {
-			ptr = (BBinder*)m_in.ReadInt32();
-			atom = (SAtom*)m_in.ReadInt32();
+			ptr = (BBinder*)m_in.ReadInt64();
+			atom = (SAtom*)m_in.ReadInt64();
 			#if BINDER_REFCOUNT_MSGS
 			berr << "Calling IncWeak() on " << ptr << " " << typeid(*ptr).name()
 				<< " (atom " << atom << ")" << endl;
@@ -898,12 +898,12 @@ SLooper::_HandleCommand(int32_t cmd)
 			berr << "IncWeak() result on " << ptr << ": " << r << endl;
 			#endif
 			m_out.WriteInt32(bcINCREFS_DONE);
-			m_out.WriteInt32((int32_t)ptr);
-			m_out.WriteInt32((int32_t)atom);
+			m_out.WriteInt64((int64_t)ptr);
+			m_out.WriteInt64((int64_t)atom);
 		} break;
 		case brDECREFS: {
-			ptr = (BBinder*)m_in.ReadInt32();
-			atom = (SAtom*)m_in.ReadInt32();
+			ptr = (BBinder*)m_in.ReadInt64();
+			atom = (SAtom*)m_in.ReadInt64();
 			#if BINDER_REFCOUNT_MSGS
 			berr << "Calling DecWeak() on " << ptr << " " << typeid(*ptr).name()
 				<< " (atom " << atom << ")" << endl;
@@ -1002,7 +1002,7 @@ SLooper::_HandleCommand(int32_t cmd)
 			SpawnLooper();
 		} break;
 		default: {
-			berr << "********* Bad command: " << (void*) cmd << ", read buffer is: " << m_in << endl;
+			berr << "********* Bad command: " << (void*)(intptr_t) cmd << ", read buffer is: " << m_in << endl;
 			result = B_ERROR;
 			//DbgOnlyFatalError("Boom");
 		} break;
@@ -1083,7 +1083,7 @@ SLooper::_WaitForCompletion(SParcel *reply, status_t *acquireResult)
 #endif
 				ErrFatalErrorIf(tr.data.ptr.buffer == NULL, "Sending NULL bcFREE_BUFFER!");
 				m_out.WriteInt32(bcFREE_BUFFER);
-				m_out.WriteInt32((int32_t)tr.data.ptr.buffer);
+				m_out.WriteInt64((int64_t)tr.data.ptr.buffer);
 			}
 			break;
 		} else if ((err = _HandleCommand(cmd))) break;
@@ -1119,7 +1119,7 @@ SLooper::_BufferFree(const void* data, ssize_t /*len*/, void* context)
 #endif
 		ErrFatalErrorIf(data == NULL, "Sending NULL bcFREE_BUFFER!");
 		reinterpret_cast<SLooper*>(context)->m_out.WriteInt32(bcFREE_BUFFER);
-		reinterpret_cast<SLooper*>(context)->m_out.WriteInt32((int32_t)data);
+		reinterpret_cast<SLooper*>(context)->m_out.WriteInt64((int64_t)data);
 	} else {
 		ErrFatalError("NULL _BufferFree()!");
 	}
@@ -1285,7 +1285,7 @@ SLooper::Transact(int32_t handle, uint32_t code, const SParcel& data,
 	BINDER_IPC_PROFILE_STATE;
 	
 #if BINDER_TRANSACTION_MSGS
-	bout << "Sending transaction " << STypeCode(code) << " to " << (void*)handle
+	bout << "Sending transaction " << STypeCode(code) << " to " << (void*)(intptr_t)handle
 		<< ": " << data << endl;
 #endif
 

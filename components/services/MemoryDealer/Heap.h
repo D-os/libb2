@@ -39,7 +39,8 @@ struct ThreadInfo {
 };
 
 struct Chunk {
-	uint32_t start,size;
+	uintptr_t start;
+	size_t size;
 	Chunk *next;
 };
 
@@ -125,12 +126,12 @@ class Stash {
 
 	public:
 
-							Stash() { m_theStash = NULL; };
+							Stash() { m_theStash = NULL; }
 							~Stash()
 							{
 								for (int32_t n = m_freedom.CountItems()-1;n>=0;n--)
 									free(m_freedom[n]);
-							};
+							}
 							
 		t * 				Alloc()
 		{
@@ -152,13 +153,13 @@ class Stash {
 			n = m_theStash;
 			m_theStash = n->next;
 			return n;
-		};
+		}
 
 		void				Free(t *n)
 		{
 			n->next = m_theStash;
 			m_theStash = n;
-		};
+		}
 
 	private:
 		t *					m_theStash;
@@ -169,26 +170,26 @@ class Chunker {
 	public:
 							Chunker(Stash<Chunk> *stash, uint32_t size=0, int32_t chunkQuantum=1);
 							~Chunker();
-		uint32_t			Alloc(uint32_t &size, bool takeBest=false, uint32_t atLeast=1);
+		uintptr_t			Alloc(size_t &size, bool takeBest=false, uint32_t atLeast=1);
 		bool				Alloc(uint32_t start, uint32_t size);
-		Chunk const * const	Free(uint32_t start, uint32_t size);
+		Chunk const * const	Free(uintptr_t start, size_t size);
 		
-		uint32_t			PreAbuttance(uint32_t addr);
-		uint32_t			PostAbuttance(uint32_t addr);
-		uint32_t			TotalChunkSpace();
-		uint32_t			LargestChunk();
+		uintptr_t			PreAbuttance(uintptr_t addr);
+		uintptr_t			PostAbuttance(uintptr_t addr);
+		size_t				TotalChunkSpace();
+		size_t				LargestChunk();
 		void				CheckSanity();
 		void				SpewChunks();
 
-		void				Reset(uint32_t size);
+		void				Reset(size_t size);
 
 	private:
 		friend				class HeapArea;
 
 		Chunk *				m_freeList;
 		Stash<Chunk> *		m_stash;
-		uint32_t				m_quantum;
-		uint32_t				m_quantumMask;
+		uintptr_t			m_quantum;
+		uintptr_t			m_quantumMask;
 };
 
 struct HashEntry {
@@ -208,7 +209,7 @@ class HashTable {
 	
 	private:
 
-		uint32_t				Hash(uint32_t address);
+		uintptr_t			Hash(uintptr_t address);
 
 		int32_t				m_buckets;
 		HashEntry **		m_hashTable;
@@ -221,8 +222,8 @@ class Hasher {
 							~Hasher();
 							
 		void				Insert(uint32_t address, uint32_t size);
-		void				Retrieve(uint32_t key, uint32_t **ptrToSize=NULL);
-		uint32_t				Remove(uint32_t key);
+		void				Retrieve(uintptr_t key, size_t **ptrToSize=NULL);
+		uint32_t			Remove(uint32_t key);
 		void				RemoveAll();
 	
 	private:
@@ -242,16 +243,16 @@ class Area : virtual public SAtom {
 								Area(const char *name, uint32_t size, bool mapped = true);
 		virtual					~Area();
 
-		inline uint32_t			Ptr2Offset(void *ptr) const
-								{ return (((uint32_t)ptr) - ((uint32_t)m_basePtr)); };
-		inline void *			Offset2Ptr(uint32_t offset) const
-								{ return (void*)(((uint32_t)m_basePtr) + offset); };
-		inline	void *			BasePtr() const { return m_basePtr; };
-		inline	area_id			ID() const { return m_area_public_id; };
-		inline	uint32_t			Size()  const { return m_size * PAGE_SIZE; };
-		uint32_t					ResizeTo(uint32_t newSize, bool acceptBest=false);
-		status_t				Map(uint32_t ptr, uint32_t size);
-		status_t				Unmap(uint32_t ptr, uint32_t size);
+		inline uintptr_t		Ptr2Offset(void *ptr) const
+								{ return (((uintptr_t)ptr) - ((uintptr_t)m_basePtr)); }
+		inline void *			Offset2Ptr(uintptr_t offset) const
+								{ return (void*)(((uintptr_t)m_basePtr) + offset); }
+		inline	void *			BasePtr() const { return m_basePtr; }
+		inline	area_id			ID() const { return m_area_public_id; }
+		inline	size_t			Size()  const { return m_size * PAGE_SIZE; }
+		size_t					ResizeTo(size_t newSize, bool acceptBest=false);
+		status_t				Map(uintptr_t ptr, size_t size);
+		status_t				Unmap(uintptr_t ptr, size_t size);
 
 				void			BasePtrLock();
 				void			BasePtrUnlock();
@@ -262,31 +263,31 @@ class Area : virtual public SAtom {
 				area_id				m_area;
 				area_id				m_area_public_id;
 				void *				m_basePtr;
-				uint32_t			m_size;
+				size_t				m_size;
 				RWLock				m_basePtrLock;
 				sptr<BMemoryHeap>	m_memoryHeap;
 		static	SLocker				m_areaAllocLock;
 	protected:
-				uint32_t			m_pageSize;
+				size_t				m_pageSize;
 };
 
 class Heap : virtual public SAtom {
 	public:
 
 
-							Heap() {};
-		virtual				~Heap() {};
+							Heap() {}
+		virtual				~Heap() {}
 
-		virtual	uint32_t		Alloc(uint32_t size);
-		virtual	uint32_t		Realloc(uint32_t ptr, uint32_t newSize);
-		virtual	void		Free(uint32_t ptr);
-		inline	void		Free(void *ptr) { Free(Offset(ptr)); };
+		virtual	uintptr_t	Alloc(size_t size);
+		virtual	uintptr_t	Realloc(uintptr_t ptr, size_t newSize);
+		virtual	void		Free(uintptr_t ptr);
+		inline	void		Free(void *ptr) { Free(Offset(ptr)); }
 
 		virtual	void		Lock();
 		virtual	void		Unlock();
 
-		virtual uint32_t		Offset(void *ptr);
-		virtual void *		Ptr(uint32_t offset);
+		virtual uintptr_t	Offset(void *ptr);
+		virtual void *		Ptr(uintptr_t offset);
 };
 
 class HeapArea : public Area, public Heap {
@@ -294,37 +295,37 @@ class HeapArea : public Area, public Heap {
 	public:
 
 
-							HeapArea(const char *name, uint32_t size, uint32_t quantum=32, bool mapped = true);
+							HeapArea(const char *name, size_t size, uint32_t quantum=32, bool mapped = true);
 		virtual				~HeapArea();
 
 				void		Reset();
-		virtual	uint32_t	Alloc(uint32_t size);
-		virtual	uint32_t	Realloc(uint32_t ptr, uint32_t newSize);
-		virtual	void		Free(uint32_t ptr);
-		inline	void		Free(void *ptr) { Free(Offset(ptr)); };
+		virtual	uintptr_t	Alloc(size_t size);
+		virtual	uintptr_t	Realloc(uintptr_t ptr, size_t newSize);
+		virtual	void		Free(uintptr_t ptr);
+		inline	void		Free(void *ptr) { Free(Offset(ptr)); }
 
 		virtual	void		Lock();
 		virtual	void		Unlock();
 
-		virtual uint32_t	Offset(void *ptr);
-		virtual void *		Ptr(uint32_t offset);
+		virtual uintptr_t	Offset(void *ptr);
+		virtual void *		Ptr(uintptr_t offset);
 
-				uint32_t	FreeSpace();
-				uint32_t	LargestFree();
+				size_t		FreeSpace();
+				size_t		LargestFree();
 				void		CheckSanity();
 				void		DumpFreeList();
 	
 	private:
 
-				status_t	MapRequired(uint32_t ptr, uint32_t size);
-				status_t	UnmapRequired(uint32_t ptr, uint32_t size);
+				status_t	MapRequired(uintptr_t ptr, size_t size);
+				status_t	UnmapRequired(uintptr_t ptr, size_t size);
 
 		Stash<Chunk>		m_stash;
 		Chunker				m_freeList;
 		Hasher				m_allocs;
 		SLocker				m_heapLock;
-		uint32_t			m_size;
-		uint32_t			*m_mapped;
+		size_t				m_size;
+		uintptr_t			*m_mapped;
 };
 
 #endif // _SUPPORT2_HEAP_H_

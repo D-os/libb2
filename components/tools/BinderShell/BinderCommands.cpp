@@ -925,7 +925,7 @@ SValue BNew::Run(const ArgList& args)
 #endif
 		status_t result = Context().Publish(publish, returned);
 		if (result != B_OK) {
-			TextError() << "new: error " << (void*)result << " publishing instance" << endl;
+			TextError() << "new: error " << (void*)(intptr_t)result << " publishing instance" << endl;
 		}
 	}
 
@@ -1224,7 +1224,7 @@ SValue BLs::Run(const ArgList& args)
 		}
 		
 		if (catValue.ErrorCheck() != B_OK) {
-			TextError() << "ls: error " << (void*)catValue.ErrorCheck() << " retrieving path" << endl;
+			TextError() << "ls: error " << (void*)(intptr_t)catValue.ErrorCheck() << " retrieving path" << endl;
 			return (const SValue&)SSimpleStatusValue(catValue.ErrorCheck());
 		}
 		if (!catValue.IsDefined()) {
@@ -1545,7 +1545,7 @@ SValue BMkdir::Run(const ArgList& args)
 	sptr<INode> newDir = parent->CreateNode(&leaf, &result);
 
 	if (result != B_OK) {
-		TextError() << "mkdir: error " << (void*)result << " creating directory" << endl;
+		TextError() << "mkdir: error " << (void*)(intptr_t)result << " creating directory" << endl;
 		return SValue::Undefined();
 	}
 

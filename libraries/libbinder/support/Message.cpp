@@ -95,7 +95,7 @@ status_t SMessage::PrintToStream(const sptr<ITextOutput>& io, uint32_t flags) co
 	if (flags&B_PRINT_STREAM_HEADER) io << "SMessage ";
 	
 	io << "{" << endl << indent
-		<< "what = " << STypeCode(m_what) << " (" << (void*)m_what << ")" << endl
+		<< "what = " << STypeCode(m_what) << " (" << (void*)(uintptr_t)m_what << ")" << endl
 		<< "when = " << m_when << endl
 		<< "priority = " << m_priority << endl
 		<< "data = ";

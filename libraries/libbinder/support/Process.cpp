@@ -771,7 +771,7 @@ BProcess::GetStrongProxyForHandle(int32_t handle)
 		// We need to create a new BpBinder if there isn't currently one, OR we
 		// are unable to acquire a weak reference on this current one.  See comment
 		// in GetWeakProxyForHandle() for more info about this.
-		if (b == NULL || !b->AttemptIncWeak((void*)s_processID)) {
+		if (b == NULL || !b->AttemptIncWeak((void*)(uintptr_t)s_processID)) {
 			b = new B_NO_THROW BpBinder(handle);
 			r = b;
 #if HANDLE_DEBUG_MSGS
@@ -781,10 +781,10 @@ BProcess::GetStrongProxyForHandle(int32_t handle)
 			// This little bit of nastyness is to allow us to add a primary
 			// reference to the remote proxy when this team doesn't have one
 			// but another team is sending the handle to us.
-			b->ForceIncStrong((void*)s_processID);
+			b->ForceIncStrong((void*)(uintptr_t)s_processID);
 			r = b;
-			B_DEC_STRONG(b, (void*)s_processID);
-			B_DEC_WEAK(b, (void*)s_processID); // FFB: safe
+			B_DEC_STRONG(b, (void*)(uintptr_t)s_processID);
+			B_DEC_WEAK(b, (void*)(uintptr_t)s_processID); // FFB: safe
 #if HANDLE_DEBUG_MSGS
 			bout << SPrintf("BProcess Forcing a strong BpBinder 0x%08x for handle %04x", b, handle) << endl;
 #endif
@@ -829,7 +829,7 @@ BProcess::GetWeakProxyForHandle(int32_t handle)
 		// We need to do this because there is a race condition between someone
 		// releasing a reference on this BpBinder, and a new reference on its handle
 		// arriving from the driver.
-		if (b == NULL || !b->AttemptIncWeak((void*)s_processID)) {
+		if (b == NULL || !b->AttemptIncWeak((void*)(uintptr_t)s_processID)) {
 			b = new B_NO_THROW BpBinder(handle);
 			r = b;
 #if HANDLE_DEBUG_MSGS
@@ -837,7 +837,7 @@ BProcess::GetWeakProxyForHandle(int32_t handle)
 #endif
 		} else {
 			r = b;
-			b->DecWeak((void*)s_processID);
+			b->DecWeak((void*)(uintptr_t)s_processID);
 #if HANDLE_DEBUG_MSGS
 			bout << SPrintf("BProcess already had weak BpBinder 0x%08x for handle %04x", b, handle) << endl;
 #endif
