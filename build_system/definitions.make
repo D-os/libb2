@@ -210,7 +210,7 @@ endif
 ###########################################################
 
 define transform-cpp-to-o-inner
-$(CXX) \
+$(CXX) -std=c++11 \
 	$(foreach header,$(C_SYSTEM_INCLUDES),-I $(header)) \
 	$(foreach header,$(C_INCLUDES),-I $(header)) \
 	$(foreach header,$(LOCAL_HACK_C_INCLUDES),-I $(header)) \
@@ -245,7 +245,7 @@ endif
 ###########################################################
 
 define transform-c-to-o-inner
-$(CC) \
+$(CC) -std=c11 \
 	$(foreach header,$(C_SYSTEM_INCLUDES),-I $(header)) \
 	$(foreach header,$(C_INCLUDES),-I $(header)) \
 	$(foreach header,$(LOCAL_HACK_C_INCLUDES),-I $(header)) \
@@ -280,7 +280,7 @@ endif
 ###########################################################
 
 define transform-host-cpp-to-o-inner
-$(HOST_CXX) \
+$(HOST_CXX) -std=c++11 \
 	$(foreach header,$(C_SYSTEM_INCLUDES),-I $(header)) \
 	$(foreach header,$(C_INCLUDES),-I $(header)) \
 	$(foreach header,$(LOCAL_HACK_C_INCLUDES),-I $(header)) \
@@ -315,7 +315,7 @@ endif
 ###########################################################
 
 define transform-host-c-to-o-inner
-$(HOST_CC) \
+$(HOST_CC) -std=c11 \
 	$(foreach header,$(C_SYSTEM_INCLUDES),-I $(header)) \
 	$(foreach header,$(C_INCLUDES),-I $(header)) \
 	$(foreach header,$(LOCAL_HACK_C_INCLUDES),-I $(header)) \
