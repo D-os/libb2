@@ -18,8 +18,9 @@
 #include <support/Thread.h>
 #include <support/Vector.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
-#include <sys/types.h>
               
 #include <signal.h>
 #include <unistd.h>

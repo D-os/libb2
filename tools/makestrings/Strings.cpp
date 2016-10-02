@@ -21,6 +21,8 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 
 class StringsParser : public BCreator

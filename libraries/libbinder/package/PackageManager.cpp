@@ -31,7 +31,8 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-              
+#include <sys/stat.h>
+
 #if TARGET_HOST == TARGET_HOST_LINUX
 #include <dirent.h>
 #include <sys/mman.h>
