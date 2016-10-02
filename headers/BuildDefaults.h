@@ -76,7 +76,7 @@ ERROR_CHECK_LEVEL is now obsolete.
  *************************************************************/
 
 #	ifndef CPU_TYPE
-#		if defined(__i386__) || defined(_M_IX86)
+#		if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86)
 #			define  CPU_TYPE	CPU_x86
 #		elif defined(__POWERPC__) || defined(__powerpc__)
 #			define  CPU_TYPE	CPU_PPC
@@ -88,7 +88,7 @@ ERROR_CHECK_LEVEL is now obsolete.
 #	endif // CPU_TYPE
 
 #if CPU_TYPE != CPU_ARM && CPU_TYPE != CPU_x86 && CPU_TYPE != CPU_PPC
-#	error "Unsupported CPU_TYPE - Only CPU_ARM and CPU_x86 are supported in this release."
+#	error "Unsupported CPU_TYPE - CPU_ARM CPU_x86 CPU_PPC are supported in this release."
 #endif
 
 #ifndef CPU_ENDIAN
