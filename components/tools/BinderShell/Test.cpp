@@ -171,7 +171,7 @@ static int getn(const char *s);
 static int newerf(const char *f1, const char *f2);
 static int olderf(const char *f1, const char *f2);
 static int equalf(const char *f1, const char *f2);
-static void syntax(const char *op, char *msg);
+static void syntax(const char *op, const char *msg);
 
 Test::Test(const SContext& context)
 	:	BUnixCommand(context)
@@ -239,7 +239,7 @@ SValue Test::main(int argc, char** argv)
 }
 
 static void
-syntax(const char *op, char *msg)
+syntax(const char *op, const char *msg)
 {
 	if (op && *op)
 		printf("%s: %s", op, msg);

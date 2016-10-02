@@ -177,11 +177,11 @@ sptr<IBinder> SContext::RemoteNew(const SValue &component, const sptr<IProcess>&
 static SString find_executable(const SString& executable)
 {
 	// First try to find the given executable in the current path...
-	char* path = getenv("PATH");
+	const char* path = getenv("PATH");
 	if (!path) path = "/bin/usr/bin";
 	SString fullPath;
 	while (path && *path) {
-		char* sep = strchr(path, ':');
+		const char* sep = strchr(path, ':');
 		if (sep && sep != path) {
 			fullPath.SetTo(path, sep-path);
 			fullPath.PathAppend(executable);

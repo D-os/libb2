@@ -246,11 +246,11 @@ public:
 	//@{
 	
 			//! Not-a-value, synonym for B_UNDEFINED_VALUE.
-	static inline const SValue& SValue::Undefined()		{ return B_UNDEFINED_VALUE; }
+	static inline const SValue& Undefined()		{ return B_UNDEFINED_VALUE; }
 			//!	The all-encompassing value, synonym for B_WILD_VALUE.
-	static inline const SValue& SValue::Wild()			{ return B_WILD_VALUE; }
+	static inline const SValue& Wild()			{ return B_WILD_VALUE; }
 			//!	The null value, synonym for B_NULL_VALUE.
-	static inline const SValue& SValue::Null()			{ return B_NULL_VALUE; }
+	static inline const SValue& Null()			{ return B_NULL_VALUE; }
 
 	//@}
 

@@ -92,7 +92,7 @@ private:
 
 	struct bitfield_fill_info;
 	static void	compute_masks(size_t start, size_t len, bitfield_fill_info&);
-	static int32_t SBitfield::word_set(uint32_t word);
+	static int32_t word_set(uint32_t word);
 	bool is_inline() const;
 	union {
 		uint32_t *	m_bits;
