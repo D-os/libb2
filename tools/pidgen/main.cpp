@@ -270,7 +270,7 @@ FindType(const sptr<IDLType>& typeptr)
 }
 
 int
-yyerror(char *errmsg)
+yyerror(void *voidref, const char *errmsg)
 {	
 	fprintf(stderr, "we got an err %s\n", errmsg);
 	parseError = 10;

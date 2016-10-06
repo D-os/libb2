@@ -197,7 +197,7 @@ endef
 
 else
 
-define transform-l-to-cpp
+define transform-y-to-cpp
 @mkdir -p $(dir $@)
 $(transform-y-to-cpp-inner)
 @mv $(@:.cpp=.hpp) $(@:.cpp=.h)

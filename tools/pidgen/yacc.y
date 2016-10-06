@@ -1,13 +1,13 @@
+%lex-param {REF}
+%parse-param {void * ref}
+
 %{
-//#define YYDEBUG 1 
+//#define YYDEBUG 1
 
 #include "idlc.h"
 #include "idlstruct.h"
 
 #define REF ((IDLStruct *) ref)
-
-#define YYPARSE_PARAM ref
-#define YYLEX_PARAM REF
 
 #define YYERROR_VERBOSE 1
 

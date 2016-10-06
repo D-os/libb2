@@ -41,7 +41,7 @@ enum {
 // categories for IDLTypes - default is undefined, 
 // S=standard types, B=B Prefixed types, U=user defined types
 
-int yyerror(char *errmsg);
+int yyerror(void *voidref, const char *errmsg);
 extern "C" int  yyparse(void *voidref);
 
 
