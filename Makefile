@@ -96,7 +96,7 @@ DEBUG_TOOLS:= $(filter debugtools,$(MAKECMDGOALS))
 # the kind of operation being done.
 SHOW_COMMANDS:= $(filter showcommands,$(MAKECMDGOALS))
 
-DEBUG_CFLAGS:= -O0 -g
+DEBUG_CFLAGS:= -O0 -g -ggdb
 RELEASE_CFLAGS:= -O3 -g0
 
 RELEASE_LDFLAGS:= -Wl,-O,1 -s
