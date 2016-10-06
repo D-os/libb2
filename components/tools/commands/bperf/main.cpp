@@ -1573,18 +1573,17 @@ SValue BinderPerformance::RunAddTest()
 	return SValue::Status(B_OK);
 }
 
-sysThreadDirectFuncs g_threadDirectFuncs;
-
 struct atomic_op_state
 {
 	int32_t N;
 	uint32_t whichTest;
-	volatile int32_t val;
+	volatile atomic_int val;
+	volatile atomic_intptr_t ptr;
 	SysTSDSlotID tsd;
-	volatile int32_t numReady;
+	volatile atomic_int numReady;
 	SConditionVariable ready;
 	SConditionVariable start;
-	volatile int32_t numRunning;
+	volatile atomic_int numRunning;
 	SConditionVariable finished;
 	SConditionVariable exit;
 };
@@ -1641,28 +1640,28 @@ static void run_atomic_op_test(atomic_op_thread_state& tstate)
 	case 0:
 	{
 		for (int32_t i=0; i<state.N; i++) {
-			SysAtomicInc32(&state.val);
+			atomic_fetch_inc(&state.val);
 		}
 	} break;
 
 	case 1:
 	{
 		for (int32_t i=0; i<state.N; i++) {
-			g_threadDirectFuncs.atomicInc32(&state.val);
+			atomic_fetch_inc(&state.val);
 		}
 	} break;
 
 	case 2:
 	{
 		for (int32_t i=0; i<state.N; i++) {
-			SysAtomicDec32(&state.val);
+			atomic_fetch_dec(&state.val);
 		}
 	} break;
 
 	case 3:
 	{
 		for (int32_t i=0; i<state.N; i++) {
-			g_threadDirectFuncs.atomicDec32(&state.val);
+			atomic_fetch_dec(&state.val);
 		}
 	} break;
 
@@ -1670,7 +1669,7 @@ static void run_atomic_op_test(atomic_op_thread_state& tstate)
 	{
 		const int32_t dir=tstate.dir;
 		for (int32_t i=0; i<state.N; i++) {
-			SysAtomicAdd32(&state.val, dir);
+			atomic_fetch_add(&state.val, dir);
 		}
 	} break;
 
@@ -1678,7 +1677,7 @@ static void run_atomic_op_test(atomic_op_thread_state& tstate)
 	{
 		const int32_t dir=tstate.dir;
 		for (int32_t i=0; i<state.N; i++) {
-			g_threadDirectFuncs.atomicAdd32(&state.val, dir);
+			atomic_fetch_add(&state.val, dir);
 		}
 	} break;
 
@@ -1686,7 +1685,7 @@ static void run_atomic_op_test(atomic_op_thread_state& tstate)
 	{
 		const int32_t dir=tstate.dir;
 		for (int32_t i=0; i<state.N; i++) {
-			SysAtomicCompareAndSwap32((volatile uint32_t*)&state.val, i, i+dir);
+			atomic_compare_exchange_strong(&state.val, &i, i+dir);
 		}
 	} break;
 
@@ -1694,35 +1693,35 @@ static void run_atomic_op_test(atomic_op_thread_state& tstate)
 	{
 		const int32_t dir=tstate.dir;
 		for (int32_t i=0; i<state.N; i++) {
-			g_threadDirectFuncs.atomicCompareAndSwap32((volatile uint32_t*)&state.val, i, i+dir);
+			atomic_compare_exchange_strong(&state.val, &i, i+dir);
 		}
 	} break;
 
 	case 8:
 	{
 		for (int32_t i=0; i<state.N; i++) {
-			state.val = (int32_t)SysTSDGet(state.tsd);
+			state.ptr = (intptr_t)SysTSDGet(state.tsd);
 		}
 	} break;
 
 	case 9:
 	{
 		for (int32_t i=0; i<state.N; i++) {
-			state.val = (int32_t)g_threadDirectFuncs.tsdGet(state.tsd);
+			state.ptr = (intptr_t)SysTSDGet(state.tsd);
 		}
 	} break;
 
 	case 10:
 	{
 		for (int32_t i=0; i<state.N; i++) {
-			SysTSDSet(state.tsd, (void*)state.val);
+			SysTSDSet(state.tsd, (void*)(intptr_t)state.ptr);
 		}
 	} break;
 
 	case 11:
 	{
 		for (int32_t i=0; i<state.N; i++) {
-			g_threadDirectFuncs.tsdSet(state.tsd, (void*)state.val);
+			SysTSDSet(state.tsd, (void*)(intptr_t)state.ptr);
 		}
 	} break;
 	}
@@ -1737,14 +1736,14 @@ static void atomic_op_func(void* argument)
 	
 	// Handshaking to keep as much work out of the timed
 	// portion as possible.
-	if (SysAtomicDec32(&state.numReady) == 1) state.ready.Open();
+	if (atomic_fetch_dec(&state.numReady) == 1) state.ready.Open();
 	state.start.Wait();
 
 	run_atomic_op_test(tstate);
 	
 	// Now that we are done, decrement the number of running threads
 	// and wake up the main thread when the last one finishes.
-	if (SysAtomicDec32(&state.numRunning) == 1) state.finished.Open();
+	if (atomic_fetch_dec(&state.numRunning) == 1) state.finished.Open();
 	
 	// Wait for all threads to be finished before exiting.
 	state.exit.Wait();
@@ -1758,9 +1757,6 @@ SValue BinderPerformance::RunAtomicOpsTest()
 	
 	int32_t numThreads = m_concurrency;
 	
-	g_threadDirectFuncs.numFuncs = sysThreadDirectFuncsCount;
-	SysThreadGetDirectFuncs(&g_threadDirectFuncs);
-
 	atomic_op_state state;
 	state.N = (m_iterations*10000)/numThreads;
 	SysTSDAllocate(&state.tsd, NULL, sysTSDAnonymous);
@@ -1864,7 +1860,7 @@ SValue BinderPerformance::RunAtomicOpsTest()
 		t.Start();
 		volatile int32_t val = 0;
 		for (int32_t i=0; i<t.N; i++) {
-			SysAtomicInc32(&val);
+			atomic_fetch_inc(&val);
 		}
 		t.Stop();
 
@@ -1876,7 +1872,7 @@ SValue BinderPerformance::RunAtomicOpsTest()
 		t.Start();
 		volatile int32_t val = 0;
 		for (int32_t i=0; i<t.N; i++) {
-			g_threadDirectFuncs.atomicInc32(&val);
+			atomic_fetch_inc(&val);
 		}
 		t.Stop();
 
@@ -1888,7 +1884,7 @@ SValue BinderPerformance::RunAtomicOpsTest()
 		volatile int32_t val = 0;
 		t.Start();
 		for (int32_t i=0; i<t.N; i++) {
-			SysAtomicDec32(&val);
+			atomic_fetch_dec(&val);
 		}
 		t.Stop();
 
@@ -1900,7 +1896,7 @@ SValue BinderPerformance::RunAtomicOpsTest()
 		t.Start();
 		volatile int32_t val = 0;
 		for (int32_t i=0; i<t.N; i++) {
-			g_threadDirectFuncs.atomicDec32(&val);
+			atomic_fetch_dec(&val);
 		}
 		t.Stop();
 
@@ -1912,11 +1908,11 @@ SValue BinderPerformance::RunAtomicOpsTest()
 		volatile int32_t val = 0;
 		t.Start();
 		for (int32_t i=0; i<t.N; i++) {
-			SysAtomicAdd32(&val, 1);
+			atomic_fetch_add(&val, 1);
 		}
 		t.Stop();
 
-		WriteResult(TextOutput(), "SysAtomicAdd32()", t);
+		WriteResult(TextOutput(), "atomic_fetch_add()", t);
 	}
 
 	{
@@ -1924,7 +1920,7 @@ SValue BinderPerformance::RunAtomicOpsTest()
 		volatile int32_t val = 0;
 		t.Start();
 		for (int32_t i=0; i<t.N; i++) {
-			g_threadDirectFuncs.atomicAdd32(&val, 1);
+			atomic_fetch_add(&val, 1);
 		}
 		t.Stop();
 
@@ -1981,7 +1977,7 @@ SValue BinderPerformance::RunAtomicOpsTest()
 		void* volatile val = NULL;
 		t.Start();
 		for (int32_t i=0; i<t.N; i++) {
-			val = g_threadDirectFuncs.tsdGet(tsd);
+			val = SysTSDGet(tsd);
 		}
 		t.Stop();
 		SysTSDFree(tsd);
@@ -2011,7 +2007,7 @@ SValue BinderPerformance::RunAtomicOpsTest()
 		void* volatile val = NULL;
 		t.Start();
 		for (int32_t i=0; i<t.N; i++) {
-			g_threadDirectFuncs.tsdSet(tsd, val);
+			SysTSDSet(tsd, val);
 		}
 		t.Stop();
 		SysTSDFree(tsd);
@@ -2154,7 +2150,7 @@ struct context_switch_state
 	SysHandle t2;
 	SConditionVariable c1;
 	SConditionVariable c2;
-	volatile int32_t numRunning;
+	volatile atomic_int numRunning;
 	SConditionVariable finished;
 };
 
@@ -2188,7 +2184,7 @@ static void context_switch_func(void* argument)
 
 	selfC->Open();
 	otherC->Open();
-	if (SysAtomicDec32(&state->numRunning) == 1)
+	if (atomic_fetch_dec(&state->numRunning) == 1)
 		state->finished.Open();
 }
 
@@ -2500,7 +2496,7 @@ SValue BinderPerformance::RunNewComponentTest()
 SValue BinderPerformance::RunCriticalSectionTest()
 {
 	Timer t(m_iterations*100);
-	SysCriticalSectionType cs = sysCriticalSectionInitializer;
+	SysCriticalSectionType cs(sysCriticalSectionInitializer);
 	t.Start();
 	for (int32_t i=0; i<t.N; i++) {
 		SysCriticalSectionEnter(&cs);
@@ -3538,7 +3534,7 @@ public:
 
 	void PerformTest()
 	{
-		while (SysAtomicAdd32(&m_state->current, 1) < m_state->iterations) {
+		while (atomic_fetch_add(&m_state->current, 1) < m_state->iterations) {
 			//SysThreadDelay(B_MS2NS(100), B_RELATIVE_TIMEOUT);
 			bool success =  m_target.promote() != NULL;
 			if (!success) {
@@ -3546,7 +3542,7 @@ public:
 				failed = true;
 			}
 		}
-		if (SysAtomicAdd32(&m_state->numThreads, -1) == 1)
+		if (atomic_fetch_add(&m_state->numThreads, -1) == 1)
 			m_state->finished.Open();
 	}
 

@@ -82,7 +82,7 @@ BPipe::PrvWrite (const void *data, size_t size, uint32_t flags)
 		mWriteOffset = size-chunk;
 	}
 
-	if (g_threadDirectFuncs.atomicAdd32(&mSpaceAvailable,-(int32_t)size) == mSize)
+	if (atomic_fetch_add(&mSpaceAvailable,-(int)size) == mSize)
 	{
 		// buffer used to be empty
 		mDataAvailableCV.Open();
@@ -153,7 +153,7 @@ BPipe::PrvRead (void *data, size_t size, uint32_t flags)
 		mReadOffset = size-chunk;
 	}
 
-	if (g_threadDirectFuncs.atomicAdd32(&mSpaceAvailable,size) == 0)
+	if (atomic_fetch_add(&mSpaceAvailable,(int)size) == 0)
 	{
 		// buffer used to be full
 		mSpaceAvailableCV.Open();

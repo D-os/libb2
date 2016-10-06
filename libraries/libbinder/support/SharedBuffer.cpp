@@ -36,14 +36,14 @@ namespace support {
 
 // --------------------------------------------------------------------
 
-static SysCriticalSectionType g_poolLock = sysCriticalSectionInitializer;
+static SysCriticalSectionType g_poolLock(sysCriticalSectionInitializer);
 static const SSharedBuffer** g_pool = NULL;
 static size_t g_poolSize = 0;
 static size_t g_poolAvail = 0;
 static size_t g_poolMemSize = 0;
 
-static inline void lock_pool() { g_threadDirectFuncs.criticalSectionEnter(&g_poolLock); }
-static inline void unlock_pool() { g_threadDirectFuncs.criticalSectionExit(&g_poolLock); }
+static inline void lock_pool() { SysCriticalSectionEnter(&g_poolLock); }
+static inline void unlock_pool() { SysCriticalSectionExit(&g_poolLock); }
 
 void __terminate_shared_buffer(void)
 {
@@ -188,7 +188,7 @@ void SSharedBuffer::do_delete() const
 void SSharedBuffer::IncUsers() const
 {
 	if ((m_users&B_STATIC_USERS) == 0) {
-		SysAtomicAdd32(&m_users, 1<<B_BUFFER_USERS_SHIFT);
+		atomic_fetch_add(&m_users, 1<<B_BUFFER_USERS_SHIFT);
 		return;
 	}
 
@@ -204,7 +204,7 @@ void SSharedBuffer::DecUsers() const
 
 	// The common case is that that we are the only user and
 	// no special modes like "static" or "pooled", so
-	// optimize that to avoid a call to atomic_add().
+	// optimize that to avoid a call to atomic_fetch_add().
 	if (users == (1<<B_BUFFER_USERS_SHIFT)) {
 		do_delete();
 		return;
@@ -213,7 +213,7 @@ void SSharedBuffer::DecUsers() const
 	// Decrement reference count (if not a static buffer) and
 	// delete if it goes to zero.
 	if ((users&B_STATIC_USERS) == 0) {
-		int32_t prev = g_threadDirectFuncs.atomicAdd32(&m_users, -(1<<B_BUFFER_USERS_SHIFT))>>B_BUFFER_USERS_SHIFT;
+		int32_t prev = atomic_fetch_add(&m_users, -(1<<B_BUFFER_USERS_SHIFT))>>B_BUFFER_USERS_SHIFT;
 		DbgOnlyFatalErrorIf(prev<1, "[SSharedBuffer::DecUsers] DecUsers() called but no users left!");
 		if (prev == 1) {
 			if ((users&B_POOLED_USERS) != 0) {
@@ -360,7 +360,7 @@ const SSharedBuffer* SSharedBuffer::Pool() const
 				pooled = copy;
 			}
 			if (add_to_pool(pooled, pos)) {
-				g_threadDirectFuncs.atomicOr32((uint32_t volatile *)&m_users, B_POOLED_USERS);
+				atomic_fetch_or(&m_users, (int)B_POOLED_USERS);
 			}
 		}
 

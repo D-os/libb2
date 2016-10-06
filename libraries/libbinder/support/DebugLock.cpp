@@ -72,12 +72,12 @@ struct block_links
 // ----- Lock debugging level
 //#pragma mark -
 
-static int32_t gHasLockDebugLevel = 0;
+static atomic_int gHasLockDebugLevel(0);
 int32_t gLockDebugLevel = -1;
 bool gLockDebugStackCrawls = true;
 
 int32_t LockDebugLevelSlow() {
-	if (atomic_or(&gHasLockDebugLevel, 1) == 0) {
+	if (atomic_fetch_or(&gHasLockDebugLevel, 1) == 0) {
 		const char* env = getenv("LOCK_DEBUG");
 		if (env) {
 			gLockDebugLevel = atoi(env);
@@ -98,7 +98,7 @@ int32_t LockDebugLevelSlow() {
 		} else {
 			gLockDebugStackCrawls = true;
 		}
-		atomic_or(&gHasLockDebugLevel, 2);
+		atomic_fetch_or(&gHasLockDebugLevel, 2);
 		if (gLockDebugLevel > 0)
 			printf("LOCK DEBUGGING ENABLED!  LOCK_DEBUG=%d  LOCK_DEBUG_STACK_CRAWLS=%d\n",
 					gLockDebugLevel, gLockDebugStackCrawls);
@@ -114,7 +114,7 @@ int32_t LockDebugLevelSlow() {
 static volatile intptr_t gGraphLock = 0;
 static SysHandle gGraphHolder = B_NO_INIT;
 static int32_t gGraphNesting = 0;
-static int32_t gHasGraphSem = 0;
+static atomic_int gHasGraphSem(0);
 static int32_t gLocksHeldTLS = -1;
 
 static void AllocGraphLock();
@@ -230,12 +230,12 @@ static void ThreadExitCheck(void*) {
 }
 
 static void AllocGraphLock() {
-	if (atomic_or(&gHasGraphSem, 1) == 0) {
+	if (atomic_fetch_or(&gHasGraphSem, 1) == 0) {
 		dbg_init_gehnaphore(&gGraphLock);
 		gLocksHeldTLS = tls_allocate();
 		SysThreadExitCallbackID idontcare;
 		SysThreadInstallExitCallback(ThreadExitCheck, NULL, &idontcare);
-		atomic_or(&gHasGraphSem, 2);
+		atomic_fetch_or(&gHasGraphSem, 2);
 	}
 	while ((gHasGraphSem&2) == 0)
 	   SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
@@ -245,7 +245,7 @@ static void AllocGraphLock() {
 //#pragma mark -
 
 static volatile intptr_t gContentionLock = 0;
-static int32_t gHasContentionSem = 0;
+static atomic_int gHasContentionSem(0);
 static SVector<DebugLockNode*>* gHighContention = NULL;
 static int32_t gMinContention = 1;
 static SVector<DebugLockNode*>* gHighBlockCount = NULL;
@@ -253,7 +253,7 @@ static int32_t gMinBlockCount = 1;
 static int32_t gNumContention = -1;
 static int32_t gBlockCount = 0;			// total number of times we have had to block a thread
 static nsecs_t gStartTime = 0;
-static int32_t gContentionCount = 0;	// counter to print stats at regular interval
+static atomic_int gContentionCount(0);	// counter to print stats at regular interval
 
 static void AllocContentionLock();
 
@@ -390,7 +390,7 @@ static inline void UnlockContention() {
 
 static void PrintContentionIfNeeded() {
 	if (gNumContention > 0) {
-		if ((atomic_add(&gContentionCount, 1)%1000) == 1) {
+		if ((atomic_fetch_add(&gContentionCount, 1)%1000) == 1) {
 			BStringIO* dirtyADSHack = new BStringIO();
 			sptr<ITextOutput> msg = dirtyADSHack;
 			DebugLockNode::PrintContentionToStream(msg);
@@ -400,7 +400,7 @@ static void PrintContentionIfNeeded() {
 }
 
 static void AllocContentionLock() {
-	if (atomic_or(&gHasContentionSem, 1) == 0) {
+	if (atomic_fetch_or(&gHasContentionSem, 1) == 0) {
 		dbg_init_gehnaphore(&gContentionLock);
 #if TARGET_HOST == TARGET_HOST_PALMOS
 		char envBuffer[128];
@@ -429,7 +429,7 @@ static void AllocContentionLock() {
 			printf("LOCK CONTENTION PROFILING ENABLED!\n\tLOCK_CONTENTION=%ld\n",
 					gNumContention);
 		gStartTime = SysGetRunTime();
-		atomic_or(&gHasContentionSem, 2);
+		atomic_fetch_or(&gHasContentionSem, 2);
 	}
 	while ((gHasContentionSem&2) == 0) 
 	   SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
@@ -492,12 +492,12 @@ void DebugLockNode::Delete()
 
 int32_t DebugLockNode::IncRefs() const
 {
-	return atomic_add(&m_refs, 1);
+	return atomic_fetch_add(&m_refs, 1);
 }
 
 int32_t DebugLockNode::DecRefs() const
 {
-	const int32_t c = atomic_add(&m_refs, -1);
+	const int32_t c = atomic_fetch_add(&m_refs, -1);
 	//if (bout != NULL) bout << "Decrementing lock " << this << "(count was " << c << "): " << m_name << endl;
 	if (c == 1) delete const_cast<DebugLockNode*>(this);
 	return c;
@@ -891,13 +891,13 @@ status_t DebugLock::do_lock(uint32_t flags, nsecs_t timeout, uint32_t debug_flag
 		UnlockGraph();
 	}
 	
-	SetMaxContention(atomic_add(&m_contention, 1));
+	SetMaxContention(atomic_fetch_add(&m_contention, 1));
 	
 	status_t err = B_OK;
 	if (!restoreOnly) {
 		dbg_lock_gehnaphore(&m_gehnaphore);
 		// SysSemaphoreWait(m_sem, B_WAIT_FOREVER, 0);
-		ErrFatalErrorIf(atomic_or(&m_held, 1) != 0, "Lock gehnaphore returned while lock still held!");
+		ErrFatalErrorIf(atomic_fetch_or(&m_held, 1) != 0, "Lock gehnaphore returned while lock still held!");
 	}
 
 	if (err == B_OK) {
@@ -966,7 +966,7 @@ status_t DebugLock::do_unlock(bool removeOnly)
 	
 	m_held = 0;
 
-	atomic_add(&m_contention, -1);
+	atomic_fetch_add(&m_contention, -1);
 	
 	status_t err = B_OK;
 	if (!removeOnly) {

@@ -84,33 +84,33 @@ class RWLock {
 inline void RWLock::WriteLock()
 {
 	m_writeLock.Lock();
-	int32_t readers = atomic_add(&m_count,-MAX_READERS);
+	int32_t readers = atomic_fetch_add(&m_count,-MAX_READERS);
 	if (readers > 0) 
 	   SysSemaphoreWaitCount(m_writerSem, B_WAIT_FOREVER, 0, readers);
 };
 
 inline void RWLock::WriteUnlock()
 {
-	int32_t readersWaiting = atomic_add(&m_count,MAX_READERS) + MAX_READERS;
+	int32_t readersWaiting = atomic_fetch_add(&m_count,MAX_READERS) + MAX_READERS;
 	if (readersWaiting) SysSemaphoreSignalCount(m_readerSem, readersWaiting);
 	m_writeLock.Unlock();
 };
 
 inline void RWLock::ReadLock()
 {
-	if (atomic_add(&m_count,1) < 0)
+	if (atomic_fetch_add(&m_count,1) < 0)
 	   SysSemaphoreWait(m_readerSem, B_WAIT_FOREVER, 0);
 };
 
 inline void RWLock::ReadUnlock()
 {
-	if (atomic_add(&m_count,-1) < 0)
+	if (atomic_fetch_add(&m_count,-1) < 0)
 		SysSemaphoreSignalCount(m_writerSem, 1);
 };
 
 inline void RWLock::DowngradeWriteToRead()
 {
-	int32_t readersWaiting = atomic_add(&m_count,MAX_READERS-1) + MAX_READERS;
+	int32_t readersWaiting = atomic_fetch_add(&m_count,MAX_READERS-1) + MAX_READERS;
 	if (readersWaiting) SysSemaphoreSignalCount(m_readerSem, readersWaiting);
 	m_writeLock.Unlock();
 }

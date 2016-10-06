@@ -133,7 +133,7 @@ private:
 	
 	SVector<SString> m_packagesPath;
 	
-	uint32_t m_nextDatabaseID;
+	atomic_int m_nextDatabaseID;
 	Data m_data;
 };
 

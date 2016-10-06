@@ -56,7 +56,7 @@ static uint32_t* PrvGetSlotAddress(int32_t)
 	// Retrieve critical section node for this thread.
 	int32_t baseIndex = gLockBaseIndex;
 	if (baseIndex == -1) {
-		if (!atomic_or(&gLockBaseAllocated, 1)) {
+		if (!atomic_fetch_or(&gLockBaseAllocated, 1)) {
 			baseIndex = tls_allocate();
 			tls_set(baseIndex, NULL);
 			gLockBaseIndex = baseIndex;
@@ -317,12 +317,12 @@ static inline void fini_gehnaphore(volatile int32_t* value)
 
 static inline void lock_gehnaphore(volatile int32_t* value)
 {
-	g_threadDirectFuncs.criticalSectionEnter((SysCriticalSectionType*)value);
+	SysCriticalSectionEnter((SysCriticalSectionType*)value);
 }
 
 static inline void unlock_gehnaphore(volatile int32_t* value)
 {
-	g_threadDirectFuncs.criticalSectionExit((SysCriticalSectionType*)value);
+	SysCriticalSectionExit((SysCriticalSectionType*)value);
 }
 
 inline void restore_ownership_gehnaphore(volatile int32_t* /*value*/)

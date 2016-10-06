@@ -201,7 +201,7 @@ template<> struct CompileTimeAssert<true> {};
 		}
 		
 		static int32_t GetSlow() {
-			if (atomic_or(&m_hasLevel, 1) == 0) {
+			if (atomic_fetch_or(&m_hasLevel, 1) == 0) {
 #if TARGET_HOST == TARGET_HOST_PALMOS
 				char envBuffer[128];
 				const char* env = NULL;
@@ -218,7 +218,7 @@ template<> struct CompileTimeAssert<true> {};
 				} else {
 					m_level = DEFVAL;
 				}
-				atomic_or(&m_hasLevel, 2);
+				atomic_fetch_or(&m_hasLevel, 2);
 				if (m_level > 0)
 					fprintf(stderr, "%s ENABLED!  %s=%d\n", ENVNAME, ENVNAME, m_level);
 			} else {
@@ -229,12 +229,12 @@ template<> struct CompileTimeAssert<true> {};
 		}
 	
 	private:
-		static int32_t m_hasLevel;
+		static atomic_int m_hasLevel;
 		static int32_t m_level;
 	};
 	
 	template<const char* ENVNAME, int DEFVAL, int MINVAL, int MAXVAL>
-	int32_t BDebugCondition<ENVNAME, DEFVAL, MINVAL, MAXVAL>::m_hasLevel = 0;
+	atomic_int BDebugCondition<ENVNAME, DEFVAL, MINVAL, MAXVAL>::m_hasLevel(0);
 	template<const char* ENVNAME, int DEFVAL, int MINVAL, int MAXVAL>
 	int32_t BDebugCondition<ENVNAME, DEFVAL, MINVAL, MAXVAL>::m_level = 0;
 
@@ -253,7 +253,7 @@ template<> struct CompileTimeAssert<true> {};
 		}
 		
 		static int32_t GetSlow() {
-			if (atomic_or(&m_hasLevel, 1) == 0) {
+			if (atomic_fetch_or(&m_hasLevel, 1) == 0) {
 #if TARGET_HOST == TARGET_HOST_PALMOS
 				char envBuffer[128];
 				const char* env = NULL;
@@ -268,7 +268,7 @@ template<> struct CompileTimeAssert<true> {};
 				} else {
 					m_level = DEFVAL;
 				}
-				atomic_or(&m_hasLevel, 2);
+				atomic_fetch_or(&m_hasLevel, 2);
 				if (env)
 					fprintf(stderr, "Adjusting to %s to: %d\n", ENVNAME, m_level);
 			} else {
@@ -279,12 +279,12 @@ template<> struct CompileTimeAssert<true> {};
 		}
 	
 	private:
-		static int32_t m_hasLevel;
+		static atomic_int m_hasLevel;
 		static int32_t m_level;
 	};
 	
 	template<const char* ENVNAME, int DEFVAL, int MINVAL, int MAXVAL>
-	int32_t BDebugInteger<ENVNAME, DEFVAL, MINVAL, MAXVAL>::m_hasLevel = 0;
+	atomic_int BDebugInteger<ENVNAME, DEFVAL, MINVAL, MAXVAL>::m_hasLevel(0);
 	template<const char* ENVNAME, int DEFVAL, int MINVAL, int MAXVAL>
 	int32_t BDebugInteger<ENVNAME, DEFVAL, MINVAL, MAXVAL>::m_level = 0;
 
@@ -299,9 +299,9 @@ template<> struct CompileTimeAssert<true> {};
 		}
 		
 		static STATE* GetSlow() {
-			if (atomic_or(&m_hasState, 1) == 0) {
+			if (atomic_fetch_or(&m_hasState, 1) == 0) {
 				m_state = new STATE;
-				atomic_or(&m_hasState, 2);
+				atomic_fetch_or(&m_hasState, 2);
 			} else {
 				while ((m_hasState&2) == 0)
 				    SysThreadDelay(B_MICROSECONDS(2), B_RELATIVE_TIMEOUT);
@@ -311,17 +311,17 @@ template<> struct CompileTimeAssert<true> {};
 	
 		~BDebugState()
 		{
-			if ((atomic_or(&m_hasState, 4)&4) == 0) {
+			if ((atomic_fetch_or(&m_hasState, 4)&4) == 0) {
 				delete m_state;
 			}
 		}
 		
 	private:
-		static int32_t m_hasState;
+		static atomic_int m_hasState;
 		static STATE* m_state;
 	};
 	
-	template<class STATE> int32_t BDebugState<STATE>::m_hasState = 0;
+	template<class STATE> atomic_int BDebugState<STATE>::m_hasState(0);
 	template<class STATE> STATE* BDebugState<STATE>::m_state = NULL;
 
 #endif

@@ -61,7 +61,7 @@ static SLooper::catch_root_func g_catchRootFunc = NULL;
 static bool s_managesContexts = false;
 static int32_t s_binderDesc = -1;
 static void *s_vmstart = MAP_FAILED;
-static int32_t g_openBuffers = 0;
+static atomic_int g_openBuffers(0);
 
 #if BINDER_DEBUG_MSGS
 static const char *inString[] = {
@@ -947,7 +947,7 @@ SLooper::_HandleCommand(int32_t cmd)
 
 #if BINDER_BUFFER_MSGS
 				printf("Creating transaction buffer for %p, now have %d open.\n",
-						tr.data.ptr.buffer, atomic_add(&g_openBuffers, 1) + 1);
+						tr.data.ptr.buffer, atomic_fetch_add(&g_openBuffers, 1) + 1);
 #endif
 
 				sptr<BBinder> b((BBinder*)tr.target.ptr);
@@ -1073,7 +1073,7 @@ SLooper::_WaitForCompletion(SParcel *reply, status_t *acquireResult)
 				setReply = true;
 #if BINDER_BUFFER_MSGS
 				berr	<< "Creating reply buffer for " << tr.data.ptr.buffer
-						<< ", now have " << (atomic_add(&g_openBuffers, 1)+1)
+						<< ", now have " << (atomic_fetch_add(&g_openBuffers, 1)+1)
 						<< " open." << endl;
 				berr << "brREPLY: " << *reply << endl;
 #endif
@@ -1115,7 +1115,7 @@ SLooper::_BufferFree(const void* data, ssize_t /*len*/, void* context)
 #endif
 #if BINDER_BUFFER_MSGS
 		berr	<< "Freeing binder buffer for " << data << ", now have "
-				<< (atomic_add(&g_openBuffers, -1) - 1) << " open." << endl;
+				<< (atomic_fetch_add(&g_openBuffers, -1) - 1) << " open." << endl;
 #endif
 		ErrFatalErrorIf(data == NULL, "Sending NULL bcFREE_BUFFER!");
 		reinterpret_cast<SLooper*>(context)->m_out.WriteInt32(bcFREE_BUFFER);

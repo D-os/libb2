@@ -207,7 +207,7 @@ BTextOutput::style_state* BTextOutput::Style()
 			}
 			else
 			{
-				style->tag = g_threadDirectFuncs.atomicInc32(&m_nextTag);
+				style->tag = atomic_fetch_inc(&m_nextTag);
 			}
 			style->buffering = true;
 			m_threadStyles->styles.AddItem(SysCurrentThread(), style);
@@ -490,7 +490,7 @@ void BTextOutput::MoveIndent(int32_t delta)
 #if SUPPORTS_TEXT_STREAM
 	style_state* style = Style();
 	
-	g_threadDirectFuncs.atomicAdd32(&style->indent, delta);
+	atomic_fetch_add(&style->indent, delta);
 	if (style->indent < 0) style->indent = 0;
 #else
 	(void)delta;

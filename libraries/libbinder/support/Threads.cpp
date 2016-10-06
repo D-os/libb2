@@ -70,7 +70,7 @@ struct our_thread_init_record
 	sem_t blockThread; // used for critical sections
 	our_thread_init_record * nextWaitingThread; // linked list of waiting threads, for critical sections
 	
-	char * name;
+	char const * name;
 	our_thread_group_record * group;
 	void (*startup_func)(void*);
 	void * startup_func_arg;
@@ -95,52 +95,52 @@ static pid_t get_our_tid()
 
 our_thread_init_record *  SetupPrimaryThread()
 {
-	our_thread_init_record * threadRecord = (our_thread_init_record*)malloc(sizeof(our_thread_init_record)); 
-	
+	our_thread_init_record * threadRecord = (our_thread_init_record*)malloc(sizeof(our_thread_init_record));
+
 	memset(threadRecord, '\0', sizeof(*threadRecord));
-	
+
 	threadRecord->magic = our_thread_init_record_MAGIC;
 	threadRecord->exit_records = NULL;
 	threadRecord->tid = get_our_tid();
 
 	threadRecord->name = "Primary";
 	threadRecord->group = NULL;
-	
+
 	sem_init(&threadRecord->blockThread, 0, 0);
-	
+
 	pthread_setspecific(currentThreadRecord, threadRecord);
-	
+
 	return threadRecord;
 }
 
 void FreePrimaryThread(void * threadP)
 {
 	our_thread_init_record * thread = (our_thread_init_record*)threadP;
-	
+
 	assert(thread);
-	
+
 	assert(thread->magic == our_thread_init_record_MAGIC);
 
 	while (thread->exit_records) {
 		our_thread_exit_record * e = thread->exit_records;
-		
+
 		assert(e->magic == our_thread_exit_record_MAGIC);
-		
+
 		thread->exit_records = e->next;
-		
+
 		if (e->exit_func)
 			e->exit_func(e->exit_func_arg);
-		
+
 		free(e);
 	}
 
 	pthread_setspecific(currentThreadRecord, 0);
-	
+
 	//if (thread->group)
 	//	group_remove(thread->group, thread);
 
 	free(thread);
-	
+
 	currentThreadRecord = 0;
 	PrimaryThreadFreed = true;
 }
@@ -151,39 +151,39 @@ extern "C" status_t SysThreadInstallExitCallback(SysThreadExitCallbackFunc *iExi
 					SysThreadExitCallbackID *oThreadExitCallbackId)
 {
 	our_thread_init_record * thread = (our_thread_init_record*)SysCurrentThread();
-	
+
 	assert(thread->magic == our_thread_init_record_MAGIC);
 
 	struct our_thread_exit_record * e = (our_thread_exit_record*)malloc(sizeof(our_thread_exit_record));
-	
+
 	// FIXME: Check !e
-	
+
 	e->magic = our_thread_exit_record_MAGIC;
-	
+
 	e->exit_func = iExitCallbackP;
 	e->exit_func_arg = iCallbackArg;
-	
+
 	e->next = thread->exit_records;
 	thread->exit_records = e;
-	
+
 	if (oThreadExitCallbackId)
-		*oThreadExitCallbackId = (SysThreadExitCallbackID)e;
-	
+		*oThreadExitCallbackId = (intptr_t)e;
+
 	return 0; // FIXME: Success
 }
 
 extern "C" status_t SysThreadRemoveExitCallback(SysThreadExitCallbackID iThreadCallbackId)
 {
 	our_thread_init_record * thread = (our_thread_init_record*)SysCurrentThread();
-	
-	our_thread_exit_record * remove_ptr = (our_thread_exit_record*)iThreadCallbackId;
-	
+
+	our_thread_exit_record * remove_ptr = (our_thread_exit_record*)(intptr_t)iThreadCallbackId;
+
 	assert(thread->magic == our_thread_init_record_MAGIC);
 	assert(remove_ptr->magic == our_thread_exit_record_MAGIC);
 
 	// cheat with linked-list removal by sharing structure layout
 	assert(offsetof(our_thread_init_record, exit_records) == offsetof(our_thread_exit_record, next));
-	
+
 	our_thread_exit_record * prior_ptr = (our_thread_exit_record*)thread;
 	for (our_thread_exit_record * ptr = prior_ptr->next; ptr; prior_ptr = ptr, ptr=ptr->next)
 	{
@@ -191,11 +191,11 @@ extern "C" status_t SysThreadRemoveExitCallback(SysThreadExitCallbackID iThreadC
 		if (ptr == remove_ptr) {
 			prior_ptr->next = ptr->next;
 			free(ptr);
-			
+
 			break;
 		}
 	}
-	
+
 	return 0; // FIXME: Success
 }
 
@@ -208,36 +208,36 @@ void group_remove(struct our_thread_group_record *, struct our_thread_init_recor
 void cleanup(void * arg)
 {
 	our_thread_init_record * thread = (our_thread_init_record*)arg;
-	
+
 	assert(thread->magic == our_thread_init_record_MAGIC);
 
 	palmos::cleanupNamedTSDKeys();
-	
+
 	while (thread->exit_records) {
 		our_thread_exit_record * e = thread->exit_records;
-		
+
 		assert(e->magic == our_thread_exit_record_MAGIC);
-		
+
 		thread->exit_records = e->next;
-		
+
 		if (e->exit_func)
 			e->exit_func(e->exit_func_arg);
-		
+
 		free(e);
 	}
 
 	pthread_setspecific(currentThreadRecord, 0);
-	
+
 	sem_destroy(&thread->blockThread);
 	sem_destroy(&thread->startup);
 	sem_destroy(&thread->preroll);
-	
+
 	if (thread->group)
 		group_remove(thread->group, thread);
 
 	if (thread->name)
 		free((void*)thread->name);
-	
+
 	free(thread);
 }
 
@@ -246,25 +246,25 @@ void * our_thread_startup(void * arg)
 {
 	our_thread_init_record * thread = (our_thread_init_record*)arg;
 	void *result = 0;
-	
+
 	assert(thread->magic == our_thread_init_record_MAGIC);
-	
+
 	thread->stack_base = (void*)&thread; // stack address
-	
+
 	pthread_setspecific(currentThreadRecord, arg);
 
 	thread->tid = get_our_tid();
 	sem_post(&thread->preroll);
-	
+
 	pthread_cleanup_push(cleanup, arg);
 
 		while ((sem_wait(&thread->startup) == -1) && (errno == EINTR))
 			; // Loop while sem_wait has been interrupted
-		
+
 		thread->startup_func(thread->startup_func_arg);
-	
+
 	pthread_cleanup_pop(1);
-	
+
 	return result;
 }
 
@@ -289,18 +289,18 @@ struct our_thread_group_record
 void group_add(our_thread_group_record * group, our_thread_init_record * thread)
 {
 	assert(group->magic == our_thread_group_record_MAGIC);
-	
+
 	pthread_mutex_lock(&group->mutex);
-	
+
 	group_rec * r = (group_rec*)malloc(sizeof(group_rec));
-	
+
 	//FIXME: Check !r
-	
+
 	r->magic = group_rec_MAGIC;
 	r->next = group->threads;
 	r->thread = thread;
 	group->threads = r;
-	
+
 	pthread_mutex_unlock(&group->mutex);
 }
 
@@ -310,37 +310,37 @@ void group_remove(our_thread_group_record * group, our_thread_init_record * thre
 	assert(group->magic == our_thread_group_record_MAGIC);
 
 	pthread_mutex_lock(&group->mutex);
-	
+
 	// cheat with linked-list removal by sharing structure layout
 	assert(offsetof(our_thread_group_record, threads) == offsetof(group_rec, next));
-	
+
 	group_rec * prior_ptr = (group_rec*)group;
 	for (group_rec * ptr = prior_ptr->next; ptr; prior_ptr = ptr, ptr=ptr->next)
 	{
 		assert(ptr->magic == group_rec_MAGIC);
-		
+
 		if (ptr->thread == thread) {
 			prior_ptr->next = ptr->next;
 			free(ptr);
-			
+
 			break;
 		}
 	}
-	
+
 	pthread_mutex_unlock(&group->mutex);
 }
 
 extern "C" SysThreadGroupHandle SysThreadGroupCreate(void)
 {
 	our_thread_group_record * group = (our_thread_group_record*)malloc(sizeof(our_thread_group_record));
-	
+
 	// FIXME: Check !group;
-	
+
 	group->magic = our_thread_group_record_MAGIC;
-	
+
 	group->threads = 0;
 	pthread_mutex_init(&group->mutex, NULL);
-	
+
 	return (SysThreadGroupHandle)group;
 }
 
@@ -353,7 +353,7 @@ extern "C" status_t SysThreadGroupDestroy(SysThreadGroupHandle h)
 	assert(group->magic == our_thread_group_record_MAGIC);
 
 	free(group);
-	
+
 	return 0; // FIXME: Success
 }
 
@@ -362,22 +362,22 @@ extern "C" status_t SysThreadGroupWait (SysThreadGroupHandle h)
 	our_thread_group_record * group = (our_thread_group_record*)h;
 
 	assert(group->magic == our_thread_group_record_MAGIC);
-	
+
 	for (;;) {
 		pthread_mutex_lock(&group->mutex);
-		
+
 		group_rec * ptr = group->threads;
-		
+
 		if (ptr)
 			group->threads = ptr->next;
-			
+
 		pthread_mutex_unlock(&group->mutex);
-		
+
 		if (!ptr)
 			break;
 
 		assert(ptr->magic == group_rec_MAGIC);
-		
+
 		void * result;
 		pthread_join(ptr->thread->thread, &result);
 	}
@@ -385,7 +385,7 @@ extern "C" status_t SysThreadGroupWait (SysThreadGroupHandle h)
 	return 0; // FIXME: Success
 }
 
-extern "C" status_t SysThreadCreateEZ(const char * name, 
+extern "C" status_t SysThreadCreateEZ(const char * name,
 				SysThreadEnterFunc *func, void *argument,
 				SysHandle* outThread)
 {
@@ -397,7 +397,7 @@ extern "C" status_t SysThreadCreateEZ(const char * name,
 				argument,
 				outThread);
 }
-                                                                 
+
 
 extern "C" status_t SysThreadCreate(
 	SysThreadGroupHandle group,
@@ -406,25 +406,25 @@ extern "C" status_t SysThreadCreate(
 	uint32_t stackSize,
 	SysThreadEnterFunc *func,
 	void *argument,
-        SysHandle* outThread)
+		SysHandle* outThread)
 {
 	our_thread_init_record * threadRecord;
-	
+
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr, stackSize*10); // FIXME: stack*10 for safety
 
 	threadRecord = (our_thread_init_record*)malloc(sizeof(our_thread_init_record));
-	
+
 	if (!threadRecord)
 		return -1; // FIXME: Error
 
 	memset(threadRecord, '\0', sizeof(our_thread_init_record));
-	
+
 	sem_init(&threadRecord->preroll, 0, 0);
 	sem_init(&threadRecord->startup, 0, 0);
 	sem_init(&threadRecord->blockThread, 0, 0);
-	
+
 	threadRecord->magic = our_thread_init_record_MAGIC;
 	threadRecord->group = NULL;
 	threadRecord->startup_func = func;
@@ -435,9 +435,9 @@ extern "C" status_t SysThreadCreate(
 		threadRecord->name = strdup(name);
 	else
 		threadRecord->name = NULL;
-	
+
 	int err = pthread_create((pthread_t*)&threadRecord->thread, &attr, our_thread_startup, threadRecord);
-	
+
 	if (err) {
 		sem_destroy(&threadRecord->preroll);
 		sem_destroy(&threadRecord->startup);
@@ -455,8 +455,8 @@ extern "C" status_t SysThreadCreate(
 		// state so the memory resources used by the thread will be freed
 		// automatically on exit.
 		pthread_detach(threadRecord->thread);
-	}	
-	
+	}
+
 	*outThread = (SysHandle)threadRecord;
 	sem_wait(&threadRecord->preroll); // wait for the new thread to store its thread ID
 	SysThreadChangePriority(*outThread, priority);
@@ -479,14 +479,14 @@ extern "C" status_t SysThreadStart(SysHandle thread)
 	assert(threadRecord->magic == our_thread_init_record_MAGIC);
 
 	sem_post(&threadRecord->startup);
-	
+
 	// FIXME: decide whether this is worth the effort
 	sem_getvalue(&threadRecord->startup, &value);
 	if (value > 1) {
 		sem_wait(&threadRecord->startup);
 		return -1; // Error, already started
 	}
-	
+
 	return 0; // Success
 }
 
@@ -501,24 +501,24 @@ extern "C" SysHandle SysCurrentThread(void)
 		PrimaryThreadSetup = true;
 		//FIXME: register for destruction. Right now this doesn't work, as
 		//secondary thread cleanup appears to happen after the primary global destructor chain
-		//abi::__cxa_atexit (&FreePrimaryThread, (void*)primaryThread, &__dso_handle); 
+		//abi::__cxa_atexit (&FreePrimaryThread, (void*)primaryThread, &__dso_handle);
 	}
 	assert(!PrimaryThreadFreed);
-	
+
 	return (SysHandle)pthread_getspecific(currentThreadRecord);
 }
 
 extern "C" void SysThreadExit(void)
 {
 	pthread_exit(0);
-} 
+}
 
 extern "C" int SysThreadKill(SysHandle thread, int signo)
 {
 	our_thread_init_record * threadRecord = (our_thread_init_record*)thread;
 
 	assert(threadRecord->magic == our_thread_init_record_MAGIC);
-	
+
 	return pthread_kill(threadRecord->thread, signo);
 }
 
@@ -527,7 +527,7 @@ extern "C" pthread_t SysThreadPthread(SysHandle thread)
 	our_thread_init_record * threadRecord = (our_thread_init_record*)thread;
 
 	assert(threadRecord->magic == our_thread_init_record_MAGIC);
-	
+
 	return threadRecord->thread;
 }
 
@@ -538,7 +538,7 @@ extern "C" status_t  SysThreadChangePriority(SysHandle thread, uint8_t priority)
 	assert(threadRecord->magic == our_thread_init_record_MAGIC);
 
 	sched_param sched;
-	
+
 	// PalmOS priorities go from 0-100, with lower values indicating more favorable scheduling.
 	// pthreads priorities go from 1-99, with higher values indicating more favorable scheduling.
 	// 'nice' values go from -20 to 19, with lower values indicating more favorable scheduling
@@ -622,24 +622,24 @@ SysCriticalSectionEnter(SysCriticalSectionType *iCS)
 {
 	our_thread_init_record * ourselves;
 	our_thread_init_record * old;
-	uint32_t retry;
+	bool retry;
 	uint32_t zero;
-	
+
 	SysCurrentThread(); // Make sure thread record for primary thread has been created
 
 	ourselves = (our_thread_init_record*)pthread_getspecific(currentThreadRecord);
-	
+
 	assert(ourselves);
 	assert(ourselves->magic == our_thread_init_record_MAGIC);
 
 	do {
-		old= (our_thread_init_record*)*((uint32_t volatile *)iCS);
+		old = (our_thread_init_record*)(uintptr_t)*iCS;
 		ourselves->nextWaitingThread = old;
 
-		retry= SysAtomicCompareAndSwap32(
-						(volatile uint32_t *)iCS,
-						(uint32_t)old,
-						(uint32_t)ourselves
+		retry = !atomic_compare_exchange_weak(
+						iCS,
+						(uintptr_t*)&old,
+						(uintptr_t)ourselves
 					);
 	} while(retry);
 
@@ -656,9 +656,9 @@ SysCriticalSectionExit(SysCriticalSectionType *iCS)
 {
 	our_thread_init_record * ourselves;
 	our_thread_init_record *curr;
-	uint32_t * volatile *prev;
-	uint32_t retry;
-	
+	SysCriticalSectionType *prev;
+	bool retry;
+
 	SysCurrentThread();
 
 	ourselves = (our_thread_init_record*)pthread_getspecific(currentThreadRecord);
@@ -668,18 +668,18 @@ SysCriticalSectionExit(SysCriticalSectionType *iCS)
 
 
 	do {
-		prev= (uint32_t * volatile *)(iCS);
-		curr= (our_thread_init_record*)*prev;
+		prev = iCS;
+		curr = (our_thread_init_record*)(uintptr_t)*prev;
 
 		while(curr != ourselves) {
-		
+
 			assert(curr->magic == our_thread_init_record_MAGIC);
-			
-			prev= (uint32_t**)(&curr->nextWaitingThread);
-			curr= (our_thread_init_record*)*prev;
+
+			prev = (SysCriticalSectionType *)(&curr->nextWaitingThread);
+			curr = (our_thread_init_record*)(uintptr_t)*prev;
 		}
 
-		if(prev!= (uint32_t* volatile *)iCS) {
+		if(prev != iCS) {
 			/*
 			 * easy part, we are not the head of the queue
 			 * so we can freely fix the queue without
@@ -687,13 +687,13 @@ SysCriticalSectionExit(SysCriticalSectionType *iCS)
 			 */
 			our_thread_init_record *otherThread;
 
-			otherThread= (our_thread_init_record*)(((uint32_t)prev)-offsetof(our_thread_init_record,nextWaitingThread));
+			otherThread = (our_thread_init_record*)(((uintptr_t)prev)-offsetof(our_thread_init_record,nextWaitingThread));
 
 			assert(otherThread->magic == our_thread_init_record_MAGIC);
 
-			*prev= 0;
+			*prev = 0;
 			sem_post(&otherThread->blockThread);
-			retry= 0;
+			retry = 0;
 		} else {
 			/*
 			 * this is the tricky part, we are the only thread
@@ -710,10 +710,10 @@ SysCriticalSectionExit(SysCriticalSectionType *iCS)
 			 * Note also that if the CompareAndSwap succeeds
 			 * there is no thread to wake up.
 			 */
-			retry= SysAtomicCompareAndSwap32(
-							(volatile uint32_t *)iCS,
-							(uint32_t)ourselves,
-							0
+			retry = !atomic_compare_exchange_weak(
+							iCS,
+							(uintptr_t*)&ourselves,
+							(uintptr_t)0
 						);
 		}
 	} while(retry);
@@ -728,7 +728,7 @@ SysConditionVariableWait(SysConditionVariableType *iCV, SysCriticalSectionType *
 {
 	our_thread_init_record * ourselves;
 	our_thread_init_record * old;
-	uint32_t retry;
+	bool retry;
 
 	SysCurrentThread();
 
@@ -742,18 +742,18 @@ SysConditionVariableWait(SysConditionVariableType *iCV, SysCriticalSectionType *
 	 * on to the list of those waiting.
 	 */
 	do {
-		old= (our_thread_init_record*)*((uint32_t volatile *)iCV);
+		old = (our_thread_init_record*)(uintptr_t)*iCV;
 
-		if ((uint32_t)old== sysConditionVariableOpened) {
+		if ((uintptr_t)old == sysConditionVariableOpened) {
 			break;
 		}
 
 		ourselves->nextWaitingThread = old;
 
-		retry= SysAtomicCompareAndSwap32(
-						(volatile uint32_t *)iCV,
-						(uint32_t)old,
-						(uint32_t)ourselves
+		retry = !atomic_compare_exchange_weak(
+						iCV,
+						(uintptr_t*)&old,
+						(uintptr_t)ourselves
 					);
 	} while(retry);
 
@@ -761,7 +761,7 @@ SysConditionVariableWait(SysConditionVariableType *iCV, SysCriticalSectionType *
 	 * Now wait for the condition to be opened if it
 	 * previously wasn't.
 	 */
-	if((uint32_t)old!= sysConditionVariableOpened) {
+	if((uintptr_t)old != sysConditionVariableOpened) {
 		if(iOptionalCS) {
 			SysCriticalSectionExit(iOptionalCS);
 		}
@@ -800,23 +800,23 @@ extern "C" void
 SysConditionVariableOpen(SysConditionVariableType *iCV)
 {
 	our_thread_init_record *curr;
-	uint32_t retry;
+	bool retry;
 
 	/*
 	 * Atomically open the condition and retrieve the list of
 	 * waiting threads.
 	 */
 	do {
-		curr= (our_thread_init_record*)*(uint32_t * volatile *)(iCV);
-		if ((uint32_t)curr == sysConditionVariableOpened) {
+		curr = (our_thread_init_record*)(uintptr_t)*iCV;
+		if ((uintptr_t)curr == sysConditionVariableOpened) {
 			curr = (our_thread_init_record*)sysConditionVariableInitializer;
 			break;
 		}
 
-		retry= SysAtomicCompareAndSwap32(
-						(volatile uint32_t *)iCV,
-						(uint32_t)curr,
-						(uint32_t)sysConditionVariableOpened
+		retry = !atomic_compare_exchange_weak(
+						iCV,
+						(uintptr_t*)&curr,
+						(uintptr_t)sysConditionVariableOpened
 					);
 	} while(retry);
 
@@ -826,8 +826,8 @@ SysConditionVariableOpen(SysConditionVariableType *iCV)
 extern "C" void
 SysConditionVariableClose(SysConditionVariableType *iCV)
 {
-	uint32_t curr;
-	uint32_t retry;
+	uintptr_t curr;
+	bool retry;
 
 	/*
 	 * Atomically transition the condition variable
@@ -835,15 +835,15 @@ SysConditionVariableClose(SysConditionVariableType *iCV)
 	 * opened, leave it as-is.
 	 */
 	do {
-		curr= *(volatile uint32_t *)iCV;
+		curr = *iCV;
 		if (curr != sysConditionVariableOpened) {
 			break;
 		}
 
-		retry= SysAtomicCompareAndSwap32(
-						(volatile uint32_t *)iCV,
-						curr,
-						(uint32_t)sysConditionVariableInitializer
+		retry = !atomic_compare_exchange_weak(
+						iCV,
+						&curr,
+						(uintptr_t)sysConditionVariableInitializer
 					);
 	} while(retry);
 }
@@ -851,24 +851,24 @@ SysConditionVariableClose(SysConditionVariableType *iCV)
 extern "C" void
 SysConditionVariableBroadcast(SysConditionVariableType *iCV)
 {
-	uint32_t *curr;
-	uint32_t retry;
+	uintptr_t curr;
+	bool retry;
 
 	/*
 	 * Atomically retrieve and clear the list of
 	 * waiting threads.
 	 */
 	do {
-		curr= *(uint32_t * volatile *)(iCV);
+		curr = *iCV;
 
-		retry= SysAtomicCompareAndSwap32(
-						(volatile uint32_t *)iCV,
-						(uint32_t)curr,
-						(uint32_t)sysConditionVariableInitializer
+		retry = !atomic_compare_exchange_weak(
+						iCV,
+						&curr,
+						(uintptr_t)sysConditionVariableInitializer
 					);
 	} while(retry);
 
-	if(curr!= (uint32_t *)sysConditionVariableOpened) {
+	if (curr != sysConditionVariableOpened) {
 		wake_up_condition((our_thread_init_record*)curr);
 	}
 }
@@ -992,10 +992,3 @@ SysOnceFlagSignal(SysOnceFlagType *iOF, uint32_t result)
 }
 
 #endif
-
-extern sysThreadDirectFuncs g_threadDirectFuncs;
-status_t SysThreadGetDirectFuncs(sysThreadDirectFuncs* ioFuncs)
-{
-	*ioFuncs = g_threadDirectFuncs;
-	return 0;
-}

@@ -21,6 +21,7 @@
 */
 
 #include <support/SupportDefs.h>
+#include <support/atomic.h>
 #include <new>
 #include <typeinfo>
 
@@ -238,9 +239,9 @@ public:
 				//!	Remove a reference.  If this is the last, the structure is freed.
 				void	Decrement(const void* id);
 
-				int32_t	ref_count;	//!< Number of weak references this structure holds.
-				SAtom*	atom;		//!< That SAtom object we hold the reference on.
-				void*	cookie;		//!< Typically the "real" derived object you are working with.
+				atomic_int	ref_count;	//!< Number of weak references this structure holds.
+				SAtom*		atom;		//!< That SAtom object we hold the reference on.
+				void*		cookie;		//!< Typically the "real" derived object you are working with.
 			};
 
 			//! Create a weak reference to the atom.
@@ -414,8 +415,8 @@ private:
 			void			lock_atom() const;
 			void			unlock_atom() const;
 			
-			int32_t*		strong_addr() const;
-			int32_t*		weak_addr() const;
+			atomic_int*		strong_addr() const;
+			atomic_int*		weak_addr() const;
 			
 			int32_t			strong_count() const;
 			int32_t			weak_count() const;
@@ -572,7 +573,7 @@ private:
 			void			lock_atom() const;
 			void			unlock_atom() const;
 			
-			int32_t*		strong_addr() const;
+			atomic_int*		strong_addr() const;
 			
 			int32_t			strong_count() const;
 			
@@ -586,11 +587,11 @@ private:
 			void			add_decstrong_raw(const void* id) const;
 	
 			union {
-				mutable	int32_t								m_strongCount;
+				mutable	atomic_int							m_strongCount;
 				mutable	BNS(::palmos::osp::) atom_debug*	m_debugPtr;
 			};
 			// XXX this should be moved to m_debugPtr, probably.
-			mutable int32_t									m_constCount;
+			mutable atomic_int								m_constCount;
 };
 
 /**************************************************************************************/
@@ -618,10 +619,10 @@ public:
 	inline SLimAtom() : m_strongCount(0) { }
 
 	//!	Increment reference count.
-	inline void IncStrongFast() const { SysAtomicInc32(&m_strongCount); }
+	inline void IncStrongFast() const { atomic_fetch_inc(&m_strongCount); }
 
 	//!	Decrement reference count, deleting object when it goes back to zero.
-	inline void DecStrongFast() const { if (SysAtomicDec32(&m_strongCount) == 1) { delete static_cast<const T*>(this); } }
+	inline void DecStrongFast() const { if (atomic_fetch_dec(&m_strongCount) == 1) { delete static_cast<const T*>(this); } }
 
 	//!	Version of IncStrongFast() for compatibility with sptr<T>.
 	inline void IncStrong(const void *) const {	IncStrongFast(); }
@@ -636,7 +637,7 @@ protected:
 	inline ~SLimAtom() { }
 	
 private:
-	mutable volatile int32_t m_strongCount;
+	mutable volatile atomic_int m_strongCount;
 };
 
 

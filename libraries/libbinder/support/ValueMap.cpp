@@ -74,7 +74,7 @@ BValueMapPool::~BValueMapPool()
 	for (int32_t i=0; i<NUM_POOLS; i++) {
 		BValueMap* map = m_pools[i].objects;
 		while (map) {
-			BValueMap* next = (BValueMap*)(map->m_users);
+			BValueMap* next = (BValueMap*)(intptr_t)(map->m_users);
 			free(map);
 			map = next;
 		}
@@ -91,13 +91,13 @@ BValueMap* BValueMapPool::Create(size_t initSize)
 		pool& p = m_pools[size_to_pool[initSize]];
 		BValueMap* map = p.objects;
 		if (map) {
-			p.objects = (BValueMap*)map->m_users;
+			p.objects = (BValueMap*)(intptr_t)map->m_users;
 			p.count--;
 			map->m_users = 1;
 			map->m_dataSize = B_ERROR;
 			map->m_size = 0;
 #if BUILD_TYPE == BUILD_TYPE_DEBUG && PROFILE_VALUE_MAP
-			g_threadDirectFuncs.atomicInc32(&m_hits);
+			atomic_fetch_inc(&m_hits);
 #endif
 			m_lock.Unlock();
 			return map;
@@ -107,7 +107,7 @@ BValueMap* BValueMapPool::Create(size_t initSize)
 	}
 
 #if BUILD_TYPE == BUILD_TYPE_DEBUG && PROFILE_VALUE_MAP
-	g_threadDirectFuncs.atomicDec32(&m_misses);
+	atomic_fetch_dec(&m_misses);
 #endif
 
 	BValueMap* map;
@@ -128,7 +128,7 @@ void BValueMapPool::Delete(BValueMap* map)
 		const int32_t whichPool = size_to_pool[map->m_avail];
 		pool& p = m_pools[whichPool];
 		if (p.count <= max_in_pool[whichPool]) {
-			map->m_users = (int32_t)p.objects;
+			map->m_users = (intptr_t)p.objects;
 			p.objects = map;
 			p.count++;
 			DbgOnlyFatalErrorIf(map->m_avail != pool_to_size[whichPool], "BValueMap pool error");
@@ -150,8 +150,8 @@ static int32_t g_hits = 1;
 BValueMap* BValueMap::Create(size_t initSize)
 {
 #if PROFILE_VALUE_MAP
-	int32_t num = g_threadDirectFuncs.atomicInc32(&g_numMaps);
-	if (g_threadDirectFuncs.atomicInc32(&g_hits)%1000 == 0) {
+	int32_t num = atomic_fetch_inc(&g_numMaps);
+	if (atomic_fetch_inc(&g_hits)%1000 == 0) {
 		int32_t hits = g_valueMapPool.Hits();
 		int32_t misses = g_valueMapPool.Misses();
 		bout << num << " BValueMap objects exist (Pool: hits=" << hits << ", misses="
@@ -226,7 +226,7 @@ BValueMap* BValueMap::Clone() const
 void BValueMap::Delete()
 {
 #if PROFILE_VALUE_MAP
-	g_threadDirectFuncs.atomicDec32(&g_numMaps);
+	atomic_fetch_dec(&g_numMaps);
 #endif
 	g_valueMapPool.Delete(this);
 }

@@ -107,7 +107,7 @@ static volatile int32_t g_runningAny = 0, g_maxAny = 0;
 
 #define ENTER_CONCURRENCY(cond, vars, what, who)									\
 	if (cond) {																		\
-		int32_t _curCon = g_threadDirectFuncs.atomicAdd32(&g_running##vars, 1)+1;	\
+		int32_t _curCon = atomic_fetch_add(&g_running##vars, 1)+1;	\
 		int32_t _maxCon = g_max##vars;												\
 		while (_curCon > _maxCon) {													\
 			if (KALAtomicCompareAndSwap32(											\
@@ -122,7 +122,7 @@ static volatile int32_t g_runningAny = 0, g_maxAny = 0;
 	}																				\
 
 #define EXIT_CONCURRENCY(cond, vars)												\
-	if (cond) { g_threadDirectFuncs.atomicAdd32(&g_running##vars, -1); }			\
+	if (cond) { atomic_fetch_add(&g_running##vars, -1); }			\
 
 #else
 
@@ -339,7 +339,7 @@ status_t SLooper::_SpawnTransactionLooper(char code)
 {
 	status_t status = B_BINDER_TOO_MANY_LOOPERS;
 	
-	const int32_t seq = g_threadDirectFuncs.atomicInc32(&g_transSeq);
+	const int32_t seq = atomic_fetch_inc(&g_transSeq);
 	char name[32]; // smooved server threads get lowercase initial letters
 	sprintf(name, "%03ld%c Transaction #%ld\n", seq%1000, code, seq);
 

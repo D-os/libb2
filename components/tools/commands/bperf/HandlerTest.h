@@ -34,8 +34,8 @@ struct handler_test_state
 	int32_t				priority;
 	size_t				dataSize;
 
-	volatile int32_t	current;
-	volatile int32_t	numThreads;
+	volatile atomic_int	current;
+	volatile atomic_int	numThreads;
 	SConditionVariable	finished;
 };
 
@@ -78,7 +78,7 @@ public:
 	{
 		if (msg.What() == kTestHandler) 
 		{
-			if (SysAtomicAdd32(&m_state->current, 1) < m_state->iterations) 
+			if (atomic_fetch_add(&m_state->current, 1) < m_state->iterations) 
 			{
 				sptr<HandlerTest> next = m_other.promote();
 				if (next != NULL) 

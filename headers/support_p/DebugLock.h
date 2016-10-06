@@ -135,7 +135,7 @@ protected:
 	virtual	void				PrintSubclassToStream(const sptr<ITextOutput>& io) const;
 	
 private:
-	mutable	int32_t				m_refs;			// instance reference count
+	mutable	atomic_int			m_refs;			// instance reference count
 	
 	// Lock-specific information.  Does not change after creation.
 			SString const		m_type;			// descriptive type of this object
@@ -197,11 +197,11 @@ private:
 	// Lock-specific information.  Protected by the lock itself.
 			volatile intptr_t	m_gehnaphore;	// implementation of this lock
 			sem_id				m_sem;			// alternate implementation
-			int32_t				m_held;			// lock implementation validation
+			atomic_int			m_held;			// lock implementation validation
 			SysHandle			m_owner;		// who currently holds the lock
 			int32_t				m_ownerFlags;	// passed in from Lock()
 			SCallStack*			m_ownerStack;	// stack of last lock accessor
-			int32_t				m_contention;	// current waiting threads
+			atomic_int			m_contention;	// current waiting threads
 			bool				m_deleted;		// no longer valid?
 };
 

@@ -73,15 +73,15 @@ void SAtomLeakChecker::Shutdown()
 
 void SAtomLeakChecker::NoteCreate()
 {
-	atomic_add(&fCreated, 1);
+	atomic_fetch_add(&fCreated, 1);
 }
 void SAtomLeakChecker::NoteDestroy()
 {
-	atomic_add(&fDestroyed, 1);
+	atomic_fetch_add(&fDestroyed, 1);
 }
 void SAtomLeakChecker::NoteFree()
 {
-	atomic_add(&fFreed, 1);
+	atomic_fetch_add(&fFreed, 1);
 }
 
 // --------------------------------------------------------------------
@@ -435,17 +435,17 @@ void SAtomTracker::WatchAction(const SLightAtom* which, const char* action)
 }
 
 // Globals
-static int32_t gHasLeakChecker = 0;
+static atomic_int gHasLeakChecker(0);
 static SAtomLeakChecker* gLeakChecker = NULL;
-static int32_t gHasTracker = 0;
+static atomic_int gHasTracker(0);
 static SAtomTracker* gTracker = NULL;
 
 SAtomLeakChecker* LeakChecker() 
 {
 	if ((gHasLeakChecker&2) != 0) return gLeakChecker;
-	if (atomic_or(&gHasLeakChecker, 1) == 0) {
+	if (atomic_fetch_or(&gHasLeakChecker, 1) == 0) {
 		gLeakChecker = new SAtomLeakChecker;
-		atomic_or(&gHasLeakChecker, 2);
+		atomic_fetch_or(&gHasLeakChecker, 2);
 	} else {
 		while ((gHasLeakChecker&2) == 0)
 		  SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
@@ -456,9 +456,9 @@ SAtomLeakChecker* LeakChecker()
 SAtomTracker* Tracker() 
 {
 	if ((gHasTracker&2) != 0) return gTracker;
-	if (atomic_or(&gHasTracker, 1) == 0) {
+	if (atomic_fetch_or(&gHasTracker, 1) == 0) {
 		gTracker = new SAtomTracker;
-		atomic_or(&gHasTracker, 2);
+		atomic_fetch_or(&gHasTracker, 2);
 	} else {
 		while ((gHasTracker&2) == 0) 
 		    SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);

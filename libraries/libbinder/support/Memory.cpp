@@ -61,7 +61,7 @@ static sptr<IMemoryHeap> find_memory_heap(const sptr<IBinder>& bheap)
 	bool found;
 	area_translation_info& info = gAreaTranslationCache.EditValueFor(bheap, &found);
 	if (found) {
-		atomic_add(&info.count, 1);
+		++info.count;
 		return info.heap;
 	} else {
 		// It doesn't exist, add the IMemoryHeap in the cache
@@ -151,7 +151,7 @@ BpMemory::~BpMemory()
 			// This should never happen!
 			ErrFatalError("~BpMemory IMemoryHeap not cached!");
 		} else {
-			if (atomic_add(&info.count, -1) == 0) {
+			if (--info.count == 0) { // FIXME! possible race here. need to lock gAreaTranslationCache
 				// This IMemoryHeap is not used by anyone anymore
 				info.heap = NULL; // Release the IMemoryHeap
 				gAreaTranslationCache.RemoveItemFor(m_heap->AsBinder());

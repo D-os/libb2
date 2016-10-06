@@ -157,8 +157,6 @@ struct parcel_pool_cleanup {
 };
 extern parcel_pool_cleanup g_parcel_pool_cleanup;
 
-extern sysThreadDirectFuncs g_threadDirectFuncs;
-
 #if _SUPPORTS_NAMESPACE
 } }	// namespace palmos::support
 #endif

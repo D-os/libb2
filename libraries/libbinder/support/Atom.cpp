@@ -14,7 +14,6 @@
 
 #include <SysThread.h>
 #include <support/Atom.h>
-#include <support/atomic.h>
 #if !LIBBE_BOOTSTRAP
 #include <support/Handler.h>
 #endif
@@ -142,8 +141,8 @@ struct SAtom::base_data
 
 	// These are only used when debugging is not enabled.  Else
 	// the counts are in debugPtr below.
-	mutable	int32_t strongCount;
-	mutable	int32_t weakCount;
+	mutable	atomic_int strongCount;
+	mutable	atomic_int weakCount;
 
 	// Before the base_data is attached to an atom, 'atom' points
 	// to the next base_data in a chain of pending allocations.
@@ -272,7 +271,7 @@ namespace support {
 namespace palmos {
 namespace osp {
 #endif
-	static volatile uint32_t gHasDebugLevel = 0;
+	static atomic_uint gHasDebugLevel(0);
 	static int32_t gDebugLevel = 0;
 	
 	static inline int32_t FastAtomDebugLevel() {
@@ -282,7 +281,7 @@ namespace osp {
 	
 	int32_t AtomDebugLevel() {
 		if ((gHasDebugLevel&2) != 0) return gDebugLevel;
-		if (g_threadDirectFuncs.atomicOr32(&gHasDebugLevel, 1) == 0) {
+		if (atomic_fetch_or(&gHasDebugLevel, 1U) == 0) {
 
 			bool instrumentationAllowed = true;
 			const char* env = getenv("ATOM_DEBUG");
@@ -293,7 +292,7 @@ namespace osp {
 			} else {
 				gDebugLevel = 0;
 			}
-			g_threadDirectFuncs.atomicOr32(&gHasDebugLevel, 2);
+			atomic_fetch_or(&gHasDebugLevel, 2U);
 			if (gDebugLevel > 0)
 				printf("ATOM DEBUGGING ENABLED!  ATOM_DEBUG=%d, ATOM_REPORT=%d\n",
 					gDebugLevel, AtomReportLevel(0));
@@ -302,7 +301,7 @@ namespace osp {
 		return gDebugLevel;
 	}
 	
-	static volatile uint32_t gHasReportLevel = 0;
+	static atomic_uint gHasReportLevel(0);
 	static int32_t gReportLevel = 0;
 	
 	int32_t AtomReportLevel(uint32_t flags) {
@@ -314,7 +313,7 @@ namespace osp {
 		}
 		
 		if ((gHasReportLevel&2) != 0) return gReportLevel;
-		if (g_threadDirectFuncs.atomicOr32(&gHasReportLevel, 1) == 0) {
+		if (atomic_fetch_or(&gHasReportLevel, 1U) == 0) {
 		
 			bool instrumentationAllowed = true;
 			const char* env = getenv("ATOM_REPORT");
@@ -325,7 +324,7 @@ namespace osp {
 			} else {
 				gReportLevel = 0;
 			}
-			g_threadDirectFuncs.atomicOr32(&gHasReportLevel, 2);
+			atomic_fetch_or(&gHasReportLevel, 2U);
 		}
 		while ((gHasReportLevel&2) == 0) 
 			SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
@@ -537,21 +536,21 @@ namespace support {
 		if (FastAtomDebugLevel() > 5) m_base->debugPtr->Unlock();
 	}
 	
-	inline int32_t* SAtom::strong_addr() const {
+	inline atomic_int* SAtom::strong_addr() const {
 		if (FastAtomDebugLevel() > 5) return &(m_base->debugPtr->primary);
 		return &m_base->strongCount;
 	}
-	inline int32_t* SAtom::weak_addr() const {
+	inline atomic_int* SAtom::weak_addr() const {
 		if (FastAtomDebugLevel() > 5) return &(m_base->debugPtr->secondary);
 		return &m_base->weakCount;
 	}
 	
 	inline int32_t SAtom::strong_count() const {
-		if (FastAtomDebugLevel() > 5) return m_base->debugPtr ? m_base->debugPtr->primary : 0;
+		if (FastAtomDebugLevel() > 5) return m_base->debugPtr ? int32_t(m_base->debugPtr->primary) : 0;
 		return m_base->strongCount;
 	}
 	inline int32_t SAtom::weak_count() const {
-		if (FastAtomDebugLevel() > 5) return m_base->debugPtr ? m_base->debugPtr->secondary : 0;
+		if (FastAtomDebugLevel() > 5) return m_base->debugPtr ? int32_t(m_base->debugPtr->secondary) : 0;
 		return m_base->weakCount;
 	}
 
@@ -780,13 +779,13 @@ namespace support {
 		if (FastAtomDebugLevel() > 5) m_debugPtr->Unlock();
 	}
 	
-	inline int32_t* SLightAtom::strong_addr() const {
+	inline atomic_int* SLightAtom::strong_addr() const {
 		if (FastAtomDebugLevel() > 5) return &(m_debugPtr->primary);
 		return &m_strongCount;
 	}
 	
 	inline int32_t SLightAtom::strong_count() const {
-		if (FastAtomDebugLevel() > 5) return m_debugPtr ? m_debugPtr->primary : 0;
+		if (FastAtomDebugLevel() > 5) return m_debugPtr ? int32_t(m_debugPtr->primary) : 0;
 		return m_strongCount;
 	}
 
@@ -900,7 +899,7 @@ void SAtom::weak_atom_ptr::Increment(const void* id)
 	atom->IncWeak(id);
 #endif
 
-	if (g_threadDirectFuncs.atomicInc32(&ref_count) == 0) {
+	if (atomic_fetch_inc(&ref_count) == 0) {
 		B_INC_WEAK(atom, this);
 	}
 
@@ -914,7 +913,7 @@ void SAtom::weak_atom_ptr::Decrement(const void* id)
 #endif
 
 //	printf("SAtom::weak_atom_ptr::Decrement() this=%p id=%p ref_count=%d\n", this, id, ref_count);
-	if (g_threadDirectFuncs.atomicDec32(&ref_count) == 1) {
+	if (atomic_fetch_dec(&ref_count) == 1) {
 		B_DEC_WEAK(atom, this);
 #if BUILD_TYPE != BUILD_TYPE_RELEASE
 		atom = NULL;
@@ -940,10 +939,10 @@ SAtom::weak_atom_ptr* SAtom::CreateWeak(const void* cookie) const
 // Remove this base_data from the tls chain.
 void SAtom::base_data::unlink()
 {
-	base_data* pos = (base_data*)g_threadDirectFuncs.tsdGet(gAtomBaseIndex);
+	base_data* pos = (base_data*)SysTSDGet(gAtomBaseIndex);
 	if (pos == this) {
 		printf("Unlinking %p from top!\n", this);
-		g_threadDirectFuncs.tsdSet(gAtomBaseIndex, (void*)(intptr_t)(pos->pending&~1U));
+		SysTSDSet(gAtomBaseIndex, (void*)(intptr_t)(pos->pending&~1U));
 		return;
 	}
 
@@ -973,7 +972,7 @@ void* SAtom::operator new(size_t size)
 		ptr->weakCount = 0;
 
 		// Chain with previous allocation.
-		base_data* prev = (base_data*)g_threadDirectFuncs.tsdGet(gAtomBaseIndex);
+		base_data* prev = (base_data*)SysTSDGet(gAtomBaseIndex);
 		if (prev) {
 			base_data* pos = prev;
 #if 0
@@ -996,7 +995,7 @@ void* SAtom::operator new(size_t size)
 		ptr->debugPtr = NULL;
 		ptr->new_size = size;
 #endif
-		g_threadDirectFuncs.tsdSet(gAtomBaseIndex, ptr);
+		SysTSDSet(gAtomBaseIndex, ptr);
 		return ptr+1;
 	}
 
@@ -1017,7 +1016,7 @@ void* SAtom::operator new(size_t size, const B_SNS(std::)nothrow_t&) throw()
 		ptr->weakCount = 0;
 
 		// Chain with previous allocation.
-		base_data* prev = (base_data*)g_threadDirectFuncs.tsdGet(gAtomBaseIndex);
+		base_data* prev = (base_data*)SysTSDGet(gAtomBaseIndex);
 		if (prev) {
 			base_data* pos = prev;
 #if 0
@@ -1040,7 +1039,7 @@ void* SAtom::operator new(size_t size, const B_SNS(std::)nothrow_t&) throw()
 		ptr->debugPtr = NULL;
 		ptr->new_size = size;
 #endif
-		g_threadDirectFuncs.tsdSet(gAtomBaseIndex, ptr);
+		SysTSDSet(gAtomBaseIndex, ptr);
 		return ptr+1;
 	}
 
@@ -1103,7 +1102,7 @@ SAtom::SAtom()
 	NOTE_CREATE();
 	
 	// Look for the memory allocation for this atom.
-	base_data* pos = (base_data*)g_threadDirectFuncs.tsdGet(gAtomBaseIndex);
+	base_data* pos = (base_data*)SysTSDGet(gAtomBaseIndex);
 	base_data* prev = NULL;
 	while ( pos && (this < ((void*)pos) || this >= ((void*)(((char*)pos)+pos->size))) ) {
 		// Not this one...  try the next!
@@ -1122,7 +1121,7 @@ SAtom::SAtom()
 #endif
 
 	m_base = pos;
-	if (!prev) g_threadDirectFuncs.tsdSet(gAtomBaseIndex, (void*)(intptr_t)(pos->pending&~1U));
+	if (!prev) SysTSDSet(gAtomBaseIndex, (void*)(intptr_t)(pos->pending&~1U));
 	else prev->next = pos->next;
 
 	pos->atom = this;
@@ -1166,8 +1165,8 @@ status_t SAtom::AttachAtom(SAtom* target)
 
 	// Transfer reference counts.
 	target->lock_atom();
-	g_threadDirectFuncs.atomicAdd32(weak_addr(), target->weak_count());
-	g_threadDirectFuncs.atomicAdd32(strong_addr(), target->strong_count());
+	atomic_fetch_add(weak_addr(), target->weak_count());
+	atomic_fetch_add(strong_addr(), target->strong_count());
 	*target->weak_addr() = 0;
 	*target->strong_addr() = 0;
 	transfer_refs(target);
@@ -1193,7 +1192,7 @@ status_t SAtom::AttachAtom(SAtom* target)
 int32_t SAtom::IncWeak(const void *id) const
 {
 	lock_atom();
-	const int32_t r = g_threadDirectFuncs.atomicInc32(weak_addr());
+	const int32_t r = atomic_fetch_inc(weak_addr());
 	add_incweak(id);
 	unlock_atom();
 
@@ -1212,7 +1211,7 @@ int32_t SAtom::IncWeak(const void *id) const
 int32_t SAtom::DecWeak(const void *id) const
 {
 	lock_atom();
-	const int32_t r = g_threadDirectFuncs.atomicDec32(weak_addr());
+	const int32_t r = atomic_fetch_dec(weak_addr());
 #if BUILD_TYPE != BUILD_TYPE_RELEASE
 	const int32_t sr = *strong_addr();
 #endif
@@ -1247,12 +1246,12 @@ int32_t SAtom::DecWeak(const void *id) const
 
 void SAtom::IncWeakFast() const
 {
-	g_threadDirectFuncs.atomicInc32(weak_addr());
+	atomic_fetch_inc(weak_addr());
 }
 
 void SAtom::DecWeakFast() const
 {
-	if (g_threadDirectFuncs.atomicDec32(weak_addr()) != 1) {
+	if (atomic_fetch_dec(weak_addr()) != 1) {
 		return;
 	}
 
@@ -1271,7 +1270,7 @@ void SAtom::DecWeakFast() const
 static int32_t numIncStrong = 0;
 static void count_inc_strong()
 {
-	if (((g_threadDirectFuncs.atomicInc32(&numIncStrong)+1)%10000) == 0) {
+	if (((atomic_fetch_inc(&numIncStrong)+1)%10000) == 0) {
 		thread_info thinfo;
 		get_thread_info(SysCurrentThread(),&thinfo);
 		printf("Have done %ld refs in process %ld\n", numIncStrong, thinfo.team);
@@ -1299,13 +1298,13 @@ int32_t SAtom::IncStrong(const void *id) const
 	IncWeak(id);
 	
 	lock_atom();
-	int32_t r = g_threadDirectFuncs.atomicInc32(strong_addr());
+	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE)
-		g_threadDirectFuncs.atomicAdd32(strong_addr(), -INITIAL_PRIMARY_VALUE);
+		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
 	
 	if (r == 0) {
 		// The incstrong count was at zero, this is an error.
-		g_threadDirectFuncs.atomicDec32(strong_addr());
+		atomic_fetch_dec(strong_addr());
 		unlock_atom();
 		char buf[128];
 		sprintf(buf, "SAtom: object [%s] IncStrong() called after final DecStrong().\nDid you use an atom_ptr inside your constructor?", lookup_debug(this, false).String());
@@ -1332,7 +1331,7 @@ int32_t SAtom::IncStrong(const void *id) const
 int32_t SAtom::DecStrong(const void *id) const
 {
 	lock_atom();
-	const int32_t r = g_threadDirectFuncs.atomicDec32(strong_addr());
+	const int32_t r = atomic_fetch_dec(strong_addr());
 	add_decstrong(id);
 	unlock_atom();
 	
@@ -1360,17 +1359,17 @@ void SAtom::IncStrongFast() const
 
 	IncWeakFast();
 	
-	if (g_threadDirectFuncs.atomicInc32(strong_addr()) != INITIAL_PRIMARY_VALUE)  {
+	if (atomic_fetch_inc(strong_addr()) != INITIAL_PRIMARY_VALUE)  {
 		return;
 	}
 
-	g_threadDirectFuncs.atomicAdd32(strong_addr(), -INITIAL_PRIMARY_VALUE);
+	atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
 	const_cast<SAtom*>(this)->InitAtom();
 }
 
 void SAtom::DecStrongFast() const
 {
-	if (g_threadDirectFuncs.atomicDec32(strong_addr()) == 1) {
+	if (atomic_fetch_dec(strong_addr()) == 1) {
 		const status_t err = const_cast<SAtom*>(this)->FinishAtom(NULL);
 		if (err == FINISH_ATOM_ASYNC) {
 			const_cast<SAtom*>(this)->schedule_async_destructor(NULL);
@@ -1391,14 +1390,13 @@ bool SAtom::attempt_inc_strong(const void *id, bool useid) const
 	
 	// Attempt to increment the reference count, without
 	// disrupting it if it has already gone to zero.
-	int32_t current = strong_count();
+	int current = strong_count();
 	while (current > 0 && current < INITIAL_PRIMARY_VALUE) {
-		if (!g_threadDirectFuncs.atomicCompareAndSwap32((volatile uint32_t*)strong_addr(), current, current+1)) {
+		if (atomic_compare_exchange_weak(strong_addr(), &current, current+1)) {
 			// Success!
 			break;
 		}
 		// Someone else changed it before us.
-		current = strong_count();
 	}
 	
 	if (current <= 0 || current == INITIAL_PRIMARY_VALUE) {
@@ -1417,7 +1415,7 @@ bool SAtom::attempt_inc_strong(const void *id, bool useid) const
 		// IncStrongAttempted() has allowed us to revive the atom, so increment
 		// the reference count and continue with a success.
 		lock_atom();
-		current = g_threadDirectFuncs.atomicInc32(strong_addr());
+		current = atomic_fetch_inc(strong_addr());
 		// If the primary references count has already been incremented by
 		// someone else, the implementor of IncStrongAttempted() is holding
 		// an unneeded reference.  So call FinishAtom() here to remove it.
@@ -1435,7 +1433,7 @@ bool SAtom::attempt_inc_strong(const void *id, bool useid) const
 	}
 	
 	if (current == INITIAL_PRIMARY_VALUE)
-		g_threadDirectFuncs.atomicAdd32(strong_addr(), -INITIAL_PRIMARY_VALUE);
+		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
 	
 	if (useid) add_incstrong(id, current);
 
@@ -1483,14 +1481,13 @@ bool SAtom::AttemptDecStrong(const void *id) const
 {
 	lock_atom();
 
-	int32_t r = strong_count();
+	int r = strong_count();
 	while (r > 0) {
-		if (!g_threadDirectFuncs.atomicCompareAndSwap32((volatile uint32_t*)strong_addr(), r, r-1)) {
+		if (atomic_compare_exchange_weak(strong_addr(), &r, r-1)) {
 			// Success!
 			break;
 		}
 		// Someone else changed it before us.
-		r = strong_count();
 	}
 
 	if (r > 0) {
@@ -1526,9 +1523,9 @@ int32_t SAtom::ForceIncStrong(const void *id) const
 	ErrFatalErrorIf(rw <= 0, "ForceIncStrong on a deleted atom!\n");
 	
 	lock_atom();
-	int32_t r = g_threadDirectFuncs.atomicInc32(strong_addr());
+	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE)
-		g_threadDirectFuncs.atomicAdd32(strong_addr(), -INITIAL_PRIMARY_VALUE);
+		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
 	
 	add_incstrong(id, r);
 
@@ -1547,9 +1544,9 @@ void SAtom::ForceIncStrongFast() const
 {
 	IncWeakFast();
 	
-	int32_t r = g_threadDirectFuncs.atomicInc32(strong_addr());
+	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE) {
-		g_threadDirectFuncs.atomicAdd32(strong_addr(), -INITIAL_PRIMARY_VALUE);
+		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
 		const_cast<SAtom*>(this)->InitAtom();
 	} else if (r == 0) {
 		const_cast<SAtom*>(this)->InitAtom();
@@ -1568,14 +1565,13 @@ bool SAtom::AttemptIncWeak(const void *id) const
 	
 	// Attempt to increment the reference count, without
 	// disrupting it if it has already gone to zero.
-	int32_t current = weak_count();
+	int current = weak_count();
 	while (current > 0) {
-		if (!g_threadDirectFuncs.atomicCompareAndSwap32((volatile uint32_t*)weak_addr(), current, current+1)) {
+		if (atomic_compare_exchange_weak(weak_addr(), &current, current+1)) {
 			// Success!
 			break;
 		}
 		// Someone else changed it before us.
-		current = weak_count();
 	}
 	
 	if (current > 0) {
@@ -1593,14 +1589,13 @@ bool SAtom::AttemptIncWeakFast() const
 {
 	// Attempt to increment the reference count, without
 	// disrupting it if it has already gone to zero.
-	int32_t current = weak_count();
+	int current = weak_count();
 	while (current > 0) {
-		if (!g_threadDirectFuncs.atomicCompareAndSwap32((volatile uint32_t*)weak_addr(), current, current+1)) {
+		if (atomic_compare_exchange_weak(weak_addr(), &current, current+1)) {
 			// Success!
 			break;
 		}
 		// Someone else changed it before us.
-		current = weak_count();
 	}
 	
 	// Return success/failure based on the previous reference count.
@@ -1800,13 +1795,13 @@ int32_t SLightAtom::IncStrong(const void *id) const
 	return const_cast<SLightAtom*>(this)->IncStrong(id);
 #else
 	lock_atom();
-	int32_t r = g_threadDirectFuncs.atomicInc32(strong_addr());
+	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE)
-		g_threadDirectFuncs.atomicAdd32(strong_addr(), -INITIAL_PRIMARY_VALUE);
+		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
 	
 	if (r == 0) {
 		// The incstrong count was at zero, this is an error.
-		g_threadDirectFuncs.atomicDec32(strong_addr());
+		atomic_fetch_dec(strong_addr());
 		unlock_atom();
 		char buf[128];
 		sprintf(buf, "SLightAtom: object [%s] IncStrong() called after final DecStrong().\nDid you use an atom_ptr inside your constructor?", lookup_debug(this, false).String());
@@ -1814,7 +1809,7 @@ int32_t SLightAtom::IncStrong(const void *id) const
 		return 0;
 	}
 	
-	g_threadDirectFuncs.atomicInc32(&m_constCount);
+	atomic_fetch_inc(&m_constCount);
 
 	add_incstrong(id, r);
 
@@ -1833,13 +1828,13 @@ int32_t SLightAtom::IncStrong(const void *id) const
 int32_t SLightAtom::IncStrong(const void *id)
 {
 	lock_atom();
-	int32_t r = g_threadDirectFuncs.atomicInc32(strong_addr());
+	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE)
-		g_threadDirectFuncs.atomicAdd32(strong_addr(), -INITIAL_PRIMARY_VALUE);
+		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
 	
 	if (r == 0) {
 		// The incstrong count was at zero, this is an error.
-		g_threadDirectFuncs.atomicDec32(strong_addr());
+		atomic_fetch_dec(strong_addr());
 		unlock_atom();
 		char buf[128];
 		sprintf(buf, "SLightAtom: object [%s] IncStrong() called after final DecStrong().\nDid you use an atom_ptr inside your constructor?", lookup_debug(this, false).String());
@@ -1866,8 +1861,8 @@ int32_t SLightAtom::DecStrong(const void *id) const
 	return const_cast<SLightAtom*>(this)->DecStrong(id);
 #else
 	lock_atom();
-	const int32_t r = g_threadDirectFuncs.atomicDec32(strong_addr());
-	g_threadDirectFuncs.atomicDec32(&m_constCount);
+	const int32_t r = atomic_fetch_dec(strong_addr());
+	atomic_fetch_dec(&m_constCount);
 	add_decstrong(id);
 	unlock_atom();
 	
@@ -1885,7 +1880,7 @@ int32_t SLightAtom::DecStrong(const void *id) const
 int32_t SLightAtom::DecStrong(const void *id)
 {
 	lock_atom();
-	const int32_t r = g_threadDirectFuncs.atomicDec32(strong_addr());
+	const int32_t r = atomic_fetch_dec(strong_addr());
 	add_decstrong(id);
 	unlock_atom();
 	
@@ -1904,18 +1899,18 @@ void SLightAtom::IncStrongFast() const
 #if BUILD_TYPE == BUILD_TYPE_RELEASE
 	return const_cast<SLightAtom*>(this)->IncStrongFast();
 #else
-	if (g_threadDirectFuncs.atomicInc32(strong_addr()) == INITIAL_PRIMARY_VALUE) {
-		g_threadDirectFuncs.atomicAdd32(strong_addr(), -INITIAL_PRIMARY_VALUE);
+	if (atomic_fetch_inc(strong_addr()) == INITIAL_PRIMARY_VALUE) {
+		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
 		const_cast<SLightAtom*>(this)->InitAtom();
 	}
-	g_threadDirectFuncs.atomicInc32(&m_constCount);
+	atomic_fetch_inc(&m_constCount);
 #endif
 }
 
 void SLightAtom::IncStrongFast()
 {
-	if (g_threadDirectFuncs.atomicInc32(strong_addr()) == INITIAL_PRIMARY_VALUE) {
-		g_threadDirectFuncs.atomicAdd32(strong_addr(), -INITIAL_PRIMARY_VALUE);
+	if (atomic_fetch_inc(strong_addr()) == INITIAL_PRIMARY_VALUE) {
+		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
 		const_cast<SLightAtom*>(this)->InitAtom();
 	}
 }
@@ -1925,8 +1920,8 @@ void SLightAtom::DecStrongFast() const
 #if BUILD_TYPE == BUILD_TYPE_RELEASE
 	return const_cast<SLightAtom*>(this)->DecStrongFast();
 #else
-	g_threadDirectFuncs.atomicDec32(&m_constCount);
-	if (g_threadDirectFuncs.atomicDec32(strong_addr()) == 1) {
+	atomic_fetch_dec(&m_constCount);
+	if (atomic_fetch_dec(strong_addr()) == 1) {
 		delete this;
 	}
 #endif
@@ -1934,7 +1929,7 @@ void SLightAtom::DecStrongFast() const
 
 void SLightAtom::DecStrongFast()
 {
-	if (g_threadDirectFuncs.atomicDec32(strong_addr()) == 1) {
+	if (atomic_fetch_dec(strong_addr()) == 1) {
 		delete this;
 	}
 }

@@ -96,11 +96,7 @@ private:
 			SysHandle			m_thread;
 
 			SLocker				m_lock;
-#if 0 // FIXME: Linux
 			SysConditionVariableType	m_ended;	// condition var
-#else
-			void*				m_ended;	// condition var
-#endif
 			bool				m_ending : 1;
 };
 

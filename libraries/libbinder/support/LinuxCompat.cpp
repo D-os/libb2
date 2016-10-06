@@ -311,7 +311,7 @@ int32_t atomic_and(volatile int32_t* location, int32_t andvalue)
 	return res;
 }
 
-int32_t atomic_or(volatile int32_t* location, int32_t orvalue)	
+int32_t atomic_or(volatile int32_t* location, int32_t orvalue)
 {
 	int32_t res;
 
@@ -345,27 +345,27 @@ int32_t compare_and_swap32(volatile int32_t *location, int32_t oldValue, int32_t
 }
 #else
 
-// Use the Sys routines, in libpalmroot
+//// Use the Sys routines, in libpalmroot
 
-int32_t atomic_add(volatile int32_t* location, int32_t addvalue)
-{
-	return SysAtomicAdd32(location, addvalue);
-}
+//int32_t atomic_add(volatile int32_t* location, int32_t addvalue)
+//{
+//	return SysAtomicAdd32(location, addvalue);
+//}
 
-int32_t atomic_and(volatile int32_t* location, int32_t andvalue)
-{
-	return SysAtomicAnd32((volatile uint32_t*)location, andvalue);
-}
+//int32_t atomic_and(volatile int32_t* location, int32_t andvalue)
+//{
+//	return SysAtomicAnd32((volatile uint32_t*)location, andvalue);
+//}
 
-int32_t atomic_or(volatile int32_t* location, int32_t orvalue)	
-{
-	return SysAtomicOr32((volatile uint32_t*)location, orvalue);
-}
+//int32_t atomic_or(volatile int32_t* location, int32_t orvalue)
+//{
+//	return SysAtomicOr32((volatile uint32_t*)location, orvalue);
+//}
 
-int32_t compare_and_swap32(volatile int32_t *location, int32_t oldValue, int32_t newValue)
-{
-	return !SysAtomicCompareAndSwap32((volatile uint32_t*)location, oldValue, newValue);
-}
+//int32_t compare_and_swap32(volatile int32_t *location, int32_t oldValue, int32_t newValue)
+//{
+//	return !SysAtomicCompareAndSwap32((volatile uint32_t*)location, oldValue, newValue);
+//}
 #endif
 
 
@@ -652,25 +652,6 @@ palmsource_dec_package_ref()
 namespace palmos {
 namespace support {
 #endif
-
-sysThreadDirectFuncs g_threadDirectFuncs = 
-{
-	sysThreadDirectFuncsCount,
-	&SysAtomicInc32,
-	&SysAtomicDec32,
-	&SysAtomicAdd32,
-	&SysAtomicAnd32,
-	&SysAtomicOr32,
-	&SysAtomicCompareAndSwap32,
- 	&SysTSDGet,
- 	&SysTSDSet,
- 	&SysCriticalSectionEnter,
- 	&SysCriticalSectionExit,
- 	&SysConditionVariableWait,
- 	&SysConditionVariableOpen,
- 	&SysConditionVariableClose,
- 	&SysConditionVariableBroadcast
-};
 
 #if _SUPPORTS_NAMESPACE
 } }	// namespace palmos::support

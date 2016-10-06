@@ -41,7 +41,7 @@ class BPipe : public BnByteInput, public BnByteOutput
 	void *mBuffer;
 
 	size_t mReadOffset,mWriteOffset;
-	volatile int32_t mSpaceAvailable;
+	volatile atomic_int mSpaceAvailable;
 
 	volatile bool mPipeHalfClosed;
 

@@ -35,6 +35,8 @@
 // Include elementary types
 #include <PalmTypes.h>
 
+#include <support/atomic.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -81,7 +83,7 @@ typedef uint16_t timeoutFlags_t; //!< a combination of timeoutFlagsEnum_t and ti
 // THREAD SUPPORT
 // -------------------------------------------------------
 
-/*!	@name Atomic Operations */
+/*!	@name Atomic Operations * /
 //@{
 
 int32_t SysAtomicInc32(int32_t volatile *ioOperandP);
@@ -91,7 +93,7 @@ uint32_t SysAtomicAnd32(uint32_t volatile *ioOperandP, uint32_t iValue);
 uint32_t SysAtomicOr32(uint32_t volatile *ioOperandP, uint32_t iValue);
 uint32_t SysAtomicCompareAndSwap32(uint32_t volatile *ioOperandP, uint32_t iOldValue,
 				 uint32_t iNewValue);
-//@}
+//@} */
 
 /*!	@name Miscellaneous */
 //@{
@@ -118,7 +120,7 @@ void		SysTSDSet(SysTSDSlotID tsdslot, void *iValue);
 /*!	@name Thread Finalizers */
 //@{
 
-typedef uint32_t SysThreadExitCallbackID;
+typedef atomic_uintptr_t SysThreadExitCallbackID;
 typedef void (SysThreadExitCallbackFunc)(void*);
 status_t	SysThreadInstallExitCallback(	SysThreadExitCallbackFunc *iExitCallbackP,
 											void *iCallbackArg,
@@ -131,8 +133,8 @@ status_t	SysThreadRemoveExitCallback(SysThreadExitCallbackID iThreadCallbackId);
 //@{
 
 //!	The value to use when initializing a SysCriticalSectionType.
-#define sysCriticalSectionInitializer NULL
-typedef void * SysCriticalSectionType;
+#define sysCriticalSectionInitializer 0
+typedef atomic_uintptr_t SysCriticalSectionType;
 
 #if (TARGET_HOST == TARGET_HOST_WIN32)
 // Not needed for TARGET_HOST_WIN32
@@ -148,7 +150,7 @@ void SysCriticalSectionExit(SysCriticalSectionType *iCS);
 
 //!	The value to use when initializing a SysConditionVariableType.
 #define sysConditionVariableInitializer 0
-typedef void * SysConditionVariableType;
+typedef atomic_uintptr_t SysConditionVariableType;
 
 #if (TARGET_HOST == TARGET_HOST_WIN32)
 // Not needed for TARGET_HOST_WIN32

@@ -140,7 +140,7 @@ struct vector_hist
 
 struct vector_stats
 {
-	mutable int32_t		lockCount;
+	mutable atomic_int	lockCount;
 	mutable sem_id		lockSem;
 	
 	size_t				hits;
@@ -189,14 +189,14 @@ struct vector_stats
 	
 	void lock() const
 	{
-		if (g_threadDirectFuncs.atomicInc32(&lockCount) >= 1) {
+		if (atomic_fetch_inc(&lockCount) >= 1) {
 			SysSemaphoreWait(lockSem, B_WAIT_FOREVER, 0);
 		}
 	}
 	
 	void unlock() const
 	{
-		if (g_threadDirectFuncs.atomicDec32(&lockCount) > 1){
+		if (atomic_fetch_dec(&lockCount) > 1){
 			SysSemaphoreSignal(lockSem);
 		}
 	}

@@ -62,7 +62,7 @@ SPackage::Pool SPackage::g_pool;
 // ========================================================================
 
 #if TRACK_SHARED_OBJECTS
-static volatile int32_t g_numSharedObjects;
+static volatile atomic_int g_numSharedObjects;
 #endif
 
 BSharedObject::BSharedObject(const SValue& src, const SPackage& package, attach_func attach)
@@ -70,7 +70,7 @@ BSharedObject::BSharedObject(const SValue& src, const SPackage& package, attach_
 {
 	//bout << "Constructing BSharedObject: " << this << endl;
 #if TRACK_SHARED_OBJECTS
-	SysAtomicInc32(&g_numSharedObjects);
+	atomic_fetch_inc(&g_numSharedObjects);
 #endif
 }
 
@@ -183,7 +183,7 @@ BSharedObject::~BSharedObject()
 {
 	//bout << "Destroying BSharedObject: " << this << endl;
 #if TRACK_SHARED_OBJECTS
-	const int32_t r = SysAtomicDec32(&g_numSharedObjects);
+	const int32_t r = atomic_fetch_dec(&g_numSharedObjects);
 	bout << "Unloaded BSharedObject, " << (r-1) << " remaining." << endl;
 #endif
 	

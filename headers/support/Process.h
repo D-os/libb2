@@ -139,8 +139,8 @@ public:
 				
 				inline status_t			InitCheck() const { return (m_instantiate || m_fake) ? B_OK : B_NO_INIT; }
 				
-				inline	int32_t			DecPending() { return SysAtomicDec32(&m_numPendingExpunge); }
-				inline	void			MakeExpunged() { SysAtomicOr32(&m_expunged, 1); }
+				inline	int32_t			DecPending() { return atomic_fetch_dec(&m_numPendingExpunge); }
+				inline	void			MakeExpunged() { atomic_fetch_or(&m_expunged, 1U); }
 				
 			protected:
 				virtual					~ComponentImage() { }
@@ -152,8 +152,8 @@ public:
 			private:
 				instantiate_component_func	m_instantiate;
 				bool						m_fake;
-				volatile int32_t			m_numPendingExpunge;
-				volatile uint32_t			m_expunged;
+				volatile atomic_int			m_numPendingExpunge;
+				volatile atomic_uint		m_expunged;
 
 			private:
 				// copy constructor not supported

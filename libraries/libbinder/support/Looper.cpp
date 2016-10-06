@@ -99,17 +99,17 @@ namespace support {
 #endif
 
 static BProcess* g_defaultProcess = NULL;
-static volatile int32_t g_haveDefaultProcess = 0;
+static volatile atomic_int g_haveDefaultProcess(0);
 
 #define DB(_x)
 
 static inline sptr<BProcess> default_team()
 {
 	if ((g_haveDefaultProcess&2) != 2) {
-		if (atomic_or(&g_haveDefaultProcess, 1) == 0) {
+		if (atomic_fetch_or(&g_haveDefaultProcess, 1) == 0) {
 			g_defaultProcess = new BProcess(SysProcessID());
 			g_defaultProcess->IncRefs(&g_defaultProcess);
-			atomic_or(&g_haveDefaultProcess, 2);
+			atomic_fetch_or(&g_haveDefaultProcess, 2);
 		} else {
 			while ((g_haveDefaultProcess&2) == 0)
 				SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);

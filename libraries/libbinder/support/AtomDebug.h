@@ -61,9 +61,9 @@ public:
 	void NoteFree();
 
 private:
-	int32_t fCreated;
-	int32_t fDestroyed;
-	int32_t fFreed;
+	atomic_int fCreated;
+	atomic_int fDestroyed;
+	atomic_int fFreed;
 };
 
 struct atom_ref_info {
@@ -89,8 +89,8 @@ struct atom_debug : public SLocker {
 	SAtom*				atom;
 	SLightAtom*			lightAtom;
 	SString				typenm;
-	int32_t				primary;
-	int32_t				secondary;
+	atomic_int			primary;
+	atomic_int			secondary;
 	int32_t				initialized;
 	int32_t				mark;
 	atom_ref_info*		incStrongs;
@@ -118,7 +118,7 @@ public:
 	void RemoveAtom(atom_debug* info);
 	
 	inline int32_t CurrentMark() const { return fCurMark; }
-	inline int32_t IncrementMark() { return atomic_add(&fCurMark, 1) + 1; }
+	inline int32_t IncrementMark() { return atomic_fetch_add(&fCurMark, 1) + 1; }
 	
 	void PrintActive(const sptr<ITextOutput>& io, int32_t mark, int32_t last, uint32_t flags) const;
 	
@@ -137,7 +137,7 @@ private:
 	bool fGone;
 	bool fWatching;
 	int32_t fFirstMark;
-	int32_t fCurMark;
+	atomic_int fCurMark;
 	
 	SSortedVector<atom_debug*> fActiveAtoms;
 	SSortedVector<B_SNS(std::)type_info*> fWatchTypes;

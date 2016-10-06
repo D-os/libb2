@@ -37,13 +37,13 @@ volatile int32_t g_pendingBufferRef = 0;
 
 using namespace palmos::support;
 
-static volatile int32_t g_sharedBufferRefs = 0;
+static volatile atomic_int g_sharedBufferRefs(0);
 
 void __attribute__ ((visibility("hidden")))
 palmsource_inc_package_ref()
 {
 	//bout << "g_sharedBufferRefs: inc from " << g_sharedBufferRefs << endl;
-	if (SysAtomicAdd32(&g_sharedBufferRefs, 1) > 0) {
+	if (atomic_fetch_add(&g_sharedBufferRefs, 1) > 0) {
 		return;
 	} else {
 		// Note that there is not a race condition here because this
@@ -64,7 +64,7 @@ void __attribute__ ((visibility("hidden")))
 palmsource_dec_package_ref()
 {
 	//bout << "g_sharedBufferRefs: dec from " << g_sharedBufferRefs << endl;
-	if (SysAtomicAdd32(&g_sharedBufferRefs, -1) > 1) {
+	if (atomic_fetch_add(&g_sharedBufferRefs, -1) > 1) {
 		return;
 	} else {
 		SPackageSptr package;

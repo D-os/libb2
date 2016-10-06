@@ -307,7 +307,7 @@ SLooper::_HandleCommand(int32_t cmd)
 
 #if BINDER_BUFFER_MSGS
 				printf("Creating transaction buffer for %p, now have %ld open.\n",
-						tr.data.ptr.buffer, atomic_add(&g_openBuffers, 1) + 1);
+						tr.data.ptr.buffer, atomic_fetch_add(&g_openBuffers, 1) + 1);
 #endif
 
 				sptr<BBinder> b((BBinder*)tr.target.ptr);
@@ -399,7 +399,7 @@ SLooper::_WaitForCompletion(SParcel *reply, status_t *acquireResult)
 				setReply = true;
 #if BINDER_BUFFER_MSGS
 				bout	<< "Creating reply buffer for " << tr.data.ptr.buffer
-						<< ", now have " << (atomic_add(&g_openBuffers, 1)+1)
+						<< ", now have " << (atomic_fetch_add(&g_openBuffers, 1)+1)
 						<< " open." << endl;
 #endif
 			} else {
@@ -440,7 +440,7 @@ SLooper::_BufferFree(const void* data, ssize_t /*len*/, void* context)
 #endif
 #if BINDER_BUFFER_MSGS
 		bout	<< "Freeing binder buffer for " << data << ", now have "
-				<< (atomic_add(&g_openBuffers, -1) - 1) << " open." << endl;
+				<< (atomic_fetch_add(&g_openBuffers, -1) - 1) << " open." << endl;
 #endif
 		ErrFatalErrorIf(data == NULL, "Sending NULL bcFREE_BUFFER!");
 		reinterpret_cast<SLooper*>(context)->m_out.WriteInt32(bcFREE_BUFFER);

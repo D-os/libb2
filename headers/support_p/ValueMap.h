@@ -138,7 +138,7 @@ private:
 										size_t* index) const;
 			ssize_t			ComputeArchivedSize() const;
 
-	mutable	int32_t			m_users;
+	mutable	atomic_int		m_users;
 	mutable	ssize_t			m_dataSize;
 			ssize_t			m_size;
 			ssize_t			m_avail;
@@ -153,14 +153,14 @@ inline void BValueMap::IncUsers() const
 {
 	AssertEditing();
 	
-	g_threadDirectFuncs.atomicInc32(&m_users);
+	atomic_fetch_inc(&m_users);
 }
 
 inline void BValueMap::DecUsers() const
 {
 	AssertEditing();
 	
-	if (g_threadDirectFuncs.atomicDec32(&m_users) == 1)
+	if (atomic_fetch_dec(&m_users) == 1)
 		const_cast<BValueMap*>(this)->Delete();
 }
 

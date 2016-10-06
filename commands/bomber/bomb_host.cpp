@@ -37,13 +37,13 @@ Object::Object(uint32_t p)
 	 pid(p),
 	 m_package()
 {
-	SysAtomicInc32(&g_objectCount);
+	atomic_fetch_inc(&g_objectCount);
 	printf("Object created: %d\n", pid);
 }
 
 Object::~Object()
 {
-	SysAtomicDec32(&g_objectCount);
+	atomic_fetch_dec(&g_objectCount);
 	printf("Object destroyed: %d\n", pid);
 }
 

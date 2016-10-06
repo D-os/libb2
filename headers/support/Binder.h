@@ -18,6 +18,7 @@
 	@brief Basic functionality of all Binder objects.
 */
 
+#include <support/atomic.h>
 #include <support/Value.h>
 #include <support/StaticValue.h>
 #include <support/SupportDefs.h>
@@ -186,7 +187,7 @@ class BBinder : public IBinder
 		struct extensions;
 		
 		const SContext					m_context;
-		extensions *					m_extensions;
+		atomic<extensions *>			m_extensions;
 };
 
 /*-------------------------------------------------------------*/
@@ -250,7 +251,7 @@ class BpAtom : public virtual SAtom
 		BpAtom&							operator=(const BpAtom& o);	// no implementation
 
 		IBinder* const					m_remote;
-		int32_t							m_state;
+		atomic_int						m_state;
 		size_t							_reserved;
 };
 

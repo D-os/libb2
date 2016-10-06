@@ -770,7 +770,7 @@ void BPackageManager::InitAtom()
 
 uint32_t BPackageManager::NextDatabaseID()
 {
-	uint32_t prev = (uint32_t)SysAtomicInc32((volatile int32_t*)&m_nextDatabaseID);
+	uint32_t prev = atomic_fetch_inc(&m_nextDatabaseID);
 	DbgOnlyFatalErrorIf(prev&0xff000000, "WARNING: BPackageManager::m_nextDatabaseID wrapped");
 	return (prev & 0x00ffffff) | 0x80000000;
 }

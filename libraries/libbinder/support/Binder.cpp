@@ -10,7 +10,6 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#include <support/atomic.h>
 #include <support/Binder.h>
 #include <support/Parcel.h>
 #include <support/StdIO.h>
@@ -634,12 +633,12 @@ BBinder::BBinder(const BBinder& other)
 	, m_extensions(NULL)
 {
 	if (other.m_extensions) {
-		other.m_extensions->lock.Lock();
-		if (other.m_extensions->links.CountItems() > 0 ||
-				other.m_extensions->other_links.CountItems() > 0) {
+		static_cast<extensions *>(other.m_extensions)->lock.Lock();
+		if (static_cast<extensions *>(other.m_extensions)->links.CountItems() > 0 ||
+				static_cast<extensions *>(other.m_extensions)->other_links.CountItems() > 0) {
 			m_extensions = new extensions(*other.m_extensions);
 		}
-		other.m_extensions->lock.Unlock();
+		static_cast<extensions *>(other.m_extensions)->lock.Unlock();
 	}
 }
 
@@ -650,10 +649,10 @@ BBinder::~BBinder()
 		// nobody else can come in here...  and we don't want to be
 		// holding the lock while calling out into destructors.
 		// (This is actually a real deadlock case that has been seen.)
-		size_t N = m_extensions->links.CountItems();
+		size_t N = static_cast<extensions *>(m_extensions)->links.CountItems();
 		size_t i;
 		for (i=0; i<N; i++) {
-			const SVector<links_rec>& links = m_extensions->links.ValueAt(i);
+			const SVector<links_rec>& links = static_cast<extensions *>(m_extensions)->links.ValueAt(i);
 			const size_t N2 = links.CountItems();
 			for (size_t i2=0; i2<N2; i2++) {
 				if (links[i2].targetAtom->AttemptIncStrong(this)) {
@@ -662,11 +661,11 @@ BBinder::~BBinder()
 				}
 			}
 		}
-		N = m_extensions->other_links.CountItems();
+		N = static_cast<extensions *>(m_extensions)->other_links.CountItems();
 		for (i=0; i<N; i++) {
-			if (m_extensions->other_links[i].targetAtom->AttemptIncStrong(this)) {
-				m_extensions->other_links[i].target->UnlinkToDeath(this, B_UNDEFINED_VALUE, B_UNLINK_ALL_TARGETS);
-				m_extensions->other_links[i].targetAtom->DecStrong(this);
+			if (static_cast<extensions *>(m_extensions)->other_links[i].targetAtom->AttemptIncStrong(this)) {
+				static_cast<extensions *>(m_extensions)->other_links[i].target->UnlinkToDeath(this, B_UNDEFINED_VALUE, B_UNLINK_ALL_TARGETS);
+				static_cast<extensions *>(m_extensions)->other_links[i].targetAtom->DecStrong(this);
 			}
 		}
 		delete m_extensions;
@@ -707,9 +706,8 @@ BBinder::Link(const sptr<IBinder>& node, const SValue &binding, uint32_t flags)
 
 	if (!m_extensions) {
 		e = new extensions;
-		if (!compare_and_swap32(reinterpret_cast<volatile int32_t*>(&m_extensions),
-								0,
-								reinterpret_cast<int32_t>(e))) {
+		extensions *exp = NULL;
+		if (!atomic_compare_exchange_strong(&m_extensions, &exp, e)) {
 			delete e;
 		}
 	}
@@ -914,9 +912,9 @@ BBinder::IsLinked() const
 	// done while someone else is accessing the vector, and while its result
 	// may be wrong in that case...  well, it could be wrong as soon as we
 	// unlock, anyway.
-	//m_extensions->lock.Lock();
-	bool linked = m_extensions->links.CountItems() > 0 || m_extensions->other_links.CountItems() > 0;
-	//m_extensions->lock.Unlock();
+	//static_cast<extensions *>(m_extensions)->lock.Lock();
+	bool linked = static_cast<extensions *>(m_extensions)->links.CountItems() > 0 || static_cast<extensions *>(m_extensions)->other_links.CountItems() > 0;
+	//static_cast<extensions *>(m_extensions)->lock.Unlock();
 	return linked;
 }
 
@@ -1618,7 +1616,7 @@ void BpAtom::InitAtom()
 #if BPATOM_DEBUG_MSGS
 	printf("*** BpAtom::InitAtom(): Transfering acquire ownership from %p\n", m_remote);
 #endif
-	atomic_or(&m_state, kRemoteAcquired);
+	atomic_fetch_or(&m_state, (int)kRemoteAcquired);
 }
 
 status_t BpAtom::FinishAtom(const void* /*id*/)

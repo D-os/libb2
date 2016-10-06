@@ -40,20 +40,20 @@ int32_t g_timeRequests = 10000;
 
 nsecs_t approx_SysGetRunTime()
 {
-	g_threadDirectFuncs.criticalSectionEnter(&g_timeLock);
+	SysCriticalSectionEnter(&g_timeLock);
 	if ((++g_timeRequests) < 1) {
 		nsecs_t time = g_lastTime;
-		g_threadDirectFuncs.criticalSectionExit(&g_timeLock);
+		SysCriticalSectionExit(&g_timeLock);
 		return time;
 	}
 
-	g_threadDirectFuncs.criticalSectionExit(&g_timeLock);
+	SysCriticalSectionExit(&g_timeLock);
 	return exact_SysGetRunTime();
 }
 
 nsecs_t exact_SysGetRunTime()
 {
-	g_threadDirectFuncs.criticalSectionEnter(&g_timeLock);
+	SysCriticalSectionEnter(&g_timeLock);
 #if TARGET_HOST == TARGET_HOST_PALMOS
 	// It's just slightly faster to call this than the cover below.
 	nsecs_t time = KALGetTime(B_TIMEBASE_RUN_TIME);
@@ -62,7 +62,7 @@ nsecs_t exact_SysGetRunTime()
 #endif
 	g_lastTime = time;
 	g_timeRequests = 0;
-	g_threadDirectFuncs.criticalSectionExit(&g_timeLock);
+	SysCriticalSectionExit(&g_timeLock);
 	return time;
 }
 

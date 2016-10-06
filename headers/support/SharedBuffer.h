@@ -185,7 +185,7 @@ private:
 	 *
 	 * *******************************************************/
 
-	mutable	int32_t			m_users;
+	mutable	atomic_int		m_users;
 			size_t			m_length;
 #if defined(_MSC_VER)
 			char			m_data[0];

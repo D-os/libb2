@@ -45,7 +45,7 @@ void SEvent::Shutdown()
 
 status_t SEvent::Wait(uint32_t flags, nsecs_t timeout)
 {
-	atomic_add(&fCountWaiting,1);
+	atomic_fetch_add(&fCountWaiting,1);
 	
 	status_t err;
 	nsecs_t starttime = SysGetRunTime(), remainingtime = timeout;

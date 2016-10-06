@@ -1,7 +1,6 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(SRC_LIBRARIES)/libbinder/app/Makefile
-include $(SRC_LIBRARIES)/libbinder/arch/Makefile
 include $(SRC_LIBRARIES)/libbinder/package/Makefile
 include $(SRC_LIBRARIES)/libbinder/services/Makefile
 include $(SRC_LIBRARIES)/libbinder/storage/Makefile
@@ -17,7 +16,6 @@ DONT_BUILD_TARGET:= 1
 
 SRC_FILES:= \
 	$(appBootstrapSources) \
-	$(archBootstrapSources) \
 	$(packageBootstrapSources) \
 	$(servicesBootstrapSources) \
 	$(storageBootstrapSources) \
@@ -39,7 +37,6 @@ TARGET_PATH:= $(OUT_LIBRARIES)
 
 SRC_FILES:= \
 	$(appSources) \
-	$(archSources) \
 	$(packageSources) \
 	$(servicesSources) \
 	$(storageSources) \
@@ -47,7 +44,6 @@ SRC_FILES:= \
 	$(xmlSources)
 IDL_FILES:= \
 	$(appIDLs) \
-	$(archIDLs) \
 	$(packageIDLs) \
 	$(servicesIDLs) \
 	$(storageIDLs) \

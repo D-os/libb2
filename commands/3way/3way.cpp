@@ -66,7 +66,7 @@ call(const SContext &context, const char *path, const char *me, uint32_t proc /*
 		SysThreadDelay(B_MS2NS(200), B_RELATIVE_TIMEOUT);
 		return ;
 	}
-	uint32_t code = (SysAtomicInc32(&g_transactionID) & 0x00ffffff) | proc;
+	uint32_t code = (atomic_fetch_inc(&g_transactionID) & 0x00ffffff) | proc;
 	SParcel data, reply;
 	data.WriteValue(SValue::String(me));
 	b->Transact(code, data, &reply, 0);

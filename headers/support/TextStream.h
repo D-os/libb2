@@ -78,7 +78,7 @@ class BTextOutput : public ITextOutput
 				{
 				public:
 					int32_t	tag;
-					int32_t	indent;
+					atomic_int	indent;
 					int32_t	startIndent;
 					int32_t	front;
 					
@@ -123,7 +123,7 @@ class BTextOutput : public ITextOutput
 				
 				style_state				m_globalStyle;
 				thread_styles*			m_threadStyles;
-				int32_t					m_nextTag;
+				atomic_int				m_nextTag;
 				
 				enum {
 					MAX_COLORS = 16

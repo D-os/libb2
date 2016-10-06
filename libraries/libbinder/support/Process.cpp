@@ -915,7 +915,7 @@ status_t BProcess::ComponentImage::FinishAtom(const void*)
 		} else {
 			// There is already a pending expunge for this looper,
 			// so eat one from the expunge count.
-			const int32_t oldVal = SysAtomicDec32(&m_numPendingExpunge);
+			const int32_t oldVal = atomic_fetch_dec(&m_numPendingExpunge);
 			DbgOnlyFatalErrorIf(oldVal <= 2, "BProcess::ComponentImage: Bad pending expunge count!");
 #if IMAGE_DEBUG_MSGS
 			bout << "********************************************************" << endl;
@@ -931,7 +931,7 @@ status_t BProcess::ComponentImage::FinishAtom(const void*)
 
 status_t BProcess::ComponentImage::IncStrongAttempted(uint32_t flags, const void* id)
 {
-	if (SysAtomicOr32(&m_expunged, 0) != 0) {
+	if (atomic_fetch_or(&m_expunged, 0U) != 0) {
 		// This image has been removed from the process, so we
 		// can't allow it to be used any more.
 		return SAtom::IncStrongAttempted(flags, id);
@@ -941,7 +941,7 @@ status_t BProcess::ComponentImage::IncStrongAttempted(uint32_t flags, const void
 	// FinishAtom() will be called again, so there will be another
 	// expunge.  Keep count of that, so we don't actually unload
 	// the image until the last expunge has happened.
-	const int32_t oldVal = SysAtomicInc32(&m_numPendingExpunge);
+	const int32_t oldVal = atomic_fetch_inc(&m_numPendingExpunge);
 #if IMAGE_DEBUG_MSGS
 	bout << "IncStrongAttempted pending to " << oldVal+1 << " on image \"" << Source() << "\" (id " << ID() << ")" << endl;
 #endif
@@ -1267,7 +1267,7 @@ sptr<IProcess> BProcess::Spawn(const SString& name, const SValue& env, uint32_t 
 		(void)env;
 		(void)flags;
 		
-		team_id teamid = this_team()+atomic_add(&nextFakeProcessIDDelta,1);
+		team_id teamid = this_team()+atomic_fetch_add(&nextFakeProcessIDDelta,1);
 		bout << "spawning pretend team " << teamid << endl;
 		
 		SysHandle thid = spawn_thread((thread_entry)pretend_team,"pretend_team",B_NORMAL_PRIORITY,(void *)teamid);

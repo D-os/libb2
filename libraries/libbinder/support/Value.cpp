@@ -111,15 +111,15 @@ struct printer_registry {
 #endif
 };
 
-static int32_t g_havePrinters = 0;
+static atomic_int g_havePrinters(0);
 static printer_registry* g_printers = NULL;
 
 static printer_registry* Printers()
 {
 	if (g_havePrinters&2) return g_printers;
-	if (atomic_or(&g_havePrinters, 1) == 0) {
+	if (atomic_fetch_or(&g_havePrinters, 1) == 0) {
 		g_printers = new B_NO_THROW printer_registry;
-		atomic_or(&g_havePrinters, 2);
+		atomic_fetch_or(&g_havePrinters, 2);
 	} else {
 		if ((g_havePrinters&2) == 0) 
 		   SysThreadDelay(B_MILLISECONDS(10), B_RELATIVE_TIMEOUT);
