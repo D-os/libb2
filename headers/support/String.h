@@ -19,6 +19,7 @@
 */
 
 #include <support/SupportDefs.h>
+#include <support/SharedBuffer.h>
 #include <support/ITextStream.h>
 #include <support/Value.h>
 
@@ -33,8 +34,6 @@ namespace support {
 /*!	@addtogroup CoreSupportUtilities
 	@{
 */
-
-class SSharedBuffer;
 
 // These are #defines so they can be concatenated with raw strings.
 #define B_UTF8_ELLIPSIS				"\xE2\x80\xA6"
@@ -657,9 +656,7 @@ _IMPEXP_SUPPORT const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io,
 inline int32_t 
 SString::Length() const
 {
-	// This is the length as contained in SSharedBuffer.  We are doing it
-	// this way just to avoid having to include the header.
-	return (*((int32_t *)_privateData - 1) >> 1) - 1;
+	return SSharedBuffer::BufferFromData(_privateData)->Length() - 1;
 }
 
 inline const char *

@@ -145,7 +145,7 @@ typedef const static_bool_value			value_cbool;
 		STRING_ASSERT(sizeof(string)<=4);								\
 		SSharedBuffer::inc_ref_func	incFunc;							\
 		SSharedBuffer::dec_ref_func	decFunc;							\
-		int32_t		users;												\
+		int			users;												\
 		size_t		length;												\
 		char		data[PADDED_STRING_LENGTH(string)];					\
 	} ident##str = {													\
@@ -165,7 +165,7 @@ typedef const static_bool_value			value_cbool;
 		STRING_ASSERT(sizeof(string)<=4);								\
 		SSharedBuffer::inc_ref_func	incFunc;							\
 		SSharedBuffer::dec_ref_func	decFunc;							\
-		int32_t		users;												\
+		int			users;												\
 		size_t		length;												\
 		char		data[PADDED_STRING_LENGTH(string)];					\
 	} ident##str = {													\
@@ -185,7 +185,7 @@ typedef const static_bool_value			value_cbool;
 		STRING_ASSERT(sizeof(string)>4);								\
 		SSharedBuffer::inc_ref_func	incFunc;							\
 		SSharedBuffer::dec_ref_func	decFunc;							\
-		int32_t		users;												\
+		int			users;												\
 		size_t		length;												\
 		char		data[PADDED_STRING_LENGTH(string)];					\
 	} ident##str = {													\
@@ -205,7 +205,7 @@ typedef const static_bool_value			value_cbool;
 		STRING_ASSERT(sizeof(string)>4);								\
 		SSharedBuffer::inc_ref_func	incFunc;							\
 		SSharedBuffer::dec_ref_func	decFunc;							\
-		int32_t		users;												\
+		int			users;												\
 		size_t		length;												\
 		char		data[PADDED_STRING_LENGTH(string)];					\
 	} ident##str = {													\
