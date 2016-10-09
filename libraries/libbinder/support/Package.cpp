@@ -33,7 +33,7 @@
 #include <unistd.h>
 
 #define SHOW_LOAD_UNLOAD 1
-#define TRACK_SHARED_OBJECTS 0
+#define TRACK_SHARED_OBJECTS 1
 
 #if _SUPPORTS_NAMESPACE
 namespace palmos {
