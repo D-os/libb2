@@ -400,7 +400,7 @@ endif
 ###########################################################
 
 define transform-o-to-shared-lib-inner
-$(CC) -shared -Wl-soname,$(notdir $@) $(GLOBAL_LDFLAGS) $(LDFLAGS) $(LOCAL_HACK_LDFLAGS) $(TARGET_LDFLAGS) \
+$(CC) -shared -Wl,-soname,$(notdir $@) $(GLOBAL_LDFLAGS) $(LDFLAGS) $(LOCAL_HACK_LDFLAGS) $(TARGET_LDFLAGS) \
 	-o $@ $(call normalize-libraries,$^) \
 	$(GLOBAL_LDLIBS) $(LOADLIBES) $(LDLIBS) $(LOCAL_HACK_LDLIBS) $(TARGET_LDLIBS)
 endef
