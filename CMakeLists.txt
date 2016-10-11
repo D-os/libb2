@@ -60,4 +60,7 @@ message(STATUS "")
 # Sub directories.
 add_subdirectory(headers)
 add_subdirectory(kits)
-#add_subdirectory(tests)
+
+# Tests
+add_subdirectory(external/googletest)
+add_subdirectory(tests)
