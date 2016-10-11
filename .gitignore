@@ -25,8 +25,9 @@
 *.app
 
 # IDE stuff
-*.pro.user
-CMakeLists.txt.user
+/*.pro.user
+/CMakeLists.txt.user
+/*.cbp
 
 # CMake/Ninja stuff
 CMakeCache.txt
