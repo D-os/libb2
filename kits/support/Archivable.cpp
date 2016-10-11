@@ -22,13 +22,13 @@
 #include <typeinfo>
 #include <vector>
 
-//#include <AppFileInfo.h>
+#include <AppFileInfo.h>
 #include <Archivable.h>
-//#include <Entry.h>
+#include <Entry.h>
 #include <List.h>
 #include <OS.h>
-//#include <Path.h>
-//#include <Roster.h>
+#include <Path.h>
+#include <Roster.h>
 #include <String.h>
 
 #include <binary_compatibility/Support.h>

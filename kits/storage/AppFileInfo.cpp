@@ -18,9 +18,9 @@
 #include <fs_attr.h>
 #include <IconUtils.h>
 #include <MimeType.h>
-//#include <RegistrarDefs.h>
+#include <RegistrarDefs.h>
 #include <Resources.h>
-//#include <Roster.h>
+#include <Roster.h>
 #include <String.h>
 
 

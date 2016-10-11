@@ -158,7 +158,7 @@ public:
                                     const void* pointer);
             status_t			AddMessenger(const char* name,
                                     BMessenger messenger);
-//			status_t			AddRef(const char* name, const entry_ref* ref);
+            status_t			AddRef(const char* name, const entry_ref* ref);
             status_t			AddMessage(const char* name,
                                     const BMessage* message);
             status_t			AddFlat(const char* name, BFlattenable* object,
@@ -249,9 +249,9 @@ public:
                                     BMessenger* messenger) const;
             status_t			FindMessenger(const char* name, int32 index,
                                     BMessenger* messenger) const;
-//            status_t			FindRef(const char* name, entry_ref* ref) const;
-//            status_t			FindRef(const char* name, int32 index,
-//                                    entry_ref* ref) const;
+            status_t			FindRef(const char* name, entry_ref* ref) const;
+            status_t			FindRef(const char* name, int32 index,
+                                    entry_ref* ref) const;
             status_t			FindMessage(const char* name,
                                     BMessage* message) const;
             status_t			FindMessage(const char* name, int32 index,
@@ -332,10 +332,10 @@ public:
                                     BMessenger messenger);
             status_t			ReplaceMessenger(const char* name, int32 index,
                                     BMessenger messenger);
-//            status_t			ReplaceRef(const char* name,
-//                                    const entry_ref* ref);
-//            status_t			ReplaceRef(const char* name, int32 index,
-//                                    const entry_ref* ref);
+            status_t			ReplaceRef(const char* name,
+                                    const entry_ref* ref);
+            status_t			ReplaceRef(const char* name, int32 index,
+                                    const entry_ref* ref);
             status_t			ReplaceMessage(const char* name,
                                     const BMessage* message);
             status_t			ReplaceMessage(const char* name, int32 index,

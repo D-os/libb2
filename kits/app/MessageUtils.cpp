@@ -39,11 +39,12 @@ CalculateChecksum(const uint8 *buffer, int32 size)
     return sum + temp;
 }
 
-#if 0
 /* entry_ref support functions */
 status_t
 entry_ref_flatten(char *buffer, size_t *size, const entry_ref *ref)
 {
+    STUB;
+#if 0
     if (*size < sizeof(ref->device) + sizeof(ref->directory))
         return B_BUFFER_OVERFLOW;
 
@@ -63,6 +64,7 @@ entry_ref_flatten(char *buffer, size_t *size, const entry_ref *ref)
     }
 
     *size = sizeof(ref->device) + sizeof(ref->directory) + nameLength;
+#endif
     return B_OK;
 }
 
@@ -70,6 +72,8 @@ entry_ref_flatten(char *buffer, size_t *size, const entry_ref *ref)
 status_t
 entry_ref_unflatten(entry_ref *ref, const char *buffer, size_t size)
 {
+    STUB;
+#if 0
     if (size < sizeof(ref->device) + sizeof(ref->directory)) {
         *ref = entry_ref();
         return B_BAD_VALUE;
@@ -89,6 +93,7 @@ entry_ref_unflatten(entry_ref *ref, const char *buffer, size_t size)
         }
     } else
         ref->set_name(NULL);
+#endif
 
     return B_OK;
 }
@@ -109,6 +114,5 @@ entry_ref_swap(char *buffer, size_t size)
 
     return B_OK;
 }
-#endif
 
 } // namespace BPrivate

@@ -379,10 +379,9 @@ extern status_t		_kern_get_next_socket_stat(int family, uint32 *cookie,
 
 // node monitor functions
 extern status_t		_kern_stop_notifying(port_id port, uint32 token);
-extern status_t		_kern_start_watching(dev_t device, ino_t node, uint32 flags,
+extern status_t		_kern_start_watching(int nodefd, uint32 flags,
                         port_id port, uint32 token);
-extern status_t		_kern_stop_watching(dev_t device, ino_t node, port_id port,
-                        uint32 token);
+extern status_t		_kern_stop_watching(int nodefd, port_id port, uint32 token);
 
 // time functions
 extern status_t		_kern_set_real_time_clock(bigtime_t time);
@@ -422,8 +421,8 @@ extern status_t		_kern_get_area_info(area_id area, area_info *info);
 extern status_t		_kern_get_next_area_info(team_id team, ssize_t *cookie,
                         area_info *info);
 extern status_t		_kern_resize_area(area_id area, size_t newSize);
-extern area_id		_kern_transfer_area(area_id area, void **_address,
-                        uint32 addressSpec, team_id target);
+//extern area_id		_kern_transfer_area(area_id area, void **_address,
+//                        uint32 addressSpec, team_id target);
 extern status_t		_kern_set_area_protection(area_id area,
                         uint32 newProtection);
 extern area_id		_kern_clone_area(const char *name, void **_address,

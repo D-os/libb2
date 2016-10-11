@@ -21,10 +21,10 @@
 #include <Application.h>
 #include <AppMisc.h>
 #include <BlockCache.h>
-//#include <Entry.h>
+#include <Entry.h>
 #include <MessageQueue.h>
 #include <Messenger.h>
-//#include <Path.h>
+#include <Path.h>
 #include <Point.h>
 #include <Rect.h>
 #include <String.h>
@@ -35,10 +35,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#warning REMOVEME
-BApplication* be_app;
-BMessenger be_app_messenger;
 
 //#include "tracing_config.h"
     // kernel tracing configuration
@@ -76,11 +72,11 @@ static status_t handle_reply(port_id replyPort, int32* pCode,
     bigtime_t timeout, BMessage* reply);
 
 
-extern "C" {
-    // private os function to set the owning team of an area
-    status_t _kern_transfer_area(area_id area, void** _address,
-        uint32 addressSpec, team_id target);
-}
+//extern "C" {
+//    // private os function to set the owning team of an area
+//    status_t _kern_transfer_area(area_id area, void** _address,
+//        uint32 addressSpec, team_id target);
+//}
 
 
 BBlockCache* BMessage::sMsgCache = NULL;
@@ -711,18 +707,14 @@ BMessage::_PrintToStream(const char* indent) const
 
                 case B_REF_TYPE:
                 {
-                    STUB;
-#if 0
                     entry_ref ref;
                     BPrivate::entry_ref_unflatten(&ref, (char*)pointer, size);
 
-                    printf("entry_ref(device=%d, directory=%" B_PRIdINO
-                        ", name=\"%s\", ", (int)ref.device, ref.directory,
+                    printf("entry_ref(dirfd=%d, name=\"%s\", ", ref.dirfd,
                         ref.name);
 
                     BPath path(&ref);
                     printf("path=\"%s\")\n", path.Path());
-#endif
                     break;
                 }
 
@@ -2689,19 +2681,19 @@ BMessage::AddMessenger(const char* name, BMessenger messenger)
 }
 
 
-//status_t
-//BMessage::AddRef(const char* name, const entry_ref* ref)
-//{
-//    size_t size = sizeof(entry_ref) + B_PATH_NAME_LENGTH;
-//    char buffer[size];
+status_t
+BMessage::AddRef(const char* name, const entry_ref* ref)
+{
+    size_t size = sizeof(entry_ref) + B_PATH_NAME_LENGTH;
+    char buffer[size];
 
-//    status_t error = BPrivate::entry_ref_flatten(buffer, &size, ref);
+    status_t error = BPrivate::entry_ref_flatten(buffer, &size, ref);
 
-//    if (error >= B_OK)
-//        error = AddData(name, B_REF_TYPE, buffer, size, false);
+    if (error >= B_OK)
+        error = AddData(name, B_REF_TYPE, buffer, size, false);
 
-//    return error;
-//}
+    return error;
+}
 
 
 status_t
@@ -2956,31 +2948,31 @@ BMessage::FindMessenger(const char* name, int32 index,
 }
 
 
-//status_t
-//BMessage::FindRef(const char* name, entry_ref* ref) const
-//{
-//    return FindRef(name, 0, ref);
-//}
+status_t
+BMessage::FindRef(const char* name, entry_ref* ref) const
+{
+    return FindRef(name, 0, ref);
+}
 
 
-//status_t
-//BMessage::FindRef(const char* name, int32 index, entry_ref* ref) const
-//{
-//    if (ref == NULL)
-//        return B_BAD_VALUE;
+status_t
+BMessage::FindRef(const char* name, int32 index, entry_ref* ref) const
+{
+    if (ref == NULL)
+        return B_BAD_VALUE;
 
-//    void* data = NULL;
-//    ssize_t size = 0;
-//    status_t error = FindData(name, B_REF_TYPE, index,
-//        (const void**)&data, &size);
+    void* data = NULL;
+    ssize_t size = 0;
+    status_t error = FindData(name, B_REF_TYPE, index,
+        (const void**)&data, &size);
 
-//    if (error == B_OK)
-//        error = BPrivate::entry_ref_unflatten(ref, (char*)data, size);
-//    else
-//        *ref = entry_ref();
+    if (error == B_OK)
+        error = BPrivate::entry_ref_unflatten(ref, (char*)data, size);
+    else
+        *ref = entry_ref();
 
-//    return error;
-//}
+    return error;
+}
 
 
 status_t
@@ -3126,26 +3118,26 @@ BMessage::ReplaceMessenger(const char* name, int32 index, BMessenger messenger)
 }
 
 
-//status_t
-//BMessage::ReplaceRef(const char* name, const entry_ref* ref)
-//{
-//    return ReplaceRef(name, 0, ref);
-//}
+status_t
+BMessage::ReplaceRef(const char* name, const entry_ref* ref)
+{
+    return ReplaceRef(name, 0, ref);
+}
 
 
-//status_t
-//BMessage::ReplaceRef(const char* name, int32 index, const entry_ref* ref)
-//{
-//    size_t size = sizeof(entry_ref) + B_PATH_NAME_LENGTH;
-//    char buffer[size];
+status_t
+BMessage::ReplaceRef(const char* name, int32 index, const entry_ref* ref)
+{
+    size_t size = sizeof(entry_ref) + B_PATH_NAME_LENGTH;
+    char buffer[size];
 
-//    status_t error = BPrivate::entry_ref_flatten(buffer, &size, ref);
+    status_t error = BPrivate::entry_ref_flatten(buffer, &size, ref);
 
-//    if (error >= B_OK)
-//        error = ReplaceData(name, B_REF_TYPE, index, buffer, size);
+    if (error >= B_OK)
+        error = ReplaceData(name, B_REF_TYPE, index, buffer, size);
 
-//    return error;
-//}
+    return error;
+}
 
 
 status_t

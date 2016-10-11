@@ -27,15 +27,15 @@
 #include <Font.h>
 //#include <Menu.h>
 #include <Point.h>
-//#include <Roster.h>
+#include <Roster.h>
 //#include <Screen.h>
 //#include <ScrollBar.h>
 #include <String.h>
 //#include <TextView.h>
 //#include <Window.h>
 
-//#include <ApplicationPrivate.h>
-//#include <AppServerLink.h>
+#include <ApplicationPrivate.h>
+#include <AppServerLink.h>
 #include <ColorConversion.h>
 //#include <DecorInfo.h>
 #include <DefaultColors.h>
@@ -45,7 +45,7 @@
 #include <InterfacePrivate.h>
 //#include <MenuPrivate.h>
 //#include <pr_server.h>
-//#include <ServerProtocol.h>
+#include <ServerProtocol.h>
 #include <ServerReadOnlyMemory.h>
 #include <truncate_string.h>
 #include <utf8_functions.h>

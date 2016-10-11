@@ -3,18 +3,16 @@
 
 #include <ByteOrder.h>
 #include <DataIO.h>
-//#include <Entry.h>
+#include <Entry.h>
 #include <Message.h>
 #include <SupportDefs.h>
 
 
 namespace BPrivate {	// Only putting these here because Be did
 
-#if 0
 status_t entry_ref_flatten(char* buffer, size_t* size, const entry_ref* ref);
 status_t entry_ref_unflatten(entry_ref* ref, const char* buffer, size_t size);
 status_t entry_ref_swap(char* buffer, size_t size);
-#endif
 
 uint32 CalculateChecksum(const uint8 *buffer, int32 size);
 
