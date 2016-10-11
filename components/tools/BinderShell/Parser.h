@@ -278,8 +278,8 @@ private:
 
 	sptr<BShell>		m_shell;
 	sptr<Lexer>			m_lexer;
-	int32_t				m_token;
-	int32_t				m_commandDepth;
+	uint32_t			m_token;
+	uint32_t			m_commandDepth;
 };
 
 inline size_t Lexer::Size() const

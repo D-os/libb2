@@ -668,7 +668,7 @@ BBinder::~BBinder()
 				static_cast<extensions *>(m_extensions)->other_links[i].targetAtom->DecStrong(this);
 			}
 		}
-		delete m_extensions;
+		delete static_cast<extensions *>(m_extensions);
 	}
 }
 
