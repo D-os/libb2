@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+
+# IDE stuff
+/*.pro.user
+/*.txt.user
+
+# CMake/Ninja stuff
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+build.ninja
+rules.ninja
+
