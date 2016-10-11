@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-//#include <Entry.h>
+#include <Entry.h>
 #include <image.h>
 #include <Messenger.h>
 #include <OS.h>
@@ -125,8 +125,6 @@ status_t
 get_app_ref(team_id team, entry_ref *ref, bool traverse)
 {
     status_t error = (ref ? B_OK : B_BAD_VALUE);
-    STUB;
-#if 0
     char appFilePath[B_PATH_NAME_LENGTH];
 
     if (error == B_OK)
@@ -136,7 +134,6 @@ get_app_ref(team_id team, entry_ref *ref, bool traverse)
         BEntry entry(appFilePath, traverse);
         error = entry.GetRef(ref);
     }
-#endif
 
     return error;
 }

@@ -19,7 +19,7 @@
 #include <Looper.h>
 #include <Message.h>
 #include <OS.h>
-//#include <Roster.h>
+#include <Roster.h>
 
 #include <AppMisc.h>
 //#include <LaunchRoster.h>

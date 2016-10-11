@@ -17,8 +17,8 @@
 //#include <sniffer/Rule.h>
 //#include <sniffer/Parser.h>
 
-//#include <RegistrarDefs.h>
-//#include <RosterPrivate.h>
+#include <RegistrarDefs.h>
+#include <RosterPrivate.h>
 
 #include <ctype.h>
 #include <new>

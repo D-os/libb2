@@ -11,6 +11,7 @@ add_library(root SHARED
         kernel/syscalls.c
         kernel/attr.c
         kernel/info.c
+        kernel/monitor.c
         private/strlcat.c
         private/strlcpy.c
         private/find_directory.c
@@ -47,9 +48,11 @@ target_sources(be PRIVATE
         storage/EntryList.cpp
         storage/File.cpp
         storage/FindDirectory.cpp
+        storage/Mime.cpp
         storage/MimeType.cpp
         storage/Node.cpp
         storage/NodeInfo.cpp
+        storage/NodeMonitor.cpp
         storage/OffsetFile.cpp
         storage/Path.cpp
         storage/ResourceFile.cpp
@@ -59,34 +62,47 @@ target_sources(be PRIVATE
         storage/Statable.cpp
         storage/SymLink.cpp
         storage/Volume.cpp
+        storage/VolumeRoster.cpp
         storage/storage_support.cpp
         storage/mime/DatabaseLocation.cpp
         storage/mime/database_support.cpp
 
         app/AppDefs.cpp
         app/AppMisc.cpp
-#	app/Application.cpp
+        app/AppServerLink.cpp
+        app/Application.cpp
+        app/Cursor.cpp
+        app/DesktopLink.cpp
         app/DirectMessageTarget.cpp
         app/Handler.cpp
+        app/InitTerminateLibBe.cpp
+        app/LinkReceiver.cpp
+        app/LinkSender.cpp
         app/Looper.cpp
         app/LooperList.cpp
         app/Message.cpp
         app/MessageAdapter.cpp
         app/MessageFilter.cpp
         app/MessageQueue.cpp
+        app/MessageRunner.cpp
         app/MessageUtils.cpp
         app/Messenger.cpp
+        app/PortLink.cpp
         app/PropertyInfo.cpp
+        app/Roster.cpp
+        app/RosterPrivate.cpp
+        app/ServerLink.cpp
+        app/ServerMemoryAllocator.cpp
         app/TokenSpace.cpp
-        app/InitTerminateLibBe.cpp
 
         interface/InterfaceDefs.cpp
         interface/Bitmap.cpp
         interface/ColorConversion.cpp
         interface/GraphicsDefs.cpp
+        interface/Picture.cpp
         interface/Point.cpp
         interface/Rect.cpp
-#   #	interface/Size.cpp
+        interface/Size.cpp
 
         # HVIF: Haiku Vector Icon Format
         private/icon/IconUtils.cpp

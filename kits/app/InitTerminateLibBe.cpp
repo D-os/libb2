@@ -17,7 +17,7 @@
 #include <AppMisc.h>
 #include <LooperList.h>
 #include <MessagePrivate.h>
-//#include <RosterPrivate.h>
+#include <RosterPrivate.h>
 #include <TokenSpace.h>
 
 //extern void __initialize_locale_kit();
@@ -73,7 +73,7 @@ initialize_before()
     DBG(OUT("initialize_before()\n"));
 
     BMessage::Private::StaticInit();
-//    BRoster::Private::InitBeRoster();
+    BRoster::Private::InitBeRoster();
 
     /* setup crash handler */
     struct sigaction sigact;
@@ -111,7 +111,7 @@ terminate_after()
 {
     DBG(OUT("terminate_after()\n"));
 
-//    BRoster::Private::DeleteBeRoster();
+    BRoster::Private::DeleteBeRoster();
     BMessage::Private::StaticCleanup();
     BMessage::Private::StaticCacheCleanup();
 
