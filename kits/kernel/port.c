@@ -308,6 +308,18 @@ port_id create_port(int32 capacity, const char *name)
     return info->fd;
 }
 
+port_id find_port(const char *name)
+{
+    STUB;
+    // create socket as above (create_port)
+    // _fill_sockaddr with given name
+    // connect() given name
+    // if success disconnect, make port_info and return fd
+    // else
+    return B_BAD_PORT_ID;
+}
+
+
 status_t delete_port(port_id port)
 {
     _ports_wlock();
