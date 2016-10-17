@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
 project(LIBBE VERSION 0.1.0 LANGUAGES CXX C)
 set(CMAKE_C_STANDARD 11)
@@ -58,5 +58,5 @@ add_subdirectory(headers)
 add_subdirectory(kits)
 
 # Tests
-add_subdirectory(external/googletest)
+add_subdirectory(external/googletest/googlemock EXCLUDE_FROM_ALL)
 add_subdirectory(tests)
