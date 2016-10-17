@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 #include <linux/binder.h>
 #include <binder/IBinder.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <poll.h>
 
@@ -214,7 +215,7 @@ TEST_F(BinderDriverInterfaceTest, IncRefsAcquireReleaseDecRefs) {
 }
 
 TEST_F(BinderDriverInterfaceTest, Transaction) {
-    binder_uintptr_t cookie = 1234;
+    //binder_uintptr_t cookie = 1234;
     struct {
         uint32_t cmd1;
         struct binder_transaction_data arg1;
@@ -229,7 +230,7 @@ TEST_F(BinderDriverInterfaceTest, Transaction) {
             .sender_euid = 0,
             .data_size = 0,
             .offsets_size = 0,
-            .data = {0, 0},
+            .data = {{0, 0}},
         },
     };
     struct {

@@ -8,5 +8,3 @@ add_executable(check
     # tests go here
 )
 target_link_libraries(check gtest_main gtest gmock)
-
-add_subdirectory(binder)
