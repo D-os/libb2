@@ -37,6 +37,8 @@
 #include <private/binder/binder_module.h>
 #include <private/binder/Static.h>
 
+#include <android/limits.h>
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
