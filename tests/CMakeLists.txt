@@ -4,9 +4,9 @@ include_directories(
 )
 
 add_executable(check
-	""
-	# tests go here
+    ""
+    # tests go here
 )
 target_link_libraries(check gtest_main gtest gmock)
 
-#add_subdirectory(kernel)
+add_subdirectory(binder)
