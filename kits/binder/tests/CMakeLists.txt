@@ -1,12 +1,12 @@
 include_directories(
-    ${CMAKE_SOURCE_DIR}/external/googletest/googletest/include
-    ${CMAKE_SOURCE_DIR}/external/googletest/googlemock/include
+    "${EXTERNAL_GOOGLETEST_DIR}/googletest/include"
+    "${EXTERNAL_GOOGLETEST_DIR}/googlemock/include"
 )
 
-add_executable(binderDriverInterfaceTest "${BINDER_SOURCE}/tests/binderDriverInterfaceTest.cpp")
+add_executable(binderDriverInterfaceTest "${BINDER_SOURCE_DIR}/tests/binderDriverInterfaceTest.cpp")
 #target_link_libraries(binderDriverInterfaceTest root)
 
-add_executable(binderLibTest "${BINDER_SOURCE}/tests/binderLibTest.cpp")
+add_executable(binderLibTest "${BINDER_SOURCE_DIR}/tests/binderLibTest.cpp")
 target_link_libraries(binderLibTest binder)
 
 #set_target_properties(checks PROPERTIES COMPILE_FLAGS "-DBINDER_IPC_32BIT=1")

@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
-project(LIBBE VERSION 0.1.0 LANGUAGES CXX C)
+project(LIBB2 VERSION 0.1.0 LANGUAGES CXX C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 
@@ -26,7 +26,7 @@ set(LIBBE_FLAGS "${LIBBE_FLAGS} -Wall -Wpointer-arith -Wcast-align -Wsign-compar
 
 # Default include directories.
 include_directories(
-    ${CMAKE_SOURCE_DIR}/headers
+	${PROJECT_SOURCE_DIR}/headers
 )
 
 # Set flags.
@@ -53,10 +53,14 @@ message(STATUS "CMAKE_RANLIB:                    ${CMAKE_RANLIB}")
 message(STATUS "=============================================")
 message(STATUS "")
 
+set(ANDROID_FRAMEWORKS_NATIVE_DIR "${CMAKE_SOURCE_DIR}/frameworks/native")
+set(ANDROID_SYSTEM_CORE_DIR "${CMAKE_SOURCE_DIR}/system/core")
+set(EXTERNAL_GOOGLETEST_DIR "${CMAKE_SOURCE_DIR}/external/googletest")
+
 # Sub directories.
 add_subdirectory(headers)
 add_subdirectory(kits)
 
 # Tests
-add_subdirectory(external/googletest)
+add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)
 add_subdirectory(tests)
