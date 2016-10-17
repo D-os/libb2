@@ -23,6 +23,7 @@
 #include <binder/TextOutput.h>
 
 #include <cutils/sched_policy.h>
+#include <cutils/threads.h>
 #include <utils/Log.h>
 #include <utils/threads.h>
 
@@ -505,8 +506,8 @@ void IPCThreadState::joinThreadPool(bool isMain)
     } while (result != -ECONNREFUSED && result != -EBADF);
 
     LOG_THREADPOOL("**** THREAD %p (PID %d) IS LEAVING THE THREAD POOL err=%p\n",
-        (void*)pthread_self(), getpid(), (void*)result);
-    
+        (void*)pthread_self(), getpid(), (void*)(uintptr_t)result);
+
     mOut.writeInt32(BC_EXIT_LOOPER);
     talkWithDriver(false);
 }
