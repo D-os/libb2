@@ -52,3 +52,7 @@ message(STATUS "")
 
 # Sub directories.
 add_subdirectory(headers)
+
+# Tests
+add_subdirectory(external/googletest)
+add_subdirectory(tests)
