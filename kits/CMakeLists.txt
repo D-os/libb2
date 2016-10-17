@@ -3,7 +3,10 @@ include_directories(
 )
 
 add_definitions(-fno-rtti -fno-exceptions)
-set(CMAKE_SHARED_LINKER_FLAGS "-nodefaultlibs -lgcc")
+set(CMAKE_SHARED_LINKER_FLAGS "-nodefaultlibs")
+if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgcc")
+endif()
 
 add_subdirectory(binder)
 
