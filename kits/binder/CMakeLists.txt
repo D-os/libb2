@@ -80,3 +80,5 @@ endif()
 #endif
 #LOCAL_CFLAGS += -Werror
 #include $(BUILD_STATIC_LIBRARY)
+
+add_subdirectory(tests)
