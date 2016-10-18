@@ -4,10 +4,10 @@ include_directories(
 )
 
 add_executable(binderDriverInterfaceTest "${BINDER_SOURCE_DIR}/tests/binderDriverInterfaceTest.cpp")
-#target_link_libraries(binderDriverInterfaceTest root)
+target_link_libraries(binderDriverInterfaceTest gtest)
 
-add_executable(binderLibTest "${BINDER_SOURCE_DIR}/tests/binderLibTest.cpp")
-target_link_libraries(binderLibTest binder)
+#add_executable(binderLibTest "${BINDER_SOURCE_DIR}/tests/binderLibTest.cpp")
+#target_link_libraries(binderLibTest binder)
 
 #set_target_properties(checks PROPERTIES COMPILE_FLAGS "-DBINDER_IPC_32BIT=1")
 #target_sources(checks PRIVATE

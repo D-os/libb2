@@ -26,7 +26,7 @@ set(LIBBE_FLAGS "${LIBBE_FLAGS} -Wall -Wpointer-arith -Wcast-align -Wsign-compar
 
 # Default include directories.
 include_directories(
-	${PROJECT_SOURCE_DIR}/headers
+    ${PROJECT_SOURCE_DIR}/headers
 )
 
 # Set flags.
