@@ -20,9 +20,10 @@
 #include <utils/Printer.h>
 #include <utils/Errors.h>
 #include <utils/Log.h>
-#include <UniquePtr.h>
 
-#include <backtrace/Backtrace.h>
+#ifdef __GLIBC__
+#include <execinfo.h>
+#endif
 
 namespace android {
 
@@ -40,13 +41,18 @@ CallStack::~CallStack() {
 void CallStack::update(int32_t ignoreDepth, pid_t tid) {
     mFrameLines.clear();
 
-    UniquePtr<Backtrace> backtrace(Backtrace::Create(BACKTRACE_CURRENT_PROCESS, tid));
-    if (!backtrace->Unwind(ignoreDepth)) {
+#ifdef __GLIBC__
+    void *buffer[MAX_BACKTRACE_FRAMES];
+    int nptrs = backtrace(buffer, MAX_BACKTRACE_FRAMES);
+    char **strings = backtrace_symbols(buffer, nptrs);
+    if (strings == NULL) {
         ALOGW("%s: Failed to unwind callstack.", __FUNCTION__);
+    } else for (int i = 0; i < nptrs; i++) {
+        mFrameLines.push_back(String8(strings[i]));
     }
-    for (size_t i = 0; i < backtrace->NumFrames(); i++) {
-      mFrameLines.push_back(String8(backtrace->FormatFrameData(i).c_str()));
-    }
+#else
+    ALOGW("%s: Callstack not supported.", __FUNCTION__);
+#endif
 }
 
 void CallStack::log(const char* logtag, android_LogPriority priority, const char* prefix) const {
