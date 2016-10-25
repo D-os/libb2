@@ -219,11 +219,6 @@ status_t BBinder::onTransact(
             return dump(fd, args);
         }
 
-        case SYSPROPS_TRANSACTION: {
-            report_sysprop_change();
-            return NO_ERROR;
-        }
-
         default:
             return UNKNOWN_TRANSACTION;
     }
