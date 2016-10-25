@@ -26,7 +26,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <android/set_abort_message.h>
+//#include <android/set_abort_message.h>
 
 #include <log/log.h>
 #include <log/logd.h>
@@ -168,7 +168,7 @@ int __android_log_buf_write(int bufID, int prio, const char *tag, const char *ms
     }
 
     if (prio == ANDROID_LOG_FATAL) {
-        android_set_abort_message(msg);
+//        android_set_abort_message(msg);
     }
 
     vec[0].iov_base   = (unsigned char *) &prio;
