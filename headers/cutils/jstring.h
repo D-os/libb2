@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#if __STDC_VERSION__ < 201112L && __cplusplus < 201103L
+#if (!defined(__cplusplus) && __STDC_VERSION__ < 201112L) || (defined(__cplusplus) && __cplusplus < 201103L)
   typedef uint16_t char16_t;
 #endif
   // otherwise char16_t is a keyword with the right semantics
