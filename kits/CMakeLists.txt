@@ -3,7 +3,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
-add_definitions(-fno-rtti -fno-exceptions -D_GNU_SOURCE=1)
+add_definitions(-fno-rtti -fno-exceptions)
 set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
 set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "")
 #set(CMAKE_SHARED_LINKER_FLAGS "-nodefaultlibs")
