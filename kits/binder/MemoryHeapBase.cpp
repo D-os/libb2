@@ -26,8 +26,8 @@
 #include <sys/ioctl.h>
 
 #include <cutils/log.h>
-#include <cutils/ashmem.h>
 #include <cutils/atomic.h>
+#include <cutils/memfd.h>
 
 #include <binder/MemoryHeapBase.h>
 
@@ -47,12 +47,14 @@ MemoryHeapBase::MemoryHeapBase(size_t size, uint32_t flags, char const * name)
 {
     const size_t pagesize = getpagesize();
     size = ((size + pagesize-1) & ~(pagesize-1));
-    int fd = ashmem_create_region(name == NULL ? "MemoryHeapBase" : name, size);
+    int fd = memfd_create(name == NULL ? "MemoryHeapBase" : name, MFD_ALLOW_SEALING);
     ALOGE_IF(fd<0, "error creating ashmem region: %s", strerror(errno));
-    if (fd >= 0) {
+    if (fd >= 0 && ftruncate(fd, size) >= 0) {
         if (mapfd(fd, size) == NO_ERROR) {
             if (flags & READ_ONLY) {
-                ashmem_set_prot_region(fd, PROT_READ);
+                fcntl(fd, F_ADD_SEALS, F_SEAL_WRITE | F_SEAL_SEAL);
+            } else {
+                fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL);
             }
         }
     }
