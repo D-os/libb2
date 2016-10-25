@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE /* TEMP_FAILURE_RETRY in unistd.h */
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
