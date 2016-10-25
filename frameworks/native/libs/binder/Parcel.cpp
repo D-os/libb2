@@ -32,16 +32,20 @@
 #include <utils/String16.h>
 #include <utils/misc.h>
 #include <utils/Flattenable.h>
-#include <cutils/ashmem.h>
+#include <cutils/memfd.h>
 
 #include <private/binder/binder_module.h>
 #include <private/binder/Static.h>
 
+#include <fcntl.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #ifndef INT32_MAX
 #define INT32_MAX ((int32_t)(2147483647))
@@ -126,9 +130,9 @@ void acquire_object(const sp<ProcessState>& proc,
             if (obj.cookie != 0) {
                 if (outAshmemSize != NULL) {
                     // If we own an ashmem fd, keep track of how much memory it refers to.
-                    int size = ashmem_get_size_region(obj.handle);
-                    if (size > 0) {
-                        *outAshmemSize += size;
+                    struct stat sb;
+                    if (!fstat(int(obj.handle), &sb)) {
+                        *outAshmemSize += size_t(sb.st_size);
                     }
                 }
             }
@@ -175,9 +179,9 @@ static void release_object(const sp<ProcessState>& proc,
         case BINDER_TYPE_FD: {
             if (outAshmemSize != NULL) {
                 if (obj.cookie != 0) {
-                    int size = ashmem_get_size_region(obj.handle);
-                    if (size > 0) {
-                        *outAshmemSize -= size;
+                    struct stat sb;
+                    if (!fstat(int(obj.handle), &sb)) {
+                        *outAshmemSize -= size_t(sb.st_size);
                     }
 
                     close(obj.handle);
@@ -948,10 +952,10 @@ status_t Parcel::writeBlob(size_t len, bool mutableCopy, WritableBlob* outBlob)
     }
 
     ALOGV("writeBlob: write to ashmem");
-    int fd = ashmem_create_region("Parcel Blob", len);
+    int fd = memfd_create("Parcel Blob", MFD_ALLOW_SEALING);
     if (fd < 0) return NO_MEMORY;
 
-    int result = ashmem_set_prot_region(fd, PROT_READ | PROT_WRITE);
+    int result = ftruncate(fd, len);
     if (result < 0) {
         status = result;
     } else {
@@ -960,7 +964,9 @@ status_t Parcel::writeBlob(size_t len, bool mutableCopy, WritableBlob* outBlob)
             status = -errno;
         } else {
             if (!mutableCopy) {
-                result = ashmem_set_prot_region(fd, PROT_READ);
+                result = fcntl(fd, F_ADD_SEALS, F_SEAL_WRITE | F_SEAL_SEAL);
+            } else {
+                result = fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL);
             }
             if (result < 0) {
                 status = result;
