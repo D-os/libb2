@@ -28,13 +28,15 @@
 #ifndef _LIBS_LOG_LOG_H
 #define _LIBS_LOG_LOG_H
 
+#include <android/log.h>
+
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 
-#include <log/logd.h>
 #include <log/uio.h>
 
 #ifdef __cplusplus
@@ -558,17 +560,6 @@ typedef enum {
 #define android_writeLog(prio, tag, text) \
     __android_log_write(prio, tag, text)
 
-#define android_bWriteLog(tag, payload, len) \
-    __android_log_bwrite(tag, payload, len)
-#define android_btWriteLog(tag, type, payload, len) \
-    __android_log_btwrite(tag, type, payload, len)
-
-#define android_errorWriteLog(tag, subTag) \
-    __android_log_error_write(tag, subTag, -1, NULL, 0)
-
-#define android_errorWriteWithInfoLog(tag, subTag, uid, data, dataLen) \
-    __android_log_error_write(tag, subTag, uid, data, dataLen)
-
 /*
  *    IF_ALOG uses android_testLog, but IF_ALOG can be overridden.
  *    android_testLog will remain constant in its purpose as a wrapper
@@ -585,27 +576,27 @@ typedef enum {
     (__android_log_is_loggable(prio, tag, ANDROID_LOG_VERBOSE) != 0)
 #endif
 
-// TODO: remove these prototypes and their users
-#define android_writevLog(vec,num) do{}while(0)
-#define android_write1Log(str,len) do{}while (0)
-#define android_setMinPriority(tag, prio) do{}while(0)
-//#define android_logToCallback(func) do{}while(0)
-#define android_logToFile(tag, file) (0)
-#define android_logToFd(tag, fd) (0)
-
 typedef enum log_id {
     LOG_ID_MIN = 0,
 
-#ifndef LINT_RLOG
-    LOG_ID_MAIN = 0,
-#endif
-    LOG_ID_RADIO = 1,
-#ifndef LINT_RLOG
-    LOG_ID_EVENTS = 2,
+    LOG_ID_KERNEL = 0,
+    LOG_ID_MAIN = 1,
+    LOG_ID_CRASH = 1,
     LOG_ID_SYSTEM = 3,
-    LOG_ID_CRASH = 4,
-    LOG_ID_KERNEL = 5,
-#endif
+    LOG_ID_RADIO = 5,
+//    LOG_ID_EVENTS = 7, // binary events log is not supported at all
+
+    LOG_ID_USER = 1,
+    LOG_ID_MAIL = 2,
+    LOG_ID_DAEMON = 3,
+    LOG_ID_AUTH = 4,
+    LOG_ID_SYSLOG = 5,
+    LOG_ID_LPR = 6,
+    LOG_ID_NEWS = 7,
+    LOG_ID_UUCP = 8,
+    LOG_ID_CRON = 9,
+    LOG_ID_AUTHPRIV = 10,
+    LOG_ID_FTP = 11,
 
     LOG_ID_MAX
 } log_id_t;
@@ -617,9 +608,6 @@ typedef enum log_id {
  * result of non-zero to expose a log.
  */
 int __android_log_is_loggable(int prio, const char *tag, int def);
-
-int __android_log_error_write(int tag, const char *subTag, int32_t uid, const char *data,
-                              uint32_t dataLen);
 
 /*
  * Send a simple string to the log.

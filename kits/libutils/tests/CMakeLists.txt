@@ -14,5 +14,4 @@ add_executable(libutils_tests
     Vector_test.cpp
 )
 
-#target_link_libraries(libutils_tests gtest z log cutils utils)
-target_link_libraries(libutils_tests gtest_main gtest z cutils utils)
+target_link_libraries(libutils_tests gtest_main gtest z log cutils utils)

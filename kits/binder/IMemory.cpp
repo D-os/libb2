@@ -196,8 +196,8 @@ sp<IMemoryHeap> BpMemory::getMemory(ssize_t* offset, size_t* size) const
                         mSize = s;
                     } else {
                         // Hm.
-                        android_errorWriteWithInfoLog(0x534e4554,
-                            "26877992", -1, NULL, 0);
+//                        android_errorWriteWithInfoLog(0x534e4554,
+//                            "26877992", -1, NULL, 0);
                         mOffset = 0;
                         mSize = 0;
                     }

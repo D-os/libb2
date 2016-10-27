@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <benchmark.h>
+#include "benchmark.h"
 
 #include <inttypes.h>
 #include <math.h>
