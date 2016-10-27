@@ -77,16 +77,19 @@ extern "C" {
  * Android log priority values, in ascending priority order.
  */
 typedef enum android_LogPriority {
-    ANDROID_LOG_UNKNOWN = 0,
-    ANDROID_LOG_DEFAULT,    /* only for SetMinPriority() */
-    ANDROID_LOG_VERBOSE,
-    ANDROID_LOG_DEBUG,
-    ANDROID_LOG_INFO,
-    ANDROID_LOG_WARN,
-    ANDROID_LOG_ERROR,
-    ANDROID_LOG_FATAL,
-    ANDROID_LOG_SILENT,     /* only for SetMinPriority(); must be last */
+    ANDROID_LOG_UNKNOWN = -2,
+    ANDROID_LOG_DEFAULT = -1,    /* only for SetMinPriority() */
+    ANDROID_LOG_FATAL = 0,
+    ANDROID_LOG_ALERT = 1,
+    ANDROID_LOG_CRIT = 2,
+    ANDROID_LOG_ERROR = 3,
+    ANDROID_LOG_WARN = 4,
+    ANDROID_LOG_INFO = 5,       /* syslog NOTICE */
+    ANDROID_LOG_DEBUG = 6,      /* syslog INFO */
+    ANDROID_LOG_VERBOSE = 7,    /* syslog DEBUG */
 } android_LogPriority;
+#define ANDROID_LOG_EMERG ANDROID_LOG_FATAL
+#define ANDROID_LOG_NOTICE ANDROID_LOG_INFO
 
 /*
  * Send a simple string to the log.
