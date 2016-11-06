@@ -62,6 +62,7 @@ set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 # Sub directories.
 add_subdirectory(headers)
 add_subdirectory(kits)
+add_subdirectory(bins)
 
 # Tests
 add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)

@@ -5,13 +5,12 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <private/android_filesystem_config.h>
-
-#include <selinux/android.h>
 #include <selinux/avc.h>
+#include <selinux/label.h>
 
 #include "binder.h"
 
@@ -130,7 +129,6 @@ struct svcinfo
     struct svcinfo *next;
     uint32_t handle;
     struct binder_death death;
-    int allow_isolated;
     size_t len;
     uint16_t name[0];
 };
@@ -175,15 +173,6 @@ uint32_t do_find_service(struct binder_state *bs, const uint16_t *s, size_t len,
         return 0;
     }
 
-    if (!si->allow_isolated) {
-        // If this service doesn't allow access from isolated processes,
-        // then check the uid to see if it is isolated.
-        uid_t appid = uid % AID_USER;
-        if (appid >= AID_ISOLATED_START && appid <= AID_ISOLATED_END) {
-            return 0;
-        }
-    }
-
     if (!svc_can_find(s, len, spid)) {
         return 0;
     }
@@ -193,7 +182,7 @@ uint32_t do_find_service(struct binder_state *bs, const uint16_t *s, size_t len,
 
 int do_add_service(struct binder_state *bs,
                    const uint16_t *s, size_t len,
-                   uint32_t handle, uid_t uid, int allow_isolated,
+                   uint32_t handle, uid_t uid,
                    pid_t spid)
 {
     struct svcinfo *si;
@@ -231,7 +220,6 @@ int do_add_service(struct binder_state *bs,
         si->name[len] = '\0';
         si->death.func = (void*) svcinfo_death;
         si->death.ptr = si;
-        si->allow_isolated = allow_isolated;
         si->next = svclist;
         svclist = si;
     }
@@ -251,7 +239,6 @@ int svcmgr_handler(struct binder_state *bs,
     size_t len;
     uint32_t handle;
     uint32_t strict_policy;
-    int allow_isolated;
 
     //ALOGI("target=%p code=%d pid=%d uid=%d\n",
     //      (void*) txn->target.ptr, txn->code, txn->sender_pid, txn->sender_euid);
@@ -278,14 +265,6 @@ int svcmgr_handler(struct binder_state *bs,
         return -1;
     }
 
-    if (sehandle && selinux_status_updated() > 0) {
-        struct selabel_handle *tmp_sehandle = selinux_android_service_context_handle();
-        if (tmp_sehandle) {
-            selabel_close(sehandle);
-            sehandle = tmp_sehandle;
-        }
-    }
-
     switch(txn->code) {
     case SVC_MGR_GET_SERVICE:
     case SVC_MGR_CHECK_SERVICE:
@@ -305,9 +284,8 @@ int svcmgr_handler(struct binder_state *bs,
             return -1;
         }
         handle = bio_get_ref(msg);
-        allow_isolated = bio_get_uint32(msg) ? 1 : 0;
         if (do_add_service(bs, s, len, handle, txn->sender_euid,
-            allow_isolated, txn->sender_pid))
+            txn->sender_pid))
             return -1;
         break;
 
@@ -360,7 +338,7 @@ int main(int argc, char **argv)
     }
 
     selinux_enabled = is_selinux_enabled();
-    sehandle = selinux_android_service_context_handle();
+    sehandle = NULL;
     selinux_status_open(true);
 
     if (selinux_enabled > 0) {
@@ -378,7 +356,7 @@ int main(int argc, char **argv)
     union selinux_callback cb;
     cb.func_audit = audit_callback;
     selinux_set_callback(SELINUX_CB_AUDIT, cb);
-    cb.func_log = selinux_log_callback;
+//    cb.func_log = selinux_log_callback;
     selinux_set_callback(SELINUX_CB_LOG, cb);
 
     binder_loop(bs, svcmgr_handler);
