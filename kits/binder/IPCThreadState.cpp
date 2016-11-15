@@ -853,14 +853,10 @@ status_t IPCThreadState::talkWithDriver(bool doReceive)
         IF_LOG_COMMANDS() {
             alog << "About to read/write, write size = " << mOut.dataSize() << endl;
         }
-#if defined(HAVE_ANDROID_OS)
         if (ioctl(mProcess->mDriverFD, BINDER_WRITE_READ, &bwr) >= 0)
             err = NO_ERROR;
         else
             err = -errno;
-#else
-        err = INVALID_OPERATION;
-#endif
         if (mProcess->mDriverFD <= 0) {
             err = -EBADF;
         }
@@ -1167,11 +1163,9 @@ void IPCThreadState::threadDestructor(void *st)
         IPCThreadState* const self = static_cast<IPCThreadState*>(st);
         if (self) {
                 self->flushCommands();
-#if defined(HAVE_ANDROID_OS)
         if (self->mProcess->mDriverFD > 0) {
             ioctl(self->mProcess->mDriverFD, BINDER_THREAD_EXIT, 0);
         }
-#endif
                 delete self;
         }
 }
