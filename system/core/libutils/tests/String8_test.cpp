@@ -31,6 +31,10 @@ protected:
     }
 };
 
+} // namespace android
+
+using namespace android;
+
 TEST_F(String8Test, Cstr) {
     String8 tmp("Hello, world!");
 
@@ -70,6 +74,4 @@ TEST_F(String8Test, OperatorPlusEquals) {
     EXPECT_STREQ(src1.string(), "My voice is my passport. Verify me.");
     EXPECT_STREQ(src2.string(), " is my passport.");
     EXPECT_STREQ(src3, " Verify me.");
-}
-
 }

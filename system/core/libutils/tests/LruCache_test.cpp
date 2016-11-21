@@ -118,6 +118,10 @@ protected:
     }
 };
 
+} // namespace android
+
+using namespace android;
+
 TEST_F(LruCacheTest, Empty) {
     LruCache<SimpleKey, StringValue> cache(100);
 
@@ -291,6 +295,4 @@ TEST_F(LruCacheTest, CallbackOnClear) {
     EXPECT_EQ(3, cache.size());
     cache.clear();
     EXPECT_EQ(3, callback.callbackCount);
-}
-
 }

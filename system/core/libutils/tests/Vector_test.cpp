@@ -36,6 +36,9 @@ protected:
 public:
 };
 
+} // namespace android
+
+using namespace android;
 
 TEST_F(VectorTest, CopyOnWrite_CopyAndAddElements) {
 
@@ -148,5 +151,3 @@ TEST_F(VectorTest, editArray_Shared) {
     EXPECT_EQ(vector1[i], vector2[i]);
   }
 }
-
-} // namespace android

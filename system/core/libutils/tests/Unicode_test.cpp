@@ -31,6 +31,10 @@ protected:
     }
 };
 
+} //namespace android
+
+using namespace android;
+
 TEST_F(UnicodeTest, UTF8toUTF16ZeroLength) {
     ssize_t measured;
 
@@ -110,6 +114,4 @@ TEST_F(UnicodeTest, UTF8toUTF16Normal) {
             << "should be second half of surrogate U+10000";
     EXPECT_EQ(NULL, output[5])
             << "should be NULL terminated";
-}
-
 }

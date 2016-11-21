@@ -33,6 +33,9 @@ protected:
     }
 };
 
+} // namespace android
+
+using namespace android;
 
 TEST_F(BitSet32Test, BitWiseOr) {
     b1.markBit(2);
@@ -266,5 +269,3 @@ TEST_F(BitSet64Test, GetIndexOfBit) {
     EXPECT_EQ(b1.getIndexOfBit(10), 1);
     EXPECT_EQ(b1.getIndexOfBit(40), 2);
 }
-
-} // namespace android
