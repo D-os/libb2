@@ -111,6 +111,9 @@ protected:
     }
 };
 
+} // namespace android
+
+using namespace android;
 
 TEST_F(LooperTest, PollOnce_WhenNonZeroTimeoutAndNotAwoken_WaitsForTimeout) {
     StopWatch stopWatch("pollOnce");
@@ -689,5 +692,3 @@ TEST_F(LooperTest, RemoveMessage_WhenRemovingSomeMessagesForHandler_ShouldRemove
     EXPECT_EQ(size_t(2), handler->messages.size())
             << "no more messages to handle";
 }
-
-} // namespace android

@@ -180,6 +180,10 @@ static void dump(BasicHashtable<TKey, key_value_pair_t<TKey, TValue> >& h) {
     }
 }
 
+} // namespace android
+
+using namespace android;
+
 TEST_F(BasicHashtableTest, DefaultConstructor_WithDefaultProperties) {
     SimpleHashtable h;
 
@@ -578,5 +582,3 @@ TEST_F(BasicHashtableTest, CopyOnWrite) {
     EXPECT_EQ(0U, h2.size());
     EXPECT_EQ(2U, h3.size());
 }
-
-} // namespace android
