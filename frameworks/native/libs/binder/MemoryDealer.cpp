@@ -22,7 +22,7 @@
 
 #include <utils/Log.h>
 #include <utils/SortedVector.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 #include <utils/threads.h>
 
 #include <stdint.h>
@@ -133,7 +133,7 @@ public:
     status_t    deallocate(size_t offset);
     size_t      size() const;
     void        dump(const char* what) const;
-    void        dump(String8& res, const char* what) const;
+    void        dump(String& res, const char* what) const;
 
 private:
 
@@ -151,7 +151,7 @@ private:
     ssize_t  alloc(size_t size, uint32_t flags);
     chunk_t* dealloc(size_t start);
     void     dump_l(const char* what) const;
-    void     dump_l(String8& res, const char* what) const;
+    void     dump_l(String& res, const char* what) const;
 
     static const int    kMemoryAlign;
     mutable Mutex       mLock;
@@ -413,19 +413,19 @@ void SimpleBestFitAllocator::dump(const char* what) const
 
 void SimpleBestFitAllocator::dump_l(const char* what) const
 {
-    String8 result;
+    String result;
     dump_l(result, what);
     ALOGD("%s", result.string());
 }
 
-void SimpleBestFitAllocator::dump(String8& result,
+void SimpleBestFitAllocator::dump(String& result,
         const char* what) const
 {
     Mutex::Autolock _l(mLock);
     dump_l(result, what);
 }
 
-void SimpleBestFitAllocator::dump_l(String8& result,
+void SimpleBestFitAllocator::dump_l(String& result,
         const char* what) const
 {
     size_t size = 0;

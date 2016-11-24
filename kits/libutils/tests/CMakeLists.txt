@@ -9,7 +9,7 @@ add_executable(libutils_tests
     "${UTILS_SOURCE_DIR}/tests/BitSet_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/Looper_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/LruCache_test.cpp"
-    "${UTILS_SOURCE_DIR}/tests/String8_test.cpp"
+    "${UTILS_SOURCE_DIR}/tests/String_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/Unicode_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/Vector_test.cpp"
 )

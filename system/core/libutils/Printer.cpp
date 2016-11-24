@@ -18,7 +18,7 @@
 // #define LOG_NDEBUG 0
 
 #include <utils/Printer.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 #include <utils/Log.h>
 
 #include <string.h>
@@ -121,9 +121,9 @@ void FdPrinter::printLine(const char* string) {
 }
 
 /*
- * Implementation of String8Printer
+ * Implementation of StringPrinter
  */
-String8Printer::String8Printer(String8* target, const char* prefix) :
+StringPrinter::StringPrinter(String* target, const char* prefix) :
         mTarget(target),
         mPrefix(prefix ?: "") {
 
@@ -132,7 +132,7 @@ String8Printer::String8Printer(String8* target, const char* prefix) :
     }
 }
 
-void String8Printer::printLine(const char* string) {
+void StringPrinter::printLine(const char* string) {
     if (string == NULL) {
         ALOGW("%s: NULL string passed in", __FUNCTION__);
         return;

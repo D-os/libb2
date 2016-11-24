@@ -28,8 +28,8 @@
 #include <errno.h>
 #include <utils/Debug.h>
 #include <utils/Log.h>
-#include <utils/String8.h>
-#include <utils/String16.h>
+#include <utils/String.h>
+#include <utils/String.h>
 #include <utils/misc.h>
 #include <utils/Flattenable.h>
 #include <cutils/memfd.h>
@@ -583,12 +583,12 @@ bool Parcel::hasFileDescriptors() const
 }
 
 // Write RPC headers.  (previously just the interface token)
-status_t Parcel::writeInterfaceToken(const String16& interface)
+status_t Parcel::writeInterfaceToken(const String& interface)
 {
     writeInt32(IPCThreadState::self()->getStrictModePolicy() |
                STRICT_MODE_PENALTY_GATHER);
     // currently the interface identification token is just its name as a string
-    return writeString16(interface);
+    return writeString(interface);
 }
 
 bool Parcel::checkInterface(IBinder* binder) const
@@ -596,7 +596,7 @@ bool Parcel::checkInterface(IBinder* binder) const
     return enforceInterface(binder->getInterfaceDescriptor());
 }
 
-bool Parcel::enforceInterface(const String16& interface,
+bool Parcel::enforceInterface(const String &interface,
                               IPCThreadState* threadState) const
 {
     int32_t strictPolicy = readInt32();
@@ -613,12 +613,12 @@ bool Parcel::enforceInterface(const String16& interface,
     } else {
       threadState->setStrictModePolicy(strictPolicy);
     }
-    const String16 str(readString16());
+    const String str(readString());
     if (str == interface) {
         return true;
     } else {
         ALOGW("**** enforceInterface() expected '%s' but read '%s'",
-                String8(interface).string(), String8(str).string());
+                String(interface).string(), String(str).string());
         return false;
     }
 }
@@ -838,37 +838,14 @@ status_t Parcel::writeCString(const char* str)
     return write(str, strlen(str)+1);
 }
 
-status_t Parcel::writeString8(const String8& str)
+status_t Parcel::writeString(const String& str)
 {
     status_t err = writeInt32(str.bytes());
     // only write string if its length is more than zero characters,
-    // as readString8 will only read if the length field is non-zero.
-    // this is slightly different from how writeString16 works.
+    // as readString will only read if the length field is non-zero.
+    // this is slightly different from how writeString works.
     if (str.bytes() > 0 && err == NO_ERROR) {
         err = write(str.string(), str.bytes()+1);
-    }
-    return err;
-}
-
-status_t Parcel::writeString16(const String16& str)
-{
-    return writeString16(str.string(), str.size());
-}
-
-status_t Parcel::writeString16(const char16_t* str, size_t len)
-{
-    if (str == NULL) return writeInt32(-1);
-
-    status_t err = writeInt32(len);
-    if (err == NO_ERROR) {
-        len *= sizeof(char16_t);
-        uint8_t* data = (uint8_t*)writeInplace(len+sizeof(char16_t));
-        if (data) {
-            memcpy(data, str, len);
-            *reinterpret_cast<char16_t*>(data+len) = 0;
-            return NO_ERROR;
-        }
-        err = mError;
     }
     return err;
 }
@@ -1302,39 +1279,15 @@ const char* Parcel::readCString() const
     return NULL;
 }
 
-String8 Parcel::readString8() const
+String Parcel::readString() const
 {
     int32_t size = readInt32();
     // watch for potential int overflow adding 1 for trailing NUL
     if (size > 0 && size < INT32_MAX) {
         const char* str = (const char*)readInplace(size+1);
-        if (str) return String8(str, size);
+        if (str) return String(str, size);
     }
-    return String8();
-}
-
-String16 Parcel::readString16() const
-{
-    size_t len;
-    const char16_t* str = readString16Inplace(&len);
-    if (str) return String16(str, len);
-    ALOGE("Reading a NULL string not supported here.");
-    return String16();
-}
-
-const char16_t* Parcel::readString16Inplace(size_t* outLen) const
-{
-    int32_t size = readInt32();
-    // watch for potential int overflow from size+1
-    if (size >= 0 && size < INT32_MAX) {
-        *outLen = size;
-        const char16_t* str = (const char16_t*)readInplace((size+1)*sizeof(char16_t));
-        if (str != NULL) {
-            return str;
-        }
-    }
-    *outLen = 0;
-    return NULL;
+    return String();
 }
 
 sp<IBinder> Parcel::readStrongBinder() const

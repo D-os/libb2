@@ -30,17 +30,17 @@ class IAppOpsService : public IInterface
 public:
     DECLARE_META_INTERFACE(AppOpsService);
 
-    virtual int32_t checkOperation(int32_t code, int32_t uid, const String16& packageName) = 0;
-    virtual int32_t noteOperation(int32_t code, int32_t uid, const String16& packageName) = 0;
+    virtual int32_t checkOperation(int32_t code, int32_t uid, const String& packageName) = 0;
+    virtual int32_t noteOperation(int32_t code, int32_t uid, const String& packageName) = 0;
     virtual int32_t startOperation(const sp<IBinder>& token, int32_t code, int32_t uid,
-            const String16& packageName) = 0;
+            const String& packageName) = 0;
     virtual void finishOperation(const sp<IBinder>& token, int32_t code, int32_t uid,
-            const String16& packageName) = 0;
-    virtual void startWatchingMode(int32_t op, const String16& packageName,
+            const String& packageName) = 0;
+    virtual void startWatchingMode(int32_t op, const String& packageName,
             const sp<IAppOpsCallback>& callback) = 0;
     virtual void stopWatchingMode(const sp<IAppOpsCallback>& callback) = 0;
     virtual sp<IBinder> getToken(const sp<IBinder>& clientToken) = 0;
-    virtual int32_t permissionToOpCode(const String16& permission) = 0;
+    virtual int32_t permissionToOpCode(const String& permission) = 0;
 
     enum {
         CHECK_OPERATION_TRANSACTION = IBinder::FIRST_CALL_TRANSACTION,

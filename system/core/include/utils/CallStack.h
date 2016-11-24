@@ -19,7 +19,7 @@
 
 #include <android/log.h>
 #include <backtrace/backtrace_constants.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 #include <utils/Vector.h>
 
 #include <stdint.h>
@@ -55,7 +55,7 @@ public:
     void dump(int fd, int indent = 0, const char* prefix = 0) const;
 
     // Return a string (possibly very long) containing the complete stack trace.
-    String8 toString(const char* prefix = 0) const;
+    String toString(const char* prefix = 0) const;
 
     // Dump a serialized representation of the stack trace to the specified printer.
     void print(Printer& printer) const;
@@ -64,7 +64,7 @@ public:
     size_t size() const { return mFrameLines.size(); }
 
 private:
-    Vector<String8> mFrameLines;
+    Vector<String> mFrameLines;
 };
 
 }; // namespace android

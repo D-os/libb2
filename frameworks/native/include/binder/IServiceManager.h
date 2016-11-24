@@ -21,7 +21,7 @@
 #include <binder/IInterface.h>
 #include <binder/IPermissionController.h>
 #include <utils/Vector.h>
-#include <utils/String16.h>
+#include <utils/String.h>
 
 namespace android {
 
@@ -36,24 +36,24 @@ public:
      * Retrieve an existing service, blocking for a few seconds
      * if it doesn't yet exist.
      */
-    virtual sp<IBinder>         getService( const String16& name) const = 0;
+    virtual sp<IBinder>         getService( const String& name) const = 0;
 
     /**
      * Retrieve an existing service, non-blocking.
      */
-    virtual sp<IBinder>         checkService( const String16& name) const = 0;
+    virtual sp<IBinder>         checkService( const String& name) const = 0;
 
     /**
      * Register a service.
      */
-    virtual status_t            addService( const String16& name,
+    virtual status_t            addService( const String& name,
                                             const sp<IBinder>& service,
                                             bool allowIsolated = false) = 0;
 
     /**
      * Return list of all existing services.
      */
-    virtual Vector<String16>    listServices() = 0;
+    virtual Vector<String>      listServices() = 0;
 
     enum {
         GET_SERVICE_TRANSACTION = IBinder::FIRST_CALL_TRANSACTION,
@@ -66,7 +66,7 @@ public:
 sp<IServiceManager> defaultServiceManager();
 
 template<typename INTERFACE>
-status_t getService(const String16& name, sp<INTERFACE>* outService)
+status_t getService(const String& name, sp<INTERFACE>* outService)
 {
     const sp<IServiceManager> sm = defaultServiceManager();
     if (sm != NULL) {
@@ -76,10 +76,10 @@ status_t getService(const String16& name, sp<INTERFACE>* outService)
     return NAME_NOT_FOUND;
 }
 
-bool checkCallingPermission(const String16& permission);
-bool checkCallingPermission(const String16& permission,
+bool checkCallingPermission(const String& permission);
+bool checkCallingPermission(const String& permission,
                             int32_t* outPid, int32_t* outUid);
-bool checkPermission(const String16& permission, pid_t pid, uid_t uid);
+bool checkPermission(const String& permission, pid_t pid, uid_t uid);
 
 
 // ----------------------------------------------------------------------

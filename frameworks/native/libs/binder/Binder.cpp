@@ -39,7 +39,7 @@ IBinder::~IBinder()
 
 // ---------------------------------------------------------------------------
 
-sp<IInterface>  IBinder::queryLocalInterface(const String16& /*descriptor*/)
+sp<IInterface>  IBinder::queryLocalInterface(const String& /*descriptor*/)
 {
     return NULL;
 }
@@ -85,11 +85,11 @@ status_t BBinder::pingBinder()
     return NO_ERROR;
 }
 
-const String16& BBinder::getInterfaceDescriptor() const
+const String &BBinder::getInterfaceDescriptor() const
 {
     // This is a local static rather than a global static,
     // to avoid static initializer ordering issues.
-    static String16 sEmptyDescriptor;
+    static String sEmptyDescriptor;
     ALOGW("reached BBinder::getInterfaceDescriptor (this=%p)", this);
     return sEmptyDescriptor;
 }
@@ -130,7 +130,7 @@ status_t BBinder::unlinkToDeath(
     return INVALID_OPERATION;
 }
 
-    status_t BBinder::dump(int /*fd*/, const Vector<String16>& /*args*/)
+status_t BBinder::dump(int /*fd*/, const Vector<String> & /*args*/)
 {
     return NO_ERROR;
 }
@@ -206,15 +206,15 @@ status_t BBinder::onTransact(
 {
     switch (code) {
         case INTERFACE_TRANSACTION:
-            reply->writeString16(getInterfaceDescriptor());
+            reply->writeString(getInterfaceDescriptor());
             return NO_ERROR;
 
         case DUMP_TRANSACTION: {
             int fd = data.readFileDescriptor();
             int argc = data.readInt32();
-            Vector<String16> args;
+            Vector<String> args;
             for (int i = 0; i < argc && data.dataAvail() > 0; i++) {
-               args.add(data.readString16());
+               args.add(data.readString());
             }
             return dump(fd, args);
         }

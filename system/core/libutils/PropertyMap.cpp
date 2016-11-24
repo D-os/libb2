@@ -47,15 +47,15 @@ void PropertyMap::clear() {
     mProperties.clear();
 }
 
-void PropertyMap::addProperty(const String8& key, const String8& value) {
+void PropertyMap::addProperty(const String& key, const String& value) {
     mProperties.add(key, value);
 }
 
-bool PropertyMap::hasProperty(const String8& key) const {
+bool PropertyMap::hasProperty(const String& key) const {
     return mProperties.indexOfKey(key) >= 0;
 }
 
-bool PropertyMap::tryGetProperty(const String8& key, String8& outValue) const {
+bool PropertyMap::tryGetProperty(const String& key, String& outValue) const {
     ssize_t index = mProperties.indexOfKey(key);
     if (index < 0) {
         return false;
@@ -65,7 +65,7 @@ bool PropertyMap::tryGetProperty(const String8& key, String8& outValue) const {
     return true;
 }
 
-bool PropertyMap::tryGetProperty(const String8& key, bool& outValue) const {
+bool PropertyMap::tryGetProperty(const String& key, bool& outValue) const {
     int32_t intValue;
     if (!tryGetProperty(key, intValue)) {
         return false;
@@ -75,8 +75,8 @@ bool PropertyMap::tryGetProperty(const String8& key, bool& outValue) const {
     return true;
 }
 
-bool PropertyMap::tryGetProperty(const String8& key, int32_t& outValue) const {
-    String8 stringValue;
+bool PropertyMap::tryGetProperty(const String& key, int32_t& outValue) const {
+    String stringValue;
     if (! tryGetProperty(key, stringValue) || stringValue.length() == 0) {
         return false;
     }
@@ -92,8 +92,8 @@ bool PropertyMap::tryGetProperty(const String8& key, int32_t& outValue) const {
     return true;
 }
 
-bool PropertyMap::tryGetProperty(const String8& key, float& outValue) const {
-    String8 stringValue;
+bool PropertyMap::tryGetProperty(const String& key, float& outValue) const {
+    String stringValue;
     if (! tryGetProperty(key, stringValue) || stringValue.length() == 0) {
         return false;
     }
@@ -115,7 +115,7 @@ void PropertyMap::addAll(const PropertyMap* map) {
     }
 }
 
-status_t PropertyMap::load(const String8& filename, PropertyMap** outMap) {
+status_t PropertyMap::load(const String& filename, PropertyMap** outMap) {
     *outMap = NULL;
 
     Tokenizer* tokenizer;
@@ -170,7 +170,7 @@ status_t PropertyMap::Parser::parse() {
         mTokenizer->skipDelimiters(WHITESPACE);
 
         if (!mTokenizer->isEol() && mTokenizer->peekChar() != '#') {
-            String8 keyToken = mTokenizer->nextToken(WHITESPACE_OR_PROPERTY_DELIMITER);
+            String keyToken = mTokenizer->nextToken(WHITESPACE_OR_PROPERTY_DELIMITER);
             if (keyToken.isEmpty()) {
                 ALOGE("%s: Expected non-empty property key.", mTokenizer->getLocation().string());
                 return BAD_VALUE;
@@ -186,7 +186,7 @@ status_t PropertyMap::Parser::parse() {
 
             mTokenizer->skipDelimiters(WHITESPACE);
 
-            String8 valueToken = mTokenizer->nextToken(WHITESPACE);
+            String valueToken = mTokenizer->nextToken(WHITESPACE);
             if (valueToken.find("\\", 0) >= 0 || valueToken.find("\"", 0) >= 0) {
                 ALOGE("%s: Found reserved character '\\' or '\"' in property value.",
                         mTokenizer->getLocation().string());

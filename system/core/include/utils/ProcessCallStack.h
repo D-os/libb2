@@ -20,7 +20,7 @@
 #include <utils/CallStack.h>
 #include <android/log.h>
 #include <utils/KeyedVector.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 
 #include <time.h>
 #include <sys/types.h>
@@ -49,7 +49,7 @@ public:
     void dump(int fd, int indent = 0, const char* prefix = 0) const;
 
     // Return a string (possibly very long) containing all the stack traces.
-    String8 toString(const char* prefix = 0) const;
+    String toString(const char* prefix = 0) const;
 
     // Dump a serialized representation of all the stack traces to the specified printer.
     void print(Printer& printer) const;
@@ -65,7 +65,7 @@ private:
 
     struct ThreadInfo {
         CallStack callStack;
-        String8 threadName;
+        String threadName;
     };
 
     // tid -> ThreadInfo

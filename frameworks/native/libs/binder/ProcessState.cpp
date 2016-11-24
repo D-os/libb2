@@ -23,10 +23,9 @@
 #include <utils/Atomic.h>
 #include <binder/BpBinder.h>
 #include <binder/IPCThreadState.h>
-#include <utils/Log.h>
-#include <utils/String8.h>
 #include <binder/IServiceManager.h>
-#include <utils/String8.h>
+#include <utils/Log.h>
+#include <utils/String.h>
 #include <utils/threads.h>
 
 #include <private/binder/binder_module.h>
@@ -79,7 +78,7 @@ sp<ProcessState> ProcessState::self()
 
 void ProcessState::setContextObject(const sp<IBinder>& object)
 {
-    setContextObject(object, String16("default"));
+    setContextObject(object, String("default"));
 }
 
 sp<IBinder> ProcessState::getContextObject(const sp<IBinder>& /*caller*/)
@@ -87,27 +86,27 @@ sp<IBinder> ProcessState::getContextObject(const sp<IBinder>& /*caller*/)
     return getStrongProxyForHandle(0);
 }
 
-void ProcessState::setContextObject(const sp<IBinder>& object, const String16& name)
+void ProcessState::setContextObject(const sp<IBinder>& object, const String &name)
 {
     AutoMutex _l(mLock);
     mContexts.add(name, object);
 }
 
-sp<IBinder> ProcessState::getContextObject(const String16& name, const sp<IBinder>& caller)
+sp<IBinder> ProcessState::getContextObject(const String& name, const sp<IBinder>& caller)
 {
     mLock.lock();
     sp<IBinder> object(
         mContexts.indexOfKey(name) >= 0 ? mContexts.valueFor(name) : NULL);
     mLock.unlock();
-    
-    //printf("Getting context object %s for %p\n", String8(name).string(), caller.get());
-    
+
+    //printf("Getting context object %s for %p\n", String(name).string(), caller.get());
+
     if (object != NULL) return object;
 
     // Don't attempt to retrieve contexts if we manage them
     if (mManagesContexts) {
         ALOGE("getContextObject(%s) failed, but we manage the contexts!\n",
-            String8(name).string());
+            String(name).string());
         return NULL;
     }
     
@@ -115,7 +114,7 @@ sp<IBinder> ProcessState::getContextObject(const String16& name, const sp<IBinde
     {
         Parcel data, reply;
         // no interface token on this magic transaction
-        data.writeString16(name);
+        data.writeString(name);
         data.writeStrongBinder(caller);
         status_t result = ipc->transact(0 /*magic*/, 0, data, &reply, 0);
         if (result == NO_ERROR) {
@@ -276,9 +275,9 @@ void ProcessState::expungeHandle(int32_t handle, IBinder* binder)
     if (e && e->binder == binder) e->binder = NULL;
 }
 
-String8 ProcessState::makeBinderThreadName() {
+String ProcessState::makeBinderThreadName() {
     int32_t s = android_atomic_add(1, &mThreadPoolSeq);
-    String8 name;
+    String name;
     name.appendFormat("Binder_%X", s);
     return name;
 }
@@ -286,7 +285,7 @@ String8 ProcessState::makeBinderThreadName() {
 void ProcessState::spawnPooledThread(bool isMain)
 {
     if (mThreadPoolStarted) {
-        String8 name = makeBinderThreadName();
+        String name = makeBinderThreadName();
         ALOGV("Spawning new pooled thread, name=%s\n", name.string());
         sp<Thread> t = new PoolThread(isMain);
         t->run(name.string());

@@ -20,7 +20,7 @@
 
 #include <utils/Log.h>
 #include <binder/Parcel.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 
 #include <private/binder/Static.h>
 
@@ -36,11 +36,11 @@ public:
     {
     }
 
-    virtual void opChanged(int32_t op, const String16& packageName) {
+    virtual void opChanged(int32_t op, const String& packageName) {
         Parcel data, reply;
         data.writeInterfaceToken(IAppOpsCallback::getInterfaceDescriptor());
         data.writeInt32(op);
-        data.writeString16(packageName);
+        data.writeString(packageName);
         remote()->transact(OP_CHANGED_TRANSACTION, data, &reply);
     }
 };
@@ -56,7 +56,7 @@ status_t BnAppOpsCallback::onTransact(
         case OP_CHANGED_TRANSACTION: {
             CHECK_INTERFACE(IAppOpsCallback, data, reply);
             int32_t op = data.readInt32();
-            String16 packageName = data.readString16();
+            String packageName = data.readString();
             opChanged(op, packageName);
             reply->writeNoException();
             return NO_ERROR;

@@ -29,10 +29,10 @@ class BBinder : public IBinder
 public:
                         BBinder();
 
-    virtual const String16& getInterfaceDescriptor() const;
+    virtual const String& getInterfaceDescriptor() const;
     virtual bool        isBinderAlive() const;
     virtual status_t    pingBinder();
-    virtual status_t    dump(int fd, const Vector<String16>& args);
+    virtual status_t    dump(int fd, const Vector<String>& args);
 
     virtual status_t    transact(   uint32_t code,
                                     const Parcel& data,

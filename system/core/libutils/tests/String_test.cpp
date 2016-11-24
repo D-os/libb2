@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "String8_test"
+#define LOG_TAG "String_test"
 #include <utils/Log.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 
 #include <gtest/gtest.h>
 
 namespace android {
 
-class String8Test : public testing::Test {
+class StringTest : public testing::Test {
 protected:
     virtual void SetUp() {
     }
@@ -35,35 +35,35 @@ protected:
 
 using namespace android;
 
-TEST_F(String8Test, Cstr) {
-    String8 tmp("Hello, world!");
+TEST_F(StringTest, Cstr) {
+    String tmp("Hello, world!");
 
     EXPECT_STREQ(tmp.string(), "Hello, world!");
 }
 
-TEST_F(String8Test, OperatorPlus) {
-    String8 src1("Hello, ");
+TEST_F(StringTest, OperatorPlus) {
+    String src1("Hello, ");
 
-    // Test adding String8 + const char*
+    // Test adding String + const char*
     const char* ccsrc2 = "world!";
-    String8 dst1 = src1 + ccsrc2;
+    String dst1 = src1 + ccsrc2;
     EXPECT_STREQ(dst1.string(), "Hello, world!");
     EXPECT_STREQ(src1.string(), "Hello, ");
     EXPECT_STREQ(ccsrc2, "world!");
 
-    // Test adding String8 + String8
-    String8 ssrc2("world!");
-    String8 dst2 = src1 + ssrc2;
+    // Test adding String + String
+    String ssrc2("world!");
+    String dst2 = src1 + ssrc2;
     EXPECT_STREQ(dst2.string(), "Hello, world!");
     EXPECT_STREQ(src1.string(), "Hello, ");
     EXPECT_STREQ(ssrc2.string(), "world!");
 }
 
-TEST_F(String8Test, OperatorPlusEquals) {
-    String8 src1("My voice");
+TEST_F(StringTest, OperatorPlusEquals) {
+    String src1("My voice");
 
-    // Testing String8 += String8
-    String8 src2(" is my passport.");
+    // Testing String += String
+    String src2(" is my passport.");
     src1 += src2;
     EXPECT_STREQ(src1.string(), "My voice is my passport.");
     EXPECT_STREQ(src2.string(), " is my passport.");

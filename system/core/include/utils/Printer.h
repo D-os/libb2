@@ -82,23 +82,23 @@ private:
     char mFormatString[MAX_FORMAT_STRING];
 }; // class FdPrinter
 
-class String8;
+class String;
 
-// Print to a String8
-class String8Printer : public Printer {
+// Print to a String
+class StringPrinter : public Printer {
 public:
-    // Create a printer using the specified String8 as the target.
+    // Create a printer using the specified String as the target.
     // - In addition, each line will be prefixed with the 'prefix' string.
-    // - target's memory lifetime must be a superset of this String8Printer.
-    String8Printer(String8* target, const char* prefix = 0);
+    // - target's memory lifetime must be a superset of this StringPrinter.
+    StringPrinter(String* target, const char* prefix = 0);
 
-    // Append the specified line to the String8. \n is appended automatically.
+    // Append the specified line to the String. \n is appended automatically.
     virtual void printLine(const char* string);
 
 private:
-    String8* mTarget;
+    String* mTarget;
     const char* mPrefix;
-}; // class String8Printer
+}; // class StringPrinter
 
 // Print to an existing Printer by adding a prefix to each line
 class PrefixPrinter : public Printer {

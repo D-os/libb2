@@ -21,7 +21,7 @@
 #include <binder/IPCThreadState.h>
 #include <binder/IServiceManager.h>
 #include <binder/PermissionCache.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 
 namespace android {
 
@@ -35,7 +35,7 @@ PermissionCache::PermissionCache() {
 }
 
 status_t PermissionCache::check(bool* granted,
-        const String16& permission, uid_t uid) const {
+        const String& permission, uid_t uid) const {
     Mutex::Autolock _l(mLock);
     Entry e;
     e.name = permission;
@@ -48,7 +48,7 @@ status_t PermissionCache::check(bool* granted,
     return NAME_NOT_FOUND;
 }
 
-void PermissionCache::cache(const String16& permission,
+void PermissionCache::cache(const String& permission,
         uid_t uid, bool granted) {
     Mutex::Autolock _l(mLock);
     Entry e;
@@ -74,12 +74,12 @@ void PermissionCache::purge() {
     mCache.clear();
 }
 
-bool PermissionCache::checkCallingPermission(const String16& permission) {
+bool PermissionCache::checkCallingPermission(const String& permission) {
     return PermissionCache::checkCallingPermission(permission, NULL, NULL);
 }
 
 bool PermissionCache::checkCallingPermission(
-        const String16& permission, int32_t* outPid, int32_t* outUid) {
+        const String& permission, int32_t* outPid, int32_t* outUid) {
     IPCThreadState* ipcState = IPCThreadState::self();
     pid_t pid = ipcState->getCallingPid();
     uid_t uid = ipcState->getCallingUid();
@@ -89,7 +89,7 @@ bool PermissionCache::checkCallingPermission(
 }
 
 bool PermissionCache::checkPermission(
-        const String16& permission, pid_t pid, uid_t uid) {
+        const String& permission, pid_t pid, uid_t uid) {
     if ((uid == 0) || (pid == getpid())) {
         // root and ourselves is always okay
         return true;
@@ -102,7 +102,7 @@ bool PermissionCache::checkPermission(
         granted = android::checkPermission(permission, pid, uid);
         t += systemTime();
         ALOGD("checking %s for uid=%d => %s (%d us)",
-                String8(permission).string(), uid,
+                String(permission).string(), uid,
                 granted?"granted":"denied", (int)ns2us(t));
         pc.cache(permission, uid, granted);
     }

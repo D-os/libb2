@@ -96,14 +96,14 @@ public:
 
     AppOpsManager();
 
-    int32_t checkOp(int32_t op, int32_t uid, const String16& callingPackage);
-    int32_t noteOp(int32_t op, int32_t uid, const String16& callingPackage);
-    int32_t startOp(int32_t op, int32_t uid, const String16& callingPackage);
-    void finishOp(int32_t op, int32_t uid, const String16& callingPackage);
-    void startWatchingMode(int32_t op, const String16& packageName,
+    int32_t checkOp(int32_t op, int32_t uid, const String& callingPackage);
+    int32_t noteOp(int32_t op, int32_t uid, const String& callingPackage);
+    int32_t startOp(int32_t op, int32_t uid, const String& callingPackage);
+    void finishOp(int32_t op, int32_t uid, const String& callingPackage);
+    void startWatchingMode(int32_t op, const String& packageName,
             const sp<IAppOpsCallback>& callback);
     void stopWatchingMode(const sp<IAppOpsCallback>& callback);
-    int32_t permissionToOpCode(const String16& permission);
+    int32_t permissionToOpCode(const String& permission);
 
 private:
     Mutex mLock;

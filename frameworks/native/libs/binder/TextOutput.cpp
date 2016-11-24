@@ -18,8 +18,7 @@
 
 #include <binder/Debug.h>
 
-#include <utils/String8.h>
-#include <utils/String16.h>
+#include <utils/String.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,15 +121,9 @@ TextOutput& operator<<(TextOutput& to, const void* val)
     return to;
 }
 
-TextOutput& operator<<(TextOutput& to, const String8& val)
+TextOutput& operator<<(TextOutput& to, const String& val)
 {
     to << val.string();
-    return to;
-}
-
-TextOutput& operator<<(TextOutput& to, const String16& val)
-{
-    to << String8(val).string();
     return to;
 }
 

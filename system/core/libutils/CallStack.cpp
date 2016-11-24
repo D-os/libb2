@@ -48,7 +48,7 @@ void CallStack::update(int32_t ignoreDepth, pid_t tid) {
     if (strings == NULL) {
         ALOGW("%s: Failed to unwind callstack.", __FUNCTION__);
     } else for (int i = 0; i < nptrs; i++) {
-        mFrameLines.push_back(String8(strings[i]));
+        mFrameLines.push_back(String(strings[i]));
     }
 #else
     ALOGW("%s: Callstack not supported.", __FUNCTION__);
@@ -65,10 +65,10 @@ void CallStack::dump(int fd, int indent, const char* prefix) const {
     print(printer);
 }
 
-String8 CallStack::toString(const char* prefix) const {
-    String8 str;
+String CallStack::toString(const char* prefix) const {
+    String str;
 
-    String8Printer printer(&str, prefix);
+    StringPrinter printer(&str, prefix);
     print(printer);
 
     return str;

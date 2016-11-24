@@ -20,7 +20,7 @@
 #include <stdint.h>
 
 #include <utils/Errors.h>
-#include <utils/String16.h>
+#include <utils/String.h>
 
 #include <binder/IServiceManager.h>
 #include <binder/IPCThreadState.h>

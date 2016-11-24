@@ -18,7 +18,7 @@
 #include <binder/IServiceManager.h>
 
 #include <utils/Log.h>
-#include <utils/String16.h>
+#include <utils/String.h>
 
 namespace android {
 
@@ -60,7 +60,7 @@ status_t ProcessInfoService::getProcessStatesImpl(size_t length, /*in*/ int32_t*
 void ProcessInfoService::updateBinderLocked() {
     const sp<IServiceManager> sm(defaultServiceManager());
     if (sm != NULL) {
-        const String16 name("processinfo");
+        const String name("processinfo");
         mProcessInfoService = interface_cast<IProcessInfoService>(sm->checkService(name));
     }
 }

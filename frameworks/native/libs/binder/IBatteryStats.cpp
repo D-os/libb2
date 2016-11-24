@@ -18,7 +18,7 @@
 
 #include <utils/Log.h>
 #include <binder/Parcel.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 
 #include <private/binder/Static.h>
 

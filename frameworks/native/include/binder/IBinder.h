@@ -19,7 +19,7 @@
 
 #include <utils/Errors.h>
 #include <utils/RefBase.h>
-#include <utils/String16.h>
+#include <utils/String.h>
 #include <utils/Vector.h>
 
 
@@ -64,17 +64,17 @@ public:
      * @a descriptor.  If it does, the base pointer to it is returned,
      * which you can safely static_cast<> to the concrete C++ interface.
      */
-    virtual sp<IInterface>  queryLocalInterface(const String16& descriptor);
+    virtual sp<IInterface>  queryLocalInterface(const String& descriptor);
 
     /**
      * Return the canonical name of the interface provided by this IBinder
      * object.
      */
-    virtual const String16& getInterfaceDescriptor() const = 0;
+    virtual const String&   getInterfaceDescriptor() const = 0;
 
     virtual bool            isBinderAlive() const = 0;
     virtual status_t        pingBinder() = 0;
-    virtual status_t        dump(int fd, const Vector<String16>& args) = 0;
+    virtual status_t        dump(int fd, const Vector<String>& args) = 0;
 
     virtual status_t        transact(   uint32_t code,
                                         const Parcel& data,

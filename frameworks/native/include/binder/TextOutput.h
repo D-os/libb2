@@ -25,8 +25,7 @@
 // ---------------------------------------------------------------------------
 namespace android {
 
-class String8;
-class String16;
+class String;
 
 class TextOutput
 {
@@ -79,8 +78,7 @@ TextOutput& operator<<(TextOutput& to, float);
 TextOutput& operator<<(TextOutput& to, double);
 TextOutput& operator<<(TextOutput& to, TextOutputManipFunc func);
 TextOutput& operator<<(TextOutput& to, const void*);
-TextOutput& operator<<(TextOutput& to, const String8& val);
-TextOutput& operator<<(TextOutput& to, const String16& val);
+TextOutput& operator<<(TextOutput& to, const String& val);
 
 class TypeCode 
 {
