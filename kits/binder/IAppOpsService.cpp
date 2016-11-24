@@ -20,7 +20,7 @@
 
 #include <utils/Log.h>
 #include <binder/Parcel.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 
 #include <private/binder/Static.h>
 
@@ -36,24 +36,24 @@ public:
     {
     }
 
-    virtual int32_t checkOperation(int32_t code, int32_t uid, const String16& packageName) {
+    virtual int32_t checkOperation(int32_t code, int32_t uid, const String& packageName) {
         Parcel data, reply;
         data.writeInterfaceToken(IAppOpsService::getInterfaceDescriptor());
         data.writeInt32(code);
         data.writeInt32(uid);
-        data.writeString16(packageName);
+        data.writeString(packageName);
         remote()->transact(CHECK_OPERATION_TRANSACTION, data, &reply);
         // fail on exception
         if (reply.readExceptionCode() != 0) return MODE_ERRORED;
         return reply.readInt32();
     }
 
-    virtual int32_t noteOperation(int32_t code, int32_t uid, const String16& packageName) {
+    virtual int32_t noteOperation(int32_t code, int32_t uid, const String& packageName) {
         Parcel data, reply;
         data.writeInterfaceToken(IAppOpsService::getInterfaceDescriptor());
         data.writeInt32(code);
         data.writeInt32(uid);
-        data.writeString16(packageName);
+        data.writeString(packageName);
         remote()->transact(NOTE_OPERATION_TRANSACTION, data, &reply);
         // fail on exception
         if (reply.readExceptionCode() != 0) return MODE_ERRORED;
@@ -61,13 +61,13 @@ public:
     }
 
     virtual int32_t startOperation(const sp<IBinder>& token, int32_t code, int32_t uid,
-                const String16& packageName) {
+                const String& packageName) {
         Parcel data, reply;
         data.writeInterfaceToken(IAppOpsService::getInterfaceDescriptor());
         data.writeStrongBinder(token);
         data.writeInt32(code);
         data.writeInt32(uid);
-        data.writeString16(packageName);
+        data.writeString(packageName);
         remote()->transact(START_OPERATION_TRANSACTION, data, &reply);
         // fail on exception
         if (reply.readExceptionCode() != 0) return MODE_ERRORED;
@@ -75,22 +75,22 @@ public:
     }
 
     virtual void finishOperation(const sp<IBinder>& token, int32_t code, int32_t uid,
-            const String16& packageName) {
+            const String& packageName) {
         Parcel data, reply;
         data.writeInterfaceToken(IAppOpsService::getInterfaceDescriptor());
         data.writeStrongBinder(token);
         data.writeInt32(code);
         data.writeInt32(uid);
-        data.writeString16(packageName);
+        data.writeString(packageName);
         remote()->transact(FINISH_OPERATION_TRANSACTION, data, &reply);
     }
 
-    virtual void startWatchingMode(int32_t op, const String16& packageName,
+    virtual void startWatchingMode(int32_t op, const String& packageName,
             const sp<IAppOpsCallback>& callback) {
         Parcel data, reply;
         data.writeInterfaceToken(IAppOpsService::getInterfaceDescriptor());
         data.writeInt32(op);
-        data.writeString16(packageName);
+        data.writeString(packageName);
         data.writeStrongBinder(IInterface::asBinder(callback));
         remote()->transact(START_WATCHING_MODE_TRANSACTION, data, &reply);
     }
@@ -113,10 +113,10 @@ public:
     }
 
 
-    virtual int32_t permissionToOpCode(const String16& permission) {
+    virtual int32_t permissionToOpCode(const String& permission) {
         Parcel data, reply;
         data.writeInterfaceToken(IAppOpsService::getInterfaceDescriptor());
-        data.writeString16(permission);
+        data.writeString(permission);
         remote()->transact(PERMISSION_TO_OP_CODE_TRANSACTION, data, &reply);
         // fail on exception
         if (reply.readExceptionCode() != 0) return -1;
@@ -137,7 +137,7 @@ status_t BnAppOpsService::onTransact(
             CHECK_INTERFACE(IAppOpsService, data, reply);
             int32_t code = data.readInt32();
             int32_t uid = data.readInt32();
-            String16 packageName = data.readString16();
+            String packageName = data.readString();
             int32_t res = checkOperation(code, uid, packageName);
             reply->writeNoException();
             reply->writeInt32(res);
@@ -147,7 +147,7 @@ status_t BnAppOpsService::onTransact(
             CHECK_INTERFACE(IAppOpsService, data, reply);
             int32_t code = data.readInt32();
             int32_t uid = data.readInt32();
-            String16 packageName = data.readString16();
+            String packageName = data.readString();
             int32_t res = noteOperation(code, uid, packageName);
             reply->writeNoException();
             reply->writeInt32(res);
@@ -158,7 +158,7 @@ status_t BnAppOpsService::onTransact(
             sp<IBinder> token = data.readStrongBinder();
             int32_t code = data.readInt32();
             int32_t uid = data.readInt32();
-            String16 packageName = data.readString16();
+            String packageName = data.readString();
             int32_t res = startOperation(token, code, uid, packageName);
             reply->writeNoException();
             reply->writeInt32(res);
@@ -169,7 +169,7 @@ status_t BnAppOpsService::onTransact(
             sp<IBinder> token = data.readStrongBinder();
             int32_t code = data.readInt32();
             int32_t uid = data.readInt32();
-            String16 packageName = data.readString16();
+            String packageName = data.readString();
             finishOperation(token, code, uid, packageName);
             reply->writeNoException();
             return NO_ERROR;
@@ -177,7 +177,7 @@ status_t BnAppOpsService::onTransact(
         case START_WATCHING_MODE_TRANSACTION: {
             CHECK_INTERFACE(IAppOpsService, data, reply);
             int32_t op = data.readInt32();
-            String16 packageName = data.readString16();
+            String packageName = data.readString();
             sp<IAppOpsCallback> callback = interface_cast<IAppOpsCallback>(data.readStrongBinder());
             startWatchingMode(op, packageName, callback);
             reply->writeNoException();
@@ -200,7 +200,7 @@ status_t BnAppOpsService::onTransact(
         } break;
         case PERMISSION_TO_OP_CODE_TRANSACTION: {
             CHECK_INTERFACE(IAppOpsService, data, reply);
-            String16 permission = data.readString16();
+            String permission = data.readString();
             const int32_t opCode = permissionToOpCode(permission);
             reply->writeNoException();
             reply->writeInt32(opCode);

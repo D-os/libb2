@@ -185,7 +185,7 @@ public:
 
     void printRefs() const
     {
-        String8 text;
+        String text;
 
         {
             Mutex::Autolock _l(mMutex);
@@ -288,7 +288,7 @@ private:
         }
     }
 
-    void printRefsLocked(String8* out, const ref_entry* refs) const
+    void printRefsLocked(String* out, const ref_entry* refs) const
     {
         char buf[128];
         while (refs) {

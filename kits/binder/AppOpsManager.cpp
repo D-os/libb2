@@ -22,7 +22,7 @@
 
 namespace android {
 
-static String16 _appops("appops");
+static String _appops("appops");
 static pthread_mutex_t gTokenMutex = PTHREAD_MUTEX_INITIALIZER;
 static sp<IBinder> gToken;
 
@@ -65,31 +65,31 @@ sp<IAppOpsService> AppOpsManager::getService()
     return service;
 }
 
-int32_t AppOpsManager::checkOp(int32_t op, int32_t uid, const String16& callingPackage)
+int32_t AppOpsManager::checkOp(int32_t op, int32_t uid, const String &callingPackage)
 {
     sp<IAppOpsService> service = getService();
     return service != NULL ? service->checkOperation(op, uid, callingPackage) : MODE_IGNORED;
 }
 
-int32_t AppOpsManager::noteOp(int32_t op, int32_t uid, const String16& callingPackage) {
+int32_t AppOpsManager::noteOp(int32_t op, int32_t uid, const String& callingPackage) {
     sp<IAppOpsService> service = getService();
     return service != NULL ? service->noteOperation(op, uid, callingPackage) : MODE_IGNORED;
 }
 
-int32_t AppOpsManager::startOp(int32_t op, int32_t uid, const String16& callingPackage) {
+int32_t AppOpsManager::startOp(int32_t op, int32_t uid, const String& callingPackage) {
     sp<IAppOpsService> service = getService();
     return service != NULL ? service->startOperation(getToken(service), op, uid, callingPackage)
             : MODE_IGNORED;
 }
 
-void AppOpsManager::finishOp(int32_t op, int32_t uid, const String16& callingPackage) {
+void AppOpsManager::finishOp(int32_t op, int32_t uid, const String& callingPackage) {
     sp<IAppOpsService> service = getService();
     if (service != NULL) {
         service->finishOperation(getToken(service), op, uid, callingPackage);
     }
 }
 
-void AppOpsManager::startWatchingMode(int32_t op, const String16& packageName,
+void AppOpsManager::startWatchingMode(int32_t op, const String& packageName,
         const sp<IAppOpsCallback>& callback) {
     sp<IAppOpsService> service = getService();
     if (service != NULL) {
@@ -104,7 +104,7 @@ void AppOpsManager::stopWatchingMode(const sp<IAppOpsCallback>& callback) {
     }
 }
 
-int32_t AppOpsManager::permissionToOpCode(const String16& permission) {
+int32_t AppOpsManager::permissionToOpCode(const String& permission) {
     sp<IAppOpsService> service = getService();
     if (service != NULL) {
         return service->permissionToOpCode(permission);

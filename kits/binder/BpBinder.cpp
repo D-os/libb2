@@ -103,7 +103,7 @@ bool BpBinder::isDescriptorCached() const {
     return mDescriptorCache.size() ? true : false;
 }
 
-const String16& BpBinder::getInterfaceDescriptor() const
+const String &BpBinder::getInterfaceDescriptor() const
 {
     if (isDescriptorCached() == false) {
         Parcel send, reply;
@@ -111,7 +111,7 @@ const String16& BpBinder::getInterfaceDescriptor() const
         status_t err = const_cast<BpBinder*>(this)->transact(
                 INTERFACE_TRANSACTION, send, &reply);
         if (err == NO_ERROR) {
-            String16 res(reply.readString16());
+            String res(reply.readString());
             Mutex::Autolock _l(mLock);
             // mDescriptorCache could have been assigned while the lock was
             // released.
@@ -142,7 +142,7 @@ status_t BpBinder::pingBinder()
     return (status_t)reply.readInt32();
 }
 
-status_t BpBinder::dump(int fd, const Vector<String16>& args)
+status_t BpBinder::dump(int fd, const Vector<String> &args)
 {
     Parcel send;
     Parcel reply;
@@ -150,7 +150,7 @@ status_t BpBinder::dump(int fd, const Vector<String16>& args)
     const size_t numArgs = args.size();
     send.writeInt32(numArgs);
     for (size_t i = 0; i < numArgs; i++) {
-        send.writeString16(args[i]);
+        send.writeString(args[i]);
     }
     status_t err = transact(DUMP_TRANSACTION, send, &reply);
     return err;

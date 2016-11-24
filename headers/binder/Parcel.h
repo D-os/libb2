@@ -20,7 +20,7 @@
 #include <cutils/native_handle.h>
 #include <utils/Errors.h>
 #include <utils/RefBase.h>
-#include <utils/String16.h>
+#include <utils/String.h>
 #include <utils/Vector.h>
 #include <utils/Flattenable.h>
 #include <linux/binder.h>
@@ -33,7 +33,7 @@ template <typename T> class LightFlattenable;
 class IBinder;
 class IPCThreadState;
 class ProcessState;
-class String8;
+class String;
 class TextOutput;
 
 class Parcel {
@@ -67,7 +67,7 @@ public:
     bool                hasFileDescriptors() const;
 
     // Writes the RPC header.
-    status_t            writeInterfaceToken(const String16& interface);
+    status_t            writeInterfaceToken(const String& interface);
 
     // Parses the RPC header, returning true if the interface name
     // in the header matches the expected interface from the caller.
@@ -76,7 +76,7 @@ public:
     // propagating the StrictMode policy mask, populating the current
     // IPCThreadState, which as an optimization may optionally be
     // passed in.
-    bool                enforceInterface(const String16& interface,
+    bool                enforceInterface(const String& interface,
                                          IPCThreadState* threadState = NULL) const;
     bool                checkInterface(IBinder*) const;
 
@@ -101,9 +101,7 @@ public:
     status_t            writeFloat(float val);
     status_t            writeDouble(double val);
     status_t            writeCString(const char* str);
-    status_t            writeString8(const String8& str);
-    status_t            writeString16(const String16& str);
-    status_t            writeString16(const char16_t* str, size_t len);
+    status_t            writeString(const String& str);
     status_t            writeStrongBinder(const sp<IBinder>& val);
     status_t            writeWeakBinder(const wp<IBinder>& val);
     status_t            writeInt32Array(size_t len, const int32_t *val);
@@ -171,9 +169,7 @@ public:
     status_t            readIntPtr(intptr_t *pArg) const;
 
     const char*         readCString() const;
-    String8             readString8() const;
-    String16            readString16() const;
-    const char16_t*     readString16Inplace(size_t* outLen) const;
+    String              readString() const;
     sp<IBinder>         readStrongBinder() const;
     wp<IBinder>         readWeakBinder() const;
 

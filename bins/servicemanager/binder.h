@@ -86,11 +86,10 @@ void bio_init(struct binder_io *bio, void *data,
 void bio_put_obj(struct binder_io *bio, void *ptr);
 void bio_put_ref(struct binder_io *bio, uint32_t handle);
 void bio_put_uint32(struct binder_io *bio, uint32_t n);
-void bio_put_string16(struct binder_io *bio, const uint16_t *str);
-void bio_put_string16_x(struct binder_io *bio, const char *_str);
+void bio_put_string(struct binder_io *bio, const char *str);
 
 uint32_t bio_get_uint32(struct binder_io *bio);
-uint16_t *bio_get_string16(struct binder_io *bio, size_t *sz);
+char *bio_get_string(struct binder_io *bio, size_t *sz);
 uint32_t bio_get_ref(struct binder_io *bio);
 
 #endif

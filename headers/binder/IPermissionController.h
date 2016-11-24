@@ -30,11 +30,11 @@ class IPermissionController : public IInterface
 public:
     DECLARE_META_INTERFACE(PermissionController);
 
-    virtual bool checkPermission(const String16& permission, int32_t pid, int32_t uid) = 0;
+    virtual bool checkPermission(const String& permission, int32_t pid, int32_t uid) = 0;
 
-    virtual void getPackagesForUid(const uid_t uid, Vector<String16> &packages) = 0;
+    virtual void getPackagesForUid(const uid_t uid, Vector<String> &packages) = 0;
 
-    virtual bool isRuntimePermission(const String16& permission) = 0;
+    virtual bool isRuntimePermission(const String& permission) = 0;
 
     enum {
         CHECK_PERMISSION_TRANSACTION = IBinder::FIRST_CALL_TRANSACTION,

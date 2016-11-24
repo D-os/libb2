@@ -18,7 +18,7 @@
 #define _UTILS_PROPERTY_MAP_H
 
 #include <utils/KeyedVector.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 #include <utils/Errors.h>
 #include <utils/Tokenizer.h>
 
@@ -57,28 +57,28 @@ public:
     /* Adds a property.
      * Replaces the property with the same key if it is already present.
      */
-    void addProperty(const String8& key, const String8& value);
+    void addProperty(const String& key, const String& value);
 
     /* Returns true if the property map contains the specified key. */
-    bool hasProperty(const String8& key) const;
+    bool hasProperty(const String& key) const;
 
     /* Gets the value of a property and parses it.
      * Returns true and sets outValue if the key was found and its value was parsed successfully.
      * Otherwise returns false and does not modify outValue.  (Also logs a warning.)
      */
-    bool tryGetProperty(const String8& key, String8& outValue) const;
-    bool tryGetProperty(const String8& key, bool& outValue) const;
-    bool tryGetProperty(const String8& key, int32_t& outValue) const;
-    bool tryGetProperty(const String8& key, float& outValue) const;
+    bool tryGetProperty(const String& key, String& outValue) const;
+    bool tryGetProperty(const String& key, bool& outValue) const;
+    bool tryGetProperty(const String& key, int32_t& outValue) const;
+    bool tryGetProperty(const String& key, float& outValue) const;
 
     /* Adds all values from the specified property map. */
     void addAll(const PropertyMap* map);
 
     /* Gets the underlying property map. */
-    inline const KeyedVector<String8, String8>& getProperties() const { return mProperties; }
+    inline const KeyedVector<String, String>& getProperties() const { return mProperties; }
 
     /* Loads a property map from a file. */
-    static status_t load(const String8& filename, PropertyMap** outMap);
+    static status_t load(const String& filename, PropertyMap** outMap);
 
 private:
     class Parser {
@@ -94,11 +94,11 @@ private:
         status_t parseType();
         status_t parseKey();
         status_t parseKeyProperty();
-        status_t parseModifier(const String8& token, int32_t* outMetaState);
-        status_t parseCharacterLiteral(char16_t* outCharacter);
+        status_t parseModifier(const String& token, int32_t* outMetaState);
+        status_t parseCharacterLiteral(char* outCharacter);
     };
 
-    KeyedVector<String8, String8> mProperties;
+    KeyedVector<String, String> mProperties;
 };
 
 } // namespace android

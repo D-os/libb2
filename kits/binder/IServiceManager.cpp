@@ -21,7 +21,7 @@
 #include <utils/Log.h>
 #include <binder/IPCThreadState.h>
 #include <binder/Parcel.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 #include <utils/SystemClock.h>
 
 #include <private/binder/Static.h>
@@ -47,15 +47,15 @@ sp<IServiceManager> defaultServiceManager()
     return gDefaultServiceManager;
 }
 
-bool checkCallingPermission(const String16& permission)
+bool checkCallingPermission(const String& permission)
 {
     return checkCallingPermission(permission, NULL, NULL);
 }
 
-static String16 _permission("permission");
+static String _permission("permission");
 
 
-bool checkCallingPermission(const String16& permission, int32_t* outPid, int32_t* outUid)
+bool checkCallingPermission(const String& permission, int32_t* outPid, int32_t* outUid)
 {
     IPCThreadState* ipcState = IPCThreadState::self();
     pid_t pid = ipcState->getCallingPid();
@@ -65,7 +65,7 @@ bool checkCallingPermission(const String16& permission, int32_t* outPid, int32_t
     return checkPermission(permission, pid, uid);
 }
 
-bool checkPermission(const String16& permission, pid_t pid, uid_t uid)
+bool checkPermission(const String &permission, pid_t pid, uid_t uid)
 {
     sp<IPermissionController> pc;
     gDefaultServiceManagerLock.lock();
@@ -81,7 +81,7 @@ bool checkPermission(const String16& permission, pid_t pid, uid_t uid)
                 if (startTime != 0) {
                     ALOGI("Check passed after %d seconds for %s from uid=%d pid=%d",
                             (int)((uptimeMillis()-startTime)/1000),
-                            String8(permission).string(), uid, pid);
+                            String(permission).string(), uid, pid);
                 }
                 return res;
             }
@@ -89,7 +89,7 @@ bool checkPermission(const String16& permission, pid_t pid, uid_t uid)
             // Is this a permission failure, or did the controller go away?
             if (IInterface::asBinder(pc)->isBinderAlive()) {
                 ALOGW("Permission failure: %s from uid=%d pid=%d",
-                        String8(permission).string(), uid, pid);
+                        String(permission).string(), uid, pid);
                 return false;
             }
             
@@ -108,7 +108,7 @@ bool checkPermission(const String16& permission, pid_t pid, uid_t uid)
             if (startTime == 0) {
                 startTime = uptimeMillis();
                 ALOGI("Waiting to check permission %s from uid=%d pid=%d",
-                        String8(permission).string(), uid, pid);
+                        String(permission).string(), uid, pid);
             }
             sleep(1);
         } else {
@@ -131,42 +131,42 @@ public:
     {
     }
 
-    virtual sp<IBinder> getService(const String16& name) const
+    virtual sp<IBinder> getService(const String& name) const
     {
         unsigned n;
         for (n = 0; n < 5; n++){
             sp<IBinder> svc = checkService(name);
             if (svc != NULL) return svc;
-            ALOGI("Waiting for service %s...\n", String8(name).string());
+            ALOGI("Waiting for service %s...\n", String(name).string());
             sleep(1);
         }
         return NULL;
     }
 
-    virtual sp<IBinder> checkService( const String16& name) const
+    virtual sp<IBinder> checkService( const String& name) const
     {
         Parcel data, reply;
         data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
-        data.writeString16(name);
+        data.writeString(name);
         remote()->transact(CHECK_SERVICE_TRANSACTION, data, &reply);
         return reply.readStrongBinder();
     }
 
-    virtual status_t addService(const String16& name, const sp<IBinder>& service,
+    virtual status_t addService(const String& name, const sp<IBinder>& service,
             bool allowIsolated)
     {
         Parcel data, reply;
         data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
-        data.writeString16(name);
+        data.writeString(name);
         data.writeStrongBinder(service);
         data.writeInt32(allowIsolated ? 1 : 0);
         status_t err = remote()->transact(ADD_SERVICE_TRANSACTION, data, &reply);
         return err == NO_ERROR ? reply.readExceptionCode() : err;
     }
 
-    virtual Vector<String16> listServices()
+    virtual Vector<String> listServices()
     {
-        Vector<String16> res;
+        Vector<String> res;
         int n = 0;
 
         for (;;) {
@@ -176,7 +176,7 @@ public:
             status_t err = remote()->transact(LIST_SERVICES_TRANSACTION, data, &reply);
             if (err != NO_ERROR)
                 break;
-            res.add(reply.readString16());
+            res.add(reply.readString());
         }
         return res;
     }
@@ -193,21 +193,21 @@ status_t BnServiceManager::onTransact(
     switch(code) {
         case GET_SERVICE_TRANSACTION: {
             CHECK_INTERFACE(IServiceManager, data, reply);
-            String16 which = data.readString16();
+            String which = data.readString();
             sp<IBinder> b = const_cast<BnServiceManager*>(this)->getService(which);
             reply->writeStrongBinder(b);
             return NO_ERROR;
         } break;
         case CHECK_SERVICE_TRANSACTION: {
             CHECK_INTERFACE(IServiceManager, data, reply);
-            String16 which = data.readString16();
+            String which = data.readString();
             sp<IBinder> b = const_cast<BnServiceManager*>(this)->checkService(which);
             reply->writeStrongBinder(b);
             return NO_ERROR;
         } break;
         case ADD_SERVICE_TRANSACTION: {
             CHECK_INTERFACE(IServiceManager, data, reply);
-            String16 which = data.readString16();
+            String which = data.readString();
             sp<IBinder> b = data.readStrongBinder();
             status_t err = addService(which, b);
             reply->writeInt32(err);
@@ -215,11 +215,11 @@ status_t BnServiceManager::onTransact(
         } break;
         case LIST_SERVICES_TRANSACTION: {
             CHECK_INTERFACE(IServiceManager, data, reply);
-            Vector<String16> list = listServices();
+            Vector<String> list = listServices();
             const size_t N = list.size();
             reply->writeInt32(N);
             for (size_t i=0; i<N; i++) {
-                reply->writeString16(list[i]);
+                reply->writeString(list[i]);
             }
             return NO_ERROR;
         } break;

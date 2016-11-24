@@ -50,8 +50,8 @@ template<typename INTERFACE>
 class BnInterface : public INTERFACE, public BBinder
 {
 public:
-    virtual sp<IInterface>      queryLocalInterface(const String16& _descriptor);
-    virtual const String16&     getInterfaceDescriptor() const;
+    virtual sp<IInterface>      queryLocalInterface(const String& _descriptor);
+    virtual const String&       getInterfaceDescriptor() const;
 
 protected:
     virtual IBinder*            onAsBinder();
@@ -72,17 +72,17 @@ protected:
 // ----------------------------------------------------------------------
 
 #define DECLARE_META_INTERFACE(INTERFACE)                               \
-    static const android::String16 descriptor;                          \
+    static const android::String descriptor;                            \
     static android::sp<I##INTERFACE> asInterface(                       \
             const android::sp<android::IBinder>& obj);                  \
-    virtual const android::String16& getInterfaceDescriptor() const;    \
+    virtual const android::String& getInterfaceDescriptor() const;      \
     I##INTERFACE();                                                     \
     virtual ~I##INTERFACE();                                            \
 
 
 #define IMPLEMENT_META_INTERFACE(INTERFACE, NAME)                       \
-    const android::String16 I##INTERFACE::descriptor(NAME);             \
-    const android::String16&                                            \
+    const android::String I##INTERFACE::descriptor(NAME);               \
+    const android::String&                                              \
             I##INTERFACE::getInterfaceDescriptor() const {              \
         return I##INTERFACE::descriptor;                                \
     }                                                                   \
@@ -112,15 +112,14 @@ protected:
 // No user-serviceable parts after this...
 
 template<typename INTERFACE>
-inline sp<IInterface> BnInterface<INTERFACE>::queryLocalInterface(
-        const String16& _descriptor)
+inline sp<IInterface> BnInterface<INTERFACE>::queryLocalInterface(const String &_descriptor)
 {
     if (_descriptor == INTERFACE::descriptor) return this;
     return NULL;
 }
 
 template<typename INTERFACE>
-inline const String16& BnInterface<INTERFACE>::getInterfaceDescriptor() const
+inline const String &BnInterface<INTERFACE>::getInterfaceDescriptor() const
 {
     return INTERFACE::getInterfaceDescriptor();
 }

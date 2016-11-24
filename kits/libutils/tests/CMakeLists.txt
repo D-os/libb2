@@ -9,7 +9,7 @@ add_executable(libutils_tests
     BitSet_test.cpp
     Looper_test.cpp
     LruCache_test.cpp
-    String8_test.cpp
+    String_test.cpp
     Unicode_test.cpp
     Vector_test.cpp
 )

@@ -35,7 +35,7 @@ static inline bool isDelimiter(char ch, const char* delimiters) {
     return strchr(delimiters, ch) != NULL;
 }
 
-Tokenizer::Tokenizer(const String8& filename, FileMap* fileMap, char* buffer,
+Tokenizer::Tokenizer(const String& filename, FileMap* fileMap, char* buffer,
         bool ownBuffer, size_t length) :
         mFilename(filename), mFileMap(fileMap),
         mBuffer(buffer), mOwnBuffer(ownBuffer), mLength(length),
@@ -49,7 +49,7 @@ Tokenizer::~Tokenizer() {
     }
 }
 
-status_t Tokenizer::open(const String8& filename, Tokenizer** outTokenizer) {
+status_t Tokenizer::open(const String& filename, Tokenizer** outTokenizer) {
     *outTokenizer = NULL;
 
     int result = NO_ERROR;
@@ -100,20 +100,20 @@ status_t Tokenizer::open(const String8& filename, Tokenizer** outTokenizer) {
     return result;
 }
 
-status_t Tokenizer::fromContents(const String8& filename,
+status_t Tokenizer::fromContents(const String& filename,
         const char* contents, Tokenizer** outTokenizer) {
     *outTokenizer = new Tokenizer(filename, NULL,
             const_cast<char*>(contents), false, strlen(contents));
     return OK;
 }
 
-String8 Tokenizer::getLocation() const {
-    String8 result;
+String Tokenizer::getLocation() const {
+    String result;
     result.appendFormat("%s:%d", mFilename.string(), mLineNumber);
     return result;
 }
 
-String8 Tokenizer::peekRemainderOfLine() const {
+String Tokenizer::peekRemainderOfLine() const {
     const char* end = getEnd();
     const char* eol = mCurrent;
     while (eol != end) {
@@ -123,10 +123,10 @@ String8 Tokenizer::peekRemainderOfLine() const {
         }
         eol += 1;
     }
-    return String8(mCurrent, eol - mCurrent);
+    return String(mCurrent, eol - mCurrent);
 }
 
-String8 Tokenizer::nextToken(const char* delimiters) {
+String Tokenizer::nextToken(const char* delimiters) {
 #if DEBUG_TOKENIZER
     ALOGD("nextToken");
 #endif
@@ -139,7 +139,7 @@ String8 Tokenizer::nextToken(const char* delimiters) {
         }
         mCurrent += 1;
     }
-    return String8(tokenStart, mCurrent - tokenStart);
+    return String(tokenStart, mCurrent - tokenStart);
 }
 
 void Tokenizer::nextLine() {

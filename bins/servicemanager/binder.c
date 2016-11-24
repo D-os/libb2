@@ -520,53 +520,26 @@ void bio_put_ref(struct binder_io *bio, uint32_t handle)
     obj->cookie = 0;
 }
 
-void bio_put_string16(struct binder_io *bio, const uint16_t *str)
+void bio_put_string(struct binder_io *bio, const char *str)
 {
     size_t len;
-    uint16_t *ptr;
+    char *ptr;
 
     if (!str) {
         bio_put_uint32(bio, 0xffffffff);
         return;
     }
 
-    len = 0;
-    while (str[len]) len++;
+    len = strlen(str);
 
-    if (len >= (MAX_BIO_SIZE / sizeof(uint16_t))) {
-        bio_put_uint32(bio, 0xffffffff);
-        return;
-    }
-
-    /* Note: The payload will carry 32bit size instead of size_t */
-    bio_put_uint32(bio, (uint32_t) len);
-    len = (len + 1) * sizeof(uint16_t);
-    ptr = bio_alloc(bio, len);
-    if (ptr)
-        memcpy(ptr, str, len);
-}
-
-void bio_put_string16_x(struct binder_io *bio, const char *_str)
-{
-    unsigned char *str = (unsigned char*) _str;
-    size_t len;
-    uint16_t *ptr;
-
-    if (!str) {
-        bio_put_uint32(bio, 0xffffffff);
-        return;
-    }
-
-    len = strlen(_str);
-
-    if (len >= (MAX_BIO_SIZE / sizeof(uint16_t))) {
+    if (len >= (MAX_BIO_SIZE)) {
         bio_put_uint32(bio, 0xffffffff);
         return;
     }
 
     /* Note: The payload will carry 32bit size instead of size_t */
     bio_put_uint32(bio, len);
-    ptr = bio_alloc(bio, (len + 1) * sizeof(uint16_t));
+    ptr = bio_alloc(bio, (len + 1));
     if (!ptr)
         return;
 
@@ -597,7 +570,7 @@ uint32_t bio_get_uint32(struct binder_io *bio)
     return ptr ? *ptr : 0;
 }
 
-uint16_t *bio_get_string16(struct binder_io *bio, size_t *sz)
+char *bio_get_string(struct binder_io *bio, size_t *sz)
 {
     size_t len;
 
@@ -605,7 +578,7 @@ uint16_t *bio_get_string16(struct binder_io *bio, size_t *sz)
     len = (size_t) bio_get_uint32(bio);
     if (sz)
         *sz = len;
-    return bio_get(bio, (len + 1) * sizeof(uint16_t));
+    return bio_get(bio, (len + 1));
 }
 
 static struct flat_binder_object *_bio_get_obj(struct binder_io *bio)

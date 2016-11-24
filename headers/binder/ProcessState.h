@@ -19,8 +19,7 @@
 
 #include <binder/IBinder.h>
 #include <utils/KeyedVector.h>
-#include <utils/String8.h>
-#include <utils/String16.h>
+#include <utils/String.h>
 
 #include <utils/threads.h>
 
@@ -38,15 +37,15 @@ public:
 
             void                setContextObject(const sp<IBinder>& object);
             sp<IBinder>         getContextObject(const sp<IBinder>& caller);
-        
+
             void                setContextObject(const sp<IBinder>& object,
-                                                 const String16& name);
-            sp<IBinder>         getContextObject(const String16& name,
+                                                 const String& name);
+            sp<IBinder>         getContextObject(const String& name,
                                                  const sp<IBinder>& caller);
 
             void                startThreadPool();
-                        
-    typedef bool (*context_check_func)(const String16& name,
+
+    typedef bool (*context_check_func)(const String& name,
                                        const sp<IBinder>& caller,
                                        void* userData);
         
@@ -72,7 +71,7 @@ private:
 
                                 ProcessState(const ProcessState& o);
             ProcessState&       operator=(const ProcessState& o);
-            String8             makeBinderThreadName();
+            String              makeBinderThreadName();
 
             struct handle_entry {
                 IBinder* binder;
@@ -100,11 +99,11 @@ private:
             context_check_func  mBinderContextCheckFunc;
             void*               mBinderContextUserData;
 
-            KeyedVector<String16, sp<IBinder> >
+            KeyedVector<String, sp<IBinder> >
                                 mContexts;
 
 
-            String8             mRootDir;
+            String              mRootDir;
             bool                mThreadPoolStarted;
     volatile int32_t            mThreadPoolSeq;
 };

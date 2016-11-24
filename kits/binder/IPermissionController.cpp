@@ -20,7 +20,7 @@
 
 #include <utils/Log.h>
 #include <binder/Parcel.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 
 #include <private/binder/Static.h>
 
@@ -36,11 +36,11 @@ public:
     {
     }
 
-    virtual bool checkPermission(const String16& permission, int32_t pid, int32_t uid)
+    virtual bool checkPermission(const String& permission, int32_t pid, int32_t uid)
     {
         Parcel data, reply;
         data.writeInterfaceToken(IPermissionController::getInterfaceDescriptor());
-        data.writeString16(permission);
+        data.writeString(permission);
         data.writeInt32(pid);
         data.writeInt32(uid);
         remote()->transact(CHECK_PERMISSION_TRANSACTION, data, &reply);
@@ -49,7 +49,7 @@ public:
         return reply.readInt32() != 0;
     }
 
-    virtual void getPackagesForUid(const uid_t uid, Vector<String16>& packages)
+    virtual void getPackagesForUid(const uid_t uid, Vector<String>& packages)
     {
         Parcel data, reply;
         data.writeInterfaceToken(IPermissionController::getInterfaceDescriptor());
@@ -64,15 +64,15 @@ public:
             return;
         }
         for (int i = 0; i < size; i++) {
-            packages.push(reply.readString16());
+            packages.push(reply.readString());
         }
     }
 
-    virtual bool isRuntimePermission(const String16& permission)
+    virtual bool isRuntimePermission(const String& permission)
     {
         Parcel data, reply;
         data.writeInterfaceToken(IPermissionController::getInterfaceDescriptor());
-        data.writeString16(permission);
+        data.writeString(permission);
         remote()->transact(IS_RUNTIME_PERMISSION_TRANSACTION, data, &reply);
         // fail on exception
         if (reply.readExceptionCode() != 0) return false;
@@ -90,7 +90,7 @@ status_t BnPermissionController::onTransact(
     switch(code) {
         case CHECK_PERMISSION_TRANSACTION: {
             CHECK_INTERFACE(IPermissionController, data, reply);
-            String16 permission = data.readString16();
+            String permission = data.readString();
             int32_t pid = data.readInt32();
             int32_t uid = data.readInt32();
             bool res = checkPermission(permission, pid, uid);
@@ -102,20 +102,20 @@ status_t BnPermissionController::onTransact(
         case GET_PACKAGES_FOR_UID_TRANSACTION: {
             CHECK_INTERFACE(IPermissionController, data, reply);
             int32_t uid = data.readInt32();
-            Vector<String16> packages;
+            Vector<String> packages;
             getPackagesForUid(uid, packages);
             reply->writeNoException();
             size_t size = packages.size();
             reply->writeInt32(size);
             for (size_t i = 0; i < size; i++) {
-                reply->writeString16(packages[i]);
+                reply->writeString(packages[i]);
             }
             return NO_ERROR;
         } break;
 
         case IS_RUNTIME_PERMISSION_TRANSACTION: {
             CHECK_INTERFACE(IPermissionController, data, reply);
-            String16 permission = data.readString16();
+            String permission = data.readString();
             const bool res = isRuntimePermission(permission);
             reply->writeNoException();
             reply->writeInt32(res ? 1 : 0);

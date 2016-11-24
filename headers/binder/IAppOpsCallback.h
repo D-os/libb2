@@ -29,7 +29,7 @@ class IAppOpsCallback : public IInterface
 public:
     DECLARE_META_INTERFACE(AppOpsCallback);
 
-    virtual void opChanged(int32_t op, const String16& packageName) = 0;
+    virtual void opChanged(int32_t op, const String& packageName) = 0;
 
     enum {
         OP_CHANGED_TRANSACTION = IBinder::FIRST_CALL_TRANSACTION

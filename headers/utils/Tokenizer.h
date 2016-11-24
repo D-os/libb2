@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <utils/Errors.h>
 #include <utils/FileMap.h>
-#include <utils/String8.h>
+#include <utils/String.h>
 
 namespace android {
 
@@ -28,7 +28,7 @@ namespace android {
  * A simple tokenizer for loading and parsing ASCII text files line by line.
  */
 class Tokenizer {
-    Tokenizer(const String8& filename, FileMap* fileMap, char* buffer,
+    Tokenizer(const String& filename, FileMap* fileMap, char* buffer,
             bool ownBuffer, size_t length);
 
 public:
@@ -40,7 +40,7 @@ public:
      * Returns NO_ERROR and a tokenizer for the file, if successful.
      * Otherwise returns an error and sets outTokenizer to NULL.
      */
-    static status_t open(const String8& filename, Tokenizer** outTokenizer);
+    static status_t open(const String& filename, Tokenizer** outTokenizer);
 
     /**
      * Prepares to tokenize the contents of a string.
@@ -48,7 +48,7 @@ public:
      * Returns NO_ERROR and a tokenizer for the string, if successful.
      * Otherwise returns an error and sets outTokenizer to NULL.
      */
-    static status_t fromContents(const String8& filename,
+    static status_t fromContents(const String& filename,
             const char* contents, Tokenizer** outTokenizer);
 
     /**
@@ -64,7 +64,7 @@ public:
     /**
      * Gets the name of the file.
      */
-    inline String8 getFilename() const { return mFilename; }
+    inline String getFilename() const { return mFilename; }
 
     /**
      * Gets a 1-based line number index for the current position.
@@ -75,7 +75,7 @@ public:
      * Formats a location string consisting of the filename and current line number.
      * Returns a string like "MyFile.txt:33".
      */
-    String8 getLocation() const;
+    String getLocation() const;
 
     /**
      * Gets the character at the current position.
@@ -86,7 +86,7 @@ public:
     /**
      * Gets the remainder of the current line as a string, excluding the newline character.
      */
-    String8 peekRemainderOfLine() const;
+    String peekRemainderOfLine() const;
 
     /**
      * Gets the character at the current position and advances past it.
@@ -101,7 +101,7 @@ public:
      * Returns the token or an empty string if the current character is a delimiter
      * or is at the end of the line.
      */
-    String8 nextToken(const char* delimiters);
+    String nextToken(const char* delimiters);
 
     /**
      * Advances to the next line.
@@ -118,7 +118,7 @@ public:
 private:
     Tokenizer(const Tokenizer& other); // not copyable
 
-    String8 mFilename;
+    String mFilename;
     FileMap* mFileMap;
     char* mBuffer;
     bool mOwnBuffer;

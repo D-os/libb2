@@ -76,7 +76,7 @@ static void dumpProcessFooter(Printer& printer, pid_t pid) {
     printer.printLine();
 }
 
-static String8 getThreadName(pid_t tid) {
+static String getThreadName(pid_t tid) {
     char path[PATH_MAX];
     char* procName = NULL;
     char procNameBuf[MAX_PROC_PATH];
@@ -92,21 +92,21 @@ static String8 getThreadName(pid_t tid) {
 
     if (procName == NULL) {
         // Reading /proc/self/task/%d/comm failed due to a race
-        return String8::format("[err-unknown-tid-%d]", tid);
+        return String::format("[err-unknown-tid-%d]", tid);
     }
 
     // Strip ending newline
     strtok(procName, "\n");
 
-    return String8(procName);
+    return String(procName);
 }
 
-static String8 getTimeString(struct tm tm) {
+static String getTimeString(struct tm tm) {
     char timestr[MAX_TIME_STRING];
     // i.e. '2013-10-22 14:42:05'
     strftime(timestr, sizeof(timestr), "%F %T", &tm);
 
-    return String8(timestr);
+    return String(timestr);
 }
 
 /*
@@ -225,7 +225,7 @@ void ProcessCallStack::printInternal(Printer& printer, Printer& csPrinter) const
     for (size_t i = 0; i < mThreadMap.size(); ++i) {
         pid_t tid = mThreadMap.keyAt(i);
         const ThreadInfo& threadInfo = mThreadMap.valueAt(i);
-        const String8& threadName = threadInfo.threadName;
+        const String& threadName = threadInfo.threadName;
 
         printer.printLine("");
         printer.printFormatLine("\"%s\" sysTid=%d", threadName.string(), tid);
@@ -247,10 +247,10 @@ void ProcessCallStack::dump(int fd, int indent, const char* prefix) const {
     print(printer);
 }
 
-String8 ProcessCallStack::toString(const char* prefix) const {
+String ProcessCallStack::toString(const char* prefix) const {
 
-    String8 dest;
-    String8Printer printer(&dest, prefix);
+    String dest;
+    StringPrinter printer(&dest, prefix);
     print(printer);
 
     return dest;

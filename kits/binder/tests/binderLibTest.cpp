@@ -36,7 +36,7 @@ static testing::Environment* binder_env;
 static char *binderservername;
 static char binderserverarg[] = "--binderserver";
 
-static String16 binderLibTestServiceName = String16("test.binderLib");
+static String binderLibTestServiceName = String("test.binderLib");
 
 enum BinderLibTestTranscationCode {
     BINDER_LIB_TEST_NOP_TRANSACTION = IBinder::FIRST_CALL_TRANSACTION,

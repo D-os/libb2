@@ -20,8 +20,7 @@ add_library(utils SHARED
     SharedBuffer.cpp
     Static.cpp
     StopWatch.cpp
-    String8.cpp
-    String16.cpp
+    String.cpp
     SystemClock.cpp
     Threads.cpp
     Timers.cpp

@@ -19,27 +19,21 @@
 
 namespace android {
 
-// For String8.cpp
-extern void initialize_string8();
-extern void terminate_string8();
-
-// For String16.cpp
-extern void initialize_string16();
-extern void terminate_string16();
+// For String.cpp
+extern void initialize_string();
+extern void terminate_string();
 
 class LibUtilsFirstStatics
 {
 public:
     LibUtilsFirstStatics()
     {
-        initialize_string8();
-        initialize_string16();
+        initialize_string();
     }
 
     ~LibUtilsFirstStatics()
     {
-        terminate_string16();
-        terminate_string8();
+        terminate_string();
     }
 };
 
