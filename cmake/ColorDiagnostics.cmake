@@ -1,5 +1,0 @@
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    SET(LIBBE_FLAGS "${LIBBE_FLAGS} -fcolor-diagnostics")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    SET(LIBBE_FLAGS "${LIBBE_FLAGS} -fdiagnostics-color")
-endif()
