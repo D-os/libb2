@@ -4,15 +4,26 @@ project(LIBB2 VERSION 0.1.0 LANGUAGES CXX C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-include(Defaults)
-include(EnsureOutOfSourceBuild)
-include(EnsureNinjaGenerator)
-include(ColorDiagnostics)
+# Defaults
+set(CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE ON)
+set(CMAKE_COLOR_MAKEFILE ON)
 
-# Test platform.
+# Ensure env
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+    message(FATAL_ERROR "Please create a separate build directory and run 'cmake path_to_libb2 [options]' there.")
+endif()
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+    message(FATAL_ERROR "Only Ninja generator is supported: cmake ... -GNinja")
+endif()
 if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
     message(FATAL_ERROR "Only Linux is supported.")
+endif()
+
+# Color diagnostics
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    SET(DIAG_FLAGS "-fcolor-diagnostics")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    SET(DIAG_FLAGS "-fdiagnostics-color")
 endif()
 
 # Build type flags.
@@ -22,7 +33,7 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
 # Common compiler flags.
-set(LIBBE_FLAGS "${LIBBE_FLAGS} -Wall -Wpointer-arith -Wcast-align -Wsign-compare -Wstrict-aliasing -Wno-multichar")
+set(COMMON_FLAGS "-Wall -Wpointer-arith -Wcast-align -Wsign-compare -Wstrict-aliasing -Wno-multichar ${DIAG_FLAGS}")
 
 # Default include directories.
 include_directories(
@@ -30,8 +41,8 @@ include_directories(
 )
 
 # Set flags.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LIBBE_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBBE_FLAGS} -Woverloaded-virtual -Wno-ctor-dtor-privacy -Wnon-virtual-dtor -fexceptions -fpermissive")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -Woverloaded-virtual -Wno-ctor-dtor-privacy -Wnon-virtual-dtor -fexceptions -fpermissive")
 
 # Compute platform bits .
 math(EXPR PLATFORM_BITS "8*${CMAKE_SIZEOF_VOID_P}")
