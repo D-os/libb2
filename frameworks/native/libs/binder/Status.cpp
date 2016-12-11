@@ -28,7 +28,7 @@ Status Status::fromExceptionCode(int32_t exceptionCode) {
 }
 
 Status Status::fromExceptionCode(int32_t exceptionCode,
-                                 const String8& message) {
+                                 const String& message) {
     return Status(exceptionCode, OK, message);
 }
 
@@ -37,7 +37,7 @@ Status Status::fromServiceSpecificError(int32_t serviceSpecificErrorCode) {
 }
 
 Status Status::fromServiceSpecificError(int32_t serviceSpecificErrorCode,
-                                        const String8& message) {
+                                        const String& message) {
     return Status(EX_SERVICE_SPECIFIC, serviceSpecificErrorCode, message);
 }
 
@@ -51,7 +51,7 @@ Status::Status(int32_t exceptionCode, int32_t errorCode)
     : mException(exceptionCode),
       mErrorCode(errorCode) {}
 
-Status::Status(int32_t exceptionCode, int32_t errorCode, const String8& message)
+Status::Status(int32_t exceptionCode, int32_t errorCode, const String& message)
     : mException(exceptionCode),
       mErrorCode(errorCode),
       mMessage(message) {}
@@ -84,13 +84,13 @@ status_t Status::readFromParcel(const Parcel& parcel) {
     }
 
     // The remote threw an exception.  Get the message back.
-    String16 message;
-    status = parcel.readString16(&message);
+    String message;
+    status = parcel.readString(&message);
     if (status != OK) {
         setFromStatusT(status);
         return status;
     }
-    mMessage = String8(message);
+    mMessage = String(message);
 
     if (mException == EX_SERVICE_SPECIFIC) {
         status = parcel.readInt32(&mErrorCode);
@@ -116,7 +116,7 @@ status_t Status::writeToParcel(Parcel* parcel) const {
         // We have no more information to write.
         return status;
     }
-    status = parcel->writeString16(String16(mMessage));
+    status = parcel->writeString(String(mMessage));
     if (mException != EX_SERVICE_SPECIFIC) {
         // We have no more information to write.
         return status;
@@ -125,13 +125,13 @@ status_t Status::writeToParcel(Parcel* parcel) const {
     return status;
 }
 
-void Status::setException(int32_t ex, const String8& message) {
+void Status::setException(int32_t ex, const String& message) {
     mException = ex;
     mErrorCode = NO_ERROR;  // an exception, not a transaction failure.
     mMessage.setTo(message);
 }
 
-void Status::setServiceSpecificError(int32_t errorCode, const String8& message) {
+void Status::setServiceSpecificError(int32_t errorCode, const String& message) {
     setException(EX_SERVICE_SPECIFIC, message);
     mErrorCode = errorCode;
 }
@@ -142,8 +142,8 @@ void Status::setFromStatusT(status_t status) {
     mMessage.clear();
 }
 
-String8 Status::toString8() const {
-    String8 ret;
+String Status::toString() const {
+    String ret;
     if (mException == EX_NONE) {
         ret.append("No error");
     } else {
@@ -152,7 +152,7 @@ String8 Status::toString8() const {
             mException == EX_TRANSACTION_FAILED) {
             ret.appendFormat("%d: ", mErrorCode);
         }
-        ret.append(String8(mMessage));
+        ret.append(String(mMessage));
         ret.append("'");
     }
     return ret;

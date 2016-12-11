@@ -789,35 +789,29 @@ restart_write:
     return NULL;
 }
 
-status_t Parcel::writeUtf8AsUtf16(const std::string& str) {
+status_t Parcel::writeUtf8(const std::string& str) {
     const uint8_t* strData = (uint8_t*)str.data();
-    const size_t strLen= str.length();
-    const ssize_t utf16Len = utf8_to_utf16_length(strData, strLen);
-    if (utf16Len < 0 || utf16Len> std::numeric_limits<int32_t>::max()) {
+    const int32_t strLen= str.length();
+    if (strLen < 0 || strLen> std::numeric_limits<int32_t>::max()) {
         return BAD_VALUE;
     }
 
-    status_t err = writeInt32(utf16Len);
+    status_t err = writeInt32(strLen);
     if (err) {
         return err;
     }
 
     // Allocate enough bytes to hold our converted string and its terminating NULL.
-    void* dst = writeInplace((utf16Len + 1) * sizeof(char16_t));
-    if (!dst) {
-        return NO_MEMORY;
-    }
+    err = write(strData, strLen + 1);
 
-    utf8_to_utf16(strData, strLen, (char16_t*)dst);
-
-    return NO_ERROR;
+    return err;
 }
 
-status_t Parcel::writeUtf8AsUtf16(const std::unique_ptr<std::string>& str) {
+status_t Parcel::writeUtf8(const std::unique_ptr<std::string>& str) {
   if (!str) {
     return writeInt32(-1);
   }
-  return writeUtf8AsUtf16(*str);
+  return writeUtf8(*str);
 }
 
 namespace {
@@ -927,34 +921,34 @@ status_t Parcel::writeBoolVector(const std::unique_ptr<std::vector<bool>>& val)
     return writeNullableTypedVector(val, &Parcel::writeBool);
 }
 
-status_t Parcel::writeCharVector(const std::vector<char16_t>& val)
+status_t Parcel::writeCharVector(const std::vector<char>& val)
 {
     return writeTypedVector(val, &Parcel::writeChar);
 }
 
-status_t Parcel::writeCharVector(const std::unique_ptr<std::vector<char16_t>>& val)
+status_t Parcel::writeCharVector(const std::unique_ptr<std::vector<char>>& val)
 {
     return writeNullableTypedVector(val, &Parcel::writeChar);
 }
 
-status_t Parcel::writeString16Vector(const std::vector<String16>& val)
+status_t Parcel::writeStringVector(const std::vector<String>& val)
 {
-    return writeTypedVector(val, &Parcel::writeString16);
+    return writeTypedVector(val, &Parcel::writeString);
 }
 
-status_t Parcel::writeString16Vector(
-        const std::unique_ptr<std::vector<std::unique_ptr<String16>>>& val)
+status_t Parcel::writeStringVector(
+        const std::unique_ptr<std::vector<std::unique_ptr<String>>>& val)
 {
-    return writeNullableTypedVector(val, &Parcel::writeString16);
+    return writeNullableTypedVector(val, &Parcel::writeString);
 }
 
-status_t Parcel::writeUtf8VectorAsUtf16Vector(
+status_t Parcel::writeUtf8Vector(
                         const std::unique_ptr<std::vector<std::unique_ptr<std::string>>>& val) {
-    return writeNullableTypedVector(val, &Parcel::writeUtf8AsUtf16);
+    return writeNullableTypedVector(val, &Parcel::writeUtf8);
 }
 
-status_t Parcel::writeUtf8VectorAsUtf16Vector(const std::vector<std::string>& val) {
-    return writeTypedVector(val, &Parcel::writeUtf8AsUtf16);
+status_t Parcel::writeUtf8Vector(const std::vector<std::string>& val) {
+    return writeTypedVector(val, &Parcel::writeUtf8);
 }
 
 status_t Parcel::writeInt32(int32_t val)
@@ -1005,7 +999,7 @@ status_t Parcel::writeBool(bool val)
     return writeInt32(int32_t(val));
 }
 
-status_t Parcel::writeChar(char16_t val)
+status_t Parcel::writeChar(char val)
 {
     return writeInt32(int32_t(val));
 }
@@ -1171,18 +1165,6 @@ status_t Parcel::writeDupFileDescriptor(int fd)
         close(dupFd);
     }
     return err;
-}
-
-status_t Parcel::writeUniqueFileDescriptor(const ScopedFd& fd) {
-    return writeDupFileDescriptor(fd.get());
-}
-
-status_t Parcel::writeUniqueFileDescriptorVector(const std::vector<ScopedFd>& val) {
-    return writeTypedVector(val, &Parcel::writeUniqueFileDescriptor);
-}
-
-status_t Parcel::writeUniqueFileDescriptorVector(const std::unique_ptr<std::vector<ScopedFd>>& val) {
-    return writeNullableTypedVector(val, &Parcel::writeUniqueFileDescriptor);
 }
 
 status_t Parcel::writeBlob(size_t len, bool mutableCopy, WritableBlob* outBlob)
@@ -1587,30 +1569,30 @@ status_t Parcel::readBoolVector(std::vector<bool>* val) const {
     return OK;
 }
 
-status_t Parcel::readCharVector(std::unique_ptr<std::vector<char16_t>>* val) const {
+status_t Parcel::readCharVector(std::unique_ptr<std::vector<char>>* val) const {
     return readNullableTypedVector(val, &Parcel::readChar);
 }
 
-status_t Parcel::readCharVector(std::vector<char16_t>* val) const {
+status_t Parcel::readCharVector(std::vector<char>* val) const {
     return readTypedVector(val, &Parcel::readChar);
 }
 
-status_t Parcel::readString16Vector(
-        std::unique_ptr<std::vector<std::unique_ptr<String16>>>* val) const {
-    return readNullableTypedVector(val, &Parcel::readString16);
+status_t Parcel::readStringVector(
+        std::unique_ptr<std::vector<std::unique_ptr<String>>>* val) const {
+    return readNullableTypedVector(val, &Parcel::readString);
 }
 
-status_t Parcel::readString16Vector(std::vector<String16>* val) const {
-    return readTypedVector(val, &Parcel::readString16);
+status_t Parcel::readStringVector(std::vector<String>* val) const {
+    return readTypedVector(val, &Parcel::readString);
 }
 
-status_t Parcel::readUtf8VectorFromUtf16Vector(
+status_t Parcel::readUtf8Vector(
         std::unique_ptr<std::vector<std::unique_ptr<std::string>>>* val) const {
-    return readNullableTypedVector(val, &Parcel::readUtf8FromUtf16);
+    return readNullableTypedVector(val, &Parcel::readUtf8);
 }
 
-status_t Parcel::readUtf8VectorFromUtf16Vector(std::vector<std::string>* val) const {
-    return readTypedVector(val, &Parcel::readUtf8FromUtf16);
+status_t Parcel::readUtf8Vector(std::vector<std::string>* val) const {
+    return readTypedVector(val, &Parcel::readUtf8);
 }
 
 status_t Parcel::readInt32(int32_t *pArg) const
@@ -1744,11 +1726,11 @@ bool Parcel::readBool() const
     return readInt32() != 0;
 }
 
-status_t Parcel::readChar(char16_t *pArg) const
+status_t Parcel::readChar(char *pArg) const
 {
     int32_t tmp;
     status_t ret = readInt32(&tmp);
-    *pArg = char16_t(tmp);
+    *pArg = char(tmp);
     return ret;
 }
 
@@ -1770,33 +1752,23 @@ int8_t Parcel::readByte() const
     return int8_t(readInt32());
 }
 
-status_t Parcel::readUtf8FromUtf16(std::string* str) const {
-    size_t utf16Size = 0;
-    const char16_t* src = readString16Inplace(&utf16Size);
+status_t Parcel::readUtf8(std::string* str) const {
+    size_t utfSize = 0;
+    const char* src = readStringInplace(&utfSize);
     if (!src) {
         return UNEXPECTED_NULL;
     }
 
     // Save ourselves the trouble, we're done.
-    if (utf16Size == 0u) {
+    if (utfSize == 0u) {
         str->clear();
-       return NO_ERROR;
+        return NO_ERROR;
     }
 
-    // Allow for closing '\0'
-    ssize_t utf8Size = utf16_to_utf8_length(src, utf16Size) + 1;
-    if (utf8Size < 1) {
-        return BAD_VALUE;
-    }
-    // Note that while it is probably safe to assume string::resize keeps a
-    // spare byte around for the trailing null, we still pass the size including the trailing null
-    str->resize(utf8Size);
-    utf16_to_utf8(src, utf16Size, &((*str)[0]), utf8Size);
-    str->resize(utf8Size - 1);
     return NO_ERROR;
 }
 
-status_t Parcel::readUtf8FromUtf16(std::unique_ptr<std::string>* str) const {
+status_t Parcel::readUtf8(std::unique_ptr<std::string>* str) const {
     const int32_t start = dataPosition();
     int32_t size;
     status_t status = readInt32(&size);
@@ -1808,7 +1780,7 @@ status_t Parcel::readUtf8FromUtf16(std::unique_ptr<std::string>* str) const {
 
     setDataPosition(start);
     str->reset(new (std::nothrow) std::string());
-    return readUtf8FromUtf16(str->get());
+    return readUtf8(str->get());
 }
 
 const char* Parcel::readCString() const
@@ -1865,7 +1837,7 @@ status_t Parcel::readString(std::unique_ptr<String>* pArg) const
 status_t Parcel::readString(String* pArg) const
 {
     size_t len;
-    const char16_t* str = readStringInplace(&len);
+    const char* str = readStringInplace(&len);
     if (str) {
         pArg->setTo(str, len);
         return 0;
@@ -1970,32 +1942,6 @@ int Parcel::readFileDescriptor() const
     }
 
     return BAD_TYPE;
-}
-
-status_t Parcel::readUniqueFileDescriptor(ScopedFd* val) const
-{
-    int got = readFileDescriptor();
-
-    if (got == BAD_TYPE) {
-        return BAD_TYPE;
-    }
-
-    val->reset(dup(got));
-
-    if (val->get() < 0) {
-        return BAD_VALUE;
-    }
-
-    return OK;
-}
-
-
-status_t Parcel::readUniqueFileDescriptorVector(std::unique_ptr<std::vector<ScopedFd>>* val) const {
-    return readNullableTypedVector(val, &Parcel::readUniqueFileDescriptor);
-}
-
-status_t Parcel::readUniqueFileDescriptorVector(std::vector<ScopedFd>* val) const {
-    return readTypedVector(val, &Parcel::readUniqueFileDescriptor);
 }
 
 status_t Parcel::readBlob(size_t len, ReadableBlob* outBlob) const

@@ -62,7 +62,7 @@ bool IBinder::checkSubclass(const void* /*subclassID*/) const
 
 
 status_t IBinder::shellCommand(const sp<IBinder>& target, int in, int out, int err,
-    Vector<String16>& args, const sp<IResultReceiver>& resultReceiver)
+    Vector<String>& args, const sp<IResultReceiver>& resultReceiver)
 {
     Parcel send;
     Parcel reply;
@@ -72,7 +72,7 @@ status_t IBinder::shellCommand(const sp<IBinder>& target, int in, int out, int e
     const size_t numArgs = args.size();
     send.writeInt32(numArgs);
     for (size_t i = 0; i < numArgs; i++) {
-        send.writeString16(args[i]);
+        send.writeString(args[i]);
     }
     send.writeStrongBinder(resultReceiver != NULL ? IInterface::asBinder(resultReceiver) : NULL);
     return target->transact(SHELL_COMMAND_TRANSACTION, send, &reply);
@@ -228,9 +228,9 @@ status_t BBinder::onTransact(
             int out = data.readFileDescriptor();
             int err = data.readFileDescriptor();
             int argc = data.readInt32();
-            Vector<String16> args;
+            Vector<String> args;
             for (int i = 0; i < argc && data.dataAvail() > 0; i++) {
-               args.add(data.readString16());
+               args.add(data.readString());
             }
             sp<IResultReceiver> resultReceiver = IResultReceiver::asInterface(
                     data.readStrongBinder());

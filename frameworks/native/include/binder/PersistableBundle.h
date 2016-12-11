@@ -21,7 +21,7 @@
 #include <vector>
 
 #include <binder/Parcelable.h>
-#include <utils/String16.h>
+#include <utils/String.h>
 #include <utils/StrongPointer.h>
 
 namespace android {
@@ -43,41 +43,41 @@ public:
 
     bool empty() const;
     size_t size() const;
-    size_t erase(const String16& key);
+    size_t erase(const String& key);
 
     /*
      * Setters for PersistableBundle. Adds a a key-value pair instantiated with
      * |key| and |value| into the member map appropriate for the type of |value|.
      * If there is already an existing value for |key|, |value| will replace it.
      */
-    void putBoolean(const String16& key, bool value);
-    void putInt(const String16& key, int32_t value);
-    void putLong(const String16& key, int64_t value);
-    void putDouble(const String16& key, double value);
-    void putString(const String16& key, const String16& value);
-    void putBooleanVector(const String16& key, const std::vector<bool>& value);
-    void putIntVector(const String16& key, const std::vector<int32_t>& value);
-    void putLongVector(const String16& key, const std::vector<int64_t>& value);
-    void putDoubleVector(const String16& key, const std::vector<double>& value);
-    void putStringVector(const String16& key, const std::vector<String16>& value);
-    void putPersistableBundle(const String16& key, const PersistableBundle& value);
+    void putBoolean(const String& key, bool value);
+    void putInt(const String& key, int32_t value);
+    void putLong(const String& key, int64_t value);
+    void putDouble(const String& key, double value);
+    void putString(const String& key, const String& value);
+    void putBooleanVector(const String& key, const std::vector<bool>& value);
+    void putIntVector(const String& key, const std::vector<int32_t>& value);
+    void putLongVector(const String& key, const std::vector<int64_t>& value);
+    void putDoubleVector(const String& key, const std::vector<double>& value);
+    void putStringVector(const String& key, const std::vector<String>& value);
+    void putPersistableBundle(const String& key, const PersistableBundle& value);
 
     /*
      * Getters for PersistableBundle. If |key| exists, these methods write the
      * value associated with |key| into |out|, and return true. Otherwise, these
      * methods return false.
      */
-    bool getBoolean(const String16& key, bool* out) const;
-    bool getInt(const String16& key, int32_t* out) const;
-    bool getLong(const String16& key, int64_t* out) const;
-    bool getDouble(const String16& key, double* out) const;
-    bool getString(const String16& key, String16* out) const;
-    bool getBooleanVector(const String16& key, std::vector<bool>* out) const;
-    bool getIntVector(const String16& key, std::vector<int32_t>* out) const;
-    bool getLongVector(const String16& key, std::vector<int64_t>* out) const;
-    bool getDoubleVector(const String16& key, std::vector<double>* out) const;
-    bool getStringVector(const String16& key, std::vector<String16>* out) const;
-    bool getPersistableBundle(const String16& key, PersistableBundle* out) const;
+    bool getBoolean(const String& key, bool* out) const;
+    bool getInt(const String& key, int32_t* out) const;
+    bool getLong(const String& key, int64_t* out) const;
+    bool getDouble(const String& key, double* out) const;
+    bool getString(const String& key, String* out) const;
+    bool getBooleanVector(const String& key, std::vector<bool>* out) const;
+    bool getIntVector(const String& key, std::vector<int32_t>* out) const;
+    bool getLongVector(const String& key, std::vector<int64_t>* out) const;
+    bool getDoubleVector(const String& key, std::vector<double>* out) const;
+    bool getStringVector(const String& key, std::vector<String>* out) const;
+    bool getPersistableBundle(const String& key, PersistableBundle* out) const;
 
     friend bool operator==(const PersistableBundle& lhs, const PersistableBundle& rhs) {
         return (lhs.mBoolMap == rhs.mBoolMap && lhs.mIntMap == rhs.mIntMap &&
@@ -98,17 +98,17 @@ private:
     status_t writeToParcelInner(Parcel* parcel) const;
     status_t readFromParcelInner(const Parcel* parcel, size_t length);
 
-    std::map<String16, bool> mBoolMap;
-    std::map<String16, int32_t> mIntMap;
-    std::map<String16, int64_t> mLongMap;
-    std::map<String16, double> mDoubleMap;
-    std::map<String16, String16> mStringMap;
-    std::map<String16, std::vector<bool>> mBoolVectorMap;
-    std::map<String16, std::vector<int32_t>> mIntVectorMap;
-    std::map<String16, std::vector<int64_t>> mLongVectorMap;
-    std::map<String16, std::vector<double>> mDoubleVectorMap;
-    std::map<String16, std::vector<String16>> mStringVectorMap;
-    std::map<String16, PersistableBundle> mPersistableBundleMap;
+    std::map<String, bool> mBoolMap;
+    std::map<String, int32_t> mIntMap;
+    std::map<String, int64_t> mLongMap;
+    std::map<String, double> mDoubleMap;
+    std::map<String, String> mStringMap;
+    std::map<String, std::vector<bool>> mBoolVectorMap;
+    std::map<String, std::vector<int32_t>> mIntVectorMap;
+    std::map<String, std::vector<int64_t>> mLongVectorMap;
+    std::map<String, std::vector<double>> mDoubleVectorMap;
+    std::map<String, std::vector<String>> mStringVectorMap;
+    std::map<String, PersistableBundle> mPersistableBundleMap;
 };
 
 }  // namespace os

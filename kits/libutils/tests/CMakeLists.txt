@@ -9,8 +9,10 @@ add_executable(libutils_tests
     "${UTILS_SOURCE_DIR}/tests/Looper_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/LruCache_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/String_test.cpp"
+    "${UTILS_SOURCE_DIR}/tests/StrongPointer_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/Unicode_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/Vector_test.cpp"
+    "${UTILS_SOURCE_DIR}/SharedBufferTest.cpp"
 )
 
 target_link_libraries(libutils_tests gtest_main gtest z log cutils utils)

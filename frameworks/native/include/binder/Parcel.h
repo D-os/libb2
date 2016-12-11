@@ -17,17 +17,21 @@
 #ifndef ANDROID_PARCEL_H
 #define ANDROID_PARCEL_H
 
+#include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <cutils/native_handle.h>
-#include <nativehelper/ScopedFd.h>
 #include <utils/Errors.h>
 #include <utils/RefBase.h>
 #include <utils/String.h>
 #include <utils/Vector.h>
 #include <utils/Flattenable.h>
 #include <linux/android/binder.h>
+
+#include <binder/IInterface.h>
+#include <binder/Parcelable.h>
 
 #include <binder/IInterface.h>
 #include <binder/Parcelable.h>
@@ -115,12 +119,12 @@ public:
     status_t            writeInt32Array(size_t len, const int32_t *val);
     status_t            writeByteArray(size_t len, const uint8_t *val);
     status_t            writeBool(bool val);
-    status_t            writeChar(char16_t val);
+    status_t            writeChar(char val);
     status_t            writeByte(int8_t val);
 
-    // Take a UTF8 encoded string, convert to UTF16, write it to the parcel.
-    status_t            writeUtf8AsUtf16(const std::string& str);
-    status_t            writeUtf8AsUtf16(const std::unique_ptr<std::string>& str);
+    // Take a UTF8 encoded string, write it to the parcel.
+    status_t            writeUtf8(const std::string& str);
+    status_t            writeUtf8(const std::unique_ptr<std::string>& str);
 
     status_t            writeByteVector(const std::unique_ptr<std::vector<int8_t>>& val);
     status_t            writeByteVector(const std::vector<int8_t>& val);
@@ -136,14 +140,14 @@ public:
     status_t            writeDoubleVector(const std::vector<double>& val);
     status_t            writeBoolVector(const std::unique_ptr<std::vector<bool>>& val);
     status_t            writeBoolVector(const std::vector<bool>& val);
-    status_t            writeCharVector(const std::unique_ptr<std::vector<char16_t>>& val);
-    status_t            writeCharVector(const std::vector<char16_t>& val);
-    status_t            writeString16Vector(
-                            const std::unique_ptr<std::vector<std::unique_ptr<String16>>>& val);
-    status_t            writeString16Vector(const std::vector<String16>& val);
-    status_t            writeUtf8VectorAsUtf16Vector(
+    status_t            writeCharVector(const std::unique_ptr<std::vector<char>>& val);
+    status_t            writeCharVector(const std::vector<char>& val);
+    status_t            writeStringVector(
+                            const std::unique_ptr<std::vector<std::unique_ptr<String>>>& val);
+    status_t            writeStringVector(const std::vector<String>& val);
+    status_t            writeUtf8Vector(
                             const std::unique_ptr<std::vector<std::unique_ptr<std::string>>>& val);
-    status_t            writeUtf8VectorAsUtf16Vector(const std::vector<std::string>& val);
+    status_t            writeUtf8Vector(const std::vector<std::string>& val);
 
     status_t            writeStrongBinderVector(const std::unique_ptr<std::vector<sp<IBinder>>>& val);
     status_t            writeStrongBinderVector(const std::vector<sp<IBinder>>& val);
@@ -179,19 +183,6 @@ public:
     // Place a file descriptor into the parcel.  A dup of the fd is made, which
     // will be closed once the parcel is destroyed.
     status_t            writeDupFileDescriptor(int fd);
-
-    // Place a file descriptor into the parcel.  This will not affect the
-    // semantics of the smart file descriptor. A new descriptor will be
-    // created, and will be closed when the parcel is destroyed.
-    status_t            writeUniqueFileDescriptor(
-                            const ScopedFd& fd);
-
-    // Place a vector of file desciptors into the parcel. Each descriptor is
-    // dup'd as in writeDupFileDescriptor
-    status_t            writeUniqueFileDescriptorVector(
-                            const std::unique_ptr<std::vector<ScopedFd>>& val);
-    status_t            writeUniqueFileDescriptorVector(
-                            const std::vector<ScopedFd>& val);
 
     // Writes a blob to the parcel.
     // If the blob is small, then it is stored in-place, otherwise it is
@@ -234,19 +225,19 @@ public:
     bool                readBool() const;
     status_t            readBool(bool *pArg) const;
     char16_t            readChar() const;
-    status_t            readChar(char16_t *pArg) const;
+    status_t            readChar(char *pArg) const;
     int8_t              readByte() const;
     status_t            readByte(int8_t *pArg) const;
 
-    // Read a UTF16 encoded string, convert to UTF8
-    status_t            readUtf8FromUtf16(std::string* str) const;
-    status_t            readUtf8FromUtf16(std::unique_ptr<std::string>* str) const;
+    // Read a UTF8 encoded string
+    status_t            readUtf8(std::string* str) const;
+    status_t            readUtf8(std::unique_ptr<std::string>* str) const;
 
     const char*         readCString() const;
     String              readString() const;
     status_t            readString(String* pArg) const;
     status_t            readString(std::unique_ptr<String>* pArg) const;
-    const char*         readStringInplace(size_t* outLen) const
+    const char*         readStringInplace(size_t* outLen) const;
     sp<IBinder>         readStrongBinder() const;
     status_t            readStrongBinder(sp<IBinder>* val) const;
     wp<IBinder>         readWeakBinder() const;
@@ -282,14 +273,14 @@ public:
     status_t            readDoubleVector(std::vector<double>* val) const;
     status_t            readBoolVector(std::unique_ptr<std::vector<bool>>* val) const;
     status_t            readBoolVector(std::vector<bool>* val) const;
-    status_t            readCharVector(std::unique_ptr<std::vector<char16_t>>* val) const;
-    status_t            readCharVector(std::vector<char16_t>* val) const;
-    status_t            readString16Vector(
-                            std::unique_ptr<std::vector<std::unique_ptr<String16>>>* val) const;
-    status_t            readString16Vector(std::vector<String16>* val) const;
-    status_t            readUtf8VectorFromUtf16Vector(
+    status_t            readCharVector(std::unique_ptr<std::vector<char>>* val) const;
+    status_t            readCharVector(std::vector<char>* val) const;
+    status_t            readStringVector(
+                            std::unique_ptr<std::vector<std::unique_ptr<String>>>* val) const;
+    status_t            readStringVector(std::vector<String>* val) const;
+    status_t            readUtf8Vector(
                             std::unique_ptr<std::vector<std::unique_ptr<std::string>>>* val) const;
-    status_t            readUtf8VectorFromUtf16Vector(std::vector<std::string>* val) const;
+    status_t            readUtf8Vector(std::vector<std::string>* val) const;
 
     template<typename T>
     status_t            read(Flattenable<T>& val) const;
@@ -314,17 +305,6 @@ public:
     // Retrieve a file descriptor from the parcel.  This returns the raw fd
     // in the parcel, which you do not own -- use dup() to get your own copy.
     int                 readFileDescriptor() const;
-
-    // Retrieve a smart file descriptor from the parcel.
-    status_t            readUniqueFileDescriptor(
-                            ScopedFd* val) const;
-
-
-    // Retrieve a vector of smart file descriptors from the parcel.
-    status_t            readUniqueFileDescriptorVector(
-                            std::unique_ptr<std::vector<ScopedFd>>* val) const;
-    status_t            readUniqueFileDescriptorVector(
-                            std::vector<ScopedFd>* val) const;
 
     // Reads a blob from the parcel.
     // The caller should call release() on the blob after reading its contents.

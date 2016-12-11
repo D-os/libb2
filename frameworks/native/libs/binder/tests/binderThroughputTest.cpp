@@ -3,6 +3,7 @@
 #include <binder/IPCThreadState.h>
 #include <binder/IServiceManager.h>
 #include <string>
+#include <chrono>
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
@@ -158,11 +159,11 @@ struct ProcResults {
     }
 };
 
-String16 generateServiceName(int num)
+String generateServiceName(int num)
 {
     char num_str[32];
     snprintf(num_str, sizeof(num_str), "%d", num);
-    String16 serviceName = String16("binderWorker") + String16(num_str);
+    String serviceName = String("binderWorker") + String(num_str);
     return serviceName;
 }
 

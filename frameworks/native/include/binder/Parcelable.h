@@ -20,7 +20,6 @@
 #include <vector>
 
 #include <utils/Errors.h>
-#include <utils/String16.h>
 
 namespace android {
 

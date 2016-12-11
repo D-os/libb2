@@ -19,7 +19,6 @@ add_library(utils SHARED
     "${UTILS_SOURCE_DIR}/Log.cpp"
     "${UTILS_SOURCE_DIR}/NativeHandle.cpp"
     "${UTILS_SOURCE_DIR}/Printer.cpp"
-    "${UTILS_SOURCE_DIR}/ProcessCallStack.cpp"
     "${UTILS_SOURCE_DIR}/PropertyMap.cpp"
     "${UTILS_SOURCE_DIR}/RefBase.cpp"
     "${UTILS_SOURCE_DIR}/SharedBuffer.cpp"
@@ -36,6 +35,7 @@ add_library(utils SHARED
 
 #    "${UTILS_SOURCE_DIR}/BlobCache.cpp"
     "${UTILS_SOURCE_DIR}/Looper.cpp"
+    "${UTILS_SOURCE_DIR}/ProcessCallStack.cpp"
 #    "${UTILS_SOURCE_DIR}/Trace.cpp"
 )
 target_link_libraries(utils cutils dl log)

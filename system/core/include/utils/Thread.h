@@ -101,11 +101,6 @@ private:
     volatile bool           mExitPending;
     volatile bool           mRunning;
             sp<Thread>      mHoldSelf;
-#if defined(__ANDROID__)
-    // legacy for debugging, not used by getTid() as it is set by the child thread
-    // and so is not initialized until the child reaches that point
-            pid_t           mTid;
-#endif
 };
 
 

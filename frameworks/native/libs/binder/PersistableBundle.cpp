@@ -55,7 +55,7 @@ enum {
 
 namespace {
 template <typename T>
-bool getValue(const android::String16& key, T* out, const std::map<android::String16, T>& map) {
+bool getValue(const android::String& key, T* out, const std::map<android::String, T>& map) {
     const auto& it = map.find(key);
     if (it == map.end()) return false;
     *out = it->second;
@@ -149,7 +149,7 @@ size_t PersistableBundle::size() const {
             mPersistableBundleMap.size());
 }
 
-size_t PersistableBundle::erase(const String16& key) {
+size_t PersistableBundle::erase(const String &key) {
     RETURN_IF_ENTRY_ERASED(mBoolMap, key);
     RETURN_IF_ENTRY_ERASED(mIntMap, key);
     RETURN_IF_ENTRY_ERASED(mLongMap, key);
@@ -163,102 +163,102 @@ size_t PersistableBundle::erase(const String16& key) {
     return mPersistableBundleMap.erase(key);
 }
 
-void PersistableBundle::putBoolean(const String16& key, bool value) {
+void PersistableBundle::putBoolean(const String& key, bool value) {
     erase(key);
     mBoolMap[key] = value;
 }
 
-void PersistableBundle::putInt(const String16& key, int32_t value) {
+void PersistableBundle::putInt(const String& key, int32_t value) {
     erase(key);
     mIntMap[key] = value;
 }
 
-void PersistableBundle::putLong(const String16& key, int64_t value) {
+void PersistableBundle::putLong(const String& key, int64_t value) {
     erase(key);
     mLongMap[key] = value;
 }
 
-void PersistableBundle::putDouble(const String16& key, double value) {
+void PersistableBundle::putDouble(const String& key, double value) {
     erase(key);
     mDoubleMap[key] = value;
 }
 
-void PersistableBundle::putString(const String16& key, const String16& value) {
+void PersistableBundle::putString(const String& key, const String& value) {
     erase(key);
     mStringMap[key] = value;
 }
 
-void PersistableBundle::putBooleanVector(const String16& key, const std::vector<bool>& value) {
+void PersistableBundle::putBooleanVector(const String& key, const std::vector<bool>& value) {
     erase(key);
     mBoolVectorMap[key] = value;
 }
 
-void PersistableBundle::putIntVector(const String16& key, const std::vector<int32_t>& value) {
+void PersistableBundle::putIntVector(const String& key, const std::vector<int32_t>& value) {
     erase(key);
     mIntVectorMap[key] = value;
 }
 
-void PersistableBundle::putLongVector(const String16& key, const std::vector<int64_t>& value) {
+void PersistableBundle::putLongVector(const String& key, const std::vector<int64_t>& value) {
     erase(key);
     mLongVectorMap[key] = value;
 }
 
-void PersistableBundle::putDoubleVector(const String16& key, const std::vector<double>& value) {
+void PersistableBundle::putDoubleVector(const String& key, const std::vector<double>& value) {
     erase(key);
     mDoubleVectorMap[key] = value;
 }
 
-void PersistableBundle::putStringVector(const String16& key, const std::vector<String16>& value) {
+void PersistableBundle::putStringVector(const String& key, const std::vector<String>& value) {
     erase(key);
     mStringVectorMap[key] = value;
 }
 
-void PersistableBundle::putPersistableBundle(const String16& key, const PersistableBundle& value) {
+void PersistableBundle::putPersistableBundle(const String& key, const PersistableBundle& value) {
     erase(key);
     mPersistableBundleMap[key] = value;
 }
 
-bool PersistableBundle::getBoolean(const String16& key, bool* out) const {
+bool PersistableBundle::getBoolean(const String& key, bool* out) const {
     return getValue(key, out, mBoolMap);
 }
 
-bool PersistableBundle::getInt(const String16& key, int32_t* out) const {
+bool PersistableBundle::getInt(const String& key, int32_t* out) const {
     return getValue(key, out, mIntMap);
 }
 
-bool PersistableBundle::getLong(const String16& key, int64_t* out) const {
+bool PersistableBundle::getLong(const String& key, int64_t* out) const {
     return getValue(key, out, mLongMap);
 }
 
-bool PersistableBundle::getDouble(const String16& key, double* out) const {
+bool PersistableBundle::getDouble(const String& key, double* out) const {
     return getValue(key, out, mDoubleMap);
 }
 
-bool PersistableBundle::getString(const String16& key, String16* out) const {
+bool PersistableBundle::getString(const String& key, String* out) const {
     return getValue(key, out, mStringMap);
 }
 
-bool PersistableBundle::getBooleanVector(const String16& key, std::vector<bool>* out) const {
+bool PersistableBundle::getBooleanVector(const String& key, std::vector<bool>* out) const {
     return getValue(key, out, mBoolVectorMap);
 }
 
-bool PersistableBundle::getIntVector(const String16& key, std::vector<int32_t>* out) const {
+bool PersistableBundle::getIntVector(const String& key, std::vector<int32_t>* out) const {
     return getValue(key, out, mIntVectorMap);
 }
 
-bool PersistableBundle::getLongVector(const String16& key, std::vector<int64_t>* out) const {
+bool PersistableBundle::getLongVector(const String& key, std::vector<int64_t>* out) const {
     return getValue(key, out, mLongVectorMap);
 }
 
-bool PersistableBundle::getDoubleVector(const String16& key, std::vector<double>* out) const {
+bool PersistableBundle::getDoubleVector(const String& key, std::vector<double>* out) const {
     return getValue(key, out, mDoubleVectorMap);
 }
 
-bool PersistableBundle::getStringVector(const String16& key, std::vector<String16>* out) const {
+bool PersistableBundle::getStringVector(const String& key, std::vector<String>* out) const {
     return getValue(key, out, mStringVectorMap);
 }
 
-bool PersistableBundle::getPersistableBundle(const String16& key, PersistableBundle* out) const {
+bool PersistableBundle::getPersistableBundle(const String& key, PersistableBundle* out) const {
     return getValue(key, out, mPersistableBundleMap);
 }
 
@@ -278,57 +278,57 @@ status_t PersistableBundle::writeToParcelInner(Parcel* parcel) const {
     RETURN_IF_FAILED(parcel->writeInt32(static_cast<int32_t>(num_entries)));
 
     for (const auto& key_val_pair : mBoolMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_BOOLEAN));
         RETURN_IF_FAILED(parcel->writeBool(key_val_pair.second));
     }
     for (const auto& key_val_pair : mIntMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_INTEGER));
         RETURN_IF_FAILED(parcel->writeInt32(key_val_pair.second));
     }
     for (const auto& key_val_pair : mLongMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_LONG));
         RETURN_IF_FAILED(parcel->writeInt64(key_val_pair.second));
     }
     for (const auto& key_val_pair : mDoubleMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_DOUBLE));
         RETURN_IF_FAILED(parcel->writeDouble(key_val_pair.second));
     }
     for (const auto& key_val_pair : mStringMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_STRING));
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.second));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.second));
     }
     for (const auto& key_val_pair : mBoolVectorMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_BOOLEANARRAY));
         RETURN_IF_FAILED(parcel->writeBoolVector(key_val_pair.second));
     }
     for (const auto& key_val_pair : mIntVectorMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_INTARRAY));
         RETURN_IF_FAILED(parcel->writeInt32Vector(key_val_pair.second));
     }
     for (const auto& key_val_pair : mLongVectorMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_LONGARRAY));
         RETURN_IF_FAILED(parcel->writeInt64Vector(key_val_pair.second));
     }
     for (const auto& key_val_pair : mDoubleVectorMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_DOUBLEARRAY));
         RETURN_IF_FAILED(parcel->writeDoubleVector(key_val_pair.second));
     }
     for (const auto& key_val_pair : mStringVectorMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_STRINGARRAY));
-        RETURN_IF_FAILED(parcel->writeString16Vector(key_val_pair.second));
+        RETURN_IF_FAILED(parcel->writeStringVector(key_val_pair.second));
     }
     for (const auto& key_val_pair : mPersistableBundleMap) {
-        RETURN_IF_FAILED(parcel->writeString16(key_val_pair.first));
+        RETURN_IF_FAILED(parcel->writeString(key_val_pair.first));
         RETURN_IF_FAILED(parcel->writeInt32(VAL_PERSISTABLEBUNDLE));
         RETURN_IF_FAILED(key_val_pair.second.writeToParcel(parcel));
     }
@@ -364,9 +364,9 @@ status_t PersistableBundle::readFromParcelInner(const Parcel* parcel, size_t len
 
     for (; num_entries > 0; --num_entries) {
         size_t start_pos = parcel->dataPosition();
-        String16 key;
+        String key;
         int32_t value_type;
-        RETURN_IF_FAILED(parcel->readString16(&key));
+        RETURN_IF_FAILED(parcel->readString(&key));
         RETURN_IF_FAILED(parcel->readInt32(&value_type));
 
         /*
@@ -375,7 +375,7 @@ status_t PersistableBundle::readFromParcelInner(const Parcel* parcel, size_t len
          */
         switch (value_type) {
             case VAL_STRING: {
-                RETURN_IF_FAILED(parcel->readString16(&mStringMap[key]));
+                RETURN_IF_FAILED(parcel->readString(&mStringMap[key]));
                 break;
             }
             case VAL_INTEGER: {
@@ -395,7 +395,7 @@ status_t PersistableBundle::readFromParcelInner(const Parcel* parcel, size_t len
                 break;
             }
             case VAL_STRINGARRAY: {
-                RETURN_IF_FAILED(parcel->readString16Vector(&mStringVectorMap[key]));
+                RETURN_IF_FAILED(parcel->readStringVector(&mStringVectorMap[key]));
                 break;
             }
             case VAL_INTARRAY: {
