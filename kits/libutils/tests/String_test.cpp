@@ -75,3 +75,26 @@ TEST_F(StringTest, OperatorPlusEquals) {
     EXPECT_STREQ(src2.string(), " is my passport.");
     EXPECT_STREQ(src3, " Verify me.");
 }
+
+TEST_F(StringTest, SetToSizeMaxReturnsNoMemory) {
+    const char *in = "some string";
+    EXPECT_EQ(NO_MEMORY, String("").setTo(in, SIZE_MAX));
+}
+
+// http://b/29250543
+TEST_F(StringTest, CorrectInvalidSurrogate) {
+    // d841d8 is an invalid start for a surrogate pair. Make sure this is handled by ignoring the
+    // first character in the pair and handling the rest correctly.
+    const char16_t string16[] = u"\xd841\xd841\xdc41\x0000";
+    String String(string16);
+
+    EXPECT_EQ(4U, String.length());
+}
+
+TEST_F(StringTest, CheckUtf32Conversion) {
+    // Since bound checks were added, check the conversion can be done without fatal errors.
+    // The utf8 lengths of these are chars are 1 + 2 + 3 + 4 = 10.
+    const char32_t string32[] = U"\x0000007f\x000007ff\x0000911\x0010fffe";
+    String String(string32);
+    EXPECT_EQ(10U, String.length());
+}
