@@ -66,7 +66,7 @@ message(STATUS "")
 
 set(ANDROID_FRAMEWORKS_NATIVE_DIR "${CMAKE_SOURCE_DIR}/frameworks/native")
 set(ANDROID_SYSTEM_CORE_DIR "${CMAKE_SOURCE_DIR}/system/core")
-set(ANDROID_LIBNATIVEHELPER_DIR "${CMAKE_SOURCE_DIR}/libnativehelper")
+set(ANDROID_SYSTEM_TOOLS_AIDL_DIR "${CMAKE_SOURCE_DIR}/system/tools/aidl")
 set(EXTERNAL_GOOGLETEST_DIR "${CMAKE_SOURCE_DIR}/external/googletest")
 set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 
@@ -74,6 +74,7 @@ set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 add_subdirectory(headers)
 add_subdirectory(kits)
 add_subdirectory(bins)
+add_subdirectory(tools)
 
 # Tests
 add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)

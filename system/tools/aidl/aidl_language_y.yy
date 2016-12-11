@@ -14,7 +14,7 @@ int yylex(yy::parser::semantic_type *, yy::parser::location_type *, void *);
 %parse-param { Parser* ps }
 %lex-param { void *lex_scanner }
 
-%pure-parser
+//%pure-parser
 %skeleton "glr.cc"
 
 %union {

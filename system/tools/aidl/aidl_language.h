@@ -8,7 +8,7 @@
 #include <android-base/macros.h>
 #include <android-base/strings.h>
 
-#include <io_delegate.h>
+#include "io_delegate.h"
 
 struct yy_buffer_state;
 typedef yy_buffer_state* YY_BUFFER_STATE;
