@@ -28,6 +28,7 @@
 #elif defined(__GLIBC__)
 #include <errno.h>
 #endif
+#include <string.h>
 
 #include <iostream>
 #include <limits>

@@ -13,6 +13,7 @@ set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "")
 
 add_subdirectory(liblog)
 add_subdirectory(libcutils)
+add_subdirectory(base)
 add_subdirectory(libutils)
 
 if (NOT PLATFORM_BITS EQUAL 64)

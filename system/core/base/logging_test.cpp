@@ -273,9 +273,7 @@ TEST(logging, UNIMPLEMENTED) {
 #if !defined(_WIN32)
     std::string expected_message =
         android::base::StringPrintf("%s unimplemented ", __PRETTY_FUNCTION__);
-    std::regex message_regex(
-        make_log_pattern(android::base::ERROR, expected_message.c_str()));
-    ASSERT_TRUE(std::regex_search(output, message_regex)) << output;
+    ASSERT_TRUE(output.find(expected_message) != std::string::npos) << output;
 #endif
   }
 }
