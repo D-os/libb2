@@ -16,11 +16,12 @@
 
 #define LOG_TAG "CallStack"
 
+#include <memory>
+
 #include <utils/CallStack.h>
 #include <utils/Printer.h>
 #include <utils/Errors.h>
 #include <utils/Log.h>
-#include <UniquePtr.h>
 
 #ifdef __GLIBC__
 #include <execinfo.h>

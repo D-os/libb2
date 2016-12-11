@@ -6,7 +6,6 @@ endif()
 
 
 add_library(utils SHARED
-    BasicHashtable.cpp
     CallStack.cpp
     FileMap.cpp
     JenkinsHash.cpp
@@ -14,7 +13,6 @@ add_library(utils SHARED
     Log.cpp
     NativeHandle.cpp
     Printer.cpp
-    ProcessCallStack.cpp
     PropertyMap.cpp
     RefBase.cpp
     SharedBuffer.cpp
@@ -31,6 +29,7 @@ add_library(utils SHARED
 
 #    BlobCache.cpp
     Looper.cpp
+    ProcessCallStack.cpp
 #    Trace.cpp
 )
 target_link_libraries(utils cutils dl log)

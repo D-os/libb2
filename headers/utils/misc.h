@@ -27,4 +27,12 @@
 # define NELEM(x) ((int) (sizeof(x) / sizeof((x)[0])))
 #endif
 
+namespace android {
+
+typedef void (*sysprop_change_callback)(void);
+void add_sysprop_change_callback(sysprop_change_callback cb, int priority);
+void report_sysprop_change();
+
+}; // namespace android
+
 #endif // _LIBS_UTILS_MISC_H
