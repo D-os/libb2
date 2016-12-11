@@ -68,6 +68,7 @@ message(STATUS "")
 add_subdirectory(headers)
 add_subdirectory(kits)
 add_subdirectory(bins)
+add_subdirectory(tools)
 
 # Tests
 add_subdirectory(external/googletest/googlemock EXCLUDE_FROM_ALL)
