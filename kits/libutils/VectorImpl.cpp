@@ -24,9 +24,8 @@
 #include <cutils/safe_iop.h>
 
 #include <utils/Errors.h>
+#include <utils/SharedBuffer.h>
 #include <utils/VectorImpl.h>
-
-#include "SharedBuffer.h"
 
 /*****************************************************************************/
 
