@@ -1,0 +1,3 @@
+#!/bin/sh
+. $(OUT_SCRIPTS)/setup_env.sh
+smooved -s $(PWD)/$(OUT_SCRIPTS)/boot_script.bsh

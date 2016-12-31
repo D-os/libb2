@@ -63,7 +63,6 @@ public:
     // lock if possible; returns 0 on success, error otherwise
     status_t    tryLock();
 
-#if defined(__ANDROID__)
     // Lock the mutex, but don't wait longer than timeoutNs (relative time).
     // Returns 0 on success, TIMED_OUT for failure due to timeout expiration.
     //
@@ -76,7 +75,6 @@ public:
     // so a timeout may occur even though no processes could run.
     // Not holding a partial wakelock may lead to a system suspend.
     status_t    timedLock(nsecs_t timeoutNs);
-#endif
 
     // Manages the mutex automatically. It'll be locked when Autolock is
     // constructed and released when Autolock goes out of scope.

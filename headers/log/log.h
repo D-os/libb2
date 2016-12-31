@@ -479,53 +479,6 @@ extern "C" {
     if (android_testLog(ANDROID_##priority, tag))
 #endif
 
-// ---------------------------------------------------------------------
-
-/*
- * Event logging.
- */
-
-/*
- * Event log entry types.  These must match up with the declarations in
- * java/android/android/util/EventLog.java.
- */
-typedef enum {
-    EVENT_TYPE_INT      = 0,
-    EVENT_TYPE_LONG     = 1,
-    EVENT_TYPE_STRING   = 2,
-    EVENT_TYPE_LIST     = 3,
-    EVENT_TYPE_FLOAT    = 4,
-} AndroidEventLogType;
-#define sizeof_AndroidEventLogType sizeof(typeof_AndroidEventLogType)
-#define typeof_AndroidEventLogType unsigned char
-
-#ifndef LOG_EVENT_INT
-#define LOG_EVENT_INT(_tag, _value) {                                       \
-        int intBuf = _value;                                                \
-        (void) android_btWriteLog(_tag, EVENT_TYPE_INT, &intBuf,            \
-            sizeof(intBuf));                                                \
-    }
-#endif
-#ifndef LOG_EVENT_LONG
-#define LOG_EVENT_LONG(_tag, _value) {                                      \
-        long long longBuf = _value;                                         \
-        (void) android_btWriteLog(_tag, EVENT_TYPE_LONG, &longBuf,          \
-            sizeof(longBuf));                                               \
-    }
-#endif
-#ifndef LOG_EVENT_FLOAT
-#define LOG_EVENT_FLOAT(_tag, _value) {                                     \
-        float floatBuf = _value;                                            \
-        (void) android_btWriteLog(_tag, EVENT_TYPE_FLOAT, &floatBuf,        \
-            sizeof(floatBuf));                                              \
-    }
-#endif
-#ifndef LOG_EVENT_STRING
-#define LOG_EVENT_STRING(_tag, _value)                                      \
-        (void) __android_log_bswrite(_tag, _value);
-#endif
-/* TODO: something for LIST */
-
 /*
  * ===========================================================================
  *

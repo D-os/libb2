@@ -47,6 +47,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -Woverloaded-virtual -Wn
 # Compute platform bits .
 math(EXPR PLATFORM_BITS "8*${CMAKE_SIZEOF_VOID_P}")
 
+# Global definitions
+add_definitions(-D_SUPPORTS_NAMESPACE=1)
+
 # Log some information.
 message(STATUS "")
 message(STATUS "============= Build environment =============")
@@ -69,6 +72,7 @@ add_subdirectory(headers)
 add_subdirectory(kits)
 add_subdirectory(bins)
 add_subdirectory(tools)
+#add_subdirectory(servers)
 
 # Tests
 add_subdirectory(external/googletest/googlemock EXCLUDE_FROM_ALL)
