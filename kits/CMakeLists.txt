@@ -11,7 +11,6 @@ set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "")
 #    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgcc")
 #endif()
 
-add_subdirectory(liblog)
 add_subdirectory(libcutils)
 add_subdirectory(base)
 add_subdirectory(libutils)

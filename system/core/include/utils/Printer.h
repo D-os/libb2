@@ -44,7 +44,7 @@ public:
     // - Unless ignoreBlankLines is false, print blank lines to logcat
     // (Note that the default ALOG behavior is to ignore blank lines)
     LogPrinter(const char* logtag,
-               android_LogPriority priority = ANDROID_LOG_DEBUG,
+               android_LogPriority priority = LOG_INFO,
                const char* prefix = 0,
                bool ignoreBlankLines = false);
 

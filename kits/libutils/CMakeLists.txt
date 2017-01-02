@@ -38,7 +38,7 @@ add_library(utils SHARED
     "${UTILS_SOURCE_DIR}/ProcessCallStack.cpp"
 #    "${UTILS_SOURCE_DIR}/Trace.cpp"
 )
-target_link_libraries(utils cutils dl log)
+target_link_libraries(utils cutils dl)
 set_target_properties(utils PROPERTIES LINKER_LANGUAGE C)
 
 add_subdirectory(tests)

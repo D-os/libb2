@@ -15,4 +15,4 @@ add_executable(libutils_tests
     "${UTILS_SOURCE_DIR}/SharedBufferTest.cpp"
 )
 
-target_link_libraries(libutils_tests gtest_main gtest z log cutils utils)
+target_link_libraries(libutils_tests gtest_main gtest z cutils utils)

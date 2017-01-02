@@ -48,7 +48,7 @@ public:
 
     // Dump a stack trace to the log using the supplied logtag.
     void log(const char* logtag,
-             android_LogPriority priority = ANDROID_LOG_DEBUG,
+             android_LogPriority priority = LOG_INFO,
              const char* prefix = 0) const;
 
     // Dump a stack trace to the specified file descriptor.

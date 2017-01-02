@@ -29,8 +29,20 @@ add_library(cutils SHARED
 #    "${CUTILS_SOURCE_DIR}/socket_network_client_unix.c"
 #    "${CUTILS_SOURCE_DIR}/sockets_unix.cpp"
     "${CUTILS_SOURCE_DIR}/str_parms.c"
+
+#    "${CUTILS_SOURCE_DIR}/android_reboot.c"
+#    "${CUTILS_SOURCE_DIR}/ashmem-dev.c"
+#    "${CUTILS_SOURCE_DIR}/debugger.c"
+    "${CUTILS_SOURCE_DIR}/klog.c"
+#    "${CUTILS_SOURCE_DIR}/partition_utils.c"
+#    "${CUTILS_SOURCE_DIR}/properties.c"
+#    "${CUTILS_SOURCE_DIR}/qtaguid.c"
+#    "${CUTILS_SOURCE_DIR}/trace-dev.c"
+#    "${CUTILS_SOURCE_DIR}/uevent.c"
+
+    log.c
 )
-target_link_libraries(cutils log)
+target_link_libraries(cutils pthread)
 set_target_properties(cutils PROPERTIES LINKER_LANGUAGE C)
 
 add_subdirectory(tests)
