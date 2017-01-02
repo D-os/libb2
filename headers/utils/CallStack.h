@@ -17,7 +17,7 @@
 #ifndef ANDROID_CALLSTACK_H
 #define ANDROID_CALLSTACK_H
 
-#include <android/log.h>
+#include <cutils/log.h>
 #include <utils/backtrace_constants.h>
 #include <utils/String.h>
 #include <utils/Vector.h>
@@ -48,7 +48,7 @@ public:
 
     // Dump a stack trace to the log using the supplied logtag.
     void log(const char* logtag,
-             android_LogPriority priority = ANDROID_LOG_DEBUG,
+             android_LogPriority priority = LOG_INFO,
              const char* prefix = 0) const;
 
     // Dump a stack trace to the specified file descriptor.

@@ -38,9 +38,11 @@ add_library(cutils SHARED
 #    trace-dev.c
 #    uevent.c
 
+    log.c
+
     safe_iop.c
 )
-target_link_libraries(cutils log)
+target_link_libraries(cutils pthread)
 set_target_properties(cutils PROPERTIES LINKER_LANGUAGE C)
 
 add_subdirectory(tests)

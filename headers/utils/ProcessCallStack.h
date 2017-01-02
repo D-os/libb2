@@ -18,7 +18,7 @@
 #define ANDROID_PROCESS_CALLSTACK_H
 
 #include <utils/CallStack.h>
-#include <android/log.h>
+#include <cutils/log.h>
 #include <utils/KeyedVector.h>
 #include <utils/String.h>
 
@@ -42,7 +42,7 @@ public:
     void update();
 
     // Print all stack traces to the log using the supplied logtag.
-    void log(const char* logtag, android_LogPriority priority = ANDROID_LOG_DEBUG,
+    void log(const char* logtag, android_LogPriority priority = LOG_INFO,
              const char* prefix = 0) const;
 
     // Dump all stack traces to the specified file descriptor.

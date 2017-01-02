@@ -30,7 +30,7 @@ LogIfSlow::LogIfSlow(const char* tag, android_LogPriority priority,
 LogIfSlow::~LogIfSlow() {
     int durationMillis = nanoseconds_to_milliseconds(systemTime(SYSTEM_TIME_BOOTTIME) - mStart);
     if (durationMillis > mTimeoutMillis) {
-        LOG_PRI(mPriority, mTag, "%s: %dms", mMessage, durationMillis);
+        LOG_PRINT(mPriority, mTag, "%s: %dms", mMessage, durationMillis);
     }
 }
 

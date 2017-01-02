@@ -8,7 +8,7 @@ add_library(base SHARED
 
     errors_unix.cpp
 )
-target_link_libraries(base log)
+target_link_libraries(base cutils)
 target_compile_options(base PRIVATE -Wexit-time-destructors)
 
 include_directories(
