@@ -28,11 +28,11 @@
 
 using namespace android;
 
-void writeString16(Parcel& parcel, const char* string)
+void writeString(Parcel& parcel, const char* string)
 {
     if (string != NULL)
     {
-        parcel.writeString16(String16(string));
+        parcel.writeString(String(string));
     }
     else
     {
@@ -41,29 +41,16 @@ void writeString16(Parcel& parcel, const char* string)
 }
 
 // get the name of the generic interface we hold a reference to
-static String16 get_interface_name(sp<IBinder> service)
+static String get_interface_name(sp<IBinder> service)
 {
     if (service != NULL) {
         Parcel data, reply;
         status_t err = service->transact(IBinder::INTERFACE_TRANSACTION, data, &reply);
         if (err == NO_ERROR) {
-            return reply.readString16();
+            return reply.readString();
         }
     }
-    return String16();
-}
-
-static String8 good_old_string(const String16& src)
-{
-    String8 name8;
-    char ch8[2];
-    ch8[1] = 0;
-    for (unsigned j = 0; j < src.size(); j++) {
-        char16_t ch = src[j];
-        if (ch < 128) ch8[0] = (char)ch;
-        name8.append(ch8);
-    }
-    return name8;
+    return String();
 }
 
 int main(int argc, char* const argv[])
@@ -74,10 +61,10 @@ int main(int argc, char* const argv[])
         aerr << "service: Unable to get default service manager!" << endl;
         return 20;
     }
-    
+
     bool wantsUsage = false;
     int result = 0;
-    
+
     while (1) {
         int ic = getopt(argc, argv, "h?");
         if (ic < 0)
@@ -95,14 +82,14 @@ int main(int argc, char* const argv[])
             break;
         }
     }
-    
+
     if (optind >= argc) {
         wantsUsage = true;
     } else if (!wantsUsage) {
         if (strcmp(argv[optind], "check") == 0) {
             optind++;
             if (optind < argc) {
-                sp<IBinder> service = sm->checkService(String16(argv[optind]));
+                sp<IBinder> service = sm->checkService(String(argv[optind]));
                 aout << "Service " << argv[optind] <<
                     (service == NULL ? ": not found" : ": found") << endl;
             } else {
@@ -112,22 +99,22 @@ int main(int argc, char* const argv[])
             }
         }
         else if (strcmp(argv[optind], "list") == 0) {
-            Vector<String16> services = sm->listServices();
+            Vector<String> services = sm->listServices();
             aout << "Found " << services.size() << " services:" << endl;
             for (unsigned i = 0; i < services.size(); i++) {
-                String16 name = services[i];
+                String name = services[i];
                 sp<IBinder> service = sm->checkService(name);
-                aout << i 
-                     << "\t" << good_old_string(name) 
-                     << ": [" << good_old_string(get_interface_name(service)) << "]"
+                aout << i
+                     << "\t" << name
+                     << ": [" << get_interface_name(service) << "]"
                      << endl;
             }
         } else if (strcmp(argv[optind], "call") == 0) {
             optind++;
             if (optind+1 < argc) {
                 int serviceArg = optind;
-                sp<IBinder> service = sm->checkService(String16(argv[optind++]));
-                String16 ifName = get_interface_name(service);
+                sp<IBinder> service = sm->checkService(String(argv[optind++]));
+                String ifName = get_interface_name(service);
                 int32_t code = atoi(argv[optind++]);
                 if (service != NULL && ifName.size() > 0) {
                     Parcel data, reply;
@@ -155,15 +142,15 @@ int main(int argc, char* const argv[])
                                 break;
                             }
                             data.writeInt64(atoll(argv[optind++]));
-                        } else if (strcmp(argv[optind], "s16") == 0) {
+                        } else if (strcmp(argv[optind], "s") == 0) {
                             optind++;
                             if (optind >= argc) {
-                                aerr << "service: no string supplied for 's16'" << endl;
+                                aerr << "service: no string supplied for 's'" << endl;
                                 wantsUsage = true;
                                 result = 10;
                                 break;
                             }
-                            data.writeString16(String16(argv[optind++]));
+                            data.writeString(String(argv[optind++]));
                         } else if (strcmp(argv[optind], "f") == 0) {
                             optind++;
                             if (optind >= argc) {
@@ -186,84 +173,84 @@ int main(int argc, char* const argv[])
                             optind++;
                             data.writeStrongBinder(NULL);
                         } else if (strcmp(argv[optind], "intent") == 0) {
-                        	
-                        	char* action = NULL;
-                        	char* dataArg = NULL;
-                        	char* type = NULL;
-                        	int launchFlags = 0;
-                        	char* component = NULL;
-                        	int categoryCount = 0;
-                        	char* categories[16];
-                        	
-                        	char* context1 = NULL;
-                        	
+
+                            char* action = NULL;
+                            char* dataArg = NULL;
+                            char* type = NULL;
+                            int launchFlags = 0;
+                            char* component = NULL;
+                            int categoryCount = 0;
+                            char* categories[16];
+
+                            char* context1 = NULL;
+
                             optind++;
-                            
-                        	while (optind < argc)
-                        	{
-                        		char* key = strtok_r(argv[optind], "=", &context1);
-                        		char* value = strtok_r(NULL, "=", &context1);
-                                
+
+                            while (optind < argc)
+                            {
+                                char* key = strtok_r(argv[optind], "=", &context1);
+                                char* value = strtok_r(NULL, "=", &context1);
+
                                 // we have reached the end of the XXX=XXX args.
                                 if (key == NULL) break;
-                        		
-                        		if (strcmp(key, "action") == 0)
-                        		{
-                        			action = value;
-                        		}
-                        		else if (strcmp(key, "data") == 0)
-                        		{
-                        			dataArg = value;
-                        		}
-                        		else if (strcmp(key, "type") == 0)
-                        		{
-                        			type = value;
-                        		}
-                        		else if (strcmp(key, "launchFlags") == 0)
-                        		{
-                        			launchFlags = atoi(value);
-                        		}
-                        		else if (strcmp(key, "component") == 0)
-                        		{
-                        			component = value;
-                        		}
-                        		else if (strcmp(key, "categories") == 0)
-                        		{
-                        			char* context2 = NULL;
-                        			int categoryCount = 0;
-                        			categories[categoryCount] = strtok_r(value, ",", &context2);
-                        			
-                        			while (categories[categoryCount] != NULL)
-                        			{
-                        				categoryCount++;
-                        				categories[categoryCount] = strtok_r(NULL, ",", &context2);
-                        			}
-                        		}
-                                
+
+                                if (strcmp(key, "action") == 0)
+                                {
+                                    action = value;
+                                }
+                                else if (strcmp(key, "data") == 0)
+                                {
+                                    dataArg = value;
+                                }
+                                else if (strcmp(key, "type") == 0)
+                                {
+                                    type = value;
+                                }
+                                else if (strcmp(key, "launchFlags") == 0)
+                                {
+                                    launchFlags = atoi(value);
+                                }
+                                else if (strcmp(key, "component") == 0)
+                                {
+                                    component = value;
+                                }
+                                else if (strcmp(key, "categories") == 0)
+                                {
+                                    char* context2 = NULL;
+                                    int categoryCount = 0;
+                                    categories[categoryCount] = strtok_r(value, ",", &context2);
+
+                                    while (categories[categoryCount] != NULL)
+                                    {
+                                        categoryCount++;
+                                        categories[categoryCount] = strtok_r(NULL, ",", &context2);
+                                    }
+                                }
+
                                 optind++;
-                        	} 
-                        	
-                            writeString16(data, action);
-                            writeString16(data, dataArg);
-                            writeString16(data, type);
-                       		data.writeInt32(launchFlags);
-                            writeString16(data, component);
-                        	
+                            }
+
+                            writeString(data, action);
+                            writeString(data, dataArg);
+                            writeString(data, type);
+                            data.writeInt32(launchFlags);
+                            writeString(data, component);
+
                             if (categoryCount > 0)
                             {
                                 data.writeInt32(categoryCount);
                                 for (int i = 0 ; i < categoryCount ; i++)
                                 {
-                                    writeString16(data, categories[i]);
+                                    writeString(data, categories[i]);
                                 }
                             }
                             else
                             {
                                 data.writeInt32(0);
-                            }                            
-  
+                            }
+
                             // for now just set the extra field to be null.
-                       		data.writeInt32(-1);
+                            data.writeInt32(-1);
                         } else {
                             aerr << "service: unknown option " << argv[optind] << endl;
                             wantsUsage = true;
@@ -271,7 +258,7 @@ int main(int argc, char* const argv[])
                             break;
                         }
                     }
-                    
+
                     service->transact(code, data, &reply);
                     aout << "Result: " << reply << endl;
                 } else {
@@ -294,23 +281,23 @@ int main(int argc, char* const argv[])
             result = 10;
         }
     }
-    
+
     if (wantsUsage) {
         aout << "Usage: service [-h|-?]\n"
                 "       service list\n"
                 "       service check SERVICE\n"
-                "       service call SERVICE CODE [i32 N | i64 N | f N | d N | s16 STR ] ...\n"
+                "       service call SERVICE CODE [i32 N | i64 N | f N | d N | s STR ] ...\n"
                 "Options:\n"
                 "   i32: Write the 32-bit integer N into the send parcel.\n"
                 "   i64: Write the 64-bit integer N into the send parcel.\n"
                 "   f:   Write the 32-bit single-precision number N into the send parcel.\n"
                 "   d:   Write the 64-bit double-precision number N into the send parcel.\n"
-                "   s16: Write the UTF-16 string STR into the send parcel.\n";
+                "   s:   Write the UTF-8  string STR into the send parcel.\n";
 //                "   intent: Write and Intent int the send parcel. ARGS can be\n"
 //                "       action=STR data=STR type=STR launchFlags=INT component=STR categories=STR[,STR,...]\n";
         return result;
     }
-    
+
     return result;
 }
 
