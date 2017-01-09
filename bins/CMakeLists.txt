@@ -1,1 +1,2 @@
 add_subdirectory(servicemanager)
+add_subdirectory(service)

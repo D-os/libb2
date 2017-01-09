@@ -42,9 +42,17 @@ include_directories(
 
 # Set flags.
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -Woverloaded-virtual -Wno-ctor-dtor-privacy -Wnon-virtual-dtor -fexceptions -fpermissive")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -Woverloaded-virtual -Wno-ctor-dtor-privacy -Wnon-virtual-dtor -fno-rtti -fno-exceptions -fpermissive")
 
-# Compute platform bits .
+# Goal is to work without libctdc++ installed
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
+set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "")
+#set(CMAKE_SHARED_LINKER_FLAGS "-nodefaultlibs")
+#if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
+#    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgcc")
+#endif()
+
+# Compute platform bits.
 math(EXPR PLATFORM_BITS "8*${CMAKE_SIZEOF_VOID_P}")
 
 # Log some information.

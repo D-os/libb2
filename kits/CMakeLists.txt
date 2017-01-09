@@ -3,14 +3,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
-add_definitions(-fno-rtti -fno-exceptions)
-set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
-set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "")
-#set(CMAKE_SHARED_LINKER_FLAGS "-nodefaultlibs")
-#if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-#    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgcc")
-#endif()
-
 add_subdirectory(libcutils)
 add_subdirectory(base)
 add_subdirectory(libutils)
