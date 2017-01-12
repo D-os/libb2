@@ -21,6 +21,7 @@
 
 #include <fcntl.h>
 #include <getopt.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,7 +36,7 @@ using android::base::StringPrintf;
 using android::base::unique_fd;
 using android::base::WriteFully;
 
-static int sort_func(const String16* lhs, const String16* rhs)
+static int sort_func(const String* lhs, const String* rhs)
 {
     return lhs->compare(*rhs);
 }
@@ -53,7 +54,7 @@ static void usage() {
             "         SERVICE [ARGS]: dumps only service SERVICE, optionally passing ARGS to it\n");
 }
 
-bool IsSkipped(const Vector<String16>& skipped, const String16& service) {
+bool IsSkipped(const Vector<String>& skipped, const String& service) {
     for (const auto& candidate : skipped) {
         if (candidate == service) {
             return true;
@@ -73,9 +74,9 @@ int main(int argc, char* const argv[])
         return 20;
     }
 
-    Vector<String16> services;
-    Vector<String16> args;
-    Vector<String16> skippedServices;
+    Vector<String> services;
+    Vector<String> args;
+    Vector<String> skippedServices;
     bool showListOnly = false;
     bool skipServices = false;
     int timeoutArg = 10;
@@ -129,12 +130,12 @@ int main(int argc, char* const argv[])
 
     for (int i = optind; i < argc; i++) {
         if (skipServices) {
-            skippedServices.add(String16(argv[i]));
+            skippedServices.add(String(argv[i]));
         } else {
             if (i == optind) {
-                services.add(String16(argv[i]));
+                services.add(String(argv[i]));
             } else {
-                args.add(String16(argv[i]));
+                args.add(String(argv[i]));
             }
         }
     }
@@ -149,7 +150,7 @@ int main(int argc, char* const argv[])
         // gets all services
         services = sm->listServices();
         services.sort(sort_func);
-        args.add(String16("-a"));
+        args.add(String("-a"));
     }
 
     const size_t N = services.size();
@@ -172,7 +173,7 @@ int main(int argc, char* const argv[])
     }
 
     for (size_t i = 0; i < N; i++) {
-        String16 service_name = std::move(services[i]);
+        String service_name = std::move(services[i]);
         if (IsSkipped(skippedServices, service_name)) continue;
 
         sp<IBinder> service = sm->checkService(service_name);
@@ -227,7 +228,7 @@ int main(int argc, char* const argv[])
                 auto time_left_ms = [end]() {
                     auto now = std::chrono::steady_clock::now();
                     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(end - now);
-                    return std::max(diff.count(), 0ll);
+                    return std::max(diff.count(), static_cast<decltype(diff.count())>(0));
                 };
 
                 int rc = TEMP_FAILURE_RETRY(poll(&pfd, 1, time_left_ms()));

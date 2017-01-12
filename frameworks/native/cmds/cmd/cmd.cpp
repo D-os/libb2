@@ -25,6 +25,7 @@
 #include <utils/Vector.h>
 
 #include <getopt.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,7 +34,7 @@
 
 using namespace android;
 
-static int sort_func(const String16* lhs, const String16* rhs)
+static int sort_func(const String* lhs, const String* rhs)
 {
     return lhs->compare(*rhs);
 }
@@ -65,7 +66,7 @@ int main(int argc, char* const argv[])
     }
 
     if ((argc == 2) && (strcmp(argv[1], "-l") == 0)) {
-        Vector<String16> services = sm->listServices();
+        Vector<String> services = sm->listServices();
         services.sort(sort_func);
         aout << "Currently running services:" << endl;
 
@@ -78,11 +79,11 @@ int main(int argc, char* const argv[])
         return 0;
     }
 
-    Vector<String16> args;
+    Vector<String> args;
     for (int i=2; i<argc; i++) {
-        args.add(String16(argv[i]));
+        args.add(String(argv[i]));
     }
-    String16 cmd = String16(argv[1]);
+    String cmd = String(argv[1]);
     sp<IBinder> service = sm->checkService(cmd);
     if (service == NULL) {
         aerr << "Can't find service: " << argv[1] << endl;
