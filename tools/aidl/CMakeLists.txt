@@ -2,8 +2,7 @@ find_package(BISON)
 find_package(FLEX)
 
 BISON_TARGET(aidl_language_y
-    aidl_language_y.yy ${CMAKE_CURRENT_BINARY_DIR}/aidl_language_y.cpp
-    COMPILE_FLAGS --defines=${CMAKE_CURRENT_BINARY_DIR}/aidl_language_y.h)
+    aidl_language_y.yy ${CMAKE_CURRENT_BINARY_DIR}/aidl_language_y.cpp)
 FLEX_TARGET(aidl_language_l
     aidl_language_l.ll  ${CMAKE_CURRENT_BINARY_DIR}/aidl_language_l.cpp)
 ADD_FLEX_BISON_DEPENDENCY(aidl_language_l aidl_language_y)

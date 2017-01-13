@@ -13,7 +13,13 @@ endif()
 add_subdirectory(binder)
 
 add_library(be SHARED "")
+target_link_libraries(be
+    "-Wl,--whole-archive"
+    interfaces
+    "-Wl,--no-whole-archive"
+)
 target_sources(be PRIVATE
-        ${headerFiles}
+    ${headerFiles}
+    ${interfaceFiles}
 )
 set_target_properties(be PROPERTIES LINKER_LANGUAGE CXX)

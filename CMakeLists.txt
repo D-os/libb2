@@ -38,6 +38,7 @@ set(COMMON_FLAGS "-Wall -Wpointer-arith -Wcast-align -Wsign-compare -Wstrict-ali
 # Default include directories.
 include_directories(
     ${CMAKE_SOURCE_DIR}/headers
+    ${CMAKE_BINARY_DIR}/interfaces
 )
 
 # Set flags.
@@ -74,6 +75,7 @@ message(STATUS "")
 
 # Sub directories.
 add_subdirectory(headers)
+add_subdirectory(interfaces)
 add_subdirectory(kits)
 add_subdirectory(bins)
 add_subdirectory(tools)
