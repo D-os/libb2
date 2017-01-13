@@ -37,7 +37,8 @@ set(COMMON_FLAGS "-Wall -Wpointer-arith -Wcast-align -Wsign-compare -Wstrict-ali
 
 # Default include directories.
 include_directories(
-    ${PROJECT_SOURCE_DIR}/headers
+    ${CMAKE_SOURCE_DIR}/headers
+    ${CMAKE_BINARY_DIR}/interfaces
 )
 
 # Set flags.
@@ -80,6 +81,7 @@ set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 
 # Sub directories.
 add_subdirectory(headers)
+add_subdirectory(interfaces)
 add_subdirectory(kits)
 add_subdirectory(bins)
 add_subdirectory(tools)
