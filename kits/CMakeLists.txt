@@ -18,8 +18,10 @@ target_link_libraries(be
     interfaces
     "-Wl,--no-whole-archive"
 )
+file(GLOB_RECURSE privateHeaderFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 target_sources(be PRIVATE
     ${headerFiles}
     ${interfaceFiles}
+    ${privateHeaderFiles}
 )
 set_target_properties(be PROPERTIES LINKER_LANGUAGE CXX)
