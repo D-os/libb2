@@ -37,7 +37,7 @@ public:
     static status_t publish(bool allowIsolated = false) {
         sp<IServiceManager> sm(defaultServiceManager());
         return sm->addService(
-                String16(SERVICE::getServiceName()),
+                String(SERVICE::getServiceName()),
                 new SERVICE(), allowIsolated);
     }
 
