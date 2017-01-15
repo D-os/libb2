@@ -3,4 +3,4 @@ add_executable(smooved
     ContextManagerService.h
     ContextManagerService.cpp
 )
-target_link_libraries(smooved binder be)
+target_link_libraries(smooved binder b2)

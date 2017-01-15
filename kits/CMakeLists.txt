@@ -12,16 +12,16 @@ if (NOT PLATFORM_BITS EQUAL 64)
 endif()
 add_subdirectory(binder)
 
-add_library(be SHARED "")
-target_link_libraries(be
+add_library(b2 SHARED "")
+target_link_libraries(b2
     "-Wl,--whole-archive"
     interfaces
     "-Wl,--no-whole-archive"
 )
 file(GLOB_RECURSE privateHeaderFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-target_sources(be PRIVATE
+target_sources(b2 PRIVATE
     ${headerFiles}
     ${interfaceFiles}
     ${privateHeaderFiles}
 )
-set_target_properties(be PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(b2 PROPERTIES LINKER_LANGUAGE CXX)
