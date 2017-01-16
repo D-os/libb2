@@ -22,6 +22,8 @@ using std::make_shared;
 using std::initializer_list;
 using std::move;
 
+using namespace os::support;
+
 /* Helper for representing null - just a do-nothing struct, plus comparison
  * operators so the helpers in MsgPackValue work. We can't use nullptr_t because
  * it may not be orderable.
@@ -39,7 +41,7 @@ class MsgPackValue {
 public:
     virtual bool equals(const MsgPackValue * other) const = 0;
     virtual bool less(const MsgPackValue * other) const = 0;
-    virtual void dump(std::string &out) const = 0;
+    virtual status_t dump(std::string &out) const = 0;
     virtual MsgPack::Type type() const = 0;
     virtual double number_value() const;
     virtual float float32_value() const;
@@ -76,7 +78,7 @@ static const union {
 static const bool is_big_endian = endian_check_data.bytes[0] == 0x00;
 
 template< typename T >
-void dump_data(T value, std::string &out)
+status_t dump_data(T value, std::string &out)
 {
     union {
         T packed;
@@ -93,129 +95,134 @@ void dump_data(T value, std::string &out)
     {
         out.push_back(converter.bytes[off + dir * i]);
     }
+    return OK;
 }
 
-inline void dump(NullStruct, std::string &out) {
+inline status_t dump(NullStruct, std::string &out) {
     out.push_back(0xc0);
+    return OK;
 }
 
-inline void dump(float value, std::string &out) {
+inline status_t dump(float value, std::string &out) {
     out.push_back(0xca);
-    dump_data(value, out);
+    return dump_data(value, out);
 }
 
-inline void dump(double value, std::string &out) {
+inline status_t dump(double value, std::string &out) {
     out.push_back(0xcb);
-    dump_data(value, out);
+    return dump_data(value, out);
 }
 
-inline void dump(uint8_t value, std::string &out) {
+inline status_t dump(uint8_t value, std::string &out) {
     if(128 <= value)
     {
         out.push_back(0xcc);
     }
     out.push_back(value);
+    return OK;
 }
 
-inline void dump(uint16_t value, std::string &out) {
+inline status_t dump(uint16_t value, std::string &out) {
     if( value < (1 << 8) )
     {
-        dump(static_cast<uint8_t>(value), out );
+        return dump(static_cast<uint8_t>(value), out );
     }
     else
     {
         out.push_back(0xcd);
-        dump_data(value, out);
+        return dump_data(value, out);
     }
 }
 
-inline void dump(uint32_t value, std::string &out) {
+inline status_t dump(uint32_t value, std::string &out) {
     if( value < (1 << 16) )
     {
-        dump(static_cast<uint16_t>(value), out );
+        return dump(static_cast<uint16_t>(value), out );
     }
     else
     {
         out.push_back(0xce);
-        dump_data(value, out);
+        return dump_data(value, out);
     }
 }
 
-inline void dump(uint64_t value, std::string &out) {
+inline status_t dump(uint64_t value, std::string &out) {
     if( value < (1ULL << 32) )
     {
-        dump(static_cast<uint32_t>(value), out );
+        return dump(static_cast<uint32_t>(value), out );
     }
     else
     {
         out.push_back(0xcf);
-        dump_data(value, out);
+        return dump_data(value, out);
     }
 }
 
 
-inline void dump(int8_t value, std::string &out) {
+inline status_t dump(int8_t value, std::string &out) {
     if( value < -32 )
     {
         out.push_back(0xd0);
     }
     out.push_back(value);
+    return OK;
 }
 
-inline void dump(int16_t value, std::string &out) {
+inline status_t dump(int16_t value, std::string &out) {
     if( value < -(1 << 7) )
     {
         out.push_back(0xd1);
-        dump_data(value, out);
+        return dump_data(value, out);
     }
     else if( value <= 0 )
     {
-        dump(static_cast<int8_t>(value), out );
+        return dump(static_cast<int8_t>(value), out );
     }
     else
     {
-        dump(static_cast<uint16_t>(value), out );
+        return dump(static_cast<uint16_t>(value), out );
     }
 }
 
-inline void dump(int32_t value, std::string &out) {
+inline status_t dump(int32_t value, std::string &out) {
     if( value < -(1 << 15) )
     {
         out.push_back(0xd2);
-        dump_data(value, out);
+        return dump_data(value, out);
     }
     else if( value <= 0 )
     {
-        dump(static_cast<int16_t>(value), out );
+        return dump(static_cast<int16_t>(value), out );
     }
     else
     {
-        dump(static_cast<uint32_t>(value), out );
+        return dump(static_cast<uint32_t>(value), out );
     }
 }
 
-inline void dump(int64_t value, std::string &out) {
+inline status_t dump(int64_t value, std::string &out) {
     if( value < -(1LL << 31) )
     {
         out.push_back(0xd3);
-        dump_data(value, out);
+        return dump_data(value, out);
     }
     else if( value <= 0 )
     {
-        dump(static_cast<int32_t>(value), out );
+        return dump(static_cast<int32_t>(value), out );
     }
     else
     {
-        dump(static_cast<uint64_t>(value), out );
+        return dump(static_cast<uint64_t>(value), out );
     }
 }
 
-inline void dump(bool value, std::string &out) {
+inline status_t dump(bool value, std::string &out) {
     const uint8_t msgpack_value = (value) ? 0xc3 : 0xc2;
     out.push_back(msgpack_value);
+    return OK;
 }
 
-inline void dump(const std::string& value, std::string &out) {
+inline status_t dump(const std::string& value, std::string &out) {
     size_t const len = value.size();
     if(len <= 0x1f)
     {
@@ -239,15 +246,16 @@ inline void dump(const std::string& value, std::string &out) {
     }
     else
     {
-        throw std::runtime_error("exceeded maximum data length");
+        return BAD_VALUE;
     }
 
     std::for_each(std::begin(value), std::end(value), [&out](char v){
         dump_data(v, out);
     });
+    return OK;
 }
 
-inline void dump(const MsgPack::array& value, std::string &out) {
+inline status_t dump(const MsgPack::array& value, std::string &out) {
     size_t const len = value.size();
     if(len <= 15)
     {
@@ -266,15 +274,16 @@ inline void dump(const MsgPack::array& value, std::string &out) {
     }
     else
     {
-        throw std::runtime_error("exceeded maximum data length");
+        return BAD_VALUE;
     }
 
     std::for_each(std::begin(value), std::end(value), [&out](MsgPack::array::value_type const& v){
         v.dump(out);
     });
+    return OK;
 }
 
-inline void dump(const MsgPack::object& value, std::string &out) {
+inline status_t dump(const MsgPack::object& value, std::string &out) {
     size_t const len = value.size();
     if(len <= 15)
     {
@@ -293,16 +302,17 @@ inline void dump(const MsgPack::object& value, std::string &out) {
     }
     else
     {
-        throw std::runtime_error("too long value.");
+        return BAD_VALUE;
     }
 
     std::for_each(std::begin(value), std::end(value), [&out](MsgPack::object::value_type const& v){
         v.first.dump(out);
         v.second.dump(out);
     });
+    return OK;
 }
 
-inline void dump(const MsgPack::binary& value, std::string &out) {
+inline status_t dump(const MsgPack::binary& value, std::string &out) {
     size_t const len = value.size();
     if(len <= 0xff)
     {
@@ -321,15 +331,16 @@ inline void dump(const MsgPack::binary& value, std::string &out) {
     }
     else
     {
-        throw std::runtime_error("exceeded maximum data length");
+        return BAD_VALUE;
     }
 
     std::for_each(std::begin(value), std::end(value), [&out](MsgPack::binary::value_type const& v){
         out.push_back(v);
     });
+    return OK;
 }
 
-inline void dump(const MsgPack::extension& value, std::string &out) {
+inline status_t dump(const MsgPack::extension& value, std::string &out) {
     const uint8_t type = std::get<0>( value );
     const MsgPack::binary& data = std::get<1>( value );
     const size_t len = data.size();
@@ -362,16 +373,17 @@ inline void dump(const MsgPack::extension& value, std::string &out) {
         dump_data(static_cast<uint32_t>(len), out);
     }
     else {
-        throw std::runtime_error("exceeded maximum data length");
+        return BAD_VALUE;
     }
 
     out.push_back(type);
     std::copy(std::begin(data), std::end(data), std::back_inserter(out));
+    return OK;
 }
 }
 
-void MsgPack::dump(std::string &out) const {
-    m_ptr->dump(out);
+status_t MsgPack::dump(std::string &out) const {
+    return m_ptr->dump(out);
 }
 
 /* * * * * * * * * * * * * * * * * * * *
@@ -403,7 +415,7 @@ protected:
     }
 
     const T m_value;
-    void dump(std::string &out) const override { msgpack11::dump(m_value, out); }
+    status_t dump(std::string &out) const override { return msgpack11::dump(m_value, out); }
 };
 
 bool equal_uint64_int64( uint64_t uint64_value, int64_t int64_value )
@@ -795,7 +807,7 @@ namespace {
  */
 class MsgPackParser final {
 public:
-    MsgPackParser( const std::string& buffer, size_t i, string& err, bool failed )
+    MsgPackParser( const std::string& buffer, size_t i, status_t err, bool failed )
         : m_ptr_beg( buffer.c_str() ),
           m_ptr_end( m_ptr_beg + buffer.size() ),
           m_ptr_cur( m_ptr_beg + i ),
@@ -808,15 +820,15 @@ public:
      *
      * Mark this parse as m_failed.
      */
-    MsgPack fail(string &&msg) {
-        return fail(move(msg), MsgPack());
+    MsgPack fail(status_t msg) {
+        return fail(msg, MsgPack());
     }
 
     template <typename T>
-    T fail(string &&msg, const T err_ret) {
+    T fail(status_t msg, const T err_ret) {
         if (!m_failed)
         {
-            m_err = std::move(msg);
+            m_err = msg;
         }
 
         m_failed = true;
@@ -834,7 +846,7 @@ public:
     }
 
     MsgPack parse_invalid(uint8_t, int) {
-        m_err = "invalid first byte.";
+        m_err = BAD_TYPE;
         m_failed = true;
         return MsgPack();
     }
@@ -1013,12 +1025,12 @@ public:
         }();
 
         if (max_depth < depth) {
-            return fail("exceeded maximum nesting depth.");
+            return fail(NO_MEMORY);
         }
 
         if(m_ptr_end <= m_ptr_cur)
         {
-            return fail("end of buffer.");
+            return fail(NOT_ENOUGH_DATA);
         }
 
         uint8_t const first_byte = *m_ptr_cur;
@@ -1033,7 +1045,7 @@ private:
     const char* const m_ptr_beg;
     const char* const m_ptr_end;
     const char* m_ptr_cur;
-    string &m_err;
+    status_t m_err;
     bool m_failed;
 
     void read_bytes(uint8_t* bytes, int n)
@@ -1053,7 +1065,7 @@ private:
 };
 
 }//namespace {
-MsgPack MsgPack::parse(const std::string &in, string &err) {
+MsgPack MsgPack::parse(const std::string &in, status_t &err) {
     MsgPackParser parser { in, 0, err, false };
     return parser.parse_msgpack(0);
 }
@@ -1061,7 +1073,7 @@ MsgPack MsgPack::parse(const std::string &in, string &err) {
 // Documented in msgpack.hpp
 vector<MsgPack> MsgPack::parse_multi(const string &in,
                                      std::string::size_type &parser_stop_pos,
-                                     string &err) {
+                                     status_t &err) {
     MsgPackParser parser { in, 0, err, false };
     parser_stop_pos = 0;
     vector<MsgPack> msgpack_vec;
@@ -1077,15 +1089,15 @@ vector<MsgPack> MsgPack::parse_multi(const string &in,
  * Shape-checking
  */
 
-bool MsgPack::has_shape(const shape & types, string & err) const {
+bool MsgPack::has_shape(const shape & types, status_t & err) const {
     if (!is_object()) {
-        err = "expected MessagePack object";
+        err = BAD_VALUE;
         return false;
     }
 
     for (auto & item : types) {
         if ((*this)[item.first].type() != item.second) {
-            err = "bad type for " + item.first;
+            err = BAD_VALUE;
             return false;
         }
     }
