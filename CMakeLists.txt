@@ -78,6 +78,7 @@ set(ANDROID_SYSTEM_CORE_DIR "${CMAKE_SOURCE_DIR}/system/core")
 set(ANDROID_SYSTEM_TOOLS_AIDL_DIR "${CMAKE_SOURCE_DIR}/system/tools/aidl")
 set(EXTERNAL_GOOGLETEST_DIR "${CMAKE_SOURCE_DIR}/external/googletest")
 set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
+set(EXTERNAL_MSGPACK11_DIR "${CMAKE_SOURCE_DIR}/external/msgpack11")
 
 # Sub directories.
 add_subdirectory(headers)

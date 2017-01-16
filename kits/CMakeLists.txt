@@ -12,7 +12,9 @@ if (NOT PLATFORM_BITS EQUAL 64)
 endif()
 add_subdirectory(binder)
 
-add_library(b2 SHARED "")
+add_library(b2 SHARED ""
+    "${EXTERNAL_MSGPACK11_DIR}/msgpack11.cpp"
+)
 target_link_libraries(b2
     "-Wl,--whole-archive"
     interfaces
