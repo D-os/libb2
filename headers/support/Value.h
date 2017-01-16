@@ -8,6 +8,8 @@
 #include <memory>
 #include <initializer_list>
 
+#include <support/SupportDefs.h>
+
 namespace os { namespace support {
 
 class MsgPackValue;
@@ -152,38 +154,37 @@ public:
     // Return the enclosed std::tuple if this is an extension, or an empty map otherwise.
     const extension &extension_items() const;
 
-    // Return a reference to arr[i] if this is an array, MsgPack() otherwise.
+    // Return a reference to arr[i] if this is an array, Value() otherwise.
     const Value & operator[](size_t i) const;
-    // Return a reference to obj[key] if this is an object, MsgPack() otherwise.
+    // Return a reference to obj[key] if this is an object, Value() otherwise.
     const Value & operator[](const std::string &key) const;
 
     // Serialize.
-    void dump(std::string &out) const;
+    status_t dump(std::string &out) const;
     std::string dump() const {
         std::string out;
         dump(out);
         return out;
     }
 
-    // Parse. If parse fails, return MsgPack() and assign an error message to err.
-    static Value parse(const std::string & in, std::string & err);
-    static Value parse(const char * in, size_t len, std::string & err) {
+    // Parse. If parse fails, return Value() and assign an error to err.
+    static Value parse(const std::string & in, status_t & err);
+    static Value parse(const char * in, size_t len, status_t & err) {
         if (in) {
             return parse(std::string(in,in+len), err);
         } else {
-            err = "null input";
+            err = UNEXPECTED_NULL;
             return nullptr;
         }
     }
     // Parse multiple objects, concatenated or separated by whitespace
-    static std::vector<Value> parse_multi(
-        const std::string & in,
+    static std::vector<Value> parse_multi(const std::string & in,
         std::string::size_type & parser_stop_pos,
-        std::string & err);
+        status_t &err);
 
     static inline std::vector<Value> parse_multi(
         const std::string & in,
-        std::string & err) {
+        status_t & err) {
         std::string::size_type parser_stop_pos;
         return parse_multi(in, parser_stop_pos, err);
     }
@@ -197,11 +198,11 @@ public:
 
     /* has_shape(types, err)
      *
-     * Return true if this is a JSON object and, for each item in types, has a field of
-     * the given type. If not, return false and set err to a descriptive message.
+     * Return true if this is a MsgPack object and, for each item in types, has a field of
+     * the given type. If not, return false and set err status.
      */
     typedef std::initializer_list<std::pair<std::string, Type>> shape;
-    bool has_shape(const shape & types, std::string & err) const;
+    bool has_shape(const shape & types, status_t & err) const;
 
 private:
     std::shared_ptr<MsgPackValue> m_ptr;
@@ -224,7 +225,7 @@ protected:
     virtual Value::Type type() const = 0;
     virtual bool equals(const MsgPackValue * other) const = 0;
     virtual bool less(const MsgPackValue * other) const = 0;
-    virtual void dump(std::string &out) const = 0;
+    virtual status_t dump(std::string &out) const = 0;
     virtual double number_value() const;
     virtual float float32_value() const;
     virtual double float64_value() const;
