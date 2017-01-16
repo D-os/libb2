@@ -18,6 +18,8 @@
     #endif
 #endif
 
+#include <support/SupportDefs.h>
+
 namespace msgpack11 {
 
 class MsgPackValue;
@@ -165,20 +167,25 @@ public:
     const MsgPack & operator[](const std::string &key) const;
 
     // Serialize.
-    void dump(std::string &out) const;
+    status_t dump(std::string &out) const;
     std::string dump() const {
         std::string out;
         dump(out);
         return out;
     }
+    std::string dump(status_t &status) const {
+        std::string out;
+        status = dump(out);
+        return out;
+    }
 
     // Parse. If parse fails, return MsgPack() and assign an error message to err.
-    static MsgPack parse(const std::string & in, std::string & err);
-    static MsgPack parse(const char * in, size_t len, std::string & err) {
+    static MsgPack parse(const std::string & in, status_t & err);
+    static MsgPack parse(const char * in, size_t len, status_t & err) {
         if (in) {
             return parse(std::string(in,in+len), err);
         } else {
-            err = "null input";
+            err = os::support::UNEXPECTED_NULL;
             return nullptr;
         }
     }
@@ -186,11 +193,11 @@ public:
     static std::vector<MsgPack> parse_multi(
         const std::string & in,
         std::string::size_type & parser_stop_pos,
-        std::string & err);
+        status_t & err);
 
     static inline std::vector<MsgPack> parse_multi(
         const std::string & in,
-        std::string & err) {
+        status_t & err) {
         std::string::size_type parser_stop_pos;
         return parse_multi(in, parser_stop_pos, err);
     }
@@ -204,11 +211,11 @@ public:
 
     /* has_shape(types, err)
      *
-     * Return true if this is a JSON object and, for each item in types, has a field of
-     * the given type. If not, return false and set err to a descriptive message.
+     * Return true if this is a MsgPack object and, for each item in types, has a field of
+     * the given type. If not, return false and set err status.
      */
     typedef std::initializer_list<std::pair<std::string, Type>> shape;
-    bool has_shape(const shape & types, std::string & err) const;
+    bool has_shape(const shape & types, status_t & err) const;
 
 private:
     std::shared_ptr<MsgPackValue> m_ptr;
