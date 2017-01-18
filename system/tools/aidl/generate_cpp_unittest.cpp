@@ -73,7 +73,7 @@ virtual ~BpComplexTypeInterface() = default;
 ::android::binder::Status Send(const ::std::unique_ptr<::std::vector<int32_t>>& goes_in, ::std::vector<double>* goes_in_and_out, ::std::vector<bool>* goes_out, ::std::vector<int32_t>* _aidl_return) override;
 ::android::binder::Status Piff(int32_t times) override;
 ::android::binder::Status TakesABinder(const ::android::sp<::foo::IFooType>& f, ::android::sp<::foo::IFooType>* _aidl_return) override;
-::android::binder::Status StringListMethod(const ::std::vector<::android::String16>& input, ::std::vector<::android::String16>* output, ::std::vector<::android::String16>* _aidl_return) override;
+::android::binder::Status StringListMethod(const ::std::vector<::android::String>& input, ::std::vector<::android::String>* output, ::std::vector<::android::String>* _aidl_return) override;
 ::android::binder::Status BinderListMethod(const ::std::vector<::android::sp<::android::IBinder>>& input, ::std::vector<::android::sp<::android::IBinder>>* output, ::std::vector<::android::sp<::android::IBinder>>* _aidl_return) override;
 ::android::binder::Status TakesAFileDescriptor(const ::ScopedFd& f, ::ScopedFd* _aidl_return) override;
 ::android::binder::Status TakesAFileDescriptorArray(const ::std::vector<::ScopedFd>& f, ::std::vector<::ScopedFd>* _aidl_return) override;
@@ -197,7 +197,7 @@ _aidl_status.setFromStatusT(_aidl_ret_status);
 return _aidl_status;
 }
 
-::android::binder::Status BpComplexTypeInterface::StringListMethod(const ::std::vector<::android::String16>& input, ::std::vector<::android::String16>* output, ::std::vector<::android::String16>* _aidl_return) {
+::android::binder::Status BpComplexTypeInterface::StringListMethod(const ::std::vector<::android::String>& input, ::std::vector<::android::String>* output, ::std::vector<::android::String>* _aidl_return) {
 ::android::Parcel _aidl_data;
 ::android::Parcel _aidl_reply;
 ::android::status_t _aidl_ret_status = ::android::OK;
@@ -206,7 +206,7 @@ _aidl_ret_status = _aidl_data.writeInterfaceToken(getInterfaceDescriptor());
 if (((_aidl_ret_status) != (::android::OK))) {
 goto _aidl_error;
 }
-_aidl_ret_status = _aidl_data.writeString16Vector(input);
+_aidl_ret_status = _aidl_data.writeStringVector(input);
 if (((_aidl_ret_status) != (::android::OK))) {
 goto _aidl_error;
 }
@@ -221,11 +221,11 @@ goto _aidl_error;
 if (!_aidl_status.isOk()) {
 return _aidl_status;
 }
-_aidl_ret_status = _aidl_reply.readString16Vector(_aidl_return);
+_aidl_ret_status = _aidl_reply.readStringVector(_aidl_return);
 if (((_aidl_ret_status) != (::android::OK))) {
 goto _aidl_error;
 }
-_aidl_ret_status = _aidl_reply.readString16Vector(output);
+_aidl_ret_status = _aidl_reply.readStringVector(output);
 if (((_aidl_ret_status) != (::android::OK))) {
 goto _aidl_error;
 }
@@ -457,14 +457,14 @@ break;
 break;
 case Call::STRINGLISTMETHOD:
 {
-::std::vector<::android::String16> in_input;
-::std::vector<::android::String16> out_output;
-::std::vector<::android::String16> _aidl_return;
+::std::vector<::android::String> in_input;
+::std::vector<::android::String> out_output;
+::std::vector<::android::String> _aidl_return;
 if (!(_aidl_data.checkInterface(this))) {
 _aidl_ret_status = ::android::BAD_TYPE;
 break;
 }
-_aidl_ret_status = _aidl_data.readString16Vector(&in_input);
+_aidl_ret_status = _aidl_data.readStringVector(&in_input);
 if (((_aidl_ret_status) != (::android::OK))) {
 break;
 }
@@ -476,11 +476,11 @@ break;
 if (!_aidl_status.isOk()) {
 break;
 }
-_aidl_ret_status = _aidl_reply->writeString16Vector(_aidl_return);
+_aidl_ret_status = _aidl_reply->writeStringVector(_aidl_return);
 if (((_aidl_ret_status) != (::android::OK))) {
 break;
 }
-_aidl_ret_status = _aidl_reply->writeString16Vector(out_output);
+_aidl_ret_status = _aidl_reply->writeStringVector(out_output);
 if (((_aidl_ret_status) != (::android::OK))) {
 break;
 }
@@ -596,7 +596,7 @@ R"(#ifndef AIDL_GENERATED_ANDROID_OS_I_COMPLEX_TYPE_INTERFACE_H_
 #include <cstdint>
 #include <foo/IFooType.h>
 #include <nativehelper/ScopedFd.h>
-#include <utils/String16.h>
+#include <utils/String.h>
 #include <utils/StrongPointer.h>
 #include <vector>
 
@@ -613,7 +613,7 @@ enum  : int32_t {
 virtual ::android::binder::Status Send(const ::std::unique_ptr<::std::vector<int32_t>>& goes_in, ::std::vector<double>* goes_in_and_out, ::std::vector<bool>* goes_out, ::std::vector<int32_t>* _aidl_return) = 0;
 virtual ::android::binder::Status Piff(int32_t times) = 0;
 virtual ::android::binder::Status TakesABinder(const ::android::sp<::foo::IFooType>& f, ::android::sp<::foo::IFooType>* _aidl_return) = 0;
-virtual ::android::binder::Status StringListMethod(const ::std::vector<::android::String16>& input, ::std::vector<::android::String16>* output, ::std::vector<::android::String16>* _aidl_return) = 0;
+virtual ::android::binder::Status StringListMethod(const ::std::vector<::android::String>& input, ::std::vector<::android::String>* output, ::std::vector<::android::String>* _aidl_return) = 0;
 virtual ::android::binder::Status BinderListMethod(const ::std::vector<::android::sp<::android::IBinder>>& input, ::std::vector<::android::sp<::android::IBinder>>* output, ::std::vector<::android::sp<::android::IBinder>>* _aidl_return) = 0;
 virtual ::android::binder::Status TakesAFileDescriptor(const ::ScopedFd& f, ::ScopedFd* _aidl_return) = 0;
 virtual ::android::binder::Status TakesAFileDescriptorArray(const ::std::vector<::ScopedFd>& f, ::std::vector<::ScopedFd>* _aidl_return) = 0;

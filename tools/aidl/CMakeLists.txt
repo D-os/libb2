@@ -36,6 +36,8 @@ add_library(aidl-common STATIC
     "${AIDL_SOURCE_DIR}/type_cpp.cpp"
     "${AIDL_SOURCE_DIR}/type_java.cpp"
     "${AIDL_SOURCE_DIR}/type_namespace.cpp"
+
+    "${AIDL_SOURCE_DIR}/docs/aidl-cpp.md"
 )
 target_compile_options(aidl-common PRIVATE
 # Tragically, the code is riddled with unused parameters.
