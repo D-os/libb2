@@ -1,4 +1,7 @@
-file(GLOB_RECURSE interfaceFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.aidl")
+set(interfaceFiles
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IContextManager.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/INode.aidl"
+)
 set(interfaces_install_dir /headers/os)
 install(FILES ${interfaceFiles} DESTINATION ${interfaces_install_dir})
 
@@ -9,7 +12,7 @@ foreach(IF ${interfaceFiles})
     set(OUT_CPP "${CMAKE_CURRENT_BINARY_DIR}/${DIR_IF}/${NAME_IF}.cpp")
     add_custom_command(
         OUTPUT "${OUT_CPP}"
-        COMMAND aidl-cpp "${IF}" "${CMAKE_CURRENT_BINARY_DIR}" "${OUT_CPP}"
+        COMMAND aidl-cpp -I"${CMAKE_CURRENT_SOURCE_DIR}" "${IF}" "${CMAKE_CURRENT_BINARY_DIR}" "${OUT_CPP}"
         MAIN_DEPENDENCY "${IF}"
         DEPENDS aidl-cpp
         COMMENT "Compiling AIDL ${REL_IF}"

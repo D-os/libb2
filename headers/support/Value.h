@@ -9,12 +9,13 @@
 #include <initializer_list>
 
 #include <support/SupportDefs.h>
+#include <binder/Parcelable.h>
 
 namespace os { namespace support {
 
 class MsgPackValue;
 
-class Value final {
+class Value final : public Parcelable {
 public:
     // Types
     enum Type {
@@ -166,6 +167,10 @@ public:
         dump(out);
         return out;
     }
+
+    // Archiving.
+    status_t writeToParcel(Parcel* parcel) const override;
+    status_t readFromParcel(const Parcel* parcel) override;
 
     // Parse. If parse fails, return Value() and assign an error to err.
     static Value parse(const std::string & in, status_t & err);

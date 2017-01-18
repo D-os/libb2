@@ -13,9 +13,11 @@ endif()
 add_subdirectory(binder)
 
 add_library(b2 SHARED ""
+    support/Context.cpp
     support/Value.cpp
 )
-target_link_libraries(b2
+target_link_libraries(b2 PUBLIC utils binder)
+target_link_libraries(b2 PRIVATE
     "-Wl,--whole-archive"
     interfaces
     "-Wl,--no-whole-archive"
