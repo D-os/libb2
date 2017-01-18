@@ -295,9 +295,9 @@ class NullableStringListType : public Type {
   NullableStringListType()
       : Type(ValidatableType::KIND_BUILT_IN,
              "java.util", "List<" + string(kStringCanonicalName) + ">",
-             {"utils/String16.h", "memory", "vector"},
-             "::std::unique_ptr<::std::vector<std::unique_ptr<::android::String16>>>",
-             "readString16Vector", "writeString16Vector") {}
+             {"utils/String.h", "memory", "vector"},
+             "::std::unique_ptr<::std::vector<std::unique_ptr<::android::String>>>",
+             "readStringVector", "writeStringVector") {}
   virtual ~NullableStringListType() = default;
   bool CanBeOutParameter() const override { return true; }
 
@@ -310,9 +310,9 @@ class StringListType : public Type {
   StringListType()
       : Type(ValidatableType::KIND_BUILT_IN,
              "java.util", "List<" + string(kStringCanonicalName) + ">",
-             {"utils/String16.h", "vector"},
-             "::std::vector<::android::String16>",
-             "readString16Vector", "writeString16Vector",
+             {"utils/String.h", "vector"},
+             "::std::vector<::android::String>",
+             "readStringVector", "writeStringVector",
              kNoArrayType, new NullableStringListType()) {}
   virtual ~StringListType() = default;
   bool CanBeOutParameter() const override { return true; }
@@ -435,26 +435,26 @@ void TypeNamespace::Init() {
 
   Type* nullable_string_array_type =
       new ArrayType(ValidatableType::KIND_BUILT_IN, "java.lang", "String[]",
-                    {"utils/String16.h", "memory", "vector"},
-                    "::std::unique_ptr<::std::vector<::std::unique_ptr<::android::String16>>>",
-                    "readString16Vector", "writeString16Vector");
+                    {"utils/String.h", "memory", "vector"},
+                    "::std::unique_ptr<::std::vector<::std::unique_ptr<::android::String>>>",
+                    "readStringVector", "writeStringVector");
 
   Type* string_array_type = new ArrayType(ValidatableType::KIND_BUILT_IN,
                                           "java.lang", "String[]",
-                                          {"utils/String16.h", "vector"},
-                                          "::std::vector<::android::String16>",
-                                          "readString16Vector",
-                                          "writeString16Vector", kNoArrayType,
+                                          {"utils/String.h", "vector"},
+                                          "::std::vector<::android::String>",
+                                          "readStringVector",
+                                          "writeStringVector", kNoArrayType,
                                           nullable_string_array_type);
 
   Type* nullable_string_type =
       new Type(ValidatableType::KIND_BUILT_IN, "java.lang", "String",
-               {"memory", "utils/String16.h"}, "::std::unique_ptr<::android::String16>",
-               "readString16", "writeString16");
+               {"memory", "utils/String.h"}, "::std::unique_ptr<::android::String>",
+               "readString", "writeString");
 
   string_type_ = new Type(ValidatableType::KIND_BUILT_IN, "java.lang", "String",
-                          {"utils/String16.h"}, "::android::String16",
-                          "readString16", "writeString16",
+                          {"utils/String.h"}, "::android::String",
+                          "readString", "writeString",
                           string_array_type, nullable_string_type);
   Add(string_type_);
 

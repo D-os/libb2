@@ -28,6 +28,8 @@ add_library(aidl-common STATIC
     type_cpp.cpp
     type_java.cpp
     type_namespace.cpp
+
+    docs/aidl-cpp.md
 )
 target_compile_options(aidl-common PRIVATE
 # Tragically, the code is riddled with unused parameters.
