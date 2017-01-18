@@ -18,7 +18,7 @@
 
 identifier  [_a-zA-Z][_a-zA-Z0-9]*
 whitespace  ([ \t\r]+)
-intvalue    [-+]?(0|[1-9][0-9]*)
+intvalue    [-+]?(0|[1-9][0-9]*)|0x[0-9]+
 
 %%
 %{
@@ -87,7 +87,7 @@ oneway                { yylval->token = new AidlToken("oneway", extra_text);
 {identifier}          { yylval->token = new AidlToken(yytext, extra_text);
                         return yy::parser::token::IDENTIFIER;
                       }
-{intvalue}            { yylval->integer = std::stoi(yytext);
+{intvalue}            { yylval->integer = std::stoi(yytext, 0, 0);
                         return yy::parser::token::INTVALUE; }
 
     /* syntax error! */
