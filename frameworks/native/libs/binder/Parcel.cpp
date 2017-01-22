@@ -242,18 +242,9 @@ void release_object(const sp<ProcessState>& proc,
     release_object(proc, obj, who, NULL);
 }
 
-inline static status_t finish_flatten_binder(
-    const sp<IBinder>& /*binder*/, const flat_binder_object& flat, Parcel* out)
-{
-    return out->writeObject(flat, false);
-}
-
-status_t flatten_binder(const sp<ProcessState>& /*proc*/,
-    const sp<IBinder>& binder, Parcel* out)
-{
-    flat_binder_object obj;
-
-    obj.flags = 0x7f | FLAT_BINDER_FLAG_ACCEPTS_FDS;
+void flatten_binder(const sp<ProcessState>& proc,
+                    const sp<IBinder>& binder, flat_binder_object* out) {
+    out->flags = 0x7f | FLAT_BINDER_FLAG_ACCEPTS_FDS;
     if (binder != NULL) {
         IBinder *local = binder->localBinder();
         if (!local) {
@@ -262,30 +253,25 @@ status_t flatten_binder(const sp<ProcessState>& /*proc*/,
                 ALOGE("null proxy");
             }
             const int32_t handle = proxy ? proxy->handle() : 0;
-            obj.type = BINDER_TYPE_HANDLE;
-            obj.binder = 0; /* Don't pass uninitialized stack data to a remote process */
-            obj.handle = handle;
-            obj.cookie = 0;
+            out->type = BINDER_TYPE_HANDLE;
+            out->binder = 0; /* Don't pass uninitialized stack data to a remote process */
+            out->handle = handle;
+            out->cookie = 0;
         } else {
-            obj.type = BINDER_TYPE_BINDER;
-            obj.binder = reinterpret_cast<uintptr_t>(local->getWeakRefs());
-            obj.cookie = reinterpret_cast<uintptr_t>(local);
+            out->type = BINDER_TYPE_BINDER;
+            out->binder = reinterpret_cast<uintptr_t>(local->getWeakRefs());
+            out->cookie = reinterpret_cast<uintptr_t>(local);
         }
     } else {
-        obj.type = BINDER_TYPE_BINDER;
-        obj.binder = 0;
-        obj.cookie = 0;
+        out->type = BINDER_TYPE_BINDER;
+        out->binder = 0;
+        out->cookie = 0;
     }
-
-    return finish_flatten_binder(binder, obj, out);
 }
 
-status_t flatten_binder(const sp<ProcessState>& /*proc*/,
-    const wp<IBinder>& binder, Parcel* out)
-{
-    flat_binder_object obj;
-
-    obj.flags = 0x7f | FLAT_BINDER_FLAG_ACCEPTS_FDS;
+void flatten_binder(const sp<ProcessState>& proc,
+                    const wp<IBinder>& binder, flat_binder_object* out) {
+    out->flags = 0x7f | FLAT_BINDER_FLAG_ACCEPTS_FDS;
     if (binder != NULL) {
         sp<IBinder> real = binder.promote();
         if (real != NULL) {
@@ -296,16 +282,16 @@ status_t flatten_binder(const sp<ProcessState>& /*proc*/,
                     ALOGE("null proxy");
                 }
                 const int32_t handle = proxy ? proxy->handle() : 0;
-                obj.type = BINDER_TYPE_WEAK_HANDLE;
-                obj.binder = 0; /* Don't pass uninitialized stack data to a remote process */
-                obj.handle = handle;
-                obj.cookie = 0;
+                out->type = BINDER_TYPE_WEAK_HANDLE;
+                out->binder = 0; /* Don't pass uninitialized stack data to a remote process */
+                out->handle = handle;
+                out->cookie = 0;
             } else {
-                obj.type = BINDER_TYPE_WEAK_BINDER;
-                obj.binder = reinterpret_cast<uintptr_t>(binder.get_refs());
-                obj.cookie = reinterpret_cast<uintptr_t>(binder.unsafe_get());
+                out->type = BINDER_TYPE_WEAK_BINDER;
+                out->binder = reinterpret_cast<uintptr_t>(binder.get_refs());
+                out->cookie = reinterpret_cast<uintptr_t>(binder.unsafe_get());
             }
-            return finish_flatten_binder(real, obj, out);
+            return;
         }
 
         // XXX How to deal?  In order to flatten the given binder,
@@ -316,17 +302,68 @@ status_t flatten_binder(const sp<ProcessState>& /*proc*/,
         // but we can't do that with the different reference counting
         // implementation we are using.
         ALOGE("Unable to unflatten Binder weak reference!");
-        obj.type = BINDER_TYPE_BINDER;
-        obj.binder = 0;
-        obj.cookie = 0;
-        return finish_flatten_binder(NULL, obj, out);
-
-    } else {
-        obj.type = BINDER_TYPE_BINDER;
-        obj.binder = 0;
-        obj.cookie = 0;
-        return finish_flatten_binder(NULL, obj, out);
+        // fallthrough
     }
+    out->type = BINDER_TYPE_BINDER;
+    out->binder = 0;
+    out->cookie = 0;
+}
+
+inline static status_t finish_flatten_binder(const flat_binder_object& flat, Parcel* out)
+{
+    return out->writeObject(flat, false);
+}
+
+inline static status_t flatten_binder(const sp<ProcessState>& proc,
+    const sp<IBinder>& binder, Parcel* out)
+{
+    flat_binder_object obj;
+    flatten_binder(proc, binder, &obj);
+    return finish_flatten_binder(obj, out);
+}
+
+inline static status_t flatten_binder(const sp<ProcessState>& proc,
+    const wp<IBinder>& binder, Parcel* out)
+{
+    flat_binder_object obj;
+    flatten_binder(proc, binder, &obj);
+    return finish_flatten_binder(obj, out);
+}
+
+status_t unflatten_binder(const sp<ProcessState>& proc,
+                          const flat_binder_object& flat, sp<IBinder>* out) {
+    switch (flat.type) {
+        case BINDER_TYPE_BINDER:
+            *out = reinterpret_cast<IBinder*>(flat.cookie);
+            return OK;
+        case BINDER_TYPE_HANDLE:
+            *out = proc->getStrongProxyForHandle(flat.handle);
+            return OK;
+    }
+    return BAD_TYPE;
+}
+
+status_t unflatten_binder(const sp<ProcessState>& proc,
+                          const flat_binder_object& flat, wp<IBinder>* out) {
+    switch (flat.type) {
+        case BINDER_TYPE_BINDER:
+            *out = reinterpret_cast<IBinder*>(flat.cookie);
+            return OK;
+        case BINDER_TYPE_WEAK_BINDER:
+            if (flat.binder != 0) {
+                out->set_object_and_refs(
+                    reinterpret_cast<IBinder*>(flat.cookie),
+                    reinterpret_cast<RefBase::weakref_type*>(flat.binder));
+            } else {
+                *out = NULL;
+            }
+            return OK;
+        case BINDER_TYPE_HANDLE:
+        case BINDER_TYPE_WEAK_HANDLE:
+            *out = proc->getWeakProxyForHandle(flat.handle);
+            return OK;
+    }
+    return BAD_TYPE;
 }
 
 inline static status_t finish_unflatten_binder(
@@ -336,18 +373,16 @@ inline static status_t finish_unflatten_binder(
     return NO_ERROR;
 }
 
-status_t unflatten_binder(const sp<ProcessState>& proc,
+inline static status_t unflatten_binder(const sp<ProcessState>& proc,
     const Parcel& in, sp<IBinder>* out)
 {
     const flat_binder_object* flat = in.readObject(false);
 
-    if (flat) {
+    if (flat && unflatten_binder(proc, *flat, out) == OK) {
         switch (flat->type) {
             case BINDER_TYPE_BINDER:
-                *out = reinterpret_cast<IBinder*>(flat->cookie);
                 return finish_unflatten_binder(NULL, *flat, in);
             case BINDER_TYPE_HANDLE:
-                *out = proc->getStrongProxyForHandle(flat->handle);
                 return finish_unflatten_binder(
                     static_cast<BpBinder*>(out->get()), *flat, in);
         }
@@ -355,28 +390,18 @@ status_t unflatten_binder(const sp<ProcessState>& proc,
     return BAD_TYPE;
 }
 
-status_t unflatten_binder(const sp<ProcessState>& proc,
+inline static status_t unflatten_binder(const sp<ProcessState>& proc,
     const Parcel& in, wp<IBinder>* out)
 {
     const flat_binder_object* flat = in.readObject(false);
 
-    if (flat) {
+    if (flat && unflatten_binder(proc, *flat, out) == OK) {
         switch (flat->type) {
             case BINDER_TYPE_BINDER:
-                *out = reinterpret_cast<IBinder*>(flat->cookie);
-                return finish_unflatten_binder(NULL, *flat, in);
             case BINDER_TYPE_WEAK_BINDER:
-                if (flat->binder != 0) {
-                    out->set_object_and_refs(
-                        reinterpret_cast<IBinder*>(flat->cookie),
-                        reinterpret_cast<RefBase::weakref_type*>(flat->binder));
-                } else {
-                    *out = NULL;
-                }
                 return finish_unflatten_binder(NULL, *flat, in);
             case BINDER_TYPE_HANDLE:
             case BINDER_TYPE_WEAK_HANDLE:
-                *out = proc->getWeakProxyForHandle(flat->handle);
                 return finish_unflatten_binder(
                     static_cast<BpBinder*>(out->unsafe_get()), *flat, in);
         }

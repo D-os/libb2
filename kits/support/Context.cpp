@@ -73,13 +73,13 @@ status_t Context::InitCheck() const
 sp<IBinder> Context::LookupService(const String& name) const
 {
     String path(kServices);
-    path.PathAppend(name);
+    path.appendPath(name);
 
     Value value = Node(m_root).Walk(&path, uint32_t(0));
 
 //	bout << "*** Lookup() name = " << name << endl;
 //	bout << "             value = " << value << endl;
-    return value.as<IBinder>();
+    return value.as<sp<IBinder>>();
 }
 
 

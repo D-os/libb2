@@ -15,6 +15,8 @@ add_subdirectory(binder)
 add_library(b2 SHARED ""
     "${EXTERNAL_MSGPACK11_DIR}/msgpack11.cpp"
     support/Context.cpp
+    support/Node.cpp
+    support/String.cpp
     support/Value.cpp
 )
 target_link_libraries(b2 PUBLIC utils binder)

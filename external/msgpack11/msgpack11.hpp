@@ -24,7 +24,7 @@ namespace msgpack11 {
 
 class MsgPackValue;
 
-class MsgPack final {
+class MsgPack {
 public:
     // Types
     enum Type {
@@ -217,7 +217,7 @@ public:
     typedef std::initializer_list<std::pair<std::string, Type>> shape;
     bool has_shape(const shape & types, status_t & err) const;
 
-private:
+protected:
     std::shared_ptr<MsgPackValue> m_ptr;
 };
 
