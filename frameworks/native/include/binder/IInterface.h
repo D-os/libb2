@@ -94,9 +94,6 @@ protected:
             intr = static_cast<I##INTERFACE*>(                          \
                 obj->queryLocalInterface(                               \
                         I##INTERFACE::descriptor).get());               \
-            if (intr == NULL) {                                         \
-                intr = new Bp##INTERFACE(obj);                          \
-            }                                                           \
         }                                                               \
         return intr;                                                    \
     }                                                                   \
@@ -141,7 +138,7 @@ inline IBinder* BpInterface<INTERFACE>::onAsBinder()
 {
     return remote();
 }
-    
+
 // ----------------------------------------------------------------------
 
 }; // namespace android
