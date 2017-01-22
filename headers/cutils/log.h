@@ -63,12 +63,12 @@ typedef int android_LogPriority;
 /*
  * Send a simple string to the log.
  */
-void __log_write(int facility, int level, const char *tag, const char *text);
+void __log_write(int facility, int priority, const char *tag, const char *text);
 
 /*
  * Send a formatted string to the log, used like printf(fmt,...)
  */
-void __log_print(int level, const char *tag,  const char *fmt, ...)
+void __log_print(int priority, const char *tag,  const char *fmt, ...)
 #if defined(__GNUC__)
 #ifdef __USE_MINGW_ANSI_STDIO
 #if __USE_MINGW_ANSI_STDIO
@@ -86,7 +86,7 @@ void __log_print(int level, const char *tag,  const char *fmt, ...)
  * A variant of __log_print() that takes a va_list to list
  * additional parameters.
  */
-void __log_vprint(int level, const char *tag,
+void __log_vprint(int priority, const char *tag,
                          const char *fmt, va_list ap);
 
 /*

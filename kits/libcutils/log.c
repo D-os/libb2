@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void __log_write(int facility, int level, const char *tag, const char *msg)
+void __log_write(int facility, int priority, const char *tag, const char *msg)
 {
     struct iovec vec[7];
     int n = 0;
@@ -11,7 +11,7 @@ void __log_write(int facility, int level, const char *tag, const char *msg)
     if (msg_len > LOGGER_PAYLOAD_MAX_LEN) msg_len = LOGGER_PAYLOAD_MAX_LEN;
 
     char marker[8];
-    marker_len = snprintf(marker, 7, "%d", (facility << 3) + (level & 07));
+    marker_len = snprintf(marker, 7, "%d", LOG_MAKEPRI(facility, LOG_PRI(priority)));
 
     vec[n].iov_base   = (void *) "<";
     vec[n++].iov_len  = 1;
@@ -32,19 +32,19 @@ void __log_write(int facility, int level, const char *tag, const char *msg)
     vec[n].iov_base   = (void *) "\n";
     vec[n++].iov_len  = 1;
 
-    klog_writev(level, vec, n);
+    klog_writev(priority, vec, n);
 }
 
-void __log_vprint(int level, const char *tag, const char *fmt, va_list ap)
+void __log_vprint(int priority, const char *tag, const char *fmt, va_list ap)
 {
     char buf[LOGGER_PREFIX_MAX_LEN + LOGGER_PAYLOAD_MAX_LEN];
 
     vsnprintf(buf, sizeof(buf), fmt, ap);
 
-    __log_write(0, level, tag, buf);
+    __log_write(0, priority, tag, buf);
 }
 
-void __log_print(int level, const char *tag, const char *fmt, ...)
+void __log_print(int priority, const char *tag, const char *fmt, ...)
 {
     va_list ap;
     char buf[LOGGER_PREFIX_MAX_LEN + LOGGER_PAYLOAD_MAX_LEN];
@@ -53,7 +53,7 @@ void __log_print(int level, const char *tag, const char *fmt, ...)
     vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
 
-    __log_write(0, level, tag, buf);
+    __log_write(0, priority, tag, buf);
 }
 
 void __log_assert(const char *cond, const char *tag,
