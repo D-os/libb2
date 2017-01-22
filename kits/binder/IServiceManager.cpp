@@ -30,6 +30,69 @@
 
 namespace android {
 
+class BpServiceManager : public BpInterface<IServiceManager>
+{
+public:
+    BpServiceManager(const sp<IBinder>& impl)
+        : BpInterface<IServiceManager>(impl)
+    {
+    }
+
+    virtual sp<IBinder> getService(const String& name) const
+    {
+        unsigned n;
+        for (n = 0; n < 5; n++){
+            sp<IBinder> svc = checkService(name);
+            if (svc != NULL) return svc;
+            ALOGI("Waiting for service %s...\n", String(name).string());
+            sleep(1);
+        }
+        return NULL;
+    }
+
+    virtual sp<IBinder> checkService( const String& name) const
+    {
+        Parcel data, reply;
+        data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
+        data.writeString(name);
+        remote()->transact(CHECK_SERVICE_TRANSACTION, data, &reply);
+        return reply.readStrongBinder();
+    }
+
+    virtual status_t addService(const String& name, const sp<IBinder>& service,
+            bool allowIsolated)
+    {
+        Parcel data, reply;
+        data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
+        data.writeString(name);
+        data.writeStrongBinder(service);
+        data.writeInt32(allowIsolated ? 1 : 0);
+        status_t err = remote()->transact(ADD_SERVICE_TRANSACTION, data, &reply);
+        return err == NO_ERROR ? reply.readExceptionCode() : err;
+    }
+
+    virtual Vector<String> listServices()
+    {
+        Vector<String> res;
+        int n = 0;
+
+        for (;;) {
+            Parcel data, reply;
+            data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
+            data.writeInt32(n++);
+            status_t err = remote()->transact(LIST_SERVICES_TRANSACTION, data, &reply);
+            if (err != NO_ERROR)
+                break;
+            res.add(reply.readString());
+        }
+        return res;
+    }
+};
+
+IMPLEMENT_META_INTERFACE(ServiceManager, "android.os.IServiceManager");
+
+// ----------------------------------------------------------------------
+
 sp<IServiceManager> defaultServiceManager()
 {
     if (gDefaultServiceManager != NULL) return gDefaultServiceManager;
@@ -37,8 +100,10 @@ sp<IServiceManager> defaultServiceManager()
     {
         AutoMutex _l(gDefaultServiceManagerLock);
         while (gDefaultServiceManager == NULL) {
-            gDefaultServiceManager = interface_cast<IServiceManager>(
-                ProcessState::self()->getContextObject(NULL));
+            sp<IBinder> contextManager = ProcessState::self()->getContextObject(NULL);
+            if (contextManager != NULL) {
+                gDefaultServiceManager = new BpServiceManager(contextManager);
+            }
             if (gDefaultServiceManager == NULL)
                 sleep(1);
         }
@@ -125,68 +190,5 @@ bool checkPermission(const String &permission, pid_t pid, uid_t uid)
         }
     }
 }
-
-// ----------------------------------------------------------------------
-
-class BpServiceManager : public BpInterface<IServiceManager>
-{
-public:
-    BpServiceManager(const sp<IBinder>& impl)
-        : BpInterface<IServiceManager>(impl)
-    {
-    }
-
-    virtual sp<IBinder> getService(const String& name) const
-    {
-        unsigned n;
-        for (n = 0; n < 5; n++){
-            sp<IBinder> svc = checkService(name);
-            if (svc != NULL) return svc;
-            ALOGI("Waiting for service %s...\n", String(name).string());
-            sleep(1);
-        }
-        return NULL;
-    }
-
-    virtual sp<IBinder> checkService( const String& name) const
-    {
-        Parcel data, reply;
-        data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
-        data.writeString(name);
-        remote()->transact(CHECK_SERVICE_TRANSACTION, data, &reply);
-        return reply.readStrongBinder();
-    }
-
-    virtual status_t addService(const String& name, const sp<IBinder>& service,
-            bool allowIsolated)
-    {
-        Parcel data, reply;
-        data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
-        data.writeString(name);
-        data.writeStrongBinder(service);
-        data.writeInt32(allowIsolated ? 1 : 0);
-        status_t err = remote()->transact(ADD_SERVICE_TRANSACTION, data, &reply);
-        return err == NO_ERROR ? reply.readExceptionCode() : err;
-    }
-
-    virtual Vector<String> listServices()
-    {
-        Vector<String> res;
-        int n = 0;
-
-        for (;;) {
-            Parcel data, reply;
-            data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
-            data.writeInt32(n++);
-            status_t err = remote()->transact(LIST_SERVICES_TRANSACTION, data, &reply);
-            if (err != NO_ERROR)
-                break;
-            res.add(reply.readString());
-        }
-        return res;
-    }
-};
-
-IMPLEMENT_META_INTERFACE(ServiceManager, "android.os.IServiceManager");
 
 }; // namespace android
