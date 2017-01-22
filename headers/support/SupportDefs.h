@@ -53,6 +53,7 @@ namespace support {
     using android::sp;
     using android::Mutex;
     using android::IBinder;
+    using android::IInterface;
     using android::interface_cast;
     using android::TextOutput;
     using android::Vector;

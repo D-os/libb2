@@ -79,7 +79,8 @@ public:
 //		Creation, destruction. */
 //	//@{
 //						SString();
-    explicit			String(const char *);
+                        String(android::String &&o) { setTo(o); o.clear(); }
+    explicit			String(const char *o) : android::String(o) {}
     explicit			String(int32_t);
 //						SString(const SString &);
                         String(const char *, int32_t maxLength);
@@ -561,19 +562,19 @@ public:
 //	status_t			PathSetTo(const char *dir, const char *leaf = NULL,
 //							bool normalize = false);
 //	status_t			PathNormalize();
-            //!	Return the end of the string representing the leaf node in the path.
-    const char *		PathLeaf(void) const { return getPathLeaf().string(); }
-            //!	Return the parent portion of the path.
-            /*!	This is all of the path up to but not including PathLeaf(). */
-    status_t			PathGetParent(String *parentPath) const { *parentPath = String(parentPath->getPathDir()); return OK; }
-            //!	Append a path to the current path string.
-            /*!	If @a leaf is an absolute path, it will replace the current
-                path.  @a normalize is as per PathSetTo(). */
-    status_t 			PathAppend(const String &leaf, bool normalize = false) { appendPath(leaf); return OK; }
-            //!	Append a path to the current path string.
-            /*!	If @a leaf is an absolute path, it will replace the current
-                path.  @a normalize is as per PathSetTo(). */
-    status_t 			PathAppend(const char *leaf, bool normalize = false)  { appendPath(leaf); return OK; }
+//            //!	Return the end of the string representing the leaf node in the path.
+//    const char *		PathLeaf(void) const { return getPathLeaf().string(); }
+//            //!	Return the parent portion of the path.
+//            /*!	This is all of the path up to but not including PathLeaf(). */
+//    status_t			PathGetParent(String *parentPath) const { *parentPath = String(parentPath->getPathDir()); return OK; }
+//            //!	Append a path to the current path string.
+//            /*!	If @a leaf is an absolute path, it will replace the current
+//                path.  @a normalize is as per PathSetTo(). */
+//    status_t 			PathAppend(const String &leaf, bool normalize = false) { appendPath(leaf); return OK; }
+//            //!	Append a path to the current path string.
+//            /*!	If @a leaf is an absolute path, it will replace the current
+//                path.  @a normalize is as per PathSetTo(). */
+//    status_t 			PathAppend(const char *leaf, bool normalize = false)  { appendPath(leaf); return OK; }
 //			//!	Retrieve the root part of the path and place it in @a root.
 //	status_t			PathGetRoot(SString* root) const;
 //			//!	Remove root part of path and place it in @a root.

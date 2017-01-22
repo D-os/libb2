@@ -10,8 +10,17 @@
 
 #include <support/SupportDefs.h>
 #include <binder/Parcelable.h>
+#include <binder/Parcel.h>
 
 namespace os { namespace support {
+
+template <typename>
+struct ValueTypeTraits;
+
+template<> struct ValueTypeTraits<flat_binder_object> {
+    static const size_t extension_id;
+    static const flat_binder_object empty_value;
+};
 
 class MsgPackValue;
 
@@ -45,7 +54,7 @@ public:
 
     // Binary and extension typedefs
     typedef std::vector<uint8_t> binary;
-    typedef std::tuple<int8_t, binary> extension;
+    typedef std::pair<int8_t, binary> extension;
 
     // Constructors for the various types of JSON value.
     Value() noexcept;                // UNDEF
@@ -73,6 +82,8 @@ public:
     Value(const extension &values);  // EXTENSION
     Value(extension &&values);       // EXTENSION
 
+    Value(const sp<IBinder> &binder);
+
     // Implicit constructor: anything with a to_value() function.
     template <class T, class = decltype(&T::to_value)>
     Value(const T & t) : Value(t.to_value()) {}
@@ -97,12 +108,25 @@ public:
             int>::type = 0>
     Value(const V & v) : Value(binary(v.begin(), v.end())) {}
 
+    // Implicit constructor: extension objects - anything with a extension_id type trait.
+    template <class E, typename std::enable_if<bool(ValueTypeTraits<E>::extension_id), int>::type = 0>
+    Value(const E & e) : Value(extension(ValueTypeTraits<E>::extension_id, binary((const char *)&e, (const char *)&e + sizeof(e)))) {}
+
     // This prevents Value(some_pointer) from accidentally producing a bool. Use
     // Value(bool(some_pointer)) if that behavior is desired.
     Value(void *) = delete;
 
     // Accessors
     Type type() const;
+
+    bool valid()        const { return type() != UNDEF; }
+    bool undefined()    const { return type() == UNDEF; }
+
+    template <typename T>
+    bool is()           const;
+
+    template <typename T>
+    T as() const;
 
     bool is_valid()     const { return type() != UNDEF; }
     bool is_undefined() const { return type() == UNDEF; }
@@ -158,7 +182,7 @@ public:
     // Return a reference to arr[i] if this is an array, Value() otherwise.
     const Value & operator[](size_t i) const;
     // Return a reference to obj[key] if this is an object, Value() otherwise.
-    const Value & operator[](const std::string &key) const;
+    const Value & operator[](const Value &key) const;
 
     // Serialize.
     status_t dump(std::string &out) const;
@@ -249,7 +273,7 @@ protected:
     virtual const Value::binary &binary_items() const;
     virtual const Value &operator[](size_t i) const;
     virtual const Value::object &object_items() const;
-    virtual const Value &operator[](const std::string &key) const;
+    virtual const Value &operator[](const Value &key) const;
     virtual const Value::extension &extension_items() const;
     virtual ~MsgPackValue() {}
 };

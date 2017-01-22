@@ -10,6 +10,8 @@
 #include <functional>
 #include <stdexcept>
 
+#include <binder/ProcessState.h>
+
 namespace os { namespace support {
 
 static const int max_depth = 200;
@@ -20,6 +22,13 @@ using std::map;
 using std::make_shared;
 using std::initializer_list;
 using std::move;
+
+/* * * * * * * * * * * * * * * * * * * *
+ * Type Traits
+ */
+
+const size_t ValueTypeTraits<flat_binder_object>::extension_id = 1;
+const flat_binder_object ValueTypeTraits<flat_binder_object>::empty_value = {};
 
 /* * * * * * * * * * * * * * * * * * * *
  * Serialization
@@ -467,7 +476,7 @@ public:
 
 class MsgPackObject final : public TValue<Value::OBJECT, Value::object> {
     const Value::object &object_items() const override { return m_value; }
-    const Value & operator[](const string &key) const override;
+    const Value & operator[](const Value &key) const override;
 public:
     explicit MsgPackObject(const Value::object &value) : TValue(value) {}
     explicit MsgPackObject(Value::object &&value)      : TValue(move(value)) {}
@@ -492,6 +501,7 @@ struct Statics {
     const std::shared_ptr<MsgPackValue> null = make_shared<MsgPackNull>();
     const std::shared_ptr<MsgPackValue> t = make_shared<MsgPackBoolean>(true);
     const std::shared_ptr<MsgPackValue> f = make_shared<MsgPackBoolean>(false);
+    const Value empty_value;
     const string empty_string;
     const vector<Value> empty_vector;
     const map<Value, Value> empty_map;
@@ -503,12 +513,6 @@ struct Statics {
 static const Statics & statics() {
     static const Statics s {};
     return s;
-}
-
-static const Value & static_null() {
-    // This has to be separate, not in Statics, because Value() accesses statics().null.
-    static const Value msgpack_null;
-    return msgpack_null;
 }
 
 /* * * * * * * * * * * * * * * * * * * *
@@ -531,20 +535,27 @@ Value::Value(bool value)                       : m_ptr(value ? statics().t : sta
 Value::Value(const string &value)              : m_ptr(make_shared<MsgPackString>(value)) {}
 Value::Value(string &&value)                   : m_ptr(make_shared<MsgPackString>(move(value))) {}
 Value::Value(const char * value)               : m_ptr(make_shared<MsgPackString>(value)) {}
-Value::Value(const Value::array &values)      : m_ptr(make_shared<MsgPackArray>(values)) {}
-Value::Value(Value::array &&values)           : m_ptr(make_shared<MsgPackArray>(move(values))) {}
-Value::Value(const Value::object &values)     : m_ptr(make_shared<MsgPackObject>(values)) {}
-Value::Value(Value::object &&values)          : m_ptr(make_shared<MsgPackObject>(move(values))) {}
-Value::Value(const Value::binary &values)     : m_ptr(make_shared<MsgPackBinary>(values)) {}
-Value::Value(Value::binary &&values)          : m_ptr(make_shared<MsgPackBinary>(move(values))) {}
-Value::Value(const Value::extension &values)  : m_ptr(make_shared<MsgPackExtension>(values)) {}
-Value::Value(Value::extension &&values)       : m_ptr(make_shared<MsgPackExtension>(move(values))) {}
+Value::Value(const Value::array &values)       : m_ptr(make_shared<MsgPackArray>(values)) {}
+Value::Value(Value::array &&values)            : m_ptr(make_shared<MsgPackArray>(move(values))) {}
+Value::Value(const Value::object &values)      : m_ptr(make_shared<MsgPackObject>(values)) {}
+Value::Value(Value::object &&values)           : m_ptr(make_shared<MsgPackObject>(move(values))) {}
+Value::Value(const Value::binary &values)      : m_ptr(make_shared<MsgPackBinary>(values)) {}
+Value::Value(Value::binary &&values)           : m_ptr(make_shared<MsgPackBinary>(move(values))) {}
+Value::Value(const Value::extension &values)   : m_ptr(make_shared<MsgPackExtension>(values)) {}
+Value::Value(Value::extension &&values)        : m_ptr(make_shared<MsgPackExtension>(move(values))) {}
+
+Value::Value(const sp<IBinder> &binder) : m_ptr(nullptr) {
+    flat_binder_object flat;
+    ::android::flatten_binder(::android::ProcessState::self(), binder, &flat);
+//    m_ptr = make_shared<MsgPackExtension>(flat);
+    Value val(flat);
+}
 
 /* * * * * * * * * * * * * * * * * * * *
  * Accessors
  */
 
-Value::Type Value::type()                             const { return m_ptr->type(); }
+Value::Type Value::type()                             const { return m_ptr ? m_ptr->type() : UNDEF; }
 double Value::number_value()                          const { return m_ptr->float64_value(); }
 float Value::float32_value()                          const { return m_ptr->float32_value(); }
 double Value::float64_value()                         const { return m_ptr->float64_value(); }
@@ -564,7 +575,7 @@ const Value::binary& Value::binary_items()            const { return m_ptr->bina
 const Value::extension& Value::extension_items()      const { return m_ptr->extension_items(); }
 const map<Value, Value> & Value::object_items()       const { return m_ptr->object_items(); }
 const Value & Value::operator[] (size_t i)            const { return (*m_ptr)[i]; }
-const Value & Value::operator[] (const string &key)   const { return (*m_ptr)[key]; }
+const Value & Value::operator[] (const Value &key)    const { return (*m_ptr)[key]; }
 
 double                        MsgPackValue::number_value()              const { return 0.0; }
 float                         MsgPackValue::float32_value()             const { return 0.0f; }
@@ -580,21 +591,52 @@ uint32_t                      MsgPackValue::uint32_value()              const { 
 uint64_t                      MsgPackValue::uint64_value()              const { return 0; }
 bool                          MsgPackValue::bool_value()                const { return false; }
 const string &                MsgPackValue::string_value()              const { return statics().empty_string; }
-const vector<Value> &       MsgPackValue::array_items()                 const { return statics().empty_vector; }
-const map<Value, Value> & MsgPackValue::object_items()                  const { return statics().empty_map; }
-const Value::binary & MsgPackValue::binary_items()                      const { return statics().empty_binary; }
-const Value::extension & MsgPackValue::extension_items()                const { return statics().empty_extension; }
-const Value &               MsgPackValue::operator[] (size_t)           const { return static_null(); }
-const Value &               MsgPackValue::operator[] (const string &)   const { return static_null(); }
+const vector<Value> &         MsgPackValue::array_items()               const { return statics().empty_vector; }
+const map<Value, Value> &     MsgPackValue::object_items()              const { return statics().empty_map; }
+const Value::binary &         MsgPackValue::binary_items()              const { return statics().empty_binary; }
+const Value::extension &      MsgPackValue::extension_items()           const { return statics().empty_extension; }
+const Value &                 MsgPackValue::operator[] (size_t)         const { return statics().empty_value; }
+const Value &                 MsgPackValue::operator[] (const Value &)  const { return statics().empty_value; }
 
-const Value & MsgPackObject::operator[] (const string &key) const {
+const Value & MsgPackObject::operator[] (const Value &key) const {
     auto iter = m_value.find(key);
-    return (iter == m_value.end()) ? static_null() : iter->second;
+    return (iter == m_value.end()) ? statics().empty_value : iter->second;
 }
 const Value & MsgPackArray::operator[] (size_t i) const {
-    if (i >= m_value.size()) return static_null();
+    if (i >= m_value.size()) return statics().empty_value;
     else return m_value[i];
 }
+
+template<>
+bool Value::is<void>() const { return is_undefined(); }
+
+//template<>
+//int Value::as<int>() const { return int_value(); };
+
+template<>
+sp<IBinder> Value::as<sp<IBinder>>() const {
+    const flat_binder_object& flat = as<flat_binder_object>();
+
+    sp<IBinder> out;
+    status_t status = ::android::unflatten_binder(::android::ProcessState::self(), flat, &out);
+    if (status == OK)
+        return out;
+
+    return sp<IBinder>();
+}
+
+template <typename T>
+T Value::as() const {
+    if (is_extension()) {
+        auto ext = extension_items();
+        if (ValueTypeTraits<T>::extension_id == ext.first) {
+            return *reinterpret_cast<T*>(ext.second.data());
+        }
+    }
+
+    return ValueTypeTraits<T>::empty_value;
+}
+
 
 /* * * * * * * * * * * * * * * * * * * *
  * Comparison
@@ -613,6 +655,35 @@ bool Value::operator< (const Value &other) const {
 
     return m_ptr->less(other.m_ptr.get());
 }
+
+
+/* * * * * * * * * * * * * * * * * * * *
+ * Archiving
+ */
+
+status_t Value::writeToParcel(Parcel* parcel) const {
+    std::string out;
+    status_t status = dump(out);
+    return status != OK ?
+        status :
+        parcel->writeByteArray(out.length(), reinterpret_cast<const uint8_t *>(out.data()));
+}
+
+status_t Value::readFromParcel(const Parcel* parcel) {
+    std::vector<uint8_t> val;
+    status_t status = parcel->readByteVector(&val);
+    if (status != OK)
+        return status;
+    if (val.empty())
+        return NOT_ENOUGH_DATA;
+    std::string str(reinterpret_cast<const char *>(val.data()), val.size());
+    Value parsed = parse(str, status);
+    if (status != OK)
+        return status;
+    *this = parsed;
+    return OK;
+}
+
 
 namespace {
 /* MsgPackParser
@@ -758,7 +829,7 @@ struct MsgPackParser final {
         const T bytes = parse_arith<T>();
         const uint8_t type = parse_arith<uint8_t>();
         const Value::binary data =  parse_binary_impl<T>(bytes);
-        return std::make_tuple(type, std::move(data));
+        return std::make_pair(type, std::move(data));
     }
 
     uint8_t parse_pos_fixint(uint8_t first_byte) {
@@ -787,7 +858,7 @@ struct MsgPackParser final {
     Value::extension parse_fixext(uint8_t bytes) {
         const uint8_t type = parse_arith<uint8_t>();
         const Value::binary data =  parse_binary_impl<uint8_t>(bytes);
-        return std::make_tuple(type, std::move(data));
+        return std::make_pair(type, std::move(data));
     }
 
     using parser_element_type = std::tuple<uint8_t, uint8_t, std::function< Value(MsgPackParser*, uint8_t) > >;
