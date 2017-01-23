@@ -23,6 +23,8 @@
 #include <support/Value.h>
 #include <utils/Vector.h>
 
+#include <os/support/IContextManager.h>
+
 namespace os {
 namespace support {
 
@@ -190,6 +192,7 @@ public:
 
 private:
     mutable sp<INode> m_root;
+    static sp<IContextManager> context_manager_;
 
 };
 
