@@ -12,6 +12,9 @@
 
 #include <support/Context.h>
 
+#include <binder/IServiceManager.h>
+#include <os/support/BpContextManager.h>
+
 //#include <support/INode.h>
 //#include <support/IProcessManager.h>
 
@@ -465,5 +468,33 @@ sp<IBinder> Context::LookupService(const String& name) const
 //{
 //    return SLooper::GetContext(name, caller->AsBinder());
 //}
+
+sp<IContextManager> Context::context_manager_ = NULL;
+
+Context Context::UserContext()
+{
+    if (context_manager_ == NULL) {
+        sp<::android::IServiceManager> sm = ::android::defaultServiceManager();
+        if (sm != NULL) {
+            char serviceName[32]; // FIXME: Replace by String
+            snprintf(serviceName, sizeof(serviceName), "user.%u.context_manager", getuid());
+            sp<IBinder> cm = sm->checkService(String(serviceName));
+            if (cm != NULL) {
+                context_manager_ = new BpContextManager(cm);
+            }
+        }
+    }
+
+    if (context_manager_ != NULL) {
+        sp<IBinder> out;
+        context_manager_->getContext(&out);
+        sp<INode> node = interface_cast<INode>(out);
+        if (node != NULL) {
+            return Context(node);
+        }
+    }
+
+    return Context();
+}
 
 } } // namespace os::support

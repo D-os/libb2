@@ -20,7 +20,7 @@ public:
 private:
     friend class BinderService<ContextManagerService>;
 
-    static char const* getServiceName() { return "context_manager"; }
+    static char const* getServiceName();
     ContextManagerService();
     virtual ~ContextManagerService();
 
