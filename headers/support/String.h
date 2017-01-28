@@ -78,8 +78,9 @@ public:
 //	/*!	@name Bookkeeping
 //		Creation, destruction. */
 //	//@{
-//						SString();
-                        String(android::String &&o) { setTo(o); o.clear(); }
+                        String() : android::String() {}
+                        String(android::String &&o) : android::String() { setTo(o); o.clear(); }
+                        String(const android::String &o) : android::String() { setTo(o); }
     explicit			String(const char *o) : android::String(o) {}
     explicit			String(int32_t);
 //						SString(const SString &);

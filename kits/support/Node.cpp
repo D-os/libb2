@@ -32,7 +32,7 @@ Node::Node()
 //		{
 //			// now we walk to the path. Note that we have to have
 //			// m_node set to the root or this walk will fail.
-//			Value value = this->Walk(path, node_flags);
+//			Value value = this->walk(path, node_flags);
 //			m_node = INode::AsInterface(value);
 //		}
 //	}
@@ -132,7 +132,7 @@ Value Node::CollapsedNode() const
 //	while (true)
 //	{
 //		entry.Undefine();
-//		outErr = (*node)->Walk(&path, 0, &entry);
+//		outErr = (*node)->walk(&path, 0, &entry);
 //		if (outErr != OK || path.Length() == 0) {
 //			// Success or failure, terminate and return result.
 //			*pathName = String(pathName->PathLeaf());
@@ -265,7 +265,7 @@ walk_path:
         while (true)
         {
             entry = Value();
-            *outErr = node->Walk(*path, flags, &entry).transactionError();
+            *outErr = node->walk(*path, flags, &entry).transactionError();
             if (*outErr != OK || path->length() == 0) {
                 // Success or failure, terminate and return result.
                 break;

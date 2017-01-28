@@ -13,5 +13,5 @@ interface INode
 
     const int CHANGE_DETAILS_SENT	= 0x0001;
 
-    void Walk(String path, int flags, out Value node);
+    void walk(String path, int flags, out Value node);
 }

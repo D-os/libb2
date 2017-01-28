@@ -1,6 +1,14 @@
 set(interfaceFiles
     "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IContextManager.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/ICatalog.aidl"
     "${CMAKE_CURRENT_SOURCE_DIR}/os/support/INode.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IDatum.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IIterable.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IIterator.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IRandomIterator.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IByteInput.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IByteOutput.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IByteSeekable.aidl"
 )
 set(interfaces_install_dir /headers/os)
 install(FILES ${interfaceFiles} DESTINATION ${interfaces_install_dir})

@@ -17,6 +17,9 @@ add_library(b2 SHARED ""
     support/Node.cpp
     support/String.cpp
     support/Value.cpp
+    support/Catalog.cpp
+    storage/GenericNode.cpp
+    storage/MetaDataNode.cpp
 )
 target_link_libraries(b2 PUBLIC utils binder)
 target_link_libraries(b2 PRIVATE
