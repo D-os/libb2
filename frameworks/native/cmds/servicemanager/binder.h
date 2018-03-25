@@ -9,6 +9,8 @@
 #include <sys/ioctl.h>
 #include <linux/android/binder.h>
 
+#define __unused __attribute__((__unused__))
+
 struct binder_state;
 
 struct binder_io
