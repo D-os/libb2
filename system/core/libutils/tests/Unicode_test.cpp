@@ -29,6 +29,8 @@ protected:
 
     virtual void TearDown() {
     }
+
+    char16_t const * const kSearchString = u"I am a leaf on the wind.";
 };
 
 } //namespace android
@@ -114,4 +116,9 @@ TEST_F(UnicodeTest, UTF8toUTF16Normal) {
             << "should be second half of surrogate U+10000";
     EXPECT_EQ(NULL, output[5])
             << "should be NULL terminated";
+}
+
+TEST_F(UnicodeTest, strstr16EmptyTarget) {
+    EXPECT_EQ(strstr16(kSearchString, u""), kSearchString)
+            << "should return the original pointer";
 }

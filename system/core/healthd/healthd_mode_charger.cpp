@@ -46,7 +46,7 @@
 
 #include "minui/minui.h"
 
-#include "healthd.h"
+#include <healthd/healthd.h>
 
 char *locale;
 
@@ -686,7 +686,7 @@ void healthd_mode_charger_init(struct healthd_config* config)
     ret = ev_init(input_callback, charger);
     if (!ret) {
         epollfd = ev_get_epollfd();
-        healthd_register_event(epollfd, charger_event_handler);
+        healthd_register_event(epollfd, charger_event_handler, EVENT_WAKEUP_FD);
     }
 
     ret = res_create_display_surface("charger/battery_fail", &charger->surf_unknown);
@@ -699,7 +699,10 @@ void healthd_mode_charger_init(struct healthd_config* config)
 
     GRSurface** scale_frames;
     int scale_count;
-    ret = res_create_multi_display_surface("charger/battery_scale", &scale_count, &scale_frames);
+    int scale_fps;  // Not in use (charger/battery_scale doesn't have FPS text
+                    // chunk). We are using hard-coded frame.disp_time instead.
+    ret = res_create_multi_display_surface("charger/battery_scale", &scale_count, &scale_fps,
+                                           &scale_frames);
     if (ret < 0) {
         LOGE("Cannot load battery_scale image\n");
         charger->batt_anim->num_frames = 0;

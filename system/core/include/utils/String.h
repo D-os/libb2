@@ -18,7 +18,6 @@
 #define ANDROID_STRING_H
 
 #include <utils/Errors.h>
-#include <utils/SharedBuffer.h>
 #include <utils/Unicode.h>
 #include <utils/TypeHelpers.h>
 
@@ -63,12 +62,11 @@ public:
 
     inline  const char*         string() const;
     inline  size_t              size() const;
-    inline  size_t              length() const;
     inline  size_t              bytes() const;
     inline  bool                isEmpty() const;
-
-    inline  const SharedBuffer* sharedBuffer() const;
-
+    
+            size_t              length() const;
+    
             void                clear();
 
             void                setTo(const String& other);
@@ -254,11 +252,6 @@ inline const char* String::string() const
     return mString;
 }
 
-inline size_t String::length() const
-{
-    return SharedBuffer::sizeFromData(mString)-1;
-}
-
 inline size_t String::size() const
 {
     return length();
@@ -271,12 +264,7 @@ inline bool String::isEmpty() const
 
 inline size_t String::bytes() const
 {
-    return SharedBuffer::sizeFromData(mString)-1;
-}
-
-inline const SharedBuffer* String::sharedBuffer() const
-{
-    return SharedBuffer::bufferFromData(mString);
+    return length();
 }
 
 inline bool String::contains(const char* other) const

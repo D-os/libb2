@@ -20,8 +20,9 @@
 #include <sys/types.h>
 
 #include <list>
+#include <string.h>
 
-#include <LogBufferElement.h>
+#include "LogBufferElement.h"
 
 // White and Blacklist
 
@@ -43,8 +44,7 @@ public:
 
     int cmp(LogBufferElement *e) const { return cmp(e->getUid(), e->getPid()); }
 
-    // *strp is malloc'd, use free to release
-    void format(char **strp);
+    std::string format();
 };
 
 typedef std::list<Prune> PruneCollection;
@@ -53,21 +53,22 @@ class PruneList {
     PruneCollection mNaughty;
     PruneCollection mNice;
     bool mWorstUidEnabled;
+    bool mWorstPidOfSystemEnabled;
 
 public:
     PruneList();
     ~PruneList();
 
-    int init(char *str);
+    int init(const char *str);
 
     bool naughty(LogBufferElement *element);
     bool naughty(void) { return !mNaughty.empty(); }
     bool nice(LogBufferElement *element);
     bool nice(void) { return !mNice.empty(); }
     bool worstUidEnabled() const { return mWorstUidEnabled; }
+    bool worstPidOfSystemEnabled() const { return mWorstPidOfSystemEnabled; }
 
-    // *strp is malloc'd, use free to release
-    void format(char **strp);
+    std::string format();
 };
 
 #endif // _LOGD_LOG_WHITE_BLACK_LIST_H__

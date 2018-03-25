@@ -4,7 +4,6 @@ include_directories(
 )
 
 add_executable(libutils_tests
-    "${UTILS_SOURCE_DIR}/tests/BasicHashtable_test.cpp"
 #    "${UTILS_SOURCE_DIR}/tests/BlobCache_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/BitSet_test.cpp"
     "${UTILS_SOURCE_DIR}/tests/Looper_test.cpp"

@@ -75,3 +75,8 @@ TEST_F(StringTest, OperatorPlusEquals) {
     EXPECT_STREQ(src2.string(), " is my passport.");
     EXPECT_STREQ(src3, " Verify me.");
 }
+
+TEST_F(StringTest, SetToSizeMaxReturnsNoMemory) {
+    const char *in = "some string";
+    EXPECT_EQ(NO_MEMORY, String("").setTo(in, SIZE_MAX));
+}

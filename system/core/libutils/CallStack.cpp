@@ -16,6 +16,8 @@
 
 #define LOG_TAG "CallStack"
 
+#include <memory>
+
 #include <utils/CallStack.h>
 #include <utils/Printer.h>
 #include <utils/Errors.h>

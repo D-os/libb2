@@ -35,6 +35,10 @@ namespace android {
 class Condition;
 
 /*
+ * NOTE: This class is for code that builds on Win32.  Its usage is
+ * deprecated for code which doesn't build for Win32.  New code which
+ * doesn't build for Win32 should use std::mutex and std::lock_guard instead.
+ *
  * Simple mutex class.  The implementation is system-dependent.
  *
  * The mutex must be unlocked by the thread that locked it.  They are not
@@ -59,9 +63,14 @@ public:
     // lock if possible; returns 0 on success, error otherwise
     status_t    tryLock();
 
-    // lock the mutex, but don't wait longer than timeoutMilliseconds.
+    // Lock the mutex, but don't wait longer than timeoutNs (relative time).
     // Returns 0 on success, TIMED_OUT for failure due to timeout expiration.
-    status_t    timedLock(nsecs_t timeoutMilliseconds);
+    //
+    // FIXME?: pthread_mutex_timedlock is based on CLOCK_REALTIME,
+    // which is subject to NTP adjustments, and includes time during suspend,
+    // so a timeout may occur even though no processes could run.
+    // Not holding a partial wakelock may lead to a system suspend.
+    status_t    timedLock(nsecs_t timeoutNs);
 
     // Manages the mutex automatically. It'll be locked when Autolock is
     // constructed and released when Autolock goes out of scope.
@@ -123,6 +132,7 @@ inline status_t Mutex::tryLock() {
     return -pthread_mutex_trylock(&mMutex);
 }
 inline status_t Mutex::timedLock(nsecs_t timeoutNs) {
+    timeoutNs += systemTime(SYSTEM_TIME_REALTIME);
     const struct timespec ts = {
         /* .tv_sec = */ static_cast<time_t>(timeoutNs / 1000000000),
         /* .tv_nsec = */ static_cast<long>(timeoutNs % 1000000000),

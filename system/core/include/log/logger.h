@@ -12,6 +12,10 @@
 
 #include <fcntl.h>
 #include <stdint.h>
+#ifdef __linux__
+#include <time.h> /* clockid_t definition */
+#endif
+
 #include <log/log.h>
 #include <log/log_read.h>
 
@@ -25,6 +29,18 @@ extern "C" {
  * may result in read() returning EINVAL.
  */
 #define LOGGER_ENTRY_MAX_LEN		1024
+
+struct logger_entry_v4 {
+    uint16_t    len;       /* length of the payload */
+    uint16_t    hdr_size;  /* sizeof(struct logger_entry_v4) */
+    int32_t     pid;       /* generating process's pid */
+    uint32_t    tid;       /* generating process's tid */
+    uint32_t    sec;       /* seconds since Epoch */
+    uint32_t    nsec;      /* nanoseconds */
+    uint32_t    lid;       /* log id of the payload, bottom 4 bits currently */
+    uint32_t    uid;       /* generating process's uid */
+    char        msg[0];    /* the entry's payload */
+} __attribute__((__packed__));
 
 /*
  * The maximum size of the log entry payload that can be
@@ -100,6 +116,8 @@ int android_logger_set_prune_list(struct logger_list *logger_list,
 #define ANDROID_LOG_RDWR     O_RDWR
 #define ANDROID_LOG_ACCMODE  O_ACCMODE
 #define ANDROID_LOG_NONBLOCK O_NONBLOCK
+#define ANDROID_LOG_WRAP     0x40000000 /* Block until buffer about to wrap */
+#define ANDROID_LOG_WRAP_DEFAULT_TIMEOUT 7200 /* 2 hour default */
 #define ANDROID_LOG_PSTORE   0x80000000
 
 struct logger_list *android_logger_list_alloc(int mode,

@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <cutils/sockets.h>
 #include <log/log.h>
 #include <log/logger.h>
@@ -86,21 +90,6 @@ static void BM_clock_overhead(int iters) {
 BENCHMARK(BM_clock_overhead);
 
 /*
- *	Measure the time it takes to submit the android logging call using
- * discrete acquisition under light load. Expect this to be a dozen or so
- * syscall periods (40us).
- */
-static void BM_log_overhead(int iters) {
-    for (int i = 0; i < iters; ++i) {
-       StartBenchmarkTiming();
-       __android_log_print(ANDROID_LOG_INFO, "BM_log_overhead", "%d", i);
-       StopBenchmarkTiming();
-       usleep(1000);
-    }
-}
-BENCHMARK(BM_log_overhead);
-
-/*
  *	Measure the time it takes for __android_log_is_loggable.
  */
 static void BM_is_loggable(int iters) {
@@ -113,3 +102,31 @@ static void BM_is_loggable(int iters) {
     StopBenchmarkTiming();
 }
 BENCHMARK(BM_is_loggable);
+
+/*
+ *	Measure the time it takes for android_log_clockid.
+ */
+static void BM_clockid(int iters) {
+    StartBenchmarkTiming();
+
+    for (int i = 0; i < iters; ++i) {
+        android_log_clockid();
+    }
+
+    StopBenchmarkTiming();
+}
+BENCHMARK(BM_clockid);
+
+/*
+ *	Measure the time it takes for __android_log_security.
+ */
+static void BM_security(int iters) {
+    StartBenchmarkTiming();
+
+    for (int i = 0; i < iters; ++i) {
+        __android_log_security();
+    }
+
+    StopBenchmarkTiming();
+}
+BENCHMARK(BM_security);

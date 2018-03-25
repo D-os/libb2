@@ -12,7 +12,6 @@ endif()
 
 
 add_library(utils SHARED
-    "${UTILS_SOURCE_DIR}/BasicHashtable.cpp"
     "${UTILS_SOURCE_DIR}/CallStack.cpp"
     "${UTILS_SOURCE_DIR}/FileMap.cpp"
     "${UTILS_SOURCE_DIR}/JenkinsHash.cpp"
