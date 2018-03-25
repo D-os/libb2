@@ -17,7 +17,7 @@
 #ifndef ANDROID_UTILS_LRU_CACHE_H
 #define ANDROID_UTILS_LRU_CACHE_H
 
-#include <UniquePtr.h>
+#include <memory>
 #include <utils/BasicHashtable.h>
 
 namespace android {
@@ -94,7 +94,7 @@ private:
     void detachFromCache(Entry& entry);
     void rehash(size_t newCapacity);
 
-    UniquePtr<BasicHashtable<TKey, Entry> > mTable;
+    std::unique_ptr<BasicHashtable<TKey, Entry> > mTable;
     OnEntryRemoved<TKey, TValue>* mListener;
     Entry* mOldest;
     Entry* mYoungest;
@@ -234,7 +234,7 @@ void LruCache<TKey, TValue>::detachFromCache(Entry& entry) {
 
 template <typename TKey, typename TValue>
 void LruCache<TKey, TValue>::rehash(size_t newCapacity) {
-    UniquePtr<BasicHashtable<TKey, Entry> > oldTable(mTable.release());
+    std::unique_ptr<BasicHashtable<TKey, Entry> > oldTable(mTable.release());
     Entry* oldest = mOldest;
 
     mOldest = NULL;
