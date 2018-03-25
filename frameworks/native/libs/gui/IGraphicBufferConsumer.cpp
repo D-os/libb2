@@ -43,8 +43,7 @@ enum {
     CONSUMER_DISCONNECT,
     GET_RELEASED_BUFFERS,
     SET_DEFAULT_BUFFER_SIZE,
-    SET_DEFAULT_MAX_BUFFER_COUNT,
-    DISABLE_ASYNC_BUFFER,
+    SET_MAX_BUFFER_COUNT,
     SET_MAX_ACQUIRED_BUFFER_COUNT,
     SET_CONSUMER_NAME,
     SET_DEFAULT_BUFFER_FORMAT,
@@ -52,6 +51,8 @@ enum {
     SET_CONSUMER_USAGE_BITS,
     SET_TRANSFORM_HINT,
     GET_SIDEBAND_STREAM,
+    GET_OCCUPANCY_HISTORY,
+    DISCARD_FREE_BUFFERS,
     DUMP,
 };
 
@@ -172,21 +173,11 @@ public:
         return reply.readInt32();
     }
 
-    virtual status_t setDefaultMaxBufferCount(int bufferCount) {
+    virtual status_t setMaxBufferCount(int bufferCount) {
         Parcel data, reply;
         data.writeInterfaceToken(IGraphicBufferConsumer::getInterfaceDescriptor());
         data.writeInt32(bufferCount);
-        status_t result = remote()->transact(SET_DEFAULT_MAX_BUFFER_COUNT, data, &reply);
-        if (result != NO_ERROR) {
-            return result;
-        }
-        return reply.readInt32();
-    }
-
-    virtual status_t disableAsyncBuffer() {
-        Parcel data, reply;
-        data.writeInterfaceToken(IGraphicBufferConsumer::getInterfaceDescriptor());
-        status_t result = remote()->transact(DISABLE_ASYNC_BUFFER, data, &reply);
+        status_t result = remote()->transact(SET_MAX_BUFFER_COUNT, data, &reply);
         if (result != NO_ERROR) {
             return result;
         }
@@ -269,6 +260,46 @@ public:
             stream = NativeHandle::create(reply.readNativeHandle(), true);
         }
         return stream;
+    }
+
+    virtual status_t getOccupancyHistory(bool forceFlush,
+            std::vector<OccupancyTracker::Segment>* outHistory) {
+        Parcel data, reply;
+        data.writeInterfaceToken(IGraphicBufferConsumer::getInterfaceDescriptor());
+        status_t error = data.writeBool(forceFlush);
+        if (error != NO_ERROR) {
+            return error;
+        }
+        error = remote()->transact(GET_OCCUPANCY_HISTORY, data,
+                &reply);
+        if (error != NO_ERROR) {
+            return error;
+        }
+        error = reply.readParcelableVector(outHistory);
+        if (error != NO_ERROR) {
+            return error;
+        }
+        status_t result = NO_ERROR;
+        error = reply.readInt32(&result);
+        if (error != NO_ERROR) {
+            return error;
+        }
+        return result;
+    }
+
+    virtual status_t discardFreeBuffers() {
+        Parcel data, reply;
+        data.writeInterfaceToken(IGraphicBufferConsumer::getInterfaceDescriptor());
+        status_t error = remote()->transact(DISCARD_FREE_BUFFERS, data, &reply);
+        if (error != NO_ERROR) {
+            return error;
+        }
+        int32_t result = NO_ERROR;
+        error = reply.readInt32(&result);
+        if (error != NO_ERROR) {
+            return error;
+        }
+        return result;
     }
 
     virtual void dump(String8& result, const char* prefix) const {
@@ -363,16 +394,10 @@ status_t BnGraphicBufferConsumer::onTransact(
             reply->writeInt32(result);
             return NO_ERROR;
         }
-        case SET_DEFAULT_MAX_BUFFER_COUNT: {
+        case SET_MAX_BUFFER_COUNT: {
             CHECK_INTERFACE(IGraphicBufferConsumer, data, reply);
             int bufferCount = data.readInt32();
-            status_t result = setDefaultMaxBufferCount(bufferCount);
-            reply->writeInt32(result);
-            return NO_ERROR;
-        }
-        case DISABLE_ASYNC_BUFFER: {
-            CHECK_INTERFACE(IGraphicBufferConsumer, data, reply);
-            status_t result = disableAsyncBuffer();
+            status_t result = setMaxBufferCount(bufferCount);
             reply->writeInt32(result);
             return NO_ERROR;
         }
@@ -425,6 +450,31 @@ status_t BnGraphicBufferConsumer::onTransact(
                 reply->writeNativeHandle(stream->handle());
             }
             return NO_ERROR;
+        }
+        case GET_OCCUPANCY_HISTORY: {
+            CHECK_INTERFACE(IGraphicBufferConsumer, data, reply);
+            bool forceFlush = false;
+            status_t error = data.readBool(&forceFlush);
+            if (error != NO_ERROR) {
+                return error;
+            }
+            std::vector<OccupancyTracker::Segment> history;
+            status_t result = getOccupancyHistory(forceFlush, &history);
+            error = reply->writeParcelableVector(history);
+            if (error != NO_ERROR) {
+                return error;
+            }
+            error = reply->writeInt32(result);
+            if (error != NO_ERROR) {
+                return error;
+            }
+            return NO_ERROR;
+        }
+        case DISCARD_FREE_BUFFERS: {
+            CHECK_INTERFACE(IGraphicBufferConsumer, data, reply);
+            status_t result = discardFreeBuffers();
+            status_t error = reply->writeInt32(result);
+            return error;
         }
         case DUMP: {
             CHECK_INTERFACE(IGraphicBufferConsumer, data, reply);

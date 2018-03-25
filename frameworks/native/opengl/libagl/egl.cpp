@@ -16,6 +16,7 @@
 */
 
 #include <assert.h>
+#include <atomic>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,11 +28,11 @@
 #include <sys/mman.h>
 
 #include <cutils/log.h>
-#include <cutils/atomic.h>
 
 #include <utils/threads.h>
 #include <ui/ANativeObjectBase.h>
 #include <ui/Fence.h>
+#include <ui/GraphicBufferMapper.h>
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -64,7 +65,7 @@ const unsigned int NUM_DISPLAYS = 1;
 static pthread_mutex_t gInitMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t gErrorKeyMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t gEGLErrorKey = -1;
-#ifndef HAVE_ANDROID_OS
+#ifndef __ANDROID__
 namespace gl {
 pthread_key_t gGLKey = -1;
 }; // namespace gl
@@ -107,8 +108,8 @@ struct egl_display_t
         return ((uintptr_t(dpy)-1U) >= NUM_DISPLAYS) ? EGL_FALSE : EGL_TRUE;
     }
 
-    NativeDisplayType   type;
-    volatile int32_t    initialized;
+    NativeDisplayType  type;
+    std::atomic_size_t initialized;
 };
 
 static egl_display_t gDisplays[NUM_DISPLAYS];
@@ -242,7 +243,6 @@ private:
     ANativeWindow*   nativeWindow;
     ANativeWindowBuffer*   buffer;
     ANativeWindowBuffer*   previousBuffer;
-    gralloc_module_t const*    module;
     int width;
     int height;
     void* bits;
@@ -341,16 +341,12 @@ egl_window_surface_v2_t::egl_window_surface_v2_t(EGLDisplay dpy,
         EGLConfig config,
         int32_t depthFormat,
         ANativeWindow* window)
-    : egl_surface_t(dpy, config, depthFormat), 
-    nativeWindow(window), buffer(0), previousBuffer(0), module(0),
-    bits(NULL)
+    : egl_surface_t(dpy, config, depthFormat),
+    nativeWindow(window), buffer(0), previousBuffer(0), bits(NULL)
 {
-    hw_module_t const* pModule;
-    hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &pModule);
-    module = reinterpret_cast<gralloc_module_t const*>(pModule);
 
     pixelFormatTable = gglGetPixelFormatTable();
-    
+
     // keep a reference on the window
     nativeWindow->common.incRef(&nativeWindow->common);
     nativeWindow->query(nativeWindow, NATIVE_WINDOW_WIDTH, &width);
@@ -440,22 +436,16 @@ void egl_window_surface_v2_t::disconnect()
 status_t egl_window_surface_v2_t::lock(
         ANativeWindowBuffer* buf, int usage, void** vaddr)
 {
-    int err;
-
-    err = module->lock(module, buf->handle,
-            usage, 0, 0, buf->width, buf->height, vaddr);
-
-    return err;
+    auto& mapper = GraphicBufferMapper::get();
+    return mapper.lock(buf->handle, usage,
+            android::Rect(buf->width, buf->height), vaddr);
 }
 
 status_t egl_window_surface_v2_t::unlock(ANativeWindowBuffer* buf)
 {
     if (!buf) return BAD_VALUE;
-    int err = NO_ERROR;
-
-    err = module->unlock(module, buf->handle);
-
-    return err;
+    auto& mapper = GraphicBufferMapper::get();
+    return mapper.unlock(buf->handle);
 }
 
 void egl_window_surface_v2_t::copyBlt(
@@ -1373,7 +1363,7 @@ static EGLSurface createPbufferSurface(EGLDisplay dpy, EGLConfig config,
 
     int32_t w = 0;
     int32_t h = 0;
-    while (attrib_list[0]) {
+    while (attrib_list[0] != EGL_NONE) {
         if (attrib_list[0] == EGL_WIDTH)  w = attrib_list[1];
         if (attrib_list[0] == EGL_HEIGHT) h = attrib_list[1];
         attrib_list+=2;
@@ -1403,7 +1393,7 @@ using namespace android;
 
 EGLDisplay eglGetDisplay(NativeDisplayType display)
 {
-#ifndef HAVE_ANDROID_OS
+#ifndef __ANDROID__
     // this just needs to be done once
     if (gGLKey == -1) {
         pthread_mutex_lock(&gInitMutex);
@@ -1429,7 +1419,7 @@ EGLBoolean eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
     EGLBoolean res = EGL_TRUE;
     egl_display_t& d = egl_display_t::get_display(dpy);
 
-    if (android_atomic_inc(&d.initialized) == 0) {
+    if (d.initialized.fetch_add(1, std::memory_order_acquire) == 0) {
         // initialize stuff here if needed
         //pthread_mutex_lock(&gInitMutex);
         //pthread_mutex_unlock(&gInitMutex);
@@ -1449,7 +1439,8 @@ EGLBoolean eglTerminate(EGLDisplay dpy)
 
     EGLBoolean res = EGL_TRUE;
     egl_display_t& d = egl_display_t::get_display(dpy);
-    if (android_atomic_dec(&d.initialized) == 1) {
+    if (d.initialized.fetch_sub(1, std::memory_order_release) == 1) {
+        std::atomic_thread_fence(std::memory_order_acquire);
         // TODO: destroy all resources (surfaces, contexts, etc...)
         //pthread_mutex_lock(&gInitMutex);
         //pthread_mutex_unlock(&gInitMutex);

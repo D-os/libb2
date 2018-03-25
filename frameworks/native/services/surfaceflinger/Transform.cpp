@@ -87,10 +87,6 @@ const vec3& Transform::operator [] (size_t i) const {
     return mMatrix[i];
 }
 
-bool Transform::transformed() const {
-    return type() > TRANSLATE;
-}
-
 float Transform::tx() const {
     return mMatrix[2][0];
 }
@@ -200,7 +196,7 @@ Rect Transform::makeBounds(int w, int h) const
     return transform( Rect(w, h) );
 }
 
-Rect Transform::transform(const Rect& bounds) const
+Rect Transform::transform(const Rect& bounds, bool roundOutwards) const
 {
     Rect r;
     vec2 lt( bounds.left,  bounds.top    );
@@ -213,10 +209,17 @@ Rect Transform::transform(const Rect& bounds) const
     lb = transform(lb);
     rb = transform(rb);
 
-    r.left   = floorf(min(lt[0], rt[0], lb[0], rb[0]) + 0.5f);
-    r.top    = floorf(min(lt[1], rt[1], lb[1], rb[1]) + 0.5f);
-    r.right  = floorf(max(lt[0], rt[0], lb[0], rb[0]) + 0.5f);
-    r.bottom = floorf(max(lt[1], rt[1], lb[1], rb[1]) + 0.5f);
+    if (roundOutwards) {
+        r.left   = floorf(min(lt[0], rt[0], lb[0], rb[0]));
+        r.top    = floorf(min(lt[1], rt[1], lb[1], rb[1]));
+        r.right  = ceilf(max(lt[0], rt[0], lb[0], rb[0]));
+        r.bottom = ceilf(max(lt[1], rt[1], lb[1], rb[1]));
+    } else {
+        r.left   = floorf(min(lt[0], rt[0], lb[0], rb[0]) + 0.5f);
+        r.top    = floorf(min(lt[1], rt[1], lb[1], rb[1]) + 0.5f);
+        r.right  = floorf(max(lt[0], rt[0], lb[0], rb[0]) + 0.5f);
+        r.bottom = floorf(max(lt[1], rt[1], lb[1], rb[1]) + 0.5f);
+    }
 
     return r;
 }
@@ -224,7 +227,7 @@ Rect Transform::transform(const Rect& bounds) const
 Region Transform::transform(const Region& reg) const
 {
     Region out;
-    if (CC_UNLIKELY(transformed())) {
+    if (CC_UNLIKELY(type() > TRANSLATE)) {
         if (CC_LIKELY(preserveRects())) {
             Region::const_iterator it = reg.begin();
             Region::const_iterator const end = reg.end();

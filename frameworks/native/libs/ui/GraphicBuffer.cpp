@@ -43,7 +43,7 @@ static uint64_t getUniqueId() {
 
 GraphicBuffer::GraphicBuffer()
     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mId(getUniqueId())
+      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
 {
     width  =
     height =
@@ -54,9 +54,9 @@ GraphicBuffer::GraphicBuffer()
 }
 
 GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
-        PixelFormat inFormat, uint32_t inUsage)
+        PixelFormat inFormat, uint32_t inUsage, std::string requestorName)
     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mId(getUniqueId())
+      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
 {
     width  =
     height =
@@ -64,7 +64,8 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
     format =
     usage  = 0;
     handle = NULL;
-    mInitCheck = initSize(inWidth, inHeight, inFormat, inUsage);
+    mInitCheck = initSize(inWidth, inHeight, inFormat, inUsage,
+            std::move(requestorName));
 }
 
 GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
@@ -72,7 +73,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
         native_handle_t* inHandle, bool keepOwnership)
     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
       mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mId(getUniqueId())
+      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
 {
     width  = static_cast<int>(inWidth);
     height = static_cast<int>(inHeight);
@@ -85,7 +86,8 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
 GraphicBuffer::GraphicBuffer(ANativeWindowBuffer* buffer, bool keepOwnership)
     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
       mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mWrappedBuffer(buffer), mId(getUniqueId())
+      mInitCheck(NO_ERROR), mWrappedBuffer(buffer), mId(getUniqueId()),
+      mGenerationNumber(0)
 {
     width  = buffer->width;
     height = buffer->height;
@@ -112,6 +114,7 @@ void GraphicBuffer::free_handle()
         GraphicBufferAllocator& allocator(GraphicBufferAllocator::get());
         allocator.free(handle);
     }
+    handle = NULL;
     mWrappedBuffer = 0;
 }
 
@@ -149,7 +152,7 @@ status_t GraphicBuffer::reallocate(uint32_t inWidth, uint32_t inHeight,
         allocator.free(handle);
         handle = 0;
     }
-    return initSize(inWidth, inHeight, inFormat, inUsage);
+    return initSize(inWidth, inHeight, inFormat, inUsage, "[Reallocation]");
 }
 
 bool GraphicBuffer::needsReallocation(uint32_t inWidth, uint32_t inHeight,
@@ -163,12 +166,12 @@ bool GraphicBuffer::needsReallocation(uint32_t inWidth, uint32_t inHeight,
 }
 
 status_t GraphicBuffer::initSize(uint32_t inWidth, uint32_t inHeight,
-        PixelFormat inFormat, uint32_t inUsage)
+        PixelFormat inFormat, uint32_t inUsage, std::string requestorName)
 {
     GraphicBufferAllocator& allocator = GraphicBufferAllocator::get();
     uint32_t outStride = 0;
-    status_t err = allocator.alloc(inWidth, inHeight, inFormat, inUsage,
-            &handle, &outStride);
+    status_t err = allocator.allocate(inWidth, inHeight, inFormat, inUsage,
+            &handle, &outStride, mId, std::move(requestorName));
     if (err == NO_ERROR) {
         width = static_cast<int>(inWidth);
         height = static_cast<int>(inHeight);
@@ -388,7 +391,7 @@ status_t GraphicBuffer::unflatten(
     mOwner = ownHandle;
 
     if (handle != 0) {
-        status_t err = mBufferMapper.registerBuffer(handle);
+        status_t err = mBufferMapper.registerBuffer(this);
         if (err != NO_ERROR) {
             width = height = stride = format = usage = 0;
             handle = NULL;

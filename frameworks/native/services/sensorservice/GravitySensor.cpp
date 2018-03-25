@@ -29,22 +29,31 @@
 namespace android {
 // ---------------------------------------------------------------------------
 
-GravitySensor::GravitySensor(sensor_t const* list, size_t count)
-    : mSensorDevice(SensorDevice::getInstance()),
-      mSensorFusion(SensorFusion::getInstance())
-{
+GravitySensor::GravitySensor(sensor_t const* list, size_t count) {
     for (size_t i=0 ; i<count ; i++) {
         if (list[i].type == SENSOR_TYPE_ACCELEROMETER) {
             mAccelerometer = Sensor(list + i);
             break;
         }
     }
+
+    const sensor_t sensor = {
+        .name       = "Gravity Sensor",
+        .vendor     = "AOSP",
+        .version    = 3,
+        .handle     = '_grv',
+        .type       = SENSOR_TYPE_GRAVITY,
+        .maxRange   = GRAVITY_EARTH * 2,
+        .resolution = mAccelerometer.getResolution(),
+        .power      = mSensorFusion.getPowerUsage(),
+        .minDelay   = mSensorFusion.getMinDelay(),
+    };
+    mSensor = Sensor(&sensor);
 }
 
 bool GravitySensor::process(sensors_event_t* outEvent,
         const sensors_event_t& event)
 {
-    const static double NS2S = 1.0 / 1000000000.0;
     if (event.type == SENSOR_TYPE_ACCELEROMETER) {
         vec3_t g;
         if (!mSensorFusion.hasEstimate(FUSION_NOMAG))
@@ -72,21 +81,6 @@ status_t GravitySensor::activate(void* ident, bool enabled) {
 
 status_t GravitySensor::setDelay(void* ident, int /*handle*/, int64_t ns) {
     return mSensorFusion.setDelay(FUSION_NOMAG, ident, ns);
-}
-
-Sensor GravitySensor::getSensor() const {
-    sensor_t hwSensor;
-    hwSensor.name       = "Gravity Sensor";
-    hwSensor.vendor     = "AOSP";
-    hwSensor.version    = 3;
-    hwSensor.handle     = '_grv';
-    hwSensor.type       = SENSOR_TYPE_GRAVITY;
-    hwSensor.maxRange   = GRAVITY_EARTH * 2;
-    hwSensor.resolution = mAccelerometer.getResolution();
-    hwSensor.power      = mSensorFusion.getPowerUsage();
-    hwSensor.minDelay   = mSensorFusion.getMinDelay();
-    Sensor sensor(&hwSensor);
-    return sensor;
 }
 
 // ---------------------------------------------------------------------------

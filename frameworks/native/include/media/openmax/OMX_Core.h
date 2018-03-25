@@ -516,6 +516,9 @@ typedef enum OMX_EVENTTYPE
      *  but must signal the event no more than 40ms after the first frame in the batch. The frames
      *  must be ordered by system timestamp inside and across batches.
      *
+     *  The component shall signal the render-timestamp of the very first frame (as well as the
+     *  first frame after each flush) unbatched (with nData1 set to 1) within 5 msec.
+     *
      *  If component is doing frame-rate conversion, it must signal the render time of each
      *  converted frame, and must interpolate media timestamps for in-between frames.
      *
@@ -524,6 +527,21 @@ typedef enum OMX_EVENTTYPE
      *  frame.
      */
     OMX_EventOutputRendered = 0x7F000001,
+
+    /** For framework internal use only: event sent by OMXNodeInstance when it receives a graphic
+     *  input buffer with a new dataspace for encoding. |arg1| will contain the dataspace. |arg2|
+     *  will contain the ColorAspects requested by the component (or framework defaults) using
+     *  the following bitfield layout:
+     *
+     *       +----------+-------------+----------------+------------+
+     *       |   Range  |  Primaries  |  MatrixCoeffs  |  Transfer  |
+     *       +----------+-------------+----------------+------------+
+     *  bits:  31....24   23.......16   15...........8   7........0
+     *
+     *  TODO: We would really need to tie this to an output buffer, but OMX does not provide a
+     *  fool-proof way to do that for video encoders.
+     */
+    OMX_EventDataSpaceChanged,
     OMX_EventMax = 0x7FFFFFFF
 } OMX_EVENTTYPE;
 
@@ -738,14 +756,20 @@ typedef struct OMX_TUNNELSETUPTYPE
     When the command is "OMX_CommandStateSet" the component will queue a
     state transition to the new state idenfied in nParam.
 
+    The component shall transition from executing to loaded state within 500 msec.
+
     When the command is "OMX_CommandFlush", to flush a port's buffer queues,
     the command will force the component to return all buffers NOT CURRENTLY
     BEING PROCESSED to the application, in the order in which the buffers
     were received.
 
+    The component shall finish flusing each port within 5 msec.
+
     When the command is "OMX_CommandPortDisable" or
     "OMX_CommandPortEnable", the component's port (given by the value of
     nParam) will be stopped or restarted.
+
+    The component shall finish disabling/reenabling each port within 5 msec.
 
     When the command "OMX_CommandMarkBuffer" is used to mark a buffer, the
     pCmdData will point to a OMX_MARKTYPE structure containing the component

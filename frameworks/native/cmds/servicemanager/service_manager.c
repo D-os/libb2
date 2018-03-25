@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <cutils/multiuser.h>
+
 #include <selinux/avc.h>
 #include <selinux/label.h>
 
@@ -21,6 +23,12 @@
 #define LOG_TAG "ServiceManager"
 #include <cutils/log.h>
 #endif
+
+struct audit_data {
+    pid_t pid;
+    uid_t uid;
+    const char *name;
+};
 
 const char *str(const char *x, size_t x_len)
 {
@@ -55,34 +63,39 @@ static int selinux_enabled;
 static char *service_manager_context;
 static struct selabel_handle* sehandle;
 
-static bool check_mac_perms(pid_t spid, const char *tctx, const char *perm, const char *name)
+static bool check_mac_perms(pid_t spid, uid_t uid, const char *tctx, const char *perm, const char *name)
 {
     char *sctx = NULL;
     const char *class = "service_manager";
     bool allowed;
+    struct audit_data ad;
 
     if (getpidcon(spid, &sctx) < 0) {
         ALOGE("SELinux: getpidcon(pid=%d) failed to retrieve pid context.\n", spid);
         return false;
     }
 
-    int result = selinux_check_access(sctx, tctx, class, perm, (void *) name);
+    ad.pid = spid;
+    ad.uid = uid;
+    ad.name = name;
+
+    int result = selinux_check_access(sctx, tctx, class, perm, (void *) &ad);
     allowed = (result == 0);
 
     freecon(sctx);
     return allowed;
 }
 
-static bool check_mac_perms_from_getcon(pid_t spid, const char *perm)
+static bool check_mac_perms_from_getcon(pid_t spid, uid_t uid, const char *perm)
 {
     if (selinux_enabled <= 0) {
         return true;
     }
 
-    return check_mac_perms(spid, service_manager_context, perm, NULL);
+    return check_mac_perms(spid, uid, service_manager_context, perm, NULL);
 }
 
-static bool check_mac_perms_from_lookup(pid_t spid, const char *perm, const char *name)
+static bool check_mac_perms_from_lookup(pid_t spid, uid_t uid, const char *perm, const char *name)
 {
     bool allowed;
     char *tctx = NULL;
@@ -101,27 +114,32 @@ static bool check_mac_perms_from_lookup(pid_t spid, const char *perm, const char
         return false;
     }
 
-    allowed = check_mac_perms(spid, tctx, perm, name);
+    allowed = check_mac_perms(spid, uid, tctx, perm, name);
     freecon(tctx);
     return allowed;
 }
 
-static int svc_can_register(const char *name, size_t name_len, pid_t spid)
+static int svc_can_register(const char *name, size_t name_len, pid_t spid, uid_t uid)
 {
     const char *perm = "add";
-    return check_mac_perms_from_lookup(spid, perm, str(name, name_len)) ? 1 : 0;
+
+    if (multiuser_get_app_id(uid) >= AID_APP) {
+        return 0; /* Don't allow apps to register services */
+    }
+
+    return check_mac_perms_from_lookup(spid, uid, perm, str(name, name_len)) ? 1 : 0;
 }
 
-static int svc_can_list(pid_t spid)
+static int svc_can_list(pid_t spid, uid_t uid)
 {
     const char *perm = "list";
-    return check_mac_perms_from_getcon(spid, perm) ? 1 : 0;
+    return check_mac_perms_from_getcon(spid, uid, perm) ? 1 : 0;
 }
 
-static int svc_can_find(const char *name, size_t name_len, pid_t spid)
+static int svc_can_find(const char *name, size_t name_len, pid_t spid, uid_t uid)
 {
     const char *perm = "find";
-    return check_mac_perms_from_lookup(spid, perm, str(name, name_len)) ? 1 : 0;
+    return check_mac_perms_from_lookup(spid, uid, perm, str(name, name_len)) ? 1 : 0;
 }
 
 struct svcinfo
@@ -162,7 +180,7 @@ void svcinfo_death(struct binder_state *bs, void *ptr)
 char svcmgr_id[] = "android.os.IServiceManager";
 
 
-uint32_t do_find_service(struct binder_state *bs, const char *s, size_t len, uid_t uid, pid_t spid)
+uint32_t do_find_service(const char *s, size_t len, uid_t uid, pid_t spid)
 {
     struct svcinfo *si = find_svc(s, len);
 
@@ -170,7 +188,7 @@ uint32_t do_find_service(struct binder_state *bs, const char *s, size_t len, uid
         return 0;
     }
 
-    if (!svc_can_find(s, len, spid)) {
+    if (!svc_can_find(s, len, spid, uid)) {
         return 0;
     }
 
@@ -190,7 +208,7 @@ int do_add_service(struct binder_state *bs,
     if (!handle || (len == 0) || (len > 127))
         return -1;
 
-    if (!svc_can_register(s, len, spid)) {
+    if (!svc_can_register(s, len, spid, uid)) {
         ALOGE("add_service('%s',%x) uid=%d - PERMISSION DENIED\n",
              str(s, len), handle, uid);
         return -1;
@@ -269,7 +287,7 @@ int svcmgr_handler(struct binder_state *bs,
         if (s == NULL) {
             return -1;
         }
-        handle = do_find_service(bs, s, len, txn->sender_euid, txn->sender_pid);
+        handle = do_find_service(s, len, txn->sender_euid, txn->sender_pid);
         if (!handle)
             break;
         bio_put_ref(reply, handle);
@@ -289,7 +307,7 @@ int svcmgr_handler(struct binder_state *bs,
     case SVC_MGR_LIST_SERVICES: {
         uint32_t n = bio_get_uint32(msg);
 
-        if (!svc_can_list(txn->sender_pid)) {
+        if (!svc_can_list(txn->sender_pid, txn->sender_euid)) {
             ALOGE("list_service() uid=%d - PERMISSION DENIED\n",
                     txn->sender_euid);
             return -1;
@@ -313,13 +331,20 @@ int svcmgr_handler(struct binder_state *bs,
 }
 
 
-static int audit_callback(void *data, security_class_t cls, char *buf, size_t len)
+static int audit_callback(void *data, __unused security_class_t cls, char *buf, size_t len)
 {
-    snprintf(buf, len, "service=%s", !data ? "NULL" : (char *)data);
+    struct audit_data *ad = (struct audit_data *)data;
+
+    if (!ad || !ad->name) {
+        ALOGE("No service manager audit data");
+        return 0;
+    }
+
+    snprintf(buf, len, "service=%s pid=%d uid=%d", ad->name, ad->pid, ad->uid);
     return 0;
 }
 
-int main(int argc, char **argv)
+int main()
 {
     struct binder_state *bs;
 
