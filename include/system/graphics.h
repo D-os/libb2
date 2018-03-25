@@ -17,6 +17,7 @@
 #ifndef SYSTEM_CORE_INCLUDE_ANDROID_GRAPHICS_H
 #define SYSTEM_CORE_INCLUDE_ANDROID_GRAPHICS_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -41,7 +42,7 @@ extern "C" {
  * pixel format definitions
  */
 
-enum {
+typedef enum android_pixel_format {
     /*
      * "linear" color pixel formats:
      *
@@ -440,7 +441,7 @@ enum {
     HAL_PIXEL_FORMAT_YCbCr_422_SP       = 0x10, // NV16
     HAL_PIXEL_FORMAT_YCrCb_420_SP       = 0x11, // NV21
     HAL_PIXEL_FORMAT_YCbCr_422_I        = 0x14, // YUY2
-};
+} android_pixel_format_t;
 
 /*
  * Structure for describing YCbCr formats for consumption by applications.
@@ -475,6 +476,102 @@ struct android_ycbcr {
     /** reserved for future use, set to 0 by gralloc's (*lock_ycbcr)() */
     uint32_t reserved[8];
 };
+
+/*
+ * Structures for describing flexible YUVA/RGBA formats for consumption by
+ * applications. Such flexible formats contain a plane for each component (e.g.
+ * red, green, blue), where each plane is laid out in a grid-like pattern
+ * occupying unique byte addresses and with consistent byte offsets between
+ * neighboring pixels.
+ *
+ * The android_flex_layout structure is used with any pixel format that can be
+ * represented by it, such as:
+ *  - HAL_PIXEL_FORMAT_YCbCr_*_888
+ *  - HAL_PIXEL_FORMAT_FLEX_RGB*_888
+ *  - HAL_PIXEL_FORMAT_RGB[AX]_888[8],BGRA_8888,RGB_888
+ *  - HAL_PIXEL_FORMAT_YV12,Y8,Y16,YCbCr_422_SP/I,YCrCb_420_SP
+ *  - even implementation defined formats that can be represented by
+ *    the structures
+ *
+ * Vertical increment (aka. row increment or stride) describes the distance in
+ * bytes from the first pixel of one row to the first pixel of the next row
+ * (below) for the component plane. This can be negative.
+ *
+ * Horizontal increment (aka. column or pixel increment) describes the distance
+ * in bytes from one pixel to the next pixel (to the right) on the same row for
+ * the component plane. This can be negative.
+ *
+ * Each plane can be subsampled either vertically or horizontally by
+ * a power-of-two factor.
+ *
+ * The bit-depth of each component can be arbitrary, as long as the pixels are
+ * laid out on whole bytes, in native byte-order, using the most significant
+ * bits of each unit.
+ */
+
+typedef enum android_flex_component {
+    /* luma */
+    FLEX_COMPONENT_Y = 1 << 0,
+    /* chroma blue */
+    FLEX_COMPONENT_Cb = 1 << 1,
+    /* chroma red */
+    FLEX_COMPONENT_Cr = 1 << 2,
+
+    /* red */
+    FLEX_COMPONENT_R = 1 << 10,
+    /* green */
+    FLEX_COMPONENT_G = 1 << 11,
+    /* blue */
+    FLEX_COMPONENT_B = 1 << 12,
+
+    /* alpha */
+    FLEX_COMPONENT_A = 1 << 30,
+} android_flex_component_t;
+
+typedef struct android_flex_plane {
+    /* pointer to the first byte of the top-left pixel of the plane. */
+    uint8_t *top_left;
+
+    android_flex_component_t component;
+
+    /* bits allocated for the component in each pixel. Must be a positive
+       multiple of 8. */
+    int32_t bits_per_component;
+    /* number of the most significant bits used in the format for this
+       component. Must be between 1 and bits_per_component, inclusive. */
+    int32_t bits_used;
+
+    /* horizontal increment */
+    int32_t h_increment;
+    /* vertical increment */
+    int32_t v_increment;
+    /* horizontal subsampling. Must be a positive power of 2. */
+    int32_t h_subsampling;
+    /* vertical subsampling. Must be a positive power of 2. */
+    int32_t v_subsampling;
+} android_flex_plane_t;
+
+typedef enum android_flex_format {
+    /* not a flexible format */
+    FLEX_FORMAT_INVALID = 0x0,
+    FLEX_FORMAT_Y = FLEX_COMPONENT_Y,
+    FLEX_FORMAT_YCbCr = FLEX_COMPONENT_Y | FLEX_COMPONENT_Cb | FLEX_COMPONENT_Cr,
+    FLEX_FORMAT_YCbCrA = FLEX_FORMAT_YCbCr | FLEX_COMPONENT_A,
+    FLEX_FORMAT_RGB = FLEX_COMPONENT_R | FLEX_COMPONENT_G | FLEX_COMPONENT_B,
+    FLEX_FORMAT_RGBA = FLEX_FORMAT_RGB | FLEX_COMPONENT_A,
+} android_flex_format_t;
+
+typedef struct android_flex_layout {
+    /* the kind of flexible format */
+    android_flex_format_t format;
+
+    /* number of planes; 0 for FLEX_FORMAT_INVALID */
+    uint32_t num_planes;
+    /* a plane for each component; ordered in increasing component value order.
+       E.g. FLEX_FORMAT_RGBA maps 0 -> R, 1 -> G, etc.
+       Can be NULL for FLEX_FORMAT_INVALID */
+    android_flex_plane_t *planes;
+} android_flex_layout_t;
 
 /**
  * Structure used to define depth point clouds for format HAL_PIXEL_FORMAT_BLOB
@@ -526,7 +623,7 @@ struct android_depth_points {
  *
  */
 
-enum {
+typedef enum android_transform {
     /* flip source image horizontally (around the vertical axis) */
     HAL_TRANSFORM_FLIP_H    = 0x01,
     /* flip source image vertically (around the horizontal axis)*/
@@ -539,7 +636,7 @@ enum {
     HAL_TRANSFORM_ROT_270   = 0x07,
     /* don't use. see system/window.h */
     HAL_TRANSFORM_RESERVED  = 0x08,
-};
+} android_transform_t;
 
 /**
  * Dataspace Definitions
@@ -552,6 +649,37 @@ enum {
  * which describes both gamma curve and numeric range (within the bit depth).
  *
  * Other dataspaces include depth measurement data from a depth camera.
+ *
+ * A dataspace is comprised of a number of fields.
+ *
+ * Version
+ * --------
+ * The top 2 bits represent the revision of the field specification. This is
+ * currently always 0.
+ *
+ *
+ * bits    31-30 29                      -                          0
+ *        +-----+----------------------------------------------------+
+ * fields | Rev |            Revision specific fields                |
+ *        +-----+----------------------------------------------------+
+ *
+ * Field layout for version = 0:
+ * ----------------------------
+ *
+ * A dataspace is comprised of the following fields:
+ *      Standard
+ *      Transfer function
+ *      Range
+ *
+ * bits    31-30 29-27 26 -  22 21 -  16 15             -           0
+ *        +-----+-----+--------+--------+----------------------------+
+ * fields |  0  |Range|Transfer|Standard|    Legacy and custom       |
+ *        +-----+-----+--------+--------+----------------------------+
+ *          VV    RRR   TTTTT    SSSSSS    LLLLLLLL       LLLLLLLL
+ *
+ * If range, transfer and standard fields are all 0 (e.g. top 16 bits are
+ * all zeroes), the bottom 16 bits contain either a legacy dataspace value,
+ * or a custom value.
  */
 
 typedef enum android_dataspace {
@@ -580,14 +708,309 @@ typedef enum android_dataspace {
     HAL_DATASPACE_ARBITRARY = 0x1,
 
     /*
-     * RGB Colorspaces
-     * -----------------
+     * Color-description aspects
      *
-     * Primaries are given using (x,y) coordinates in the CIE 1931 definition
-     * of x and y specified by ISO 11664-1.
+     * The following aspects define various characteristics of the color
+     * specification. These represent bitfields, so that a data space value
+     * can specify each of them independently.
+     */
+
+    HAL_DATASPACE_STANDARD_SHIFT = 16,
+
+    /*
+     * Standard aspect
+     *
+     * Defines the chromaticity coordinates of the source primaries in terms of
+     * the CIE 1931 definition of x and y specified in ISO 11664-1.
+     */
+    HAL_DATASPACE_STANDARD_MASK = 63 << HAL_DATASPACE_STANDARD_SHIFT,  // 0x3F
+
+    /*
+     * Chromacity coordinates are unknown or are determined by the application.
+     * Implementations shall use the following suggested standards:
+     *
+     * All YCbCr formats: BT709 if size is 720p or larger (since most video
+     *                    content is letterboxed this corresponds to width is
+     *                    1280 or greater, or height is 720 or greater).
+     *                    BT601_625 if size is smaller than 720p or is JPEG.
+     * All RGB formats:   BT709.
+     *
+     * For all other formats standard is undefined, and implementations should use
+     * an appropriate standard for the data represented.
+     */
+    HAL_DATASPACE_STANDARD_UNSPECIFIED = 0 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    /*
+     * Primaries:       x       y
+     *  green           0.300   0.600
+     *  blue            0.150   0.060
+     *  red             0.640   0.330
+     *  white (D65)     0.3127  0.3290
+     *
+     * Use the unadjusted KR = 0.2126, KB = 0.0722 luminance interpretation
+     * for RGB conversion.
+     */
+    HAL_DATASPACE_STANDARD_BT709 = 1 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    /*
+     * Primaries:       x       y
+     *  green           0.290   0.600
+     *  blue            0.150   0.060
+     *  red             0.640   0.330
+     *  white (D65)     0.3127  0.3290
+     *
+     *  KR = 0.299, KB = 0.114. This adjusts the luminance interpretation
+     *  for RGB conversion from the one purely determined by the primaries
+     *  to minimize the color shift into RGB space that uses BT.709
+     *  primaries.
+     */
+    HAL_DATASPACE_STANDARD_BT601_625 = 2 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    /*
+     * Primaries:       x       y
+     *  green           0.290   0.600
+     *  blue            0.150   0.060
+     *  red             0.640   0.330
+     *  white (D65)     0.3127  0.3290
+     *
+     * Use the unadjusted KR = 0.222, KB = 0.071 luminance interpretation
+     * for RGB conversion.
+     */
+    HAL_DATASPACE_STANDARD_BT601_625_UNADJUSTED = 3 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    /*
+     * Primaries:       x       y
+     *  green           0.310   0.595
+     *  blue            0.155   0.070
+     *  red             0.630   0.340
+     *  white (D65)     0.3127  0.3290
+     *
+     *  KR = 0.299, KB = 0.114. This adjusts the luminance interpretation
+     *  for RGB conversion from the one purely determined by the primaries
+     *  to minimize the color shift into RGB space that uses BT.709
+     *  primaries.
+     */
+    HAL_DATASPACE_STANDARD_BT601_525 = 4 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    /*
+     * Primaries:       x       y
+     *  green           0.310   0.595
+     *  blue            0.155   0.070
+     *  red             0.630   0.340
+     *  white (D65)     0.3127  0.3290
+     *
+     * Use the unadjusted KR = 0.212, KB = 0.087 luminance interpretation
+     * for RGB conversion (as in SMPTE 240M).
+     */
+    HAL_DATASPACE_STANDARD_BT601_525_UNADJUSTED = 5 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    /*
+     * Primaries:       x       y
+     *  green           0.170   0.797
+     *  blue            0.131   0.046
+     *  red             0.708   0.292
+     *  white (D65)     0.3127  0.3290
+     *
+     * Use the unadjusted KR = 0.2627, KB = 0.0593 luminance interpretation
+     * for RGB conversion.
+     */
+    HAL_DATASPACE_STANDARD_BT2020 = 6 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    /*
+     * Primaries:       x       y
+     *  green           0.170   0.797
+     *  blue            0.131   0.046
+     *  red             0.708   0.292
+     *  white (D65)     0.3127  0.3290
+     *
+     * Use the unadjusted KR = 0.2627, KB = 0.0593 luminance interpretation
+     * for RGB conversion using the linear domain.
+     */
+    HAL_DATASPACE_STANDARD_BT2020_CONSTANT_LUMINANCE = 7 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    /*
+     * Primaries:       x      y
+     *  green           0.21   0.71
+     *  blue            0.14   0.08
+     *  red             0.67   0.33
+     *  white (C)       0.310  0.316
+     *
+     * Use the unadjusted KR = 0.30, KB = 0.11 luminance interpretation
+     * for RGB conversion.
+     */
+    HAL_DATASPACE_STANDARD_BT470M = 8 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    /*
+     * Primaries:       x       y
+     *  green           0.243   0.692
+     *  blue            0.145   0.049
+     *  red             0.681   0.319
+     *  white (C)       0.310   0.316
+     *
+     * Use the unadjusted KR = 0.254, KB = 0.068 luminance interpretation
+     * for RGB conversion.
+     */
+    HAL_DATASPACE_STANDARD_FILM = 9 << HAL_DATASPACE_STANDARD_SHIFT,
+
+    HAL_DATASPACE_TRANSFER_SHIFT = 22,
+
+    /*
+     * Transfer aspect
      *
      * Transfer characteristics are the opto-electronic transfer characteristic
      * at the source as a function of linear optical intensity (luminance).
+     *
+     * For digital signals, E corresponds to the recorded value. Normally, the
+     * transfer function is applied in RGB space to each of the R, G and B
+     * components independently. This may result in color shift that can be
+     * minized by applying the transfer function in Lab space only for the L
+     * component. Implementation may apply the transfer function in RGB space
+     * for all pixel formats if desired.
+     */
+
+    HAL_DATASPACE_TRANSFER_MASK = 31 << HAL_DATASPACE_TRANSFER_SHIFT,  // 0x1F
+
+    /*
+     * Transfer characteristics are unknown or are determined by the
+     * application.
+     *
+     * Implementations should use the following transfer functions:
+     *
+     * For YCbCr formats: use HAL_DATASPACE_TRANSFER_SMPTE_170M
+     * For RGB formats: use HAL_DATASPACE_TRANSFER_SRGB
+     *
+     * For all other formats transfer function is undefined, and implementations
+     * should use an appropriate standard for the data represented.
+     */
+    HAL_DATASPACE_TRANSFER_UNSPECIFIED = 0 << HAL_DATASPACE_TRANSFER_SHIFT,
+
+    /*
+     * Transfer characteristic curve:
+     *  E = L
+     *      L - luminance of image 0 <= L <= 1 for conventional colorimetry
+     *      E - corresponding electrical signal
+     */
+    HAL_DATASPACE_TRANSFER_LINEAR = 1 << HAL_DATASPACE_TRANSFER_SHIFT,
+
+    /*
+     * Transfer characteristic curve:
+     *
+     * E = 1.055 * L^(1/2.4) - 0.055  for 0.0031308 <= L <= 1
+     *   = 12.92 * L                  for 0 <= L < 0.0031308
+     *     L - luminance of image 0 <= L <= 1 for conventional colorimetry
+     *     E - corresponding electrical signal
+     */
+    HAL_DATASPACE_TRANSFER_SRGB = 2 << HAL_DATASPACE_TRANSFER_SHIFT,
+
+    /*
+     * BT.601 525, BT.601 625, BT.709, BT.2020
+     *
+     * Transfer characteristic curve:
+     *  E = 1.099 * L ^ 0.45 - 0.099  for 0.018 <= L <= 1
+     *    = 4.500 * L                 for 0 <= L < 0.018
+     *      L - luminance of image 0 <= L <= 1 for conventional colorimetry
+     *      E - corresponding electrical signal
+     */
+    HAL_DATASPACE_TRANSFER_SMPTE_170M = 3 << HAL_DATASPACE_TRANSFER_SHIFT,
+
+    /*
+     * Assumed display gamma 2.2.
+     *
+     * Transfer characteristic curve:
+     *  E = L ^ (1/2.2)
+     *      L - luminance of image 0 <= L <= 1 for conventional colorimetry
+     *      E - corresponding electrical signal
+     */
+    HAL_DATASPACE_TRANSFER_GAMMA2_2 = 4 << HAL_DATASPACE_TRANSFER_SHIFT,
+
+    /*
+     *  display gamma 2.8.
+     *
+     * Transfer characteristic curve:
+     *  E = L ^ (1/2.8)
+     *      L - luminance of image 0 <= L <= 1 for conventional colorimetry
+     *      E - corresponding electrical signal
+     */
+    HAL_DATASPACE_TRANSFER_GAMMA2_8 = 5 << HAL_DATASPACE_TRANSFER_SHIFT,
+
+    /*
+     * SMPTE ST 2084
+     *
+     * Transfer characteristic curve:
+     *  E = ((c1 + c2 * L^n) / (1 + c3 * L^n)) ^ m
+     *  c1 = c3 - c2 + 1 = 3424 / 4096 = 0.8359375
+     *  c2 = 32 * 2413 / 4096 = 18.8515625
+     *  c3 = 32 * 2392 / 4096 = 18.6875
+     *  m = 128 * 2523 / 4096 = 78.84375
+     *  n = 0.25 * 2610 / 4096 = 0.1593017578125
+     *      L - luminance of image 0 <= L <= 1 for HDR colorimetry.
+     *          L = 1 corresponds to 10000 cd/m2
+     *      E - corresponding electrical signal
+     */
+    HAL_DATASPACE_TRANSFER_ST2084 = 6 << HAL_DATASPACE_TRANSFER_SHIFT,
+
+    /*
+     * ARIB STD-B67 Hybrid Log Gamma
+     *
+     * Transfer characteristic curve:
+     *  E = r * L^0.5                 for 0 <= L <= 1
+     *    = a * ln(L - b) + c         for 1 < L
+     *  a = 0.17883277
+     *  b = 0.28466892
+     *  c = 0.55991073
+     *  r = 0.5
+     *      L - luminance of image 0 <= L for HDR colorimetry. L = 1 corresponds
+     *          to reference white level of 100 cd/m2
+     *      E - corresponding electrical signal
+     */
+    HAL_DATASPACE_TRANSFER_HLG = 7 << HAL_DATASPACE_TRANSFER_SHIFT,
+
+    HAL_DATASPACE_RANGE_SHIFT = 27,
+
+    /*
+     * Range aspect
+     *
+     * Defines the range of values corresponding to the unit range of 0-1.
+     * This is defined for YCbCr only, but can be expanded to RGB space.
+     */
+    HAL_DATASPACE_RANGE_MASK = 7 << HAL_DATASPACE_RANGE_SHIFT,  // 0x7
+
+    /*
+     * Range is unknown or are determined by the application.  Implementations
+     * shall use the following suggested ranges:
+     *
+     * All YCbCr formats: limited range.
+     * All RGB or RGBA formats (including RAW and Bayer): full range.
+     * All Y formats: full range
+     *
+     * For all other formats range is undefined, and implementations should use
+     * an appropriate range for the data represented.
+     */
+    HAL_DATASPACE_RANGE_UNSPECIFIED = 0 << HAL_DATASPACE_RANGE_SHIFT,
+
+    /*
+     * Full range uses all values for Y, Cb and Cr from
+     * 0 to 2^b-1, where b is the bit depth of the color format.
+     */
+    HAL_DATASPACE_RANGE_FULL = 1 << HAL_DATASPACE_RANGE_SHIFT,
+
+    /*
+     * Limited range uses values 16/256*2^b to 235/256*2^b for Y, and
+     * 1/16*2^b to 15/16*2^b for Cb, Cr, R, G and B, where b is the bit depth of
+     * the color format.
+     *
+     * E.g. For 8-bit-depth formats:
+     * Luma (Y) samples should range from 16 to 235, inclusive
+     * Chroma (Cb, Cr) samples should range from 16 to 240, inclusive
+     *
+     * For 10-bit-depth formats:
+     * Luma (Y) samples should range from 64 to 940, inclusive
+     * Chroma (Cb, Cr) samples should range from 64 to 960, inclusive
+     */
+    HAL_DATASPACE_RANGE_LIMITED = 2 << HAL_DATASPACE_RANGE_SHIFT,
+
+    /*
+     * Legacy dataspaces
      */
 
     /*
@@ -600,34 +1023,30 @@ typedef enum android_dataspace {
      * The values are encoded using the full range ([0,255] for 8-bit) for all
      * components.
      */
-    HAL_DATASPACE_SRGB_LINEAR = 0x200,
+    HAL_DATASPACE_SRGB_LINEAR = 0x200, // deprecated, use HAL_DATASPACE_V0_SRGB_LINEAR
+
+    HAL_DATASPACE_V0_SRGB_LINEAR = HAL_DATASPACE_STANDARD_BT709 |
+            HAL_DATASPACE_TRANSFER_LINEAR | HAL_DATASPACE_RANGE_FULL,
+
 
     /*
      * sRGB gamma encoding:
      *
      * The red, green and blue components are stored in sRGB space, and
-     * converted to linear space when read, using the standard sRGB to linear
-     * equation:
-     *
-     * Clinear = Csrgb / 12.92                  for Csrgb <= 0.04045
-     *         = (Csrgb + 0.055 / 1.055)^2.4    for Csrgb >  0.04045
-     *
-     * When written the inverse transformation is performed:
-     *
-     * Csrgb = 12.92 * Clinear                  for Clinear <= 0.0031308
-     *       = 1.055 * Clinear^(1/2.4) - 0.055  for Clinear >  0.0031308
-     *
+     * converted to linear space when read, using the SRGB transfer function
+     * for each of the R, G and B components. When written, the inverse
+     * transformation is performed.
      *
      * The alpha component, if present, is always stored in linear space and
      * is left unmodified when read or written.
      *
-     * The RGB primaries and the white point are the same as BT.709.
-     *
-     * The values are encoded using the full range ([0,255] for 8-bit) for all
-     * components.
-     *
+     * Use full range and BT.709 standard.
      */
-    HAL_DATASPACE_SRGB = 0x201,
+    HAL_DATASPACE_SRGB = 0x201, // deprecated, use HAL_DATASPACE_V0_SRGB
+
+    HAL_DATASPACE_V0_SRGB = HAL_DATASPACE_STANDARD_BT709 |
+            HAL_DATASPACE_TRANSFER_SRGB | HAL_DATASPACE_RANGE_FULL,
+
 
     /*
      * YCbCr Colorspaces
@@ -645,94 +1064,53 @@ typedef enum android_dataspace {
      *
      * Same model as BT.601-625, but all values (Y, Cb, Cr) range from 0 to 255
      *
-     * Transfer characteristic curve:
-     *  E = 1.099 * L ^ 0.45 - 0.099, 1.00 >= L >= 0.018
-     *  E = 4.500 L, 0.018 > L >= 0
-     *      L - luminance of image 0 <= L <= 1 for conventional colorimetry
-     *      E - corresponding electrical signal
-     *
-     * Primaries:       x       y
-     *  green           0.290   0.600
-     *  blue            0.150   0.060
-     *  red             0.640   0.330
-     *  white (D65)     0.3127  0.3290
+     * Use full range, BT.601 transfer and BT.601_625 standard.
      */
-    HAL_DATASPACE_JFIF = 0x101,
+    HAL_DATASPACE_JFIF = 0x101, // deprecated, use HAL_DATASPACE_V0_JFIF
+
+    HAL_DATASPACE_V0_JFIF = HAL_DATASPACE_STANDARD_BT601_625 |
+            HAL_DATASPACE_TRANSFER_SMPTE_170M | HAL_DATASPACE_RANGE_FULL,
 
     /*
      * ITU-R Recommendation 601 (BT.601) - 625-line
      *
      * Standard-definition television, 625 Lines (PAL)
      *
-     * For 8-bit-depth formats:
-     * Luma (Y) samples should range from 16 to 235, inclusive
-     * Chroma (Cb, Cr) samples should range from 16 to 240, inclusive
-     *
-     * For 10-bit-depth formats:
-     * Luma (Y) samples should range from 64 to 940, inclusive
-     * Chroma (Cb, Cr) samples should range from 64 to 960, inclusive
-     *
-     * Transfer characteristic curve:
-     *  E = 1.099 * L ^ 0.45 - 0.099, 1.00 >= L >= 0.018
-     *  E = 4.500 L, 0.018 > L >= 0
-     *      L - luminance of image 0 <= L <= 1 for conventional colorimetry
-     *      E - corresponding electrical signal
-     *
-     * Primaries:       x       y
-     *  green           0.290   0.600
-     *  blue            0.150   0.060
-     *  red             0.640   0.330
-     *  white (D65)     0.3127  0.3290
+     * Use limited range, BT.601 transfer and BT.601_625 standard.
      */
-    HAL_DATASPACE_BT601_625 = 0x102,
+    HAL_DATASPACE_BT601_625 = 0x102, // deprecated, use HAL_DATASPACE_V0_BT601_625
+
+    HAL_DATASPACE_V0_BT601_625 = HAL_DATASPACE_STANDARD_BT601_625 |
+            HAL_DATASPACE_TRANSFER_SMPTE_170M | HAL_DATASPACE_RANGE_LIMITED,
+
 
     /*
      * ITU-R Recommendation 601 (BT.601) - 525-line
      *
      * Standard-definition television, 525 Lines (NTSC)
      *
-     * For 8-bit-depth formats:
-     * Luma (Y) samples should range from 16 to 235, inclusive
-     * Chroma (Cb, Cr) samples should range from 16 to 240, inclusive
-     *
-     * For 10-bit-depth formats:
-     * Luma (Y) samples should range from 64 to 940, inclusive
-     * Chroma (Cb, Cr) samples should range from 64 to 960, inclusive
-     *
-     * Transfer characteristic curve:
-     *  E = 1.099 * L ^ 0.45 - 0.099, 1.00 >= L >= 0.018
-     *  E = 4.500 L, 0.018 > L >= 0
-     *      L - luminance of image 0 <= L <= 1 for conventional colorimetry
-     *      E - corresponding electrical signal
-     *
-     * Primaries:       x       y
-     *  green           0.310   0.595
-     *  blue            0.155   0.070
-     *  red             0.630   0.340
-     *  white (D65)     0.3127  0.3290
+     * Use limited range, BT.601 transfer and BT.601_525 standard.
      */
-    HAL_DATASPACE_BT601_525 = 0x103,
+    HAL_DATASPACE_BT601_525 = 0x103, // deprecated, use HAL_DATASPACE_V0_BT601_525
+
+    HAL_DATASPACE_V0_BT601_525 = HAL_DATASPACE_STANDARD_BT601_525 |
+            HAL_DATASPACE_TRANSFER_SMPTE_170M | HAL_DATASPACE_RANGE_LIMITED,
 
     /*
      * ITU-R Recommendation 709 (BT.709)
      *
      * High-definition television
      *
-     * For 8-bit-depth formats:
-     * Luma (Y) samples should range from 16 to 235, inclusive
-     * Chroma (Cb, Cr) samples should range from 16 to 240, inclusive
-     *
-     * For 10-bit-depth formats:
-     * Luma (Y) samples should range from 64 to 940, inclusive
-     * Chroma (Cb, Cr) samples should range from 64 to 960, inclusive
-     *
-     * Primaries:       x       y
-     *  green           0.300   0.600
-     *  blue            0.150   0.060
-     *  red             0.640   0.330
-     *  white (D65)     0.3127  0.3290
+     * Use limited range, BT.709 transfer and BT.709 standard.
      */
-    HAL_DATASPACE_BT709 = 0x104,
+    HAL_DATASPACE_BT709 = 0x104, // deprecated, use HAL_DATASPACE_V0_BT709
+
+    HAL_DATASPACE_V0_BT709 = HAL_DATASPACE_STANDARD_BT709 |
+            HAL_DATASPACE_TRANSFER_SMPTE_170M | HAL_DATASPACE_RANGE_LIMITED,
+
+    /*
+     * Data spaces for non-color formats
+     */
 
     /*
      * The buffer contains depth ranging measurements from a depth camera.
@@ -755,6 +1133,278 @@ typedef enum android_dataspace {
     HAL_DATASPACE_DEPTH = 0x1000
 
 } android_dataspace_t;
+
+/*
+ * Color modes that may be supported by a display.
+ *
+ * Definitions:
+ * Rendering intent generally defines the goal in mapping a source (input)
+ * color to a destination device color for a given color mode.
+ *
+ *  It is important to keep in mind three cases where mapping may be applied:
+ *  1. The source gamut is much smaller than the destination (display) gamut
+ *  2. The source gamut is much larger than the destination gamut (this will
+ *  ordinarily be handled using colorimetric rendering, below)
+ *  3. The source and destination gamuts are roughly equal, although not
+ *  completely overlapping
+ *  Also, a common requirement for mappings is that skin tones should be
+ *  preserved, or at least remain natural in appearance.
+ *
+ *  Colorimetric Rendering Intent (All cases):
+ *  Colorimetric indicates that colors should be preserved. In the case
+ *  that the source gamut lies wholly within the destination gamut or is
+ *  about the same (#1, #3), this will simply mean that no manipulations
+ *  (no saturation boost, for example) are applied. In the case where some
+ *  source colors lie outside the destination gamut (#2, #3), those will
+ *  need to be mapped to colors that are within the destination gamut,
+ *  while the already in-gamut colors remain unchanged.
+ *
+ *  Non-colorimetric transforms can take many forms. There are no hard
+ *  rules and it's left to the implementation to define.
+ *  Two common intents are described below.
+ *
+ *  Stretched-Gamut Enhancement Intent (Source < Destination):
+ *  When the destination gamut is much larger than the source gamut (#1), the
+ *  source primaries may be redefined to reflect the full extent of the
+ *  destination space, or to reflect an intermediate gamut.
+ *  Skin-tone preservation would likely be applied. An example might be sRGB
+ *  input displayed on a DCI-P3 capable device, with skin-tone preservation.
+ *
+ *  Within-Gamut Enhancement Intent (Source >= Destination):
+ *  When the device (destination) gamut is not larger than the source gamut
+ *  (#2 or #3), but the appearance of a larger gamut is desired, techniques
+ *  such as saturation boost may be applied to the source colors. Skin-tone
+ *  preservation may be applied. There is no unique method for within-gamut
+ *  enhancement; it would be defined within a flexible color mode.
+ *
+ */
+typedef enum android_color_mode {
+
+  /*
+   * HAL_COLOR_MODE_DEFAULT is the "native" gamut of the display.
+   * White Point: Vendor/OEM defined
+   * Panel Gamma: Vendor/OEM defined (typically 2.2)
+   * Rendering Intent: Vendor/OEM defined (typically 'enhanced')
+   */
+  HAL_COLOR_MODE_NATIVE = 0,
+
+  /*
+   * HAL_COLOR_MODE_STANDARD_BT601_625 corresponds with display
+   * settings that implement the ITU-R Recommendation BT.601
+   * or Rec 601. Using 625 line version
+   * Rendering Intent: Colorimetric
+   * Primaries:
+   *                  x       y
+   *  green           0.290   0.600
+   *  blue            0.150   0.060
+   *  red             0.640   0.330
+   *  white (D65)     0.3127  0.3290
+   *
+   *  KR = 0.299, KB = 0.114. This adjusts the luminance interpretation
+   *  for RGB conversion from the one purely determined by the primaries
+   *  to minimize the color shift into RGB space that uses BT.709
+   *  primaries.
+   *
+   * Gamma Correction (GC):
+   *
+   *  if Vlinear < 0.018
+   *    Vnonlinear = 4.500 * Vlinear
+   *  else
+   *    Vnonlinear = 1.099 * (Vlinear)^(0.45) – 0.099
+   */
+  HAL_COLOR_MODE_STANDARD_BT601_625 = 1,
+
+  /*
+   * Primaries:
+   *                  x       y
+   *  green           0.290   0.600
+   *  blue            0.150   0.060
+   *  red             0.640   0.330
+   *  white (D65)     0.3127  0.3290
+   *
+   *  Use the unadjusted KR = 0.222, KB = 0.071 luminance interpretation
+   *  for RGB conversion.
+   *
+   * Gamma Correction (GC):
+   *
+   *  if Vlinear < 0.018
+   *    Vnonlinear = 4.500 * Vlinear
+   *  else
+   *    Vnonlinear = 1.099 * (Vlinear)^(0.45) – 0.099
+   */
+  HAL_COLOR_MODE_STANDARD_BT601_625_UNADJUSTED = 2,
+
+  /*
+   * Primaries:
+   *                  x       y
+   *  green           0.310   0.595
+   *  blue            0.155   0.070
+   *  red             0.630   0.340
+   *  white (D65)     0.3127  0.3290
+   *
+   *  KR = 0.299, KB = 0.114. This adjusts the luminance interpretation
+   *  for RGB conversion from the one purely determined by the primaries
+   *  to minimize the color shift into RGB space that uses BT.709
+   *  primaries.
+   *
+   * Gamma Correction (GC):
+   *
+   *  if Vlinear < 0.018
+   *    Vnonlinear = 4.500 * Vlinear
+   *  else
+   *    Vnonlinear = 1.099 * (Vlinear)^(0.45) – 0.099
+   */
+  HAL_COLOR_MODE_STANDARD_BT601_525 = 3,
+
+  /*
+   * Primaries:
+   *                  x       y
+   *  green           0.310   0.595
+   *  blue            0.155   0.070
+   *  red             0.630   0.340
+   *  white (D65)     0.3127  0.3290
+   *
+   *  Use the unadjusted KR = 0.212, KB = 0.087 luminance interpretation
+   *  for RGB conversion (as in SMPTE 240M).
+   *
+   * Gamma Correction (GC):
+   *
+   *  if Vlinear < 0.018
+   *    Vnonlinear = 4.500 * Vlinear
+   *  else
+   *    Vnonlinear = 1.099 * (Vlinear)^(0.45) – 0.099
+   */
+  HAL_COLOR_MODE_STANDARD_BT601_525_UNADJUSTED = 4,
+
+  /*
+   * HAL_COLOR_MODE_REC709 corresponds with display settings that implement
+   * the ITU-R Recommendation BT.709 / Rec. 709 for high-definition television.
+   * Rendering Intent: Colorimetric
+   * Primaries:
+   *                  x       y
+   *  green           0.300   0.600
+   *  blue            0.150   0.060
+   *  red             0.640   0.330
+   *  white (D65)     0.3127  0.3290
+   *
+   * HDTV REC709 Inverse Gamma Correction (IGC): V represents normalized
+   * (with [0 to 1] range) value of R, G, or B.
+   *
+   *  if Vnonlinear < 0.081
+   *    Vlinear = Vnonlinear / 4.5
+   *  else
+   *    Vlinear = ((Vnonlinear + 0.099) / 1.099) ^ (1/0.45)
+   *
+   * HDTV REC709 Gamma Correction (GC):
+   *
+   *  if Vlinear < 0.018
+   *    Vnonlinear = 4.5 * Vlinear
+   *  else
+   *    Vnonlinear = 1.099 * (Vlinear) ^ 0.45 – 0.099
+   */
+  HAL_COLOR_MODE_STANDARD_BT709 = 5,
+
+  /*
+   * HAL_COLOR_MODE_DCI_P3 corresponds with display settings that implement
+   * SMPTE EG 432-1 and SMPTE RP 431-2
+   * Rendering Intent: Colorimetric
+   * Primaries:
+   *                  x       y
+   *  green           0.265   0.690
+   *  blue            0.150   0.060
+   *  red             0.680   0.320
+   *  white (D65)     0.3127  0.3290
+   *
+   * Gamma: 2.2
+   */
+  HAL_COLOR_MODE_DCI_P3 = 6,
+
+  /*
+   * HAL_COLOR_MODE_SRGB corresponds with display settings that implement
+   * the sRGB color space. Uses the same primaries as ITU-R Recommendation
+   * BT.709
+   * Rendering Intent: Colorimetric
+   * Primaries:
+   *                  x       y
+   *  green           0.300   0.600
+   *  blue            0.150   0.060
+   *  red             0.640   0.330
+   *  white (D65)     0.3127  0.3290
+   *
+   * PC/Internet (sRGB) Inverse Gamma Correction (IGC):
+   *
+   *  if Vnonlinear ≤ 0.03928
+   *    Vlinear = Vnonlinear / 12.92
+   *  else
+   *    Vlinear = ((Vnonlinear + 0.055)/1.055) ^ 2.4
+   *
+   * PC/Internet (sRGB) Gamma Correction (GC):
+   *
+   *  if Vlinear ≤ 0.0031308
+   *    Vnonlinear = 12.92 * Vlinear
+   *  else
+   *    Vnonlinear = 1.055 * (Vlinear)^(1/2.4) – 0.055
+   */
+  HAL_COLOR_MODE_SRGB = 7,
+
+  /*
+   * HAL_COLOR_MODE_ADOBE_RGB corresponds with the RGB color space developed
+   * by Adobe Systems, Inc. in 1998.
+   * Rendering Intent: Colorimetric
+   * Primaries:
+   *                  x       y
+   *  green           0.210   0.710
+   *  blue            0.150   0.060
+   *  red             0.640   0.330
+   *  white (D65)     0.3127  0.3290
+   *
+   * Gamma: 2.2
+   */
+  HAL_COLOR_MODE_ADOBE_RGB = 8
+
+} android_color_mode_t;
+
+/*
+ * Color transforms that may be applied by hardware composer to the whole
+ * display.
+ */
+typedef enum android_color_transform {
+    /* Applies no transform to the output color */
+    HAL_COLOR_TRANSFORM_IDENTITY = 0,
+
+    /* Applies an arbitrary transform defined by a 4x4 affine matrix */
+    HAL_COLOR_TRANSFORM_ARBITRARY_MATRIX = 1,
+
+    /* Applies a transform that inverts the value or luminance of the color, but
+     * does not modify hue or saturation */
+    HAL_COLOR_TRANSFORM_VALUE_INVERSE = 2,
+
+    /* Applies a transform that maps all colors to shades of gray */
+    HAL_COLOR_TRANSFORM_GRAYSCALE = 3,
+
+    /* Applies a transform which corrects for protanopic color blindness */
+    HAL_COLOR_TRANSFORM_CORRECT_PROTANOPIA = 4,
+
+    /* Applies a transform which corrects for deuteranopic color blindness */
+    HAL_COLOR_TRANSFORM_CORRECT_DEUTERANOPIA = 5,
+
+    /* Applies a transform which corrects for tritanopic color blindness */
+    HAL_COLOR_TRANSFORM_CORRECT_TRITANOPIA = 6
+} android_color_transform_t;
+
+/*
+ * Supported HDR formats. Must be kept in sync with equivalents in Display.java.
+ */
+typedef enum android_hdr {
+    /* Device supports Dolby Vision HDR */
+    HAL_HDR_DOLBY_VISION = 1,
+
+    /* Device supports HDR10 */
+    HAL_HDR_HDR10 = 2,
+
+    /* Device supports hybrid log-gamma HDR */
+    HAL_HDR_HLG = 3
+} android_hdr_t;
 
 #ifdef __cplusplus
 }

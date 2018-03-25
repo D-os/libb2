@@ -20,6 +20,8 @@
 #include <cutils/klog.h>
 #include <fs_mgr.h>
 
+__BEGIN_DECLS
+
 #define INFO(x...)    KLOG_INFO("fs_mgr", x)
 #define WARNING(x...) KLOG_WARNING("fs_mgr", x)
 #define ERROR(x...)   KLOG_ERROR("fs_mgr", x)
@@ -46,7 +48,7 @@
  *
  *   <fs_mgr_options> is a comma separated list of flags that control the operation of
  *                     the fs_mgr program.  The list includes "wait", which will wait till
- *                     the <source> file exists, and "check", which requests that the fs_mgr 
+ *                     the <source> file exists, and "check", which requests that the fs_mgr
  *                     run an fscheck program on the <source> before mounting the filesystem.
  *                     If check is specifed on a read-only filesystem, it is ignored.
  *                     Also, "encryptable" means that filesystem can be encrypted.
@@ -79,9 +81,16 @@
 #define MF_NOTRIM       0x1000
 #define MF_FILEENCRYPTION 0x2000
 #define MF_FORMATTABLE  0x4000
+#define MF_SLOTSELECT   0x8000
+#define MF_FORCEFDEORFBE 0x10000
+#define MF_LATEMOUNT    0x20000
+#define MF_NOFAIL       0x40000
 
 #define DM_BUF_SIZE 4096
 
 int fs_mgr_set_blk_ro(const char *blockdev);
+int fs_mgr_update_for_slotselect(struct fstab *fstab);
+
+__END_DECLS
 
 #endif /* __CORE_FS_MGR_PRIV_H */
