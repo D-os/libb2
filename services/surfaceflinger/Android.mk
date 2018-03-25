@@ -10,16 +10,18 @@ LOCAL_SRC_FILES := \
     DispSync.cpp \
     EventControlThread.cpp \
     EventThread.cpp \
+    FenceTracker.cpp \
     FrameTracker.cpp \
+    GpuService.cpp \
     Layer.cpp \
     LayerDim.cpp \
     MessageQueue.cpp \
     MonitoredProducer.cpp \
-    SurfaceFlinger.cpp \
     SurfaceFlingerConsumer.cpp \
     Transform.cpp \
     DisplayHardware/FramebufferSurface.cpp \
-    DisplayHardware/HWComposer.cpp \
+    DisplayHardware/HWC2.cpp \
+    DisplayHardware/HWC2On1Adapter.cpp \
     DisplayHardware/PowerHAL.cpp \
     DisplayHardware/VirtualDisplaySurface.cpp \
     Effects/Daltonizer.cpp \
@@ -36,9 +38,23 @@ LOCAL_SRC_FILES := \
     RenderEngine/GLES11RenderEngine.cpp \
     RenderEngine/GLES20RenderEngine.cpp
 
+LOCAL_C_INCLUDES := \
+	frameworks/native/vulkan/include \
+	external/vulkan-validation-layers/libs/vkjson
 
 LOCAL_CFLAGS := -DLOG_TAG=\"SurfaceFlinger\"
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
+
+ifeq ($(TARGET_USES_HWC2),true)
+    LOCAL_CFLAGS += -DUSE_HWC2
+    LOCAL_SRC_FILES += \
+        SurfaceFlinger.cpp \
+        DisplayHardware/HWComposer.cpp
+else
+    LOCAL_SRC_FILES += \
+        SurfaceFlinger_hwc1.cpp \
+        DisplayHardware/HWComposer_hwc1.cpp
+endif
 
 ifeq ($(TARGET_BOARD_PLATFORM),omap4)
     LOCAL_CFLAGS += -DHAS_CONTEXT_PRIORITY
@@ -63,18 +79,36 @@ ifeq ($(TARGET_RUNNING_WITHOUT_SYNC_FRAMEWORK),true)
     LOCAL_CFLAGS += -DRUNNING_WITHOUT_SYNC_FRAMEWORK
 endif
 
-# See build/target/board/generic/BoardConfig.mk for a description of this setting.
+# The following two BoardConfig variables define (respectively):
+#
+#   - The phase offset between hardware vsync and when apps are woken up by the
+#     Choreographer callback
+#   - The phase offset between hardware vsync and when SurfaceFlinger wakes up
+#     to consume input
+#
+# Their values can be tuned to trade off between display pipeline latency (both
+# overall latency and the lengths of the app --> SF and SF --> display phases)
+# and frame delivery jitter (which typically manifests as "jank" or "jerkiness"
+# while interacting with the device). The default values should produce a
+# relatively low amount of jitter at the expense of roughly two frames of
+# app --> display latency, and unless significant testing is performed to avoid
+# increased display jitter (both manual investigation using systrace [1] and
+# automated testing using dumpsys gfxinfo [2] are recommended), they should not
+# be modified.
+#
+# [1] https://developer.android.com/studio/profile/systrace.html
+# [2] https://developer.android.com/training/testing/performance.html
+
 ifneq ($(VSYNC_EVENT_PHASE_OFFSET_NS),)
     LOCAL_CFLAGS += -DVSYNC_EVENT_PHASE_OFFSET_NS=$(VSYNC_EVENT_PHASE_OFFSET_NS)
 else
-    LOCAL_CFLAGS += -DVSYNC_EVENT_PHASE_OFFSET_NS=0
+    LOCAL_CFLAGS += -DVSYNC_EVENT_PHASE_OFFSET_NS=1000000
 endif
 
-# See build/target/board/generic/BoardConfig.mk for a description of this setting.
 ifneq ($(SF_VSYNC_EVENT_PHASE_OFFSET_NS),)
     LOCAL_CFLAGS += -DSF_VSYNC_EVENT_PHASE_OFFSET_NS=$(SF_VSYNC_EVENT_PHASE_OFFSET_NS)
 else
-    LOCAL_CFLAGS += -DSF_VSYNC_EVENT_PHASE_OFFSET_NS=0
+    LOCAL_CFLAGS += -DSF_VSYNC_EVENT_PHASE_OFFSET_NS=1000000
 endif
 
 ifneq ($(PRESENT_TIME_OFFSET_FROM_VSYNC_NS),)
@@ -90,8 +124,9 @@ else
 endif
 
 LOCAL_CFLAGS += -fvisibility=hidden -Werror=format
-LOCAL_CFLAGS += -std=c++11
+LOCAL_CFLAGS += -std=c++14
 
+LOCAL_STATIC_LIBRARIES := libvkjson
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
     liblog \
@@ -104,7 +139,8 @@ LOCAL_SHARED_LIBRARIES := \
     libbinder \
     libui \
     libgui \
-    libpowermanager
+    libpowermanager \
+    libvulkan
 
 LOCAL_MODULE := libsurfaceflinger
 
@@ -120,7 +156,17 @@ LOCAL_CLANG := true
 
 LOCAL_LDFLAGS := -Wl,--version-script,art/sigchainlib/version-script.txt -Wl,--export-dynamic
 LOCAL_CFLAGS := -DLOG_TAG=\"SurfaceFlinger\"
-LOCAL_CPPFLAGS := -std=c++11
+LOCAL_CPPFLAGS := -std=c++14
+
+LOCAL_INIT_RC := surfaceflinger.rc
+
+ifneq ($(ENABLE_CPUSETS),)
+    LOCAL_CFLAGS += -DENABLE_CPUSETS
+endif
+
+ifeq ($(TARGET_USES_HWC2),true)
+    LOCAL_CFLAGS += -DUSE_HWC2
+endif
 
 LOCAL_SRC_FILES := \
     main_surfaceflinger.cpp
@@ -153,7 +199,7 @@ include $(CLEAR_VARS)
 LOCAL_CLANG := true
 
 LOCAL_CFLAGS := -DLOG_TAG=\"SurfaceFlinger\"
-LOCAL_CPPFLAGS := -std=c++11
+LOCAL_CPPFLAGS := -std=c++14
 
 LOCAL_SRC_FILES := \
     DdmConnection.cpp

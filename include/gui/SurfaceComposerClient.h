@@ -40,6 +40,7 @@ namespace android {
 
 class DisplayInfo;
 class Composer;
+class HdrCapabilities;
 class ISurfaceComposerClient;
 class IGraphicBufferProducer;
 class Region;
@@ -81,6 +82,16 @@ public:
     // Set a new active configuration using an index relative to the list
     // returned by getDisplayInfo
     static status_t setActiveConfig(const sp<IBinder>& display, int id);
+
+    // Gets the list of supported color modes for the given display
+    static status_t getDisplayColorModes(const sp<IBinder>& display,
+            Vector<android_color_mode_t>* outColorModes);
+
+    // Gets the active color mode for the given display
+    static android_color_mode_t getActiveColorMode(const sp<IBinder>& display);
+
+    // Sets the active color mode for the given display
+    static status_t setActiveColorMode(const sp<IBinder>& display, android_color_mode_t colorMode);
 
     /* Triggers screen on/off or low power mode and waits for it to complete */
     static void setDisplayPowerMode(const sp<IBinder>& display, int mode);
@@ -133,17 +144,30 @@ public:
     status_t    setPosition(const sp<IBinder>& id, float x, float y);
     status_t    setSize(const sp<IBinder>& id, uint32_t w, uint32_t h);
     status_t    setCrop(const sp<IBinder>& id, const Rect& crop);
+    status_t    setFinalCrop(const sp<IBinder>& id, const Rect& crop);
     status_t    setLayerStack(const sp<IBinder>& id, uint32_t layerStack);
+    status_t    deferTransactionUntil(const sp<IBinder>& id,
+            const sp<IBinder>& handle, uint64_t frameNumber);
+    status_t    setOverrideScalingMode(const sp<IBinder>& id,
+            int32_t overrideScalingMode);
+    status_t    setGeometryAppliesWithResize(const sp<IBinder>& id);
+
     status_t    destroySurface(const sp<IBinder>& id);
 
     status_t clearLayerFrameStats(const sp<IBinder>& token) const;
     status_t getLayerFrameStats(const sp<IBinder>& token, FrameStats* outStats) const;
 
+    status_t getTransformToDisplayInverse(const sp<IBinder>& token,
+            bool* outTransformToDisplayInverse) const;
+
     static status_t clearAnimationFrameStats();
     static status_t getAnimationFrameStats(FrameStats* outStats);
 
-    static void setDisplaySurface(const sp<IBinder>& token,
-            const sp<IGraphicBufferProducer>& bufferProducer);
+    static status_t getHdrCapabilities(const sp<IBinder>& display,
+            HdrCapabilities* outCapabilities);
+
+    static status_t setDisplaySurface(const sp<IBinder>& token,
+            sp<IGraphicBufferProducer> bufferProducer);
     static void setDisplayLayerStack(const sp<IBinder>& token,
             uint32_t layerStack);
     static void setDisplaySize(const sp<IBinder>& token, uint32_t width, uint32_t height);

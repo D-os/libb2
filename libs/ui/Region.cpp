@@ -795,10 +795,15 @@ status_t Region::unflatten(void const* buffer, size_t size) {
         return NO_MEMORY;
     }
 
+    if (numRects > (UINT32_MAX / sizeof(Rect))) {
+        android_errorWriteWithInfoLog(0x534e4554, "29983260", -1, NULL, 0);
+        return NO_MEMORY;
+    }
+
     Region result;
     result.mStorage.clear();
     for (size_t r = 0; r < numRects; ++r) {
-        Rect rect;
+        Rect rect(Rect::EMPTY_RECT);
         status_t status = rect.unflatten(buffer, size);
         if (status != NO_ERROR) {
             return status;
@@ -833,18 +838,6 @@ Region::const_iterator Region::end() const {
 Rect const* Region::getArray(size_t* count) const {
     if (count) *count = static_cast<size_t>(end() - begin());
     return begin();
-}
-
-SharedBuffer const* Region::getSharedBuffer(size_t* count) const {
-    // We can get to the SharedBuffer of a Vector<Rect> because Rect has
-    // a trivial destructor.
-    SharedBuffer const* sb = SharedBuffer::bufferFromData(mStorage.array());
-    if (count) {
-        size_t numRects = isRect() ? 1 : mStorage.size() - 1;
-        count[0] = numRects;
-    }
-    sb->acquire();
-    return sb;
 }
 
 // ----------------------------------------------------------------------------

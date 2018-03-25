@@ -30,6 +30,8 @@
 #include <ui/Rect.h>
 #include <ui/Region.h>
 
+#include <gui/FrameTimestamps.h>
+
 namespace android {
 // ----------------------------------------------------------------------------
 
@@ -74,33 +76,55 @@ public:
     // The slot must be in the range of [0, NUM_BUFFER_SLOTS).
     //
     // Return of a value other than NO_ERROR means an error has occurred:
-    // * NO_INIT - the buffer queue has been abandoned.
+    // * NO_INIT - the buffer queue has been abandoned or the producer is not
+    //             connected.
     // * BAD_VALUE - one of the two conditions occurred:
     //              * slot was out of range (see above)
     //              * buffer specified by the slot is not dequeued
     virtual status_t requestBuffer(int slot, sp<GraphicBuffer>* buf) = 0;
 
-    // setBufferCount sets the number of buffer slots available. Calling this
-    // will also cause all buffer slots to be emptied. The caller should empty
-    // its mirrored copy of the buffer slots when calling this method.
+    // setMaxDequeuedBufferCount sets the maximum number of buffers that can be
+    // dequeued by the producer at one time. If this method succeeds, any new
+    // buffer slots will be both unallocated and owned by the BufferQueue object
+    // (i.e. they are not owned by the producer or consumer). Calling this may
+    // also cause some buffer slots to be emptied. If the caller is caching the
+    // contents of the buffer slots, it should empty that cache after calling
+    // this method.
     //
-    // This function should not be called when there are any dequeued buffer
-    // slots, doing so will result in a BAD_VALUE error returned.
+    // This function should not be called with a value of maxDequeuedBuffers
+    // that is less than the number of currently dequeued buffer slots. Doing so
+    // will result in a BAD_VALUE error.
     //
-    // The buffer count should be at most NUM_BUFFER_SLOTS (inclusive), but at least
-    // the minimum undequeued buffer count (exclusive). The minimum value
-    // can be obtained by calling query(NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS).
-    // In particular the range is (minUndequeudBuffers, NUM_BUFFER_SLOTS].
-    //
-    // The buffer count may also be set to 0 (the default), to indicate that
-    // the producer does not wish to set a value.
+    // The buffer count should be at least 1 (inclusive), but at most
+    // (NUM_BUFFER_SLOTS - the minimum undequeued buffer count) (exclusive). The
+    // minimum undequeued buffer count can be obtained by calling
+    // query(NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS).
     //
     // Return of a value other than NO_ERROR means an error has occurred:
     // * NO_INIT - the buffer queue has been abandoned.
     // * BAD_VALUE - one of the below conditions occurred:
-    //              * bufferCount was out of range (see above)
-    //              * client has one or more buffers dequeued
-    virtual status_t setBufferCount(int bufferCount) = 0;
+    //     * bufferCount was out of range (see above).
+    //     * client would have more than the requested number of dequeued
+    //       buffers after this call.
+    //     * this call would cause the maxBufferCount value to be exceeded.
+    //     * failure to adjust the number of available slots.
+    virtual status_t setMaxDequeuedBufferCount(int maxDequeuedBuffers) = 0;
+
+    // Set the async flag if the producer intends to asynchronously queue
+    // buffers without blocking. Typically this is used for triple-buffering
+    // and/or when the swap interval is set to zero.
+    //
+    // Enabling async mode will internally allocate an additional buffer to
+    // allow for the asynchronous behavior. If it is not enabled queue/dequeue
+    // calls may block.
+    //
+    // Return of a value other than NO_ERROR means an error has occurred:
+    // * NO_INIT - the buffer queue has been abandoned.
+    // * BAD_VALUE - one of the following has occurred:
+    //             * this call would cause the maxBufferCount value to be
+    //               exceeded
+    //             * failure to adjust the number of available slots.
+    virtual status_t setAsyncMode(bool async) = 0;
 
     // dequeueBuffer requests a new buffer slot for the client to use. Ownership
     // of the slot is transfered to the client, meaning that the server will not
@@ -126,9 +150,6 @@ public:
     // fence signals. If the fence is Fence::NO_FENCE, the buffer may be written
     // immediately.
     //
-    // The async parameter sets whether we're in asynchronous mode for this
-    // dequeueBuffer() call.
-    //
     // The width and height parameters must be no greater than the minimum of
     // GL_MAX_VIEWPORT_DIMS and GL_MAX_TEXTURE_SIZE (see: glGetIntegerv).
     // An error due to invalid dimensions might not be reported until
@@ -150,7 +171,8 @@ public:
     // success.
     //
     // Return of a negative means an error has occurred:
-    // * NO_INIT - the buffer queue has been abandoned.
+    // * NO_INIT - the buffer queue has been abandoned or the producer is not
+    //             connected.
     // * BAD_VALUE - both in async mode and buffer count was less than the
     //               max numbers of buffers that can be allocated at once.
     // * INVALID_OPERATION - cannot attach the buffer because it would cause
@@ -162,11 +184,13 @@ public:
     // * WOULD_BLOCK - no buffer is currently available, and blocking is disabled
     //                 since both the producer/consumer are controlled by app
     // * NO_MEMORY - out of memory, cannot allocate the graphics buffer.
+    // * TIMED_OUT - the timeout set by setDequeueTimeout was exceeded while
+    //               waiting for a buffer to become available.
     //
     // All other negative values are an unknown error returned downstream
     // from the graphics allocator (typically errno).
-    virtual status_t dequeueBuffer(int* slot, sp<Fence>* fence, bool async,
-            uint32_t w, uint32_t h, PixelFormat format, uint32_t usage) = 0;
+    virtual status_t dequeueBuffer(int* slot, sp<Fence>* fence, uint32_t w,
+            uint32_t h, PixelFormat format, uint32_t usage) = 0;
 
     // detachBuffer attempts to remove all ownership of the buffer in the given
     // slot from the buffer queue. If this call succeeds, the slot will be
@@ -178,7 +202,8 @@ public:
     // requestBuffer).
     //
     // Return of a value other than NO_ERROR means an error has occurred:
-    // * NO_INIT - the buffer queue has been abandoned.
+    // * NO_INIT - the buffer queue has been abandoned or the producer is not
+    //             connected.
     // * BAD_VALUE - the given slot number is invalid, either because it is
     //               out of the range [0, NUM_BUFFER_SLOTS), or because the slot
     //               it refers to is not currently dequeued and requested.
@@ -198,7 +223,8 @@ public:
     // equivalent to fence from the dequeueBuffer call.
     //
     // Return of a value other than NO_ERROR means an error has occurred:
-    // * NO_INIT - the buffer queue has been abandoned.
+    // * NO_INIT - the buffer queue has been abandoned or the producer is not
+    //             connected.
     // * BAD_VALUE - either outBuffer or outFence were NULL.
     // * NO_MEMORY - no slots were found that were both free and contained a
     //               GraphicBuffer.
@@ -217,7 +243,8 @@ public:
     // success.
     //
     // Return of a negative value means an error has occurred:
-    // * NO_INIT - the buffer queue has been abandoned.
+    // * NO_INIT - the buffer queue has been abandoned or the producer is not
+    //             connected.
     // * BAD_VALUE - outSlot or buffer were NULL, invalid combination of
     //               async mode and buffer count override, or the generation
     //               number of the buffer did not match the buffer queue.
@@ -230,6 +257,8 @@ public:
     // * WOULD_BLOCK - no buffer slot is currently available, and blocking is
     //                 disabled since both the producer/consumer are
     //                 controlled by the app.
+    // * TIMED_OUT - the timeout set by setDequeueTimeout was exceeded while
+    //               waiting for a slot to become available.
     virtual status_t attachBuffer(int* outSlot,
             const sp<GraphicBuffer>& buffer) = 0;
 
@@ -251,7 +280,8 @@ public:
     // (refer to the documentation below).
     //
     // Return of a value other than NO_ERROR means an error has occurred:
-    // * NO_INIT - the buffer queue has been abandoned.
+    // * NO_INIT - the buffer queue has been abandoned or the producer is not
+    //             connected.
     // * BAD_VALUE - one of the below conditions occurred:
     //              * fence was NULL
     //              * scaling mode was unknown
@@ -271,23 +301,21 @@ public:
         // crop - a crop rectangle that's used as a hint to the consumer
         // scalingMode - a set of flags from NATIVE_WINDOW_SCALING_* in <window.h>
         // transform - a set of flags from NATIVE_WINDOW_TRANSFORM_* in <window.h>
-        // async - if the buffer is queued in asynchronous mode
         // fence - a fence that the consumer must wait on before reading the buffer,
         //         set this to Fence::NO_FENCE if the buffer is ready immediately
         // sticky - the sticky transform set in Surface (only used by the LEGACY
         //          camera mode).
         inline QueueBufferInput(int64_t timestamp, bool isAutoTimestamp,
                 android_dataspace dataSpace, const Rect& crop, int scalingMode,
-                uint32_t transform, bool async, const sp<Fence>& fence,
-                uint32_t sticky = 0)
+                uint32_t transform, const sp<Fence>& fence, uint32_t sticky = 0)
                 : timestamp(timestamp), isAutoTimestamp(isAutoTimestamp),
                   dataSpace(dataSpace), crop(crop), scalingMode(scalingMode),
-                  transform(transform), stickyTransform(sticky),
-                  async(async), fence(fence), surfaceDamage() { }
+                  transform(transform), stickyTransform(sticky), fence(fence),
+                  surfaceDamage() { }
         inline void deflate(int64_t* outTimestamp, bool* outIsAutoTimestamp,
                 android_dataspace* outDataSpace,
                 Rect* outCrop, int* outScalingMode,
-                uint32_t* outTransform, bool* outAsync, sp<Fence>* outFence,
+                uint32_t* outTransform, sp<Fence>* outFence,
                 uint32_t* outStickyTransform = NULL) const {
             *outTimestamp = timestamp;
             *outIsAutoTimestamp = bool(isAutoTimestamp);
@@ -295,7 +323,6 @@ public:
             *outCrop = crop;
             *outScalingMode = scalingMode;
             *outTransform = transform;
-            *outAsync = bool(async);
             *outFence = fence;
             if (outStickyTransform != NULL) {
                 *outStickyTransform = stickyTransform;
@@ -319,7 +346,6 @@ public:
         int scalingMode;
         uint32_t transform;
         uint32_t stickyTransform;
-        int async;
         sp<Fence> fence;
         Region surfaceDamage;
     };
@@ -335,28 +361,33 @@ public:
         inline void deflate(uint32_t* outWidth,
                 uint32_t* outHeight,
                 uint32_t* outTransformHint,
-                uint32_t* outNumPendingBuffers) const {
+                uint32_t* outNumPendingBuffers,
+                uint64_t* outNextFrameNumber) const {
             *outWidth = width;
             *outHeight = height;
             *outTransformHint = transformHint;
             *outNumPendingBuffers = numPendingBuffers;
+            *outNextFrameNumber = nextFrameNumber;
         }
         inline void inflate(uint32_t inWidth, uint32_t inHeight,
-                uint32_t inTransformHint, uint32_t inNumPendingBuffers) {
+                uint32_t inTransformHint, uint32_t inNumPendingBuffers,
+                uint64_t inNextFrameNumber) {
             width = inWidth;
             height = inHeight;
             transformHint = inTransformHint;
             numPendingBuffers = inNumPendingBuffers;
+            nextFrameNumber = inNextFrameNumber;
         }
     private:
         uint32_t width;
         uint32_t height;
         uint32_t transformHint;
         uint32_t numPendingBuffers;
+        uint64_t nextFrameNumber{0};
     };
 
-    virtual status_t queueBuffer(int slot,
-            const QueueBufferInput& input, QueueBufferOutput* output) = 0;
+    virtual status_t queueBuffer(int slot, const QueueBufferInput& input,
+            QueueBufferOutput* output) = 0;
 
     // cancelBuffer indicates that the client does not wish to fill in the
     // buffer associated with slot and transfers ownership of the slot back to
@@ -364,9 +395,19 @@ public:
     //
     // The buffer is not queued for use by the consumer.
     //
+    // The slot must be in the range of [0, NUM_BUFFER_SLOTS).
+    //
     // The buffer will not be overwritten until the fence signals.  The fence
     // will usually be the one obtained from dequeueBuffer.
-    virtual void cancelBuffer(int slot, const sp<Fence>& fence) = 0;
+    //
+    // Return of a value other than NO_ERROR means an error has occurred:
+    // * NO_INIT - the buffer queue has been abandoned or the producer is not
+    //             connected.
+    // * BAD_VALUE - one of the below conditions occurred:
+    //              * fence was NULL
+    //              * slot index was out of range (see above).
+    //              * the slot was not in the dequeued state
+    virtual status_t cancelBuffer(int slot, const sp<Fence>& fence) = 0;
 
     // query retrieves some information for this surface
     // 'what' tokens allowed are that of NATIVE_WINDOW_* in <window.h>
@@ -407,6 +448,9 @@ public:
     //             * the producer is already connected
     //             * api was out of range (see above).
     //             * output was NULL.
+    //             * Failure to adjust the number of available slots. This can
+    //               happen because of trying to allocate/deallocate the async
+    //               buffer in response to the value of producerControlledByApp.
     // * DEAD_OBJECT - the token is hosted by an already-dead process
     //
     // Additional negative errors may be returned by the internals, they
@@ -414,16 +458,23 @@ public:
     virtual status_t connect(const sp<IProducerListener>& listener,
             int api, bool producerControlledByApp, QueueBufferOutput* output) = 0;
 
+    enum class DisconnectMode {
+        // Disconnect only the specified API.
+        Api,
+        // Disconnect any API originally connected from the process calling disconnect.
+        AllLocal
+    };
+
     // disconnect attempts to disconnect a client API from the
     // IGraphicBufferProducer.  Calling this method will cause any subsequent
     // calls to other IGraphicBufferProducer methods to fail except for
     // getAllocator and connect.  Successfully calling connect after this will
     // allow the other methods to succeed again.
     //
-    // This method will fail if the the IGraphicBufferProducer is not currently
-    // connected to the specified client API.
-    //
     // The api should be one of the NATIVE_WINDOW_API_* values in <window.h>
+    //
+    // Alternatively if mode is AllLocal, then the API value is ignored, and any API
+    // connected from the same PID calling disconnect will be disconnected.
     //
     // Disconnecting from an abandoned IGraphicBufferProducer is legal and
     // is considered a no-op.
@@ -433,7 +484,7 @@ public:
     //             * the api specified does not match the one that was connected
     //             * api was out of range (see above).
     // * DEAD_OBJECT - the token is hosted by an already-dead process
-    virtual status_t disconnect(int api) = 0;
+    virtual status_t disconnect(int api, DisconnectMode mode = DisconnectMode::Api) = 0;
 
     // Attaches a sideband buffer stream to the IGraphicBufferProducer.
     //
@@ -457,7 +508,7 @@ public:
     // allocated. This is most useful to avoid an allocation delay during
     // dequeueBuffer. If there are already the maximum number of buffers
     // allocated, this function has no effect.
-    virtual void allocateBuffers(bool async, uint32_t width, uint32_t height,
+    virtual void allocateBuffers(uint32_t width, uint32_t height,
             PixelFormat format, uint32_t usage) = 0;
 
     // Sets whether dequeueBuffer is allowed to allocate new buffers.
@@ -483,6 +534,62 @@ public:
 
     // Returns the name of the connected consumer.
     virtual String8 getConsumerName() const = 0;
+
+    // Used to enable/disable shared buffer mode.
+    //
+    // When shared buffer mode is enabled the first buffer that is queued or
+    // dequeued will be cached and returned to all subsequent calls to
+    // dequeueBuffer and acquireBuffer. This allows the producer and consumer to
+    // simultaneously access the same buffer.
+    virtual status_t setSharedBufferMode(bool sharedBufferMode) = 0;
+
+    // Used to enable/disable auto-refresh.
+    //
+    // Auto refresh has no effect outside of shared buffer mode. In shared
+    // buffer mode, when enabled, it indicates to the consumer that it should
+    // attempt to acquire buffers even if it is not aware of any being
+    // available.
+    virtual status_t setAutoRefresh(bool autoRefresh) = 0;
+
+    // Sets how long dequeueBuffer will wait for a buffer to become available
+    // before returning an error (TIMED_OUT).
+    //
+    // This timeout also affects the attachBuffer call, which will block if
+    // there is not a free slot available into which the attached buffer can be
+    // placed.
+    //
+    // By default, the BufferQueue will wait forever, which is indicated by a
+    // timeout of -1. If set (to a value other than -1), this will disable
+    // non-blocking mode and its corresponding spare buffer (which is used to
+    // ensure a buffer is always available).
+    //
+    // Return of a value other than NO_ERROR means an error has occurred:
+    // * BAD_VALUE - Failure to adjust the number of available slots. This can
+    //               happen because of trying to allocate/deallocate the async
+    //               buffer.
+    virtual status_t setDequeueTimeout(nsecs_t timeout) = 0;
+
+    // Returns the last queued buffer along with a fence which must signal
+    // before the contents of the buffer are read. If there are no buffers in
+    // the queue, outBuffer will be populated with nullptr and outFence will be
+    // populated with Fence::NO_FENCE
+    //
+    // outTransformMatrix is not modified if outBuffer is null.
+    //
+    // Returns NO_ERROR or the status of the Binder transaction
+    virtual status_t getLastQueuedBuffer(sp<GraphicBuffer>* outBuffer,
+            sp<Fence>* outFence, float outTransformMatrix[16]) = 0;
+
+    // Attempts to retrieve timestamp information for the given frame number.
+    // If information for the given frame number is not found, returns false.
+    // Returns true otherwise.
+    //
+    // If a fence has not yet signaled the timestamp returned will be 0;
+    virtual bool getFrameTimestamps(uint64_t /*frameNumber*/,
+            FrameTimestamps* /*outTimestamps*/) const { return false; }
+
+    // Returns a unique id for this BufferQueue
+    virtual status_t getUniqueId(uint64_t* outId) const = 0;
 };
 
 // ----------------------------------------------------------------------------

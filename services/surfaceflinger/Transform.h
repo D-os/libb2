@@ -60,7 +60,6 @@ public:
             };
 
             // query the transform
-            bool        transformed() const;
             bool        preserveRects() const;
             uint32_t    getType() const;
             uint32_t    getOrientation() const;
@@ -79,8 +78,12 @@ public:
             Rect    makeBounds(int w, int h) const;
             vec2    transform(int x, int y) const;
             Region  transform(const Region& reg) const;
-            Rect    transform(const Rect& bounds) const;
+            Rect    transform(const Rect& bounds,
+                    bool roundOutwards = false) const;
             Transform operator * (const Transform& rhs) const;
+            // assumes the last row is < 0 , 0 , 1 >
+            vec2 transform(const vec2& v) const;
+            vec3 transform(const vec3& v) const;
 
             Transform inverse() const;
 
@@ -96,9 +99,6 @@ private:
 
     enum { UNKNOWN_TYPE = 0x80000000 };
 
-    // assumes the last row is < 0 , 0 , 1 >
-    vec2 transform(const vec2& v) const;
-    vec3 transform(const vec3& v) const;
     uint32_t type() const;
     static bool absIsOne(float f);
     static bool isZero(float f);
