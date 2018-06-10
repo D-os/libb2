@@ -7,3 +7,6 @@
 [submodule "libs/libutils"]
 	path = libs/libutils
 	url = git@github.com:D-os/libutils.git
+[submodule "external/safe-iop"]
+	path = external/safe-iop
+	url = https://android.googlesource.com/platform/external/safe-iop
