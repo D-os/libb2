@@ -1,0 +1,18 @@
+Coding Style
+============
+
+Own code follows Google C++ Style Guide
+https://google.github.io/styleguide/cppguide.html
+(SIC! Adroid Utils and Binder code deviates.)
+
+BeAPI compatibility layer follows Be Headers of course.
+OpenBinder code stays as it is in line with Google Style.
+
+Why?
+- CapitalisedMethodNames help distinguish from memberVariables
+- we no need no m_ember prefixes
+- CAPS_IDENTIFIER_NAMES are so ingrained that we may as well leave them
+
+
+
+sudo chmod 0666 /dev/binder /dev/kmsg ; sudo sysctl -q kernel.printk_devkmsg=on; bins/servicemanager/servicemanager
