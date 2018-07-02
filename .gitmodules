@@ -10,3 +10,6 @@
 [submodule "external/safe-iop"]
 	path = external/safe-iop
 	url = https://android.googlesource.com/platform/external/safe-iop
+[submodule "libs/libcutils"]
+	path = libs/libcutils
+	url = git@github.com:D-os/libcutils.git
