@@ -13,3 +13,6 @@
 [submodule "libs/libcutils"]
 	path = libs/libcutils
 	url = git@github.com:D-os/libcutils.git
+[submodule "cmds"]
+	path = cmds
+	url = git@github.com:D-os/cmds.git
