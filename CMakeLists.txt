@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
 
 project(LIBB2 VERSION 0.1.0 LANGUAGES CXX C)
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 # Defaults
 set(CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE ON)
@@ -73,17 +73,16 @@ message(STATUS "CMAKE_RANLIB:                    ${CMAKE_RANLIB}")
 message(STATUS "=============================================")
 message(STATUS "")
 
-set(ANDROID_FRAMEWORKS_NATIVE_DIR "${CMAKE_SOURCE_DIR}/frameworks/native")
-set(ANDROID_SYSTEM_CORE_DIR "${CMAKE_SOURCE_DIR}/system/core")
 set(EXTERNAL_GOOGLETEST_DIR "${CMAKE_SOURCE_DIR}/external/googletest")
 set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 
 # Sub directories.
 add_subdirectory(headers)
-add_subdirectory(interfaces)
+#add_subdirectory(interfaces)
+add_subdirectory(libs)
 add_subdirectory(kits)
-add_subdirectory(bins)
-add_subdirectory(tools)
+add_subdirectory(cmds)
+#add_subdirectory(tools)
 
 # Tests
 add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)

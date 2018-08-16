@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -14,18 +14,18 @@
 #define _SUPPORT_DEFS_H
 
 /*!	@file support/SupportDefs.h
-	@ingroup CoreSupportUtilities
-	@brief Common Support Kit definitions.
+    @ingroup CoreSupportUtilities
+    @brief Common Support Kit definitions.
 */
 
 /*!	@addtogroup CoreSupport Support Kit
-	@ingroup Core
-	@brief Foundational classes of the system: utilities, types,
-	containers, the Binder, the data model, etc.
+    @ingroup Core
+    @brief Foundational classes of the system: utilities, types,
+    containers, the Binder, the data model, etc.
 */
 
 /*!	@addtogroup CoreSupportUtilities
-	@{
+    @{
 */
 
 /*-------------------------------------------------------------*/
@@ -116,31 +116,31 @@ typedef int32_t	team_id;
 /* Semaphores */
 
 /* -----
-	flags for semaphore control
+    flags for semaphore control
 ----- */
 
 enum {
-	B_CAN_INTERRUPT     = 1, 	/* semaphore can be interrupted by a signal */
-	B_DO_NOT_RESCHEDULE = 2,	/* release() without rescheduling */
-	B_CHECK_PERMISSION  = 4,	/* disallow users changing kernel semaphores */
-	B_TIMEOUT           = 8,    /* honor the (relative) timeout parameter */
-	//B_RELATIVE_TIMEOUT	= 8,
-	//B_ABSOLUTE_TIMEOUT	= 16,	/* honor the (absolute) timeout parameter */
-	B_USE_REAL_TIME     = 32,
-	B_WAKE_ON_TIMEOUT   = 64
+    B_CAN_INTERRUPT     = 1, 	/* semaphore can be interrupted by a signal */
+    B_DO_NOT_RESCHEDULE = 2,	/* release() without rescheduling */
+    B_CHECK_PERMISSION  = 4,	/* disallow users changing kernel semaphores */
+    B_TIMEOUT           = 8,    /* honor the (relative) timeout parameter */
+    //B_RELATIVE_TIMEOUT	= 8,
+    //B_ABSOLUTE_TIMEOUT	= 16,	/* honor the (absolute) timeout parameter */
+    B_USE_REAL_TIME     = 32,
+    B_WAKE_ON_TIMEOUT   = 64
 };
 
 /* Threads */
 
 typedef enum {
-	B_THREAD_RUNNING=1,
-	B_THREAD_READY,
-	B_THREAD_RECEIVING,
-	B_THREAD_ASLEEP,
-	B_THREAD_SUSPENDED,
-	B_THREAD_WAITING,
+    B_THREAD_RUNNING=1,
+    B_THREAD_READY,
+    B_THREAD_RECEIVING,
+    B_THREAD_ASLEEP,
+    B_THREAD_SUSPENDED,
+    B_THREAD_WAITING,
 
-	_thread_state_force_int32 = 0x10000000
+    _thread_state_force_int32 = 0x10000000
 } thread_state;
 
 #if (TARGET_HOST == TARGET_HOST_PALMOS) || (TARGET_HOST == TARGET_HOST_LINUX)
@@ -196,28 +196,28 @@ typedef	int32_t image_id;
 /* Images */
 
 typedef enum {
-	B_APP_IMAGE = 1,
-	B_LIBRARY_IMAGE,
-	B_ADD_ON_IMAGE,
-	B_SYSTEM_IMAGE,
+    B_APP_IMAGE = 1,
+    B_LIBRARY_IMAGE,
+    B_ADD_ON_IMAGE,
+    B_SYSTEM_IMAGE,
 
-	_image_type_force_int32 = 0x10000000
+    _image_type_force_int32 = 0x10000000
 } image_type;
 
 typedef struct {
-	image_id	id;					
-	image_type	type;				
-	int32_t		sequence;			
-	int32_t		init_order;			
-	void		(*init_routine)(image_id imid);
-	void		(*term_routine)(image_id imid);
-	dev_t		device;				
-	ino_t		node;
-	char        name[MAXPATHLEN];  
-	void		*text;	
-	void		*data;
-	int32_t		text_size;	
-	int32_t		data_size;	
+    image_id	id;
+    image_type	type;
+    int32_t		sequence;
+    int32_t		init_order;
+    void		(*init_routine)(image_id imid);
+    void		(*term_routine)(image_id imid);
+    dev_t		device;
+    ino_t		node;
+    char        name[MAXPATHLEN];
+    void		*text;
+    void		*data;
+    int32_t		text_size;
+    int32_t		data_size;
 } image_info;
 
 extern image_id	load_add_on(const char *path);
@@ -226,7 +226,7 @@ extern status_t	unload_add_on(image_id imid);
 /* private; use the macros, below */
 extern _IMPEXP_SUPPORT status_t	get_image_info(image_id image, image_info *info);
 extern _IMPEXP_SUPPORT status_t	get_next_image_info(team_id team, int32_t *cookie, image_info *info);
-								
+
 #define	B_SYMBOL_TYPE_DATA		0x1
 #define	B_SYMBOL_TYPE_TEXT		0x2
 #define B_SYMBOL_TYPE_ANY		0x5
@@ -240,7 +240,7 @@ extern _IMPEXP_SUPPORT status_t	get_nth_image_symbol(image_id imid, int32_t inde
 #if TARGET_HOST != TARGET_HOST_PALMOS
 static inline void* inplace_realloc (void* mem, size_t size)
 {
-	return NULL;
+    return NULL;
 }
 
 // XXX This was added to sys/types.h...  should it be in some PalmOS-specific
@@ -249,12 +249,12 @@ static inline void* inplace_realloc (void* mem, size_t size)
 #define _UUID_T
 typedef struct uuid_t
 {
-	uint32_t time_low;
-	uint16_t time_mid;
-	uint16_t time_hi_and_version;
-	uint8_t clock_seq_hi_and_reserved;
-	uint8_t clock_seq_low;
-	uint8_t node[6];
+    uint32_t time_low;
+    uint16_t time_mid;
+    uint16_t time_hi_and_version;
+    uint8_t clock_seq_hi_and_reserved;
+    uint8_t clock_seq_low;
+    uint8_t node[6];
 } uuid_t;
 #endif /* uuid_T */
 #endif /* TARGET_HOST != TARGET_HOST_PALMOS */
@@ -270,12 +270,12 @@ extern "C" {
 #endif
 //!	Perform a realloc, but only if it won't change the location of the memory.
 /*!	This function is needed by some parts of the Support Kit.
-	If your platform doesn't have it, you can just implement it
-	to return NULL.
+    If your platform doesn't have it, you can just implement it
+    to return NULL.
 
-	@note In the Rome branch, this is an inline function here,
-	while in other branches it is implemented in WindowsComaptibility.cpp
-	and LinuxCompat.cpp.  The latter is probably more correct.
+    @note In the Rome branch, this is an inline function here,
+    while in other branches it is implemented in WindowsComaptibility.cpp
+    and LinuxCompat.cpp.  The latter is probably more correct.
 */
 void* inplace_realloc (void *, size_t);
 #ifdef __cplusplus
@@ -286,27 +286,27 @@ void* inplace_realloc (void *, size_t);
 
 //!	Locking operation status result.
 struct lock_status_t {
-	void (*unlock_func)(void* data);	//!< unlock function, NULL if lock failed
-	union {
-		status_t error;					//!< error if "unlock_func" is NULL
-		void* data;						//!< locked object if "unlock_func" is non-NULL
-	} value;
-	
+    void (*unlock_func)(void* data);	//!< unlock function, NULL if lock failed
+    union {
+        status_t error;					//!< error if "unlock_func" is NULL
+        void* data;						//!< locked object if "unlock_func" is non-NULL
+    } value;
+
 #ifdef __cplusplus
-	//!	Constructor for successfully holding a lock.
-	inline lock_status_t(void (*f)(void*), void* d)	{ unlock_func = f; value.data = d; }
-	//!	Constructor for failing to lock.
-	inline lock_status_t(status_t e)			{ unlock_func = NULL; value.error = e; }
-	
-	//!	Did the lock operation succeed?
-	inline bool is_locked() const				{ return (unlock_func != NULL); }
-	//!	B_OK if the lock is held, else an error code.
-	inline status_t status() const				{ return is_locked() ? (status_t) B_OK : value.error; }
-	//!	Call to release the lock.  May only be called once.
-	inline void unlock() const					{ if (unlock_func) unlock_func(value.data); }
-	
-	//!	Conversion operator for status code, synonym for status().
-	inline operator status_t() const			{ return status(); }
+    //!	Constructor for successfully holding a lock.
+    inline lock_status_t(void (*f)(void*), void* d)	{ unlock_func = f; value.data = d; }
+    //!	Constructor for failing to lock.
+    inline lock_status_t(status_t e)			{ unlock_func = NULL; value.error = e; }
+
+    //!	Did the lock operation succeed?
+    inline bool is_locked() const				{ return (unlock_func != NULL); }
+    //!	B_OK if the lock is held, else an error code.
+    inline status_t status() const				{ return is_locked() ? (status_t) B_OK : value.error; }
+    //!	Call to release the lock.  May only be called once.
+    inline void unlock() const					{ if (unlock_func) unlock_func(value.data); }
+
+    //!	Conversion operator for status code, synonym for status().
+    inline operator status_t() const			{ return status(); }
 #endif
 };
 
@@ -314,14 +314,14 @@ struct lock_status_t {
 
 //!	Standard constructor flag to not initialize an object.
 enum no_init_t {
-	B_DO_NOT_INITIALIZE = 1
+    B_DO_NOT_INITIALIZE = 1
 };
 
 /*-------------------------------------------------------------*/
 
 //!	Standard PrintToStream() flags.
 enum {
-	B_PRINT_STREAM_HEADER		= 0x00000001	//!< Also print type header.
+    B_PRINT_STREAM_HEADER		= 0x00000001	//!< Also print type header.
 };
 
 /*-------------------------------------------------------------*/
