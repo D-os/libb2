@@ -95,7 +95,7 @@ set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 
 # Sub directories.
 add_subdirectory(headers)
-#add_subdirectory(interfaces)
+add_subdirectory(interfaces)
 add_subdirectory(libs)
 add_subdirectory(libraries)
 add_subdirectory(cmds)

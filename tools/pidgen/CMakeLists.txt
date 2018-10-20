@@ -12,7 +12,7 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-add_executable(pidgen
+set(PIDGEN_SOURCES
     ${BISON_yacc_y_OUTPUTS}
     ${FLEX_scanner_l_OUTPUTS}
     "idlstruct.cpp"
@@ -30,7 +30,8 @@ add_executable(pidgen
     "WSDL.cpp"
     "WsdlOutput.cpp"
 )
-target_compile_options(pidgen PRIVATE
+
+SET(PIDGEN_CFLAGS
 ${GLOBAL_CFLAGS} -frtti
 # Tragically, the code is riddled with unused parameters.
 -Wno-unused-parameter
@@ -42,4 +43,11 @@ ${GLOBAL_CFLAGS} -frtti
 # yacc also has a habit of using char* over const char*.
 -Wno-writable-strings
 )
-target_link_libraries(pidgen PUBLIC ob_bootstrap)
+
+add_executable(pidgen_bs ${PIDGEN_SOURCES})
+target_compile_options(pidgen_bs PRIVATE ${PIDGEN_CFLAGS})
+target_link_libraries(pidgen_bs PUBLIC ob_bootstrap)
+
+add_executable(pidgen ${PIDGEN_SOURCES})
+target_compile_options(pidgen PRIVATE ${PIDGEN_CFLAGS})
+target_link_libraries(pidgen PUBLIC ob)
