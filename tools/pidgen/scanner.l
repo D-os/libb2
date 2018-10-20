@@ -4,7 +4,7 @@
 /* scanner for Pidgen - Palm Interface Definition Generator */
 #include "InterfaceRec.h"
 #include "idlstruct.h"
-#include "yacc.h"
+#include "yacc_y.hpp"
 #define YY_DECL	int yylex (IDLStruct* ref)
 #define MAX_IMPORT_DEPTH 12
 YY_BUFFER_STATE import_stack[MAX_IMPORT_DEPTH];

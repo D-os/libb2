@@ -23,12 +23,7 @@
 
 #include <support/atomic.h>
 
-#if TARGET_HOST != TARGET_HOST_WIN32
 #include <getopt.h>
-#else
-#include "getopt.h"
-#endif
-
 #include <ctype.h>
 
 #define PRINT_PATHS(x) // x

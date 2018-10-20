@@ -11,7 +11,7 @@
  */
 
 #include "TypeBank.h"
-#include "yacc.h"
+#include "yacc_y.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <support/StdIO.h>

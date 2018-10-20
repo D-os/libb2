@@ -35,6 +35,23 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 # Common compiler flags.
 set(COMMON_FLAGS "-Wall -Wpointer-arith -Wcast-align -Wsign-compare -Wstrict-aliasing -Wno-multichar ${DIAG_FLAGS}")
 
+# OpenBinder defines
+set(GLOBAL_CFLAGS
+    -DBUILD_TYPE=BUILD_TYPE_DEBUG
+    -DTARGET_PLATFORM=TARGET_PLATFORM_PALMSIM_LINUX
+    -DTARGET_HOST=TARGET_HOST_LINUX
+    -D_SUPPORTS_EXCEPTIONS=1
+    -DVALIDATES_REGION=0
+    -DVALIDATES_VALUE=0
+    -DSUPPORTS_LOCK_DEBUG=1
+    -DSUPPORTS_ATOM_DEBUG=1
+    -D_SUPPORTS_NAMESPACE=0
+    -DSUPPORTS_UNIX_FILE_PATH=1
+    -DSUPPORTS_TEXT_STREAM=1
+    -DSUPPORTS_CALL_STACK=1
+    -DLINUX_DEMO_HACK=1
+)
+
 # Default include directories.
 include_directories(
     ${CMAKE_SOURCE_DIR}/headers
@@ -80,9 +97,9 @@ set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 add_subdirectory(headers)
 #add_subdirectory(interfaces)
 add_subdirectory(libs)
-add_subdirectory(kits)
+add_subdirectory(libraries)
 add_subdirectory(cmds)
-#add_subdirectory(tools)
+add_subdirectory(tools)
 
 # Tests
 add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)
