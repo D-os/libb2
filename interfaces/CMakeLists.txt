@@ -52,5 +52,5 @@ set(interfaceSources ${interfaceSources} PARENT_SCOPE)
 set(interfaceHeaders ${interfaceHeaders} PARENT_SCOPE)
 
 add_library(interfaces STATIC ${interfaceSources})
-target_compile_options(interfaces PRIVATE ${GLOBAL_CFLAGS} -fPIC)
+target_compile_options(interfaces PRIVATE ${GLOBAL_CFLAGS} -fPIC -frtti -fexceptions)
 target_include_directories(interfaces PRIVATE "${INTERFACE_HEADERS_DIR}")
