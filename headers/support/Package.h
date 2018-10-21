@@ -32,7 +32,7 @@ namespace support {
 	@{
 */
 
-#if (defined(__GNUC__))
+#if 0 // FIXME: (defined(__GNUC__))
 #define ATTRIBUTE_VISIBILITY_HIDDEN __attribute__ ((visibility("hidden")))
 #else
 #define ATTRIBUTE_VISIBILITY_HIDDEN

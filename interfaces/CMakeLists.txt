@@ -29,12 +29,13 @@ foreach(IF ${interfaceFiles})
     get_filename_component(NAME_IF ${REL_IF} NAME_WE)
     get_filename_component(DIR_IF ${REL_IF} DIRECTORY)
     set(HEADER_DIR "${INTERFACE_HEADERS_DIR}/${DIR_IF}")
-    set(OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${DIR_IF}")
-    set(OUT_CPP "${OUT_DIR}/${NAME_IF}.cpp")
+    set(CPP_DIR "${CMAKE_CURRENT_BINARY_DIR}/${DIR_IF}")
+    set(OUT_HEADER "${HEADER_DIR}/${NAME_IF}.h")
+    set(OUT_CPP "${CPP_DIR}/${NAME_IF}.cpp")
     file(MAKE_DIRECTORY ${HEADER_DIR})
     add_custom_command(
-        OUTPUT "${OUT_CPP}"
-        COMMAND pidgen_bs -I "${CMAKE_CURRENT_SOURCE_DIR}" -O "${OUT_DIR}" -S "${HEADER_DIR}" "${IF}"
+        OUTPUT ${OUT_HEADER} ${OUT_CPP}
+        COMMAND pidgen_bs -I "${CMAKE_CURRENT_SOURCE_DIR}" -O "${CPP_DIR}" -S "${HEADER_DIR}" "${IF}"
         MAIN_DEPENDENCY "${IF}"
         DEPENDS pidgen_bs
         COMMENT "Compiling IDL ${REL_IF}"
