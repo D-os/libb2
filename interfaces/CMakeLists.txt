@@ -24,8 +24,6 @@ set(interfaceFiles
 set(interfaces_install_dir /headers/os)
 install(FILES ${interfaceFiles} DESTINATION ${interfaces_install_dir})
 
-set(INTERFACE_HEADERS_DIR "${CMAKE_BINARY_DIR}/headers")
-
 foreach(IF ${interfaceFiles})
     file(RELATIVE_PATH REL_IF ${CMAKE_CURRENT_SOURCE_DIR} ${IF})
     get_filename_component(NAME_IF ${REL_IF} NAME_WE)
@@ -53,4 +51,3 @@ set(interfaceHeaders ${interfaceHeaders} PARENT_SCOPE)
 
 add_library(interfaces STATIC ${interfaceSources})
 target_compile_options(interfaces PRIVATE ${GLOBAL_CFLAGS} -fPIC -frtti -fexceptions)
-target_include_directories(interfaces PRIVATE "${INTERFACE_HEADERS_DIR}")

@@ -52,10 +52,13 @@ set(GLOBAL_CFLAGS
     -DLINUX_DEMO_HACK=1
 )
 
+set(SOURCE_HEADERS_DIR "${CMAKE_SOURCE_DIR}/headers")
+set(INTERFACE_HEADERS_DIR "${CMAKE_BINARY_DIR}/headers")
+
 # Default include directories.
 include_directories(
-    ${CMAKE_SOURCE_DIR}/headers
-    ${CMAKE_BINARY_DIR}/interfaces
+    ${SOURCE_HEADERS_DIR}
+    ${INTERFACE_HEADERS_DIR}
 )
 
 # Set flags.
@@ -100,6 +103,7 @@ add_subdirectory(libs)
 add_subdirectory(libraries)
 add_subdirectory(cmds)
 add_subdirectory(tools)
+add_subdirectory(servers)
 
 # Tests
 add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)
