@@ -104,6 +104,7 @@ add_subdirectory(libraries)
 add_subdirectory(cmds)
 add_subdirectory(tools)
 add_subdirectory(servers)
+add_subdirectory(commands)
 
 # Tests
 add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)
