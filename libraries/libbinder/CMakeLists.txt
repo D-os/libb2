@@ -12,9 +12,9 @@ target_link_libraries(ob PRIVATE
 )
 set_target_properties(ob PROPERTIES LINKER_LANGUAGE CXX)
 
-#add_subdirectory(app)
-#add_subdirectory(package)
-#add_subdirectory(services)
+add_subdirectory(app)
+add_subdirectory(package)
+add_subdirectory(services)
 add_subdirectory(storage)
 add_subdirectory(support)
 add_subdirectory(xml)
