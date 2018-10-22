@@ -3,4 +3,4 @@ add_executable(makestrings
 )
 target_compile_options(makestrings PRIVATE ${GLOBAL_CFLAGS})
 target_link_libraries(makestrings PUBLIC ob_bootstrap)
-#target_link_libraries(makestrings PRIVATE binder_glue) FIXME: link with real libob
+#target_link_libraries(makestrings PRIVATE ob_glue) FIXME: link with real libob
