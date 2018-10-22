@@ -105,6 +105,7 @@ add_subdirectory(cmds)
 add_subdirectory(tools)
 add_subdirectory(servers)
 add_subdirectory(commands)
+add_subdirectory(components)
 add_subdirectory(samples)
 
 # Tests
