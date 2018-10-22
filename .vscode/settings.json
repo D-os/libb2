@@ -1,0 +1,10 @@
+{
+    "editor.tabSize": 2,
+    "editor.trimAutoWhitespace": true,
+    "files.trimTrailingWhitespace": true,
+    "indentRainbow.ignoreErrorLanguages": [
+        "plaintext",
+        "cpp"
+    ],
+    "C_Cpp.configurationWarnings": "Disabled"
+}
