@@ -1,8 +1,8 @@
 BasedOnStyle: Google
 Language: Cpp
-Standard: Cpp17
+Standard: Cpp11
 BreakBeforeBraces: Custom
-BraceWrapping:   
+BraceWrapping:
   AfterClass:      true
   AfterControlStatement: false
   AfterEnum:       false
@@ -26,3 +26,4 @@ AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
 Cpp11BracedListStyle: true
+ColumnLimit: 0
