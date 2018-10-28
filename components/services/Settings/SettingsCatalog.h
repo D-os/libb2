@@ -35,6 +35,7 @@
 using namespace palmos::storage;
 using namespace palmos::support;
 using namespace palmos::services;
+using namespace palmos::xml;
 #endif
 
 class BSettingsCatalog;

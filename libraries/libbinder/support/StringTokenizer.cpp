@@ -95,7 +95,7 @@ SString SStringTokenizer::NextToken(const SString& delimeters)
 	RegularExpressionize();
 	return NextToken();
 }
+
 #if _SUPPORTS_NAMESPACE
 } } // palmos::support
 #endif
-

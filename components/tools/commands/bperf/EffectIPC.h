@@ -24,6 +24,8 @@
 extern void ALocalFunction(void);
 extern void ALocalFunctionWithParam(void* param);
 
+using namespace palmos::support;
+
 class ALocalClass
 {
 public:

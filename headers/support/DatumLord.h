@@ -24,6 +24,11 @@
 #include <support/Locker.h>
 #include <support/MemoryStore.h>
 
+#if _SUPPORTS_NAMESPACE
+namespace palmos {
+namespace support {
+#endif
+
 /*!	@addtogroup CoreSupportDataModel
 	@{
 */
@@ -50,7 +55,7 @@ private:
 // be fixed.
 // "d:\source\rome\platform\headers\PDK\support\DatumLord.h", line 30: Error: C3032E: 'SDatumLord::Datum' is a non-public member
 public:
-	class Datum : public BGenericDatum
+    class Datum : public storage::BGenericDatum
 	{
 	public:
 						Datum(const sptr<SDatumLord> &owner, const SValue &key);
@@ -97,5 +102,9 @@ private:
 };
 
 /*!	@} */
+
+#if _SUPPORTS_NAMESPACE
+} } // namespace palmos::support
+#endif
 
 #endif // _SUPPORT_DATUMLORD_H

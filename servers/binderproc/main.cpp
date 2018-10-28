@@ -16,6 +16,8 @@
 
 #include <syslog.h>
 
+using namespace palmos::support;
+
 int main(int argc, char* argv[])
 {
 	//openlog("binderproc", LOG_PERROR | LOG_NDELAY, LOG_USER);

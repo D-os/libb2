@@ -29,6 +29,8 @@
 #include <unistd.h>
 
 #if _SUPPORTS_NAMESPACE
+using namespace palmos::app;
+
 namespace palmos {
 namespace support {
 #endif

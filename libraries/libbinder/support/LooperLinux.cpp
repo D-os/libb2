@@ -415,7 +415,7 @@ void SLooper::StopProcess(const sptr<IBinder>& rootObject, bool now)
 	SLooper* looper = This();
 	if (!looper) return;
 	
-	BpBinder* remote = rootObject->RemoteBinder();
+    osp::BpBinder* remote = rootObject->RemoteBinder();
 	if (remote) {
 		looper->m_out.WriteInt32(bcSTOP_PROCESS);
 		looper->m_out.WriteInt32(remote->Handle());

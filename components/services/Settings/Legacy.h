@@ -15,6 +15,6 @@
 
 #include <support/Value.h>
 
-SValue legacy_date_format(const SValue& value);
+palmos::storage::SValue legacy_date_format(const palmos::storage::SValue& value);
 
 #endif // LEGACY_H

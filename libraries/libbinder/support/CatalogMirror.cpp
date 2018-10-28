@@ -20,6 +20,8 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
+using namespace palmos::storage;
+
 namespace palmos {
 namespace support {
 #endif

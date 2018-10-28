@@ -15,6 +15,8 @@
 #include <support/Autolock.h>
 
 #if _SUPPORTS_NAMESPACE
+using namespace palmos::support;
+
 namespace palmos {
 namespace storage {
 #endif

@@ -25,6 +25,7 @@
 #include "bsh.h"
 
 #if _SUPPORTS_NAMESPACE
+using namespace palmos::storage;
 using namespace palmos::support;
 #endif
 

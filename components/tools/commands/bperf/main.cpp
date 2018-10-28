@@ -59,7 +59,6 @@
 #if _SUPPORTS_NAMESPACE
 using namespace palmos::support;
 using namespace palmos::app;
-using namespace palmos::view;
 #endif
 
 #ifdef memcpy

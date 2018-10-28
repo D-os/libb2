@@ -16,6 +16,9 @@
 
 #include <app/ICommand.h>
 
+using namespace palmos::app;
+using namespace palmos::support;
+
 int main(int argc, char* argv[])
 {
 	// This function retrieves the default (user) Binder context,

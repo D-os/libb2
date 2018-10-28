@@ -39,7 +39,7 @@ using namespace palmos::support;
 
 static volatile atomic_int g_sharedBufferRefs(0);
 
-void //__attribute__ ((visibility("hidden")))
+extern "C" void //__attribute__ ((visibility("hidden")))
 palmsource_inc_package_ref()
 {
 	//bout << "g_sharedBufferRefs: inc from " << g_sharedBufferRefs << endl;
@@ -60,7 +60,7 @@ palmsource_inc_package_ref()
 	}
 }
 
-void //__attribute__ ((visibility("hidden")))
+extern "C" void //__attribute__ ((visibility("hidden")))
 palmsource_dec_package_ref()
 {
 	//bout << "g_sharedBufferRefs: dec from " << g_sharedBufferRefs << endl;

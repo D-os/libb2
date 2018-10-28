@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -29,8 +29,6 @@ namespace storage {
 	@{
 */
 
-class IDatum;
-
 // ==========================================================================
 // ==========================================================================
 
@@ -50,43 +48,44 @@ class IDatum;
 */
 class BMetaDataNode : public BGenericNode
 {
-public:
-	// --------------------------------------------------------------
-	/*!	@name Bookkeeping
+ public:
+  // --------------------------------------------------------------
+  /*!	@name Bookkeeping
 		Creation, destruction, locking, etc. */
-	//@{
-								BMetaDataNode();
-								BMetaDataNode(const SContext& context);
-protected:
-	virtual						~BMetaDataNode();
-public:
+  //@{
+  BMetaDataNode();
+  BMetaDataNode(const support::SContext& context);
 
-			//!	Update the modified date.
-			void				TouchLocked();
+ protected:
+  virtual ~BMetaDataNode();
 
-	//@}
+ public:
+  //!	Update the modified date.
+  void TouchLocked();
 
-	// --------------------------------------------------------------
-	/*!	@name BGenericNode Metadata API
+  //@}
+
+  // --------------------------------------------------------------
+  /*!	@name BGenericNode Metadata API
 		Implement the BGenericNode virtuals needed to support the
 		basic meta-data of a node. */
-	//@{
+  //@{
 
-	virtual	SString				MimeTypeLocked() const;
-	virtual	status_t			StoreMimeTypeLocked(const SString& value);
-	virtual	nsecs_t				CreationDateLocked() const;
-	virtual	status_t			StoreCreationDateLocked(nsecs_t value);
-	virtual	nsecs_t				ModifiedDateLocked() const;
-	virtual	status_t			StoreModifiedDateLocked(nsecs_t value);
+  virtual support::SString MimeTypeLocked() const;
+  virtual status_t         StoreMimeTypeLocked(const support::SString& value);
+  virtual nsecs_t          CreationDateLocked() const;
+  virtual status_t         StoreCreationDateLocked(nsecs_t value);
+  virtual nsecs_t          ModifiedDateLocked() const;
+  virtual status_t         StoreModifiedDateLocked(nsecs_t value);
 
-	//@}
+  //@}
 
-private:
-			void				init();
+ private:
+  void init();
 
-			SString				m_mimeType;
-			nsecs_t				m_creationDate;
-			nsecs_t				m_modifiedDate;
+  support::SString m_mimeType;
+  nsecs_t          m_creationDate;
+  nsecs_t          m_modifiedDate;
 };
 
 // ==========================================================================
@@ -95,7 +94,8 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::storage
+}
+}  // namespace palmos::storage
 #endif
 
-#endif // _STORAGE_METADATANODE_H
+#endif  // _STORAGE_METADATANODE_H

@@ -14,6 +14,12 @@
 
 #include <support/StdIO.h>
 
+#if _SUPPORTS_NAMESPACE
+namespace org {
+namespace openbinder {
+namespace samples {
+#endif
+
 /*	Path in context at which count is stored to persist across resets (and sync).
 
 	Change the "vendor/sample" and remaining part to whatever you want -- for example,
@@ -96,3 +102,7 @@ int32_t SampleService::Test()
 	// Return new value.
 	return m_count;
 }
+
+#if _SUPPORTS_NAMESPACE
+} } } // end namespace org::openbinder::samples
+#endif

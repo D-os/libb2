@@ -15,9 +15,9 @@
 #include <support/SharedBuffer.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
+namespace palmos {
+namespace support {
 #endif
-
             
 status_t StringSplit(const SString& srcStr, const SString& splitOn, SVector<SString>* strList, bool append)
 {
@@ -106,3 +106,6 @@ status_t StringSplit(const char* srcStr, int32_t srcStrLen, const char* splitOn,
     return B_OK;
 }
 
+#if _SUPPORTS_NAMESPACE
+} } // palmos::support
+#endif

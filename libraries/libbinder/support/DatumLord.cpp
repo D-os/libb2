@@ -12,6 +12,11 @@
 
 #include <support/DatumLord.h>
 
+#if _SUPPORTS_NAMESPACE
+namespace palmos {
+namespace support {
+#endif
+
 static sptr<IBinder> ChooseByteStream(uint32_t mode, const sptr<IStorage> &storage)
 {
 	switch (mode & IDatum::READ_WRITE_MASK)
@@ -197,3 +202,6 @@ SDatumLord::Storage::~Storage()
 	m_owner->StorageDone();
 }
 
+#if _SUPPORTS_NAMESPACE
+} } // namespace palmos::support
+#endif

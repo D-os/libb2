@@ -14,6 +14,12 @@
 
 #include <support/InstantiateComponent.h>
 
+#if _SUPPORTS_NAMESPACE
+namespace org {
+namespace openbinder {
+namespace samples {
+#endif
+
 // -----------------------------------------------------------------
 
 // Given a component name
@@ -32,3 +38,7 @@ sptr<IBinder> InstantiateComponent(	const SString& component,
 
 	return NULL;
 }
+
+#if _SUPPORTS_NAMESPACE
+} } } // end namespace org::openbinder::samples
+#endif

@@ -18,7 +18,7 @@
 #include <support/Catalog.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace vendor::sample;
+using namespace palmos::support;
 #endif
 
 class Service : public BCatalog, public SPackageSptr

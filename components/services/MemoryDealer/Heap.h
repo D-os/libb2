@@ -20,8 +20,11 @@
 #include <support/Memory.h>
 
 #if _SUPPORTS_NAMESPACE
+using palmos::support::sptr;
+using palmos::support::BMemoryHeap;
 using palmos::support::SAtom;
 using palmos::support::SLocker;
+using palmos::support::SReadWriteLocker;
 using palmos::support::SVector;
 #endif
 

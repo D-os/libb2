@@ -10,6 +10,12 @@ target_link_libraries(ob PRIVATE
     interfaces
     "-Wl,--no-whole-archive"
 )
+file(GLOB_RECURSE privateHeaderFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+target_sources(ob PRIVATE
+    ${headerFiles}
+#    ${interfaceFiles}
+    ${privateHeaderFiles}
+)
 set_target_properties(ob PROPERTIES LINKER_LANGUAGE CXX)
 
 add_subdirectory(app)

@@ -14,6 +14,8 @@
 #include <support/InstantiateComponent.h>
 #include <support/TokenSource.h>
 
+using namespace palmos::support;
+
 class TS : public BTokenSource, public SPackageSptr
 {
 	public:

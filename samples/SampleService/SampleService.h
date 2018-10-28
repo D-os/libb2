@@ -19,7 +19,9 @@
 #include <support/Package.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace vendor::sample;
+namespace org {
+namespace openbinder {
+namespace samples {
 #endif
 
 class SampleService : public BnSampleService, public SPackageSptr
@@ -43,4 +45,8 @@ private:
 };
 
 
-#endif // HARD_INPUT_VIEW_H
+#if _SUPPORTS_NAMESPACE
+} } } // end namespace org::openbinder::samples
+#endif
+
+#endif // SAMPLE_SERVICE_H

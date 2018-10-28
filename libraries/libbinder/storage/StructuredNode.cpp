@@ -12,6 +12,11 @@
 
 #include <storage/StructuredNode.h>
 
+#if _SUPPORTS_NAMESPACE
+namespace palmos {
+namespace storage {
+#endif
+
 BStructuredNode::BStructuredNode(const SContext &context, const char **entries, size_t entryCount, uint32_t mode)
 	: BIndexedDataNode(context, mode)
 	, m_entries(entries)
@@ -46,3 +51,7 @@ status_t BStructuredNode::StoreValueAtLocked(size_t index, const SValue& value)
 {
 	return B_UNSUPPORTED;
 }
+
+#if _SUPPORTS_NAMESPACE
+} } // namespace palmos::support
+#endif

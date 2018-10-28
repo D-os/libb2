@@ -18,6 +18,8 @@
 
 #include <support/StdIO.h>
 
+using namespace palmos::app;
+
 class AtomCommand : public BCommand, public SPackageSptr
 {
 public:
