@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -24,7 +24,7 @@
 #include <errno.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 /******* Chunking *********/
@@ -72,19 +72,19 @@ bool Chunker::Alloc(uint32_t start, uint32_t size)
 		((it->start + it->size) < (start+size))) {
 		return false;
 	}
-	
+
 	if (it->start == start) {
 		if (it->size == size) {
 			*p = it->next;
 			m_stash->Free(it);
 			return true;
 		}
-		
+
 		it->size -= size;
 		it->start += size;
 		return true;
 	}
-	
+
 	if ((it->start + it->size) == (start + size)) {
 		it->size -= size;
 		return true;
@@ -121,7 +121,7 @@ uintptr_t Chunker::Alloc(size_t &size, bool takeBest, uint32_t atLeast)
 {
 	Chunk **p=&m_freeList,*it,**c;
 	uint32_t s=size,start;
-	
+
 	while (*p && ((*p)->size < s)) p = &(*p)->next;
 	if (!(*p)) {
 		if (takeBest) {
@@ -147,7 +147,7 @@ uintptr_t Chunker::Alloc(size_t &size, bool takeBest, uint32_t atLeast)
 		size = 0;
 		return NONZERO_NULL;
 	}
-	
+
 	it = *p;
 	s = it->size;
 	start = it->start;
@@ -160,7 +160,7 @@ uintptr_t Chunker::Alloc(size_t &size, bool takeBest, uint32_t atLeast)
 		it->size -= size;
 		it->start += size;
 	}
-	
+
 	return start;
 }
 
@@ -193,7 +193,7 @@ Chunk const * const Chunker::Free(uintptr_t start, size_t size)
 			p2 = &(*p2)->next;
 		}
 	}
-	
+
 	// p1 points to the node left of the free'd region
 	// p2 points to the node right of the free'd region
 	n = *p1;
@@ -220,7 +220,7 @@ Chunk const * const Chunker::Free(uintptr_t start, size_t size)
 		*p2 = n;
 		return n;
 	}
-	
+
 	// free'd region preceeds and abutts left node
 	n->start -= size;
 	n->size += size;
@@ -267,7 +267,7 @@ size_t Chunker::TotalChunkSpace()
 {
 	Chunk *p=m_freeList;
 	size_t total=0;
-	
+
 	while (p) {
 		total += p->size;
 		p = p->next;
@@ -280,7 +280,7 @@ size_t Chunker::LargestChunk()
 {
 	Chunk *p=m_freeList;
 	Chunk *l=p;
-	
+
 	while (p) {
 		if (p->size > l->size) l = p;
 		p = p->next;
@@ -387,7 +387,7 @@ void Hasher::Retrieve(uintptr_t address, size_t **ptrToSize)
 		if (ptrToSize) *ptrToSize = NULL;
 		return;
 	}
-	
+
 	if (ptrToSize) *ptrToSize = &(*p)->size;
 }
 
@@ -397,7 +397,7 @@ uint32_t Hasher::Remove(uint32_t address)
 	Chunk **p = &m_hashTable[bucket],*it;
 	while (*p && ((*p)->start != address)) p = &(*p)->next;
 	if (!(*p)) return 0;
-	
+
 	it = *p;
 	*p = it->next;
 	bucket = it->size;
@@ -425,23 +425,23 @@ SLocker Area::m_areaAllocLock("Area Alloc Lock");
 Area::Area(const char *name, uint32_t size, bool mapped)
 {
 	m_areaAllocLock.Lock();
-	
+
 	char buf[64];
 	int i;
 	int fd = -1;
-	
+
 	if (size == 0) {
 		size = 8*1024*1024;
 		printf("[MemoryDealer] Defaulting to allocation of %d\n", size);
 	}
-	
+
 
 	PAGE_SIZE = getpagesize();
 	m_size = (size+getpagesize()-1)/getpagesize();
-	
+
 #if 1
 	/* shm implementation */
-	
+
 	int id = shmget(IPC_PRIVATE, m_size*getpagesize(), 0666);
 	if (id == -1) {
 		fprintf(stderr, "[MemoryDealer] Problem obtaining shared segment: %s\n", strerror(errno));
@@ -458,7 +458,7 @@ Area::Area(const char *name, uint32_t size, bool mapped)
 					    be freed when there are no more refcounts on it, instead of
 					    living eternally until manually removed. */
 	}
-	                     
+
 #else
 	/* mmap() implementation */
 	for (i=1;i<10000;i++) {
@@ -467,20 +467,20 @@ Area::Area(const char *name, uint32_t size, bool mapped)
 		if (fd != -1)
 			break;
 	}
-	
+
 	if (i==10000) {
 		fprintf(stderr, "[MemoryDealer]: unable to get filename %s, maybe /tmp needs to be cleaned up?\n", buf);
 		abort();
 	}
-	
+
 	printf("[MemoryDealer] Shared area file name is '%s'\n", buf);
-	
+
 	ftruncate(fd, m_size*getpagesize());
-	
+
 	m_area = m_area_public_id = i;
 	m_basePtr = mmap(0, m_size*getpagesize(), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	close(fd);
-	
+
 	if (m_basePtr == 0) {
 		m_area = B_NO_MEMORY;
 	}
@@ -506,7 +506,7 @@ Area::~Area()
 {
 	m_areaAllocLock.Lock();
 	m_basePtrLock.WriteLock();
-	
+
 #if 1
 	/* shm */
 	if (shmdt(m_basePtr) == -1) {
@@ -521,7 +521,7 @@ Area::~Area()
 	}
 	unlink(name);
 #endif
-	
+
 	m_areaAllocLock.Unlock();
 }
 

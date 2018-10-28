@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 #include <support_p/WindowsCompatibility.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -64,7 +64,7 @@ status_t SWalkHelper::HelperWalk(SString* path, uint32_t flags, SValue* node)
 		else
 		{
 			err = HelperLookupEntry(name, flags, node);
-		
+
 			if (err == B_ENTRY_NOT_FOUND)
 			{
 				// Before we lose the name...  if this entry didn't
@@ -77,7 +77,7 @@ status_t SWalkHelper::HelperWalk(SString* path, uint32_t flags, SValue* node)
 					if ((flags & INode::CREATE_DATUM) && path->Length() == 0)
 					{
 						sptr<IDatum> datum = HelperCreateDatum(&name, flags, &err);
-						
+
 						// someone could have created the entry before we could
 						// so just return that entry.
 						if (err == B_ENTRY_EXISTS)
@@ -138,7 +138,7 @@ status_t SWalkHelper::HelperWalk(SString* path, uint32_t flags, SValue* node)
 			}
 		}
 	}
-	
+
 	return err;
 }
 
@@ -340,10 +340,10 @@ status_t BCatalog::AddEntry(const SString& name, const SValue& entry)
 				PushEntryCreated(this, name, binder);
 			}
 		}
-		
+
 		err = B_OK;
 	}
-	
+
 	return err;
 }
 
@@ -368,7 +368,7 @@ status_t BCatalog::RemoveEntry(const SString& name)
 		}
 		err = B_OK;
 	}
-	
+
 	return err;
 }
 
@@ -376,18 +376,18 @@ status_t BCatalog::RenameEntry(const SString& old_name, const SString& new_name)
 {
 	status_t err;
 	sptr<IBinder> binder;
-		
+
 	{
 		SAutolock _l(Lock());
-		
+
 		bool old = has_entry_l(old_name);
 		bool nuu = has_entry_l(new_name);
-		
+
 		// can't rename a entry that doesn't exist or rename
 		// an entry that exists to another entry that exists.
 		if (!old) return B_ENTRY_NOT_FOUND;
 		if (nuu) return B_ENTRY_EXISTS;
-		
+
 		//! @todo Need to keep the same IDatum object.
 
 		ssize_t pos;
@@ -405,10 +405,10 @@ status_t BCatalog::RenameEntry(const SString& old_name, const SString& new_name)
 				TouchLocked();
 			}
 		}
-		
+
 		err = (pos >= 0) ? B_OK : B_NO_MEMORY;
 	}
-	
+
 	//! @todo Fix to only get the entry object if linked!!!
 
 	// send the renamed event;
@@ -420,14 +420,14 @@ status_t BCatalog::RenameEntry(const SString& old_name, const SString& new_name)
 			PushEntryRenamed(this, old_name, new_name, binder);
 		}
 	}
-	
+
 	return err;
 }
 
 sptr<INode> BCatalog::CreateNode(SString* name, status_t* err)
 {
 	sptr<INode> catalog;
-	
+
 	{
 		SAutolock _l(Lock());
 
@@ -490,7 +490,7 @@ sptr<IDatum> BCatalog::CreateDatum(SString* name, uint32_t flags, status_t* err)
 			TouchLocked();
 		}
 	}
-	
+
 	if (datum != NULL)
 	{
 		// send the entry created event
@@ -525,27 +525,27 @@ bool BCatalog::has_entry_l(const SString& name)
 {
 	if (m_entries.IndexOf(name) >= 0)
 		return true;
-	
+
 	return false;
 }
 
 status_t BCatalog::EntryAtLocked(size_t index, uint32_t flags, SValue* key, SValue* entry)
 {
 	if (index >= m_entries.CountItems()) return B_END_OF_DATA;
-	
+
 //#if BUILD_TYPE == BUILD_TYPE_DEBUG
 //	printf("EntryAt() flags = %p\n", flags);
 //#endif
-	
+
 	*key = SValue::String(m_entries.KeyAt(index));
-	*entry = m_entries.ValueAt(index); 
+	*entry = m_entries.ValueAt(index);
 
 	if ((flags & INode::REQUEST_DATA) == 0 && !entry->IsObject())
 	{
 		*entry = SValue::Binder(DatumAtLocked(index)->AsBinder());
 	}
 
-	return B_OK;	
+	return B_OK;
 }
 
 size_t BCatalog::CountEntriesLocked() const
@@ -677,5 +677,5 @@ void BIndexedCatalog::EntryRemovedAt(uint32_t index)
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

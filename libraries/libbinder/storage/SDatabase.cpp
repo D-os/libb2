@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -16,8 +16,8 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
-using namespace palmos::storage;
+using namespace os::support;
+using namespace os::storage;
 #endif
 
 // Only used if the table key is <type><creator> in 64-bits
@@ -30,7 +30,7 @@ using namespace palmos::storage;
 #ifdef DEBUGME
 #  define MY_DEBUG_ONLY(x) x
 #else
-#  define MY_DEBUG_ONLY(x) 
+#  define MY_DEBUG_ONLY(x)
 #endif
 
 SDatabase::PrvOpenDbAtom::PrvOpenDbAtom(DatabaseID dbID, uint16_t attr, DmOpenModeType mode, DbShareModeType share, status_t * outResult)
@@ -55,7 +55,7 @@ SDatabase::PrvOpenDbAtom::~PrvOpenDbAtom()
 			DmCloseDatabase(m_dbRef);
 	}
 }
-	
+
 SLocker SDatabase::s_dmRefTableLock("SDatabase reftable lock");
 SKeyedVector<SDatabase::dmRefTableKey, wptr<SDatabase::PrvOpenDbAtom> > SDatabase::s_dmRefTable;
 

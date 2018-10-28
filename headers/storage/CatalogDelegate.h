@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -26,7 +26,7 @@
 #include <support/Locker.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 #endif
 
@@ -98,7 +98,7 @@ public:
 	virtual	status_t				AddEntry(const SString& name, const SValue& entry);
 	virtual	status_t				RemoveEntry(const SString& name);
 	virtual	status_t				RenameEntry(const SString& entry, const SString& name);
-	
+
 	virtual	sptr<INode>				CreateNode(SString* name, status_t* err);
 	virtual	sptr<IDatum>			CreateDatum(SString* name, uint32_t flags, status_t* err);
 
@@ -176,7 +176,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::storage
+} } // namespace os::storage
 #endif
 
 #endif // _STORAGE_CATALOGDELEGATE_H

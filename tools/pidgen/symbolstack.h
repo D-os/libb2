@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -16,7 +16,7 @@
 #include "InterfaceRec.h"
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support; 
+using namespace os::support;
 #endif
 
 /******* symbols ***************************/
@@ -30,11 +30,11 @@ class IDLSymbol
 		~IDLSymbol(); // destructor
 
 		IDLSymbol&			operator = (const IDLSymbol &);
-		
+
 		status_t			SetType(const sptr<IDLType>& aType);
 		sptr<IDLType> 		GetType();
 		SString				GetId();
-					
+
 	private:
 		SString				m_id;
 		sptr<IDLType>		m_type;
@@ -45,11 +45,11 @@ class IDLSymbol
 class StackNode
 {
 	public:
-		
+
 		StackNode(); // empty node
 		StackNode(const SString newname, const SString parent); //
 		StackNode(const StackNode& node); // copy constructor
-		StackNode & operator = (const StackNode& node); // assignment 
+		StackNode & operator = (const StackNode& node); // assignment
 		~StackNode(); // destructor
 
 		SString 					getScopeName();
@@ -58,15 +58,15 @@ class StackNode
 		status_t					setParentInfo(StackNode* parentptr);
 		// some way of accessing the children in the future
 		StackNode*					getChildInfoAt(int32_t index);
-		status_t					setChildInfo(StackNode* childptr);	 
+		status_t					setChildInfo(StackNode* childptr);
 		int32_t						countChildren();
 
 		// look up name in the current node, and if it's valid insert it
 		IDLSymbol*					lookup(IDLSymbol sym, bool insert);
-	
+
 	private:
 		SString 							scopename;
-		StackNode* 							parentlink;		
+		StackNode* 							parentlink;
 		SVector<StackNode*>					childlink;
 		SKeyedVector<SString, IDLSymbol>	scopetable;
 };
@@ -74,7 +74,7 @@ class StackNode
 
 /******* symbol stack **********************/
 class SymbolStack
-{	
+{
 	public:
 		SymbolStack(); // empty stack
 		~SymbolStack(); // destroys stack
@@ -89,7 +89,7 @@ class SymbolStack
 		//bool lookupInterface(const SString symbolname);
 		//void printstack();
 		StackNode* getCurrentScope() const;
-		
+
 	private:
 		SymbolStack(const SymbolStack& stack); // copy constructor
 		//void insertsym(IDLSymbol* symbol);

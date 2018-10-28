@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -33,7 +33,7 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -48,15 +48,15 @@ struct SysPackageLaunchGetInstantiateType
 };
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 //!	This is a prototype for the factory function you should implement to create components.
 extern "C"
-BNS(palmos::support::) sptr<BNS(palmos::support::)IBinder>
-InstantiateComponent(	const BNS(palmos::support::) SString& component,
-						const BNS(palmos::support::) SContext& context,
-						const BNS(palmos::support::) SValue& args);
+BNS(os::support::) sptr<BNS(os::support::)IBinder>
+InstantiateComponent(	const BNS(os::support::) SString& component,
+						const BNS(os::support::) SContext& context,
+						const BNS(os::support::) SValue& args);
 
 
 /*!	@} */

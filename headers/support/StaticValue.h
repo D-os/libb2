@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -24,7 +24,7 @@
 #include <support/TypeConstants.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -52,7 +52,7 @@ struct static_small_value
 {
 	uint32_t		type;
 	char			data[4];
-	
+
 	inline operator const SValue&() const { return *(const SValue*)(void*)this; }
 };
 
@@ -63,7 +63,7 @@ struct static_large_value
 {
 	uint32_t		type;
 	const void*	data;
-	
+
 	inline operator const SValue&() const { return *(const SValue*)(void*)this; }
 };
 
@@ -73,7 +73,7 @@ struct static_small_string_value
 	uint32_t		type;
 	char			data[4];
 	const void*	data_str;
-	
+
 	inline operator const SString&() const { return *(const SString*)(void*)&data_str; }
 	inline operator const SValue&() const { return *(const SValue*)(void*)this; }
 };
@@ -84,7 +84,7 @@ struct static_large_string_value
 	uint32_t		type;
 	const void*	data;
 	const void*	data_str;		// XXX could change SString to point to the SSharedBuffer
-	
+
 	inline operator const SString&() const { return *(const SString*)(void*)&data_str; }
 	inline operator const SValue&() const { return *(const SValue*)(void*)this; }
 };
@@ -96,7 +96,7 @@ struct static_int32_value
 {
 	uint32_t	type;
 	int32_t		value;
-	
+
 	inline operator const SValue&() const { return *(const SValue*)(void*)this; }
 };
 
@@ -107,7 +107,7 @@ struct static_float_value
 {
 	uint32_t	type;
 	float		value;
-	
+
 	inline operator const SValue&() const { return *(const SValue*)(void*)this; }
 };
 
@@ -121,7 +121,7 @@ struct static_bool_value
 	// changes between compilers.  (For example, in ADS it is
 	// 4 bytes.)
 	int8_t		value;
-	
+
 	inline operator const SValue&() const { return *(const SValue*)(void*)this; }
 };
 
@@ -274,7 +274,7 @@ typedef const static_bool_value			value_cbool;
 //	--------------------------------------------------------------------
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif	/* _SUPPORT_STATIC_VALUE_H_ */

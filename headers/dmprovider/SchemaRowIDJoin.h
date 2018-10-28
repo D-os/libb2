@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -21,9 +21,9 @@
 #include <dmprovider/SchemaTableNode.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace dmprovider {
-using namespace palmos::storage;
+using namespace os::storage;
 #endif
 
 /*!	@addtogroup CoreDataManagerProvider
@@ -47,7 +47,7 @@ using namespace palmos::storage;
 	- It assumes that every row in @a join will have a corresponding row
 	  in @a primary.  If that is not the case, then this row will still
 	  show up in the join, just without any @a primary data.
-	
+
 	@note These classes are not a part of the OpenBinder build, but included
 	as an example for other similar implementations.
 */
@@ -100,7 +100,7 @@ public:
 
 			//!	By default, clients are not allowed to modify the MIME type.
 			/*!	To use the normal BMetaDataNode implementation, override
-				this to call directly to BGenericNode::SetMimeType(). 
+				this to call directly to BGenericNode::SetMimeType().
 				To change the MIME type yourself, you can call
 				SetMimeTypeLocked(). */
 	virtual	void					SetMimeType(const SString& value);
@@ -293,7 +293,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::dmprovider
+} } // namespace os::dmprovider
 #endif
 
 #endif // _DMPROVIDER_SCHEMATAROWIDJOIN_H

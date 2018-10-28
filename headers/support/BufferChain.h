@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -19,7 +19,7 @@
 #include <string.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -36,27 +36,27 @@ class SBufferChain
 		inline	SBufferChain<BUFFERTYPE>& operator=(const BUFFERTYPE& chain);
 
 		inline	void		MakeEmpty();
-		
+
 		inline	status_t	AppendBuffer(const BUFFERTYPE& buffer);
 		inline	status_t	PrependBuffer(const BUFFERTYPE& buffer);
-		
+
 		inline	status_t	AppendChain(const SBufferChain<BUFFERTYPE>& chain);
 		inline	status_t	AppendChain(const BUFFERTYPE& buffer);
 		inline	status_t	PrependChain(const SBufferChain<BUFFERTYPE>& chain);
 		inline	status_t	PrependChain(const BUFFERTYPE& buffer);
-		
+
 		inline	status_t	RemoveFirst();
 
 		inline	size_t		Size() const;
 
-		BUFFERTYPE *		RootBuffer() const;		
+		BUFFERTYPE *		RootBuffer() const;
 
 	private:
 		enum
 		{
 			ALLOC_SIZE		= 4
 		};
-		
+
 		BUFFERTYPE *		m_root;
 		BUFFERTYPE *		m_last;
 		BUFFERTYPE *		m_free;
@@ -154,7 +154,7 @@ SBufferChain<BUFFERTYPE>::init_copy(const BUFFERTYPE* clone)
 	m_last = 0;
 	m_free = 0;
 	m_root = 0;
-	
+
 	if (clone != 0)
 	{
 		return AppendChain(*clone);
@@ -205,7 +205,7 @@ SBufferChain<BUFFERTYPE>::MakeEmpty()
 		// move all entries to free list
 		m_last->next = m_free;
 		m_free = m_root;
-		
+
 		m_root = 0;
 		m_last = 0;
 	}
@@ -217,7 +217,7 @@ SBufferChain<BUFFERTYPE>::AppendBuffer(const BUFFERTYPE& buffer)
 	BUFFERTYPE * b = next();
 	if (b == 0) return B_NO_MEMORY;
 	*b = buffer;
-	
+
 	if (m_last == 0)
 	{
 		m_root = b;
@@ -228,7 +228,7 @@ SBufferChain<BUFFERTYPE>::AppendBuffer(const BUFFERTYPE& buffer)
 		m_last->next = b;
 		m_last = b;
 	}
-	
+
 	return B_OK;
 }
 
@@ -238,7 +238,7 @@ SBufferChain<BUFFERTYPE>::PrependBuffer(const BUFFERTYPE& buffer)
 	BUFFERTYPE * b = next();
 	if (b == 0) return B_NO_MEMORY;
 	*b = buffer;
-	
+
 	if (m_root == 0)
 	{
 		m_root = b;
@@ -284,7 +284,7 @@ SBufferChain<BUFFERTYPE>::AppendChain(const BUFFERTYPE& buffer)
 			m_last->next = b;
 			m_last = b;
 		}
-		
+
 		src = static_cast<const BUFFERTYPE*>(src->next);
 	}
 	return B_OK;
@@ -321,7 +321,7 @@ SBufferChain<BUFFERTYPE>::PrependChain(const BUFFERTYPE& buffer)
 			b->next = m_root;
 			m_root = b;
 		}
-		
+
 		src = static_cast<const BUFFERTYPE*>(src->next);
 	}
 	return B_OK;
@@ -367,7 +367,7 @@ SBufferChain<BUFFERTYPE>::Size() const
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // palmos::support
+} } // os::support
 #endif
 
 #endif // _SUPPORT_BUFFER_CHAIN_H_

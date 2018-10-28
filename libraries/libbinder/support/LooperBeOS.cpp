@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@ extern "C" char _single_threaded;
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -46,7 +46,7 @@ SLooper::_ConstructPlatform()
 	m_binderDesc = open_binder(m_team->ID());
 	m_in.SetLength(0);
 	m_out.SetLength(0);
-	
+
 	#warning THIS CODE SUCKS.
 	// XXX: What follows is awful. This is the lamest piece of code I ever wrote.
 	// I hate myself. Please help me.
@@ -60,7 +60,7 @@ SLooper::_ConstructPlatform()
 	SLocker lock;
 	lock.Lock();
 	lock.Unlock();
-	
+
 	SysThreadExitCallbackID idontcare;
 	SysThreadInstallExitCallback(_DeleteSelf, this, &idontcare);
 
@@ -82,7 +82,7 @@ SLooper::_DestroyPlatform()
 	m_binderDesc = -1;
 }
 
-status_t 
+status_t
 SLooper::_InitMainPlatform()
 {
 	const char* env;
@@ -119,7 +119,7 @@ SLooper::_InitMainPlatform()
 status_t SLooper::SpawnLooper()
 {
 	SysHandle thid;
-	SysThreadCreate(NULL, "SLooper", B_NORMAL_PRIORITY, sysThreadStackUI, 
+	SysThreadCreate(NULL, "SLooper", B_NORMAL_PRIORITY, sysThreadStackUI,
 		(SysThreadEnterFunc*) _DriverLoop, This(), &thid);
 	status_t status = (SysThreadStart(thid) != errNone) ? B_ERROR : B_OK;
 	return status;
@@ -184,9 +184,9 @@ void
 SLooper::_SetNextEventTime(nsecs_t when, int32_t priority)
 {
 	TRACE();
-	SLooper* looper = This();	
+	SLooper* looper = This();
 //	bout << "SLooper::_SetNextEventTime:enter (" << find_thread(NULL) << ")@" << SysGetRunTime() << " when = " << when << endl;
-	
+
 	binder_wakeup_time wakeup;
 	wakeup.time = when;
 	wakeup.priority = priority;
@@ -203,12 +203,12 @@ void SLooper::_SetThreadPriority(int32_t priority)
 	}
 }
 
-status_t 
+status_t
 SLooper::_HandleCommand(int32_t cmd)
 {
 	BBinder *ptr;
 	status_t result = B_OK;
-	
+
 #if BINDER_DEBUG_MSGS
 	berr	<< "Thread " << find_thread(NULL)
 			<< " got command: " << cmd << " " << inString[cmd] << endl;
@@ -287,11 +287,11 @@ SLooper::_HandleCommand(int32_t cmd)
 				ErrFatalError("Bad read!");
 				return (m_lastError = (amt < B_OK ? amt : B_BAD_VALUE));
 			}
-			
+
 			SParcel buffer(tr.data.ptr.buffer, tr.data_size, _BufferFree, this);
 			buffer.SetBinderOffsets(tr.data.ptr.offsets, tr.offsets_size, false);
 			m_priority = tr.priority;
-			
+
 			SLooper::catch_root_func crf;
 			if ((tr.flags&tfRootObject) && (crf=g_catchRootFunc) != NULL) {
 				SValue value;
@@ -299,7 +299,7 @@ SLooper::_HandleCommand(int32_t cmd)
 				sptr<IBinder> root(value.AsBinder());
 				if (root != NULL) crf(root);
 				else ErrFatalError("Captured transaction does not contain binder!");
-			
+
 			} else if (tr.target.ptr) {
 #if BINDER_DEBUG_MSGS
 				bout << "Received transaction buffer: " << buffer.Data() << endl;
@@ -315,16 +315,16 @@ SLooper::_HandleCommand(int32_t cmd)
 				const status_t error = b->Transact(tr.code, buffer, &reply, 0);
 				if (error < B_OK) reply.Reference(NULL, error);
 				reply.Reply();
-				
+
 			} else {
 				ErrFatalError("No target!");
 				// Just to be safe.
 				SParcel reply(_BufferReply, this);
 				reply.Reply();
 			}
-			
+
 			buffer.Free();
-			
+
 		} break;
 		case brEVENT_OCCURRED: {
 			m_priority = m_in.ReadInt32();
@@ -339,7 +339,7 @@ SLooper::_HandleCommand(int32_t cmd)
 			result = B_ERROR;
 		} break;
 	}
-	
+
 	return (m_lastError = result);
 }
 
@@ -353,11 +353,11 @@ SLooper::_WaitForCompletion(SParcel *reply, status_t *acquireResult)
 	// Remember current thread priority, so any transactions executed
 	// during this time don't disrupt it.
 	const int32_t curPriority = m_priority;
-	
+
 	while (1) {
 		if ((err=_TransactWithDriver()) < B_OK) break;
 		cmd = m_in.ReadInt32();
-		
+
 #if BINDER_DEBUG_MSGS
 		berr << "_WaitForCompletion got : " << cmd << " " << inString[cmd] << endl;
 #endif
@@ -413,19 +413,19 @@ SLooper::_WaitForCompletion(SParcel *reply, status_t *acquireResult)
 			break;
 		} else if ((err = _HandleCommand(cmd))) break;
 	}
-	
+
 	// Restore last thread priority.
 	_SetThreadPriority(curPriority);
-	
+
 	// Propagate binder errors into reply status.
 	if (err < B_OK && !setReply && reply) {
 		reply->Reference(NULL, err);
 	}
-	
+
 	return (m_lastError = err);
 }
 
-status_t 
+status_t
 SLooper::_BufferReply(const SParcel& buffer, void* context)
 {
 	return reinterpret_cast<SLooper*>(context)->_Reply(0, buffer);
@@ -450,14 +450,14 @@ SLooper::_BufferFree(const void* data, ssize_t /*len*/, void* context)
 	}
 }
 
-status_t 
+status_t
 SLooper::_Reply(uint32_t flags, const SParcel& data)
 {
 	status_t err;
 	status_t statusBuffer;
 	err = _WriteTransaction(bcREPLY, flags, -1, 0, data, &statusBuffer);
 	if (err < B_OK) return err;
-	
+
 	return _WaitForCompletion();
 }
 
@@ -472,16 +472,16 @@ SLooper::_TransactWithDriver(bool doRead)
 	//   immediately afterward.  In this case, we want to attempt to perform
 	//   writes and reads together as much as possible.  To do this, we only
 	//   read when the read buffer is empty, and only write at that time.
-	
+
 	binder_write_read bwr;
-	
+
 	// Is the read buffer empty?
 	const bool needRead = m_in.Position() == m_in.Length();
-	
+
 	// How much is available for writing?  If a read is requested, but
 	// we aren't going to read now, then we say 0.
 	const ssize_t outAvail = (!doRead || needRead) ? m_out.Length() : 0;
-	
+
 	// This is what we'll write.
 	bwr.write_size = outAvail;
 	bwr.write_buffer = m_out.Data();
@@ -494,11 +494,11 @@ SLooper::_TransactWithDriver(bool doRead)
 	} else {
 		bwr.read_size = 0;
 	}
-	
+
 	// Anything to do this time?
 	if (bwr.write_buffer == 0 && bwr.read_buffer == 0)
 		return B_OK;
-	
+
 	// Do it!
 	ssize_t amt = ioctl_binder(m_binderDesc,BINDER_WRITE_READ,&bwr,sizeof(bwr));
 	if (amt >= 0) {
@@ -519,7 +519,7 @@ SLooper::_TransactWithDriver(bool doRead)
 	return amt;
 }
 
-sptr<IBinder> 
+sptr<IBinder>
 SLooper::_GetRootObject(thread_id id, team_id team)
 {
 	m_out.WriteInt32(bcRESUME_THREAD);
@@ -532,34 +532,34 @@ SLooper::_GetRootObject(thread_id id, team_id team)
 	#else
 	(void)team;
 	#endif
-	
+
 	SParcel data;
 	_WaitForCompletion(&data);
 	SValue value;
 	data.GetValues(1, &value);
-	
+
 	#if BINDER_DEBUG_MSGS
 	bout << "Getting root object:" << endl << indent
 			<< "Value: " << value << endl
 			<< "Data: " << data << endl << dedent;
 	#endif
-	
+
 	return value.AsBinder();
 }
 
-status_t 
+status_t
 SLooper::SetRootObject(sptr<IBinder> rootNode)
 {
 	SValue value(sptr<IBinder>(rootNode.ptr()));
 	SParcel data;
 	data.SetValues(&value, NULL);
-	
+
 	#if BINDER_DEBUG_MSGS
 	bout << "Setting root object:" << endl << indent
 			<< "Value: " << value << endl
 			<< "Data: " << data << endl << dedent;
 	#endif
-	
+
 	return This()->_Reply(tfRootObject,data);
 }
 
@@ -605,7 +605,7 @@ int32_t SLooper::_LoopSelf()
 	// We want to unload any images now, rather than waiting for some
 	// future binder event that may be a long time in coming.
 	_ExpungeImages();
-	
+
 	int32_t cmd,err = B_OK;
 	while (err == B_OK) {
 		if ((err=_TransactWithDriver()) < B_OK) break;
@@ -616,7 +616,7 @@ int32_t SLooper::_LoopSelf()
 	return err;
 }
 
-status_t 
+status_t
 SLooper::IncrefsHandle(int32_t handle)
 {
 	TRACE();
@@ -628,7 +628,7 @@ SLooper::IncrefsHandle(int32_t handle)
 	return B_OK;
 }
 
-status_t 
+status_t
 SLooper::DecrefsHandle(int32_t handle)
 {
 	TRACE();
@@ -640,7 +640,7 @@ SLooper::DecrefsHandle(int32_t handle)
 	return B_OK;
 }
 
-status_t 
+status_t
 SLooper::AcquireHandle(int32_t handle)
 {
 	TRACE();
@@ -653,7 +653,7 @@ SLooper::AcquireHandle(int32_t handle)
 	return B_OK;
 }
 
-status_t 
+status_t
 SLooper::ReleaseHandle(int32_t handle)
 {
 	TRACE();
@@ -665,11 +665,11 @@ SLooper::ReleaseHandle(int32_t handle)
 	return B_OK;
 }
 
-status_t 
+status_t
 SLooper::AttemptAcquireHandle(int32_t handle)
 {
 	BINDER_IPC_PROFILE_STATE;
-	
+
 	TRACE();
 #if BINDER_DEBUG_MSGS
 	bout << "Writing attempt acquire for handle " << handle << endl;
@@ -678,11 +678,11 @@ SLooper::AttemptAcquireHandle(int32_t handle)
 	m_out.WriteInt32(m_priority);
 	m_out.WriteInt32(handle);
 	status_t result = B_ERROR;
-	
+
 	BEGIN_BINDER_CALL();
 	_WaitForCompletion(NULL, &result);
 	FINISH_BINDER_CALL();
-	
+
 	return result;
 }
 
@@ -713,10 +713,10 @@ SLooper::_WriteTransaction(int32_t cmd, uint32_t binderFlags, int32_t handle, ui
 		// Just return this parcel's status.
 		return (m_lastError = data.ErrorCheck());
 	}
-	
+
 	m_out.WriteInt32(cmd);
 	m_out.Write(&tr, sizeof(tr));
-	
+
 	return (m_lastError = B_OK);
 }
 
@@ -729,15 +729,15 @@ SLooper::Transact(int32_t handle, uint32_t code, const SParcel& data,
 		if (reply) reply->Reference(NULL, data.Length());
 		return (m_lastError = data.ErrorCheck());
 	}
-	
+
 	BINDER_IPC_PROFILE_STATE;
-	
+
 	status_t err = _WriteTransaction(bcTRANSACTION, 0, handle, code, data);
 	if (err < B_OK) {
 		if (reply) reply->Reference(NULL, err);
 		return err;
 	}
-	
+
 	BEGIN_BINDER_CALL();
 	if (reply) {
 		err = _WaitForCompletion(reply);
@@ -746,10 +746,10 @@ SLooper::Transact(int32_t handle, uint32_t code, const SParcel& data,
 		err = _WaitForCompletion(&fakeReply);
 	}
 	FINISH_BINDER_CALL();
-	
+
 	return err;
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

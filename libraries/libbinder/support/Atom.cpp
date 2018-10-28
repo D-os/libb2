@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -34,7 +34,7 @@
 /*---------------------------------------------------------------------------------*/
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -100,7 +100,7 @@ void SAtom::schedule_async_destructor(const void* id)
 		g_atomDestructor = new AsyncDestructor;
 		if (g_atomDestructor == NULL) goto badstuff;
 	}
-	
+
 	if (g_atomDestructorVec->CountItems() == 0) {
 		if (g_atomDestructor->PostMessage(SMessage('kill')) != B_OK) {
 			goto badstuff;
@@ -160,13 +160,13 @@ struct SAtom::base_data
 	size_t size;
 
 #if SUPPORTS_ATOM_DEBUG
-	mutable	BNS(::palmos::osp::) atom_debug* debugPtr;
+	mutable	BNS(os::osp::) atom_debug* debugPtr;
 	size_t new_size;
 #endif
 };
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 /*---------------------------------------------------------------------------------*/
@@ -184,12 +184,12 @@ struct SAtom::base_data
 /* No atom debugging -- just run as fast as possible. */
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 	void SAtom::RenameOwnerID(const void*, const void*) const				{ }
 	inline void SAtom::move_pointers(SAtom**, SAtom**, size_t)				{ }
-	
+
 	void SAtom::Report(const sptr<ITextOutput>&, uint32_t) const			{ }
 	int32_t SAtom::MarkLeakReport()											{ return -1; }
 	void SAtom::LeakReport(const sptr<ITextOutput>&, int32_t, int32_t, uint32_t) { }
@@ -204,21 +204,21 @@ namespace support {
 	void SAtom::StopWatching(const B_SNS(std::) type_info*)					{ }
 
 	size_t SAtom::AtomObjectSize() const									{ return 0; }
-	
+
 	inline void SAtom::init_atom()											{ }
 	inline void SAtom::term_atom()											{ }
 
 	inline void SAtom::lock_atom() const									{ }
 	inline void SAtom::unlock_atom() const									{ }
-	
+
 	inline int32_t* SAtom::strong_addr() const								{ return &m_base->strongCount; }
 	inline int32_t* SAtom::weak_addr() const								{ return &m_base->weakCount; }
 	inline int32_t SAtom::strong_count() const								{ return m_base->strongCount; }
 	inline int32_t SAtom::weak_count() const								{ return m_base->weakCount; }
-	
+
 	inline void SAtom::watch_action(const char*) const						{ }
 	inline void SAtom::do_report(const sptr<ITextOutput>&, uint32_t) const	{ }
-	
+
 	inline void SAtom::add_incstrong(const void*, int32_t) const			{ }
 	inline void SAtom::add_decstrong(const void*) const						{ }
 	inline void SAtom::add_incweak(const void*) const						{ }
@@ -230,7 +230,7 @@ namespace support {
 
 	void SLightAtom::RenameOwnerID(const void*, const void*) const				{ }
 	inline void SLightAtom::move_pointers(SLightAtom**, SLightAtom**, size_t)	{ }
-	
+
 	void SLightAtom::Report(const sptr<ITextOutput>&, uint32_t) const			{ }
 
 	bool SLightAtom::ExistsAndIncStrong(SLightAtom*)							{ return false; }
@@ -240,23 +240,23 @@ namespace support {
 
 	inline void SLightAtom::lock_atom() const									{ }
 	inline void SLightAtom::unlock_atom() const									{ }
-	
+
 	inline int32_t* SLightAtom::strong_addr() const								{ return &m_strongCount; }
 	inline int32_t SLightAtom::strong_count() const								{ return m_strongCount; }
-	
+
 	inline void SLightAtom::watch_action(const char*) const						{ }
 	inline void SLightAtom::do_report(const sptr<ITextOutput>&, uint32_t) const	{ }
-	
+
 	inline void SLightAtom::add_incstrong(const void*, int32_t) const			{ }
 	inline void SLightAtom::add_decstrong(const void*) const					{ }
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #define NOTE_CREATE()
 #define NOTE_DESTROY()
 #define NOTE_FREE()
-	
+
 #else
 
 /*---------------------------------------------------------------------------------*/
@@ -268,17 +268,17 @@ namespace support {
 #include <support/StringIO.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace osp {
 #endif
 	static atomic_uint gHasDebugLevel(0);
 	static int32_t gDebugLevel = 0;
-	
+
 	static inline int32_t FastAtomDebugLevel() {
 		if ((gHasDebugLevel&2) != 0) return gDebugLevel;
 		return AtomDebugLevel();
 	}
-	
+
 	int32_t AtomDebugLevel() {
 		if ((gHasDebugLevel&2) != 0) return gDebugLevel;
 		if (atomic_fetch_or(&gHasDebugLevel, 1U) == 0) {
@@ -300,10 +300,10 @@ namespace osp {
 		while ((gHasDebugLevel&2) == 0) SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
 		return gDebugLevel;
 	}
-	
+
 	static atomic_uint gHasReportLevel(0);
 	static int32_t gReportLevel = 0;
-	
+
 	int32_t AtomReportLevel(uint32_t flags) {
 		switch (flags&B_ATOM_REPORT_FORCE_MASK) {
 			case B_ATOM_REPORT_FORCE_LONG:		return 10;
@@ -311,10 +311,10 @@ namespace osp {
 			case B_ATOM_REPORT_FORCE_SUMMARY:	return 0;
 			default:						break;
 		}
-		
+
 		if ((gHasReportLevel&2) != 0) return gReportLevel;
 		if (atomic_fetch_or(&gHasReportLevel, 1U) == 0) {
-		
+
 			bool instrumentationAllowed = true;
 			const char* env = getenv("ATOM_REPORT");
 			if (instrumentationAllowed && env) {
@@ -326,18 +326,18 @@ namespace osp {
 			}
 			atomic_fetch_or(&gHasReportLevel, 2U);
 		}
-		while ((gHasReportLevel&2) == 0) 
+		while ((gHasReportLevel&2) == 0)
 			SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
 		return gReportLevel;
 	}
-#if _SUPPORTS_NAMESPACE	
+#if _SUPPORTS_NAMESPACE
 }	//namespace osp
 using namespace osp;
 #endif
 
 #if _SUPPORTS_NAMESPACE
 namespace support {
-#endif	
+#endif
 	static void rename_owner_id(atom_ref_info* refs, const void* newID, const void* oldID)
 	{
 		while (refs) {
@@ -345,13 +345,13 @@ namespace support {
 			refs = refs->next;
 		}
 	}
-	
+
 	/*! This is useful, for example, if you have a piece of memory
 		with a pointer to an atom, whose memory address you have used
 		for the reference ID.  If you are moving your memory to a new
 		location with memcpy(), you can use this function to change
 		the ID stored in the atom for your reference.
-		
+
 		This function does nothing if atom debugging is not currently
 		enabled.
 
@@ -364,7 +364,7 @@ namespace support {
 			rename_owner_id(m_base->debugPtr->incWeaks, newID, oldID);
 		}
 	}
-	
+
 	inline void SAtom::move_pointers(SAtom** newPtr, SAtom** oldPtr, size_t num)
 	{
 		if (FastAtomDebugLevel() > 5) {
@@ -374,17 +374,17 @@ namespace support {
 			}
 		}
 	}
-	
+
 	/*!	The @a flags may be one of B_ATOM_REPORT_FORCE_LONG,
 		B_ATOM_REPORT_FORCE_SHORT, or B_ATOM_REPORT_FORCE_SUMMARY,
 		as well as B_ATOM_REPORT_REMOVE_HEADER.
-	
+
 		This is the API called by the "atom report" command described
 		in @ref SAtomDebugging.
 
 		@note Debugging only.  Set the ATOM_DEBUG and ATOM_REPORT
 		environment variables to use.
-		
+
 		This function only works if you are linking
 		with a library that contains debugging code and have set the
 		ATOM_DEBUG environment variable.  Choices for ATOM_DEBUG are:
@@ -406,7 +406,7 @@ namespace support {
 		unlock_atom();
 		io << sio->String();
 	}
-	
+
 	/*!	This is the API called by the "atom mark" command described
 		in @ref SAtomDebugging.
 
@@ -418,7 +418,7 @@ namespace support {
 		if (FastAtomDebugLevel() > 5) return Tracker()->IncrementMark();
 		return -1;
 	}
-	
+
 	/*!	This function prints information about all of the currently
 		active atoms created during the leak context \a mark up to and
 		including the context \a last.
@@ -444,11 +444,11 @@ namespace support {
 			io->MoveIndent(-1);
 		}
 	}
-	
+
 	void SAtom::LeakReport(int32_t mark, int32_t last, uint32_t flags) {
 		LeakReport(berr, mark, last, flags);
 	}
-	
+
 	/*!	Check whether the given atom currently exists, and acquire a
 		strong pointer if so.  These only work when the
 		leak checker is turned on; otherwise, false is always returned.
@@ -509,11 +509,11 @@ namespace support {
 	void SAtom::StartWatching(const B_SNS(std::) type_info* type) {
 		Tracker()->StartWatching(type);
 	}
-	
+
 	void SAtom::StopWatching(const B_SNS(std::) type_info* type) {
 		Tracker()->StopWatching(type);
 	}
-	
+
 	inline void SAtom::init_atom() {
 		if (FastAtomDebugLevel() > 5) {
 			m_base->debugPtr = new(B_SNS(std::) nothrow) atom_debug(this);
@@ -535,7 +535,7 @@ namespace support {
 	inline void SAtom::unlock_atom() const {
 		if (FastAtomDebugLevel() > 5) m_base->debugPtr->Unlock();
 	}
-	
+
 	inline atomic_int* SAtom::strong_addr() const {
 		if (FastAtomDebugLevel() > 5) return &(m_base->debugPtr->primary);
 		return &m_base->strongCount;
@@ -544,7 +544,7 @@ namespace support {
 		if (FastAtomDebugLevel() > 5) return &(m_base->debugPtr->secondary);
 		return &m_base->weakCount;
 	}
-	
+
 	inline int32_t SAtom::strong_count() const {
 		if (FastAtomDebugLevel() > 5) return m_base->debugPtr ? int32_t(m_base->debugPtr->primary) : 0;
 		return m_base->strongCount;
@@ -557,27 +557,27 @@ namespace support {
 	inline void SAtom::watch_action(const char* description) const {
 		if (FastAtomDebugLevel() > 5) Tracker()->WatchAction(this, description);
 	}
-	
+
 	inline void SAtom::do_report(const sptr<ITextOutput>& io, uint32_t flags) const {
 		if (FastAtomDebugLevel() > 5) m_base->debugPtr->report(io, flags);
 	}
-	
+
 	inline void SAtom::add_incstrong(const void* id, int32_t cnt) const {
 		if (FastAtomDebugLevel() > 5) add_incstrong_raw(id, cnt);
 	}
-	
+
 	inline void SAtom::add_decstrong(const void* id) const {
 		if (FastAtomDebugLevel() > 5) add_decstrong_raw(id);
 	}
-	
+
 	inline void SAtom::add_incweak(const void* id) const {
 		if (FastAtomDebugLevel() > 5) add_incweak_raw(id);
 	}
-	
+
 	inline void SAtom::add_decweak(const void* id) const {
 		if (FastAtomDebugLevel() > 5) add_decweak_raw(id);
 	}
-	
+
 	void SAtom::add_incstrong_raw(const void* id, int32_t cnt) const {
 		if (cnt == INITIAL_PRIMARY_VALUE) {
 			m_base->debugPtr->typenm = B_TYPENAME(*this);
@@ -593,7 +593,7 @@ namespace support {
 			m_base->debugPtr->incStrongs = ref;
 		}
 	}
-	
+
 	void SAtom::add_decstrong_raw(const void* id) const {
 		bool found = false;
 		if (id) {
@@ -608,7 +608,7 @@ namespace support {
 				}
 			}
 		}
-	
+
 		if (!found) {
 			atom_ref_info *ref = new(B_SNS(std::) nothrow) atom_ref_info;
 			if (ref) {
@@ -619,7 +619,7 @@ namespace support {
 				ref->next = m_base->debugPtr->decStrongs;
 				m_base->debugPtr->decStrongs = ref;
 			}
-			
+
 			if (id) {
 				sptr<BStringIO> blah(new BStringIO);
 				sptr<ITextOutput> io(blah.ptr());
@@ -628,11 +628,11 @@ namespace support {
 				do_report(io, B_ATOM_REPORT_FORCE_LONG);
 				io->MoveIndent(-1);
 				ErrFatalError(blah->String());
-				
+
 			}
 		}
 	}
-	
+
 	void SAtom::add_incweak_raw(const void* id) const {
 		atom_ref_info *ref = new(B_SNS(std::) nothrow) atom_ref_info;
 		if (ref) {
@@ -645,7 +645,7 @@ namespace support {
 			m_base->debugPtr->incWeaks = ref;
 		}
 	}
-	
+
 	void SAtom::add_decweak_raw(const void* id) const {
 		bool found = false;
 		if (id) {
@@ -660,7 +660,7 @@ namespace support {
 				}
 			}
 		}
-	
+
 		if (!found) {
 			atom_ref_info *ref = new(B_SNS(std::) nothrow) atom_ref_info;
 			if (ref) {
@@ -710,7 +710,7 @@ namespace support {
 		for the reference ID.  If you are moving your memory to a new
 		location with memcpy(), you can use this function to change
 		the ID stored in the atom for your reference.
-		
+
 		This function does nothing if atom debugging is not currently
 		enabled.
 
@@ -722,7 +722,7 @@ namespace support {
 			rename_owner_id(m_debugPtr->incStrongs, newID, oldID);
 		}
 	}
-	
+
 	inline void SLightAtom::move_pointers(SLightAtom** newPtr, SLightAtom** oldPtr, size_t num)
 	{
 		if (FastAtomDebugLevel() > 5) {
@@ -732,7 +732,7 @@ namespace support {
 			}
 		}
 	}
-	
+
 	/*!	@copydoc SAtom::Report */
 	void SLightAtom::Report(const sptr<ITextOutput>& io, uint32_t flags) const {
 		sptr<BStringIO> sio(new BStringIO);
@@ -742,7 +742,7 @@ namespace support {
 		unlock_atom();
 		io << sio->String();
 	}
-	
+
 	/*!	Check whether the given atom currently exists, and acquire a
 		strong pointer if so.  This only works when the
 		leak checker is turned on; otherwise, false is always returned.
@@ -778,12 +778,12 @@ namespace support {
 	inline void SLightAtom::unlock_atom() const {
 		if (FastAtomDebugLevel() > 5) m_debugPtr->Unlock();
 	}
-	
+
 	inline atomic_int* SLightAtom::strong_addr() const {
 		if (FastAtomDebugLevel() > 5) return &(m_debugPtr->primary);
 		return &m_strongCount;
 	}
-	
+
 	inline int32_t SLightAtom::strong_count() const {
 		if (FastAtomDebugLevel() > 5) return m_debugPtr ? int32_t(m_debugPtr->primary) : 0;
 		return m_strongCount;
@@ -792,19 +792,19 @@ namespace support {
 	inline void SLightAtom::watch_action(const char* description) const {
 		if (FastAtomDebugLevel() > 5) Tracker()->WatchAction(this, description);
 	}
-	
+
 	inline void SLightAtom::do_report(const sptr<ITextOutput>& io, uint32_t flags) const {
 		if (FastAtomDebugLevel() > 5) m_debugPtr->report(io, flags);
 	}
-	
+
 	inline void SLightAtom::add_incstrong(const void* id, int32_t cnt) const {
 		if (FastAtomDebugLevel() > 5) add_incstrong_raw(id, cnt);
 	}
-	
+
 	inline void SLightAtom::add_decstrong(const void* id) const {
 		if (FastAtomDebugLevel() > 5) add_decstrong_raw(id);
 	}
-	
+
 	void SLightAtom::add_incstrong_raw(const void* id, int32_t cnt) const {
 		if (cnt == INITIAL_PRIMARY_VALUE) {
 			m_debugPtr->typenm = B_TYPENAME(*this);
@@ -820,7 +820,7 @@ namespace support {
 			m_debugPtr->incStrongs = ref;
 		}
 	}
-	
+
 	void SLightAtom::add_decstrong_raw(const void* id) const {
 		bool found = false;
 		if (id) {
@@ -835,7 +835,7 @@ namespace support {
 				}
 			}
 		}
-	
+
 		if (!found) {
 			atom_ref_info *ref = new(B_SNS(std::) nothrow) atom_ref_info;
 			if (ref) {
@@ -846,7 +846,7 @@ namespace support {
 				ref->next = m_debugPtr->decStrongs;
 				m_debugPtr->decStrongs = ref;
 			}
-			
+
 			if (id) {
 				sptr<BStringIO> blah(new BStringIO);
 				sptr<ITextOutput> io(blah.ptr());
@@ -859,7 +859,7 @@ namespace support {
 		}
 	}
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #define NOTE_CREATE() { if (FastAtomDebugLevel() > 0) LeakChecker()->NoteCreate(); }
@@ -875,7 +875,7 @@ namespace support {
 /* Common SAtom functionality. */
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -967,7 +967,7 @@ void* SAtom::operator new(size_t size)
 	// Allocate extra space before the atom, rounded to 8 bytes.
 	base_data* ptr = (base_data*)::operator new(size + sizeof(base_data));
 	if (ptr) {
-	
+
 		ptr->strongCount = INITIAL_PRIMARY_VALUE;
 		ptr->weakCount = 0;
 
@@ -987,10 +987,10 @@ void* SAtom::operator new(size_t size)
 			ptr->next = NULL;
 		}
 		ptr->size = size + sizeof(base_data);
-	
+
 		PRINT(("Allocate atom base=%p, tls=%ld, off=%p\n",
 					ptr, gAtomBaseIndex, ptr+1));
-	
+
 #if SUPPORTS_ATOM_DEBUG
 		ptr->debugPtr = NULL;
 		ptr->new_size = size;
@@ -1011,7 +1011,7 @@ void* SAtom::operator new(size_t size, const B_SNS(std::)nothrow_t&) throw()
 	// Allocate extra space before the atom, rounded to 8 bytes.
 	base_data* ptr = (base_data*)::operator new(size + sizeof(base_data), B_SNS(std::)nothrow);
 	if (ptr) {
-	
+
 		ptr->strongCount = INITIAL_PRIMARY_VALUE;
 		ptr->weakCount = 0;
 
@@ -1031,10 +1031,10 @@ void* SAtom::operator new(size_t size, const B_SNS(std::)nothrow_t&) throw()
 			ptr->next = NULL;
 		}
 		ptr->size = size + sizeof(base_data);
-	
+
 		PRINT(("Allocate atom base=%p, tls=%ld, off=%p\n",
 					ptr, gAtomBaseIndex, ptr+1));
-	
+
 #if SUPPORTS_ATOM_DEBUG
 		ptr->debugPtr = NULL;
 		ptr->new_size = size;
@@ -1070,7 +1070,7 @@ void SAtom::delete_impl(size_t size)
 		NOTE_FREE();
 		return;
 	}
-	
+
 	const int32_t c = strong_count();
 	if (c != 0 && c != INITIAL_PRIMARY_VALUE) {
 		char buf[128];
@@ -1100,7 +1100,7 @@ void SAtom::destructor_impl()
 SAtom::SAtom()
 {
 	NOTE_CREATE();
-	
+
 	// Look for the memory allocation for this atom.
 	base_data* pos = (base_data*)SysTSDGet(gAtomBaseIndex);
 	base_data* prev = NULL;
@@ -1126,9 +1126,9 @@ SAtom::SAtom()
 
 	pos->atom = this;
 	pos->size = 0;
-	
+
 	init_atom();
-	
+
 	PRINT(("Creating SAtom %p\n", this));
 }
 
@@ -1137,7 +1137,7 @@ SAtom::SAtom()
 SAtom::~SAtom()
 {
 	NOTE_DESTROY();
-	
+
 	PRINT(("Destroying SAtom %p\n", this));
 	if (weak_count() == 0) {
 		// Whoops, someone is really deleting us.  Do it all.
@@ -1296,12 +1296,12 @@ int32_t SAtom::IncStrong(const void *id) const
 	//count_inc_strong();
 
 	IncWeak(id);
-	
+
 	lock_atom();
 	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE)
 		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
-	
+
 	if (r == 0) {
 		// The incstrong count was at zero, this is an error.
 		atomic_fetch_dec(strong_addr());
@@ -1312,7 +1312,7 @@ int32_t SAtom::IncStrong(const void *id) const
 		DecWeak(id);
 		return 0;
 	}
-	
+
 	add_incstrong(id, r);
 
 	unlock_atom();
@@ -1322,7 +1322,7 @@ int32_t SAtom::IncStrong(const void *id) const
 		const_cast<SAtom*>(this)->InitAtom();
 		r -= INITIAL_PRIMARY_VALUE;
 	}
-	
+
 	return r;
 }
 
@@ -1334,7 +1334,7 @@ int32_t SAtom::DecStrong(const void *id) const
 	const int32_t r = atomic_fetch_dec(strong_addr());
 	add_decstrong(id);
 	unlock_atom();
-	
+
 	if (r == 1)	{
 		watch_action("FinishAtom()");
 		const status_t err = const_cast<SAtom*>(this)->FinishAtom(id);
@@ -1358,7 +1358,7 @@ void SAtom::IncStrongFast() const
 	//count_inc_strong();
 
 	IncWeakFast();
-	
+
 	if (atomic_fetch_inc(strong_addr()) != INITIAL_PRIMARY_VALUE)  {
 		return;
 	}
@@ -1385,9 +1385,9 @@ bool SAtom::attempt_inc_strong(const void *id, bool useid) const
 {
 	if (useid) IncWeak(id);
 	else IncWeakFast();
-	
+
 	lock_atom();
-	
+
 	// Attempt to increment the reference count, without
 	// disrupting it if it has already gone to zero.
 	int current = strong_count();
@@ -1398,7 +1398,7 @@ bool SAtom::attempt_inc_strong(const void *id, bool useid) const
 		}
 		// Someone else changed it before us.
 	}
-	
+
 	if (current <= 0 || current == INITIAL_PRIMARY_VALUE) {
 		unlock_atom();
 		// The primary count has gone to zero; if the object hasn't yet
@@ -1411,7 +1411,7 @@ bool SAtom::attempt_inc_strong(const void *id, bool useid) const
 			else DecWeakFast();
 			return false;
 		}
-		
+
 		// IncStrongAttempted() has allowed us to revive the atom, so increment
 		// the reference count and continue with a success.
 		lock_atom();
@@ -1431,14 +1431,14 @@ bool SAtom::attempt_inc_strong(const void *id, bool useid) const
 			lock_atom();
 		}
 	}
-	
+
 	if (current == INITIAL_PRIMARY_VALUE)
 		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
-	
+
 	if (useid) add_incstrong(id, current);
 
 	unlock_atom();
-	
+
 	if (current == INITIAL_PRIMARY_VALUE) {
 		watch_action("InitAtom()");
 		const_cast<SAtom*>(this)->InitAtom();
@@ -1472,7 +1472,7 @@ bool SAtom::AttemptIncStrongFast() const
 	it leaves the atom as-is and returns false.  Note that successful
 	removal of the strong reference may result in the object being
 	destroyed.
-	
+
 	Trust me, it is useful...  though for very few things.
 
 	@see DecStrong()
@@ -1493,7 +1493,7 @@ bool SAtom::AttemptDecStrong(const void *id) const
 	if (r > 0) {
 		add_decstrong(id);
 		unlock_atom();
-		
+
 		if (r == 1)	{
 			watch_action("FinishAtom()");
 			const status_t err = const_cast<SAtom*>(this)->FinishAtom(id);
@@ -1508,7 +1508,7 @@ bool SAtom::AttemptDecStrong(const void *id) const
 		return true;
 	}
 	unlock_atom();
-	
+
 	return false;
 }
 
@@ -1521,12 +1521,12 @@ int32_t SAtom::ForceIncStrong(const void *id) const
 {
 	int32_t rw = IncWeak(id);
 	ErrFatalErrorIf(rw <= 0, "ForceIncStrong on a deleted atom!\n");
-	
+
 	lock_atom();
 	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE)
 		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
-	
+
 	add_incstrong(id, r);
 
 	unlock_atom();
@@ -1536,14 +1536,14 @@ int32_t SAtom::ForceIncStrong(const void *id) const
 		const_cast<SAtom*>(this)->InitAtom();
 		r -= INITIAL_PRIMARY_VALUE;
 	}
-	
+
 	return r;
 }
 
 void SAtom::ForceIncStrongFast() const
 {
 	IncWeakFast();
-	
+
 	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE) {
 		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
@@ -1562,7 +1562,7 @@ void SAtom::ForceIncStrongFast() const
 bool SAtom::AttemptIncWeak(const void *id) const
 {
 	lock_atom();
-	
+
 	// Attempt to increment the reference count, without
 	// disrupting it if it has already gone to zero.
 	int current = weak_count();
@@ -1573,14 +1573,14 @@ bool SAtom::AttemptIncWeak(const void *id) const
 		}
 		// Someone else changed it before us.
 	}
-	
+
 	if (current > 0) {
 		// Successfully acquired a weak reference.
 		add_incweak(id);
 	}
-	
+
 	unlock_atom();
-	
+
 	// Return success/failure based on the previous reference count.
 	return current > 0;
 }
@@ -1597,7 +1597,7 @@ bool SAtom::AttemptIncWeakFast() const
 		}
 		// Someone else changed it before us.
 	}
-	
+
 	// Return success/failure based on the previous reference count.
 	return current > 0;
 }
@@ -1642,7 +1642,7 @@ void SAtom::MovePointersBefore(SAtom** newPtr, SAtom** oldPtr, size_t num)
 	else memcpy(newPtr, oldPtr, sizeof(SAtom*)*num);
 	move_pointers(newPtr, oldPtr, num);
 }
-			
+
 void SAtom::MovePointersAfter(SAtom** newPtr, SAtom** oldPtr, size_t num)
 {
 	if (num == 1) *newPtr = *oldPtr;
@@ -1696,7 +1696,7 @@ void SAtom::InitAtom()
 	The default implementation will return B_OK, allowing the SAtom destruction to
 	proceed as normal.  Don't override this method unless you want some other
 	behavior.  Like InitAtom(), you do not need to call the SAtom implementation.
-	
+
 	@see DecStrong()
 */
 status_t SAtom::FinishAtom(const void* id)
@@ -1709,7 +1709,7 @@ status_t SAtom::FinishAtom(const void* id)
 	implementation returns B_OK if B_ATOM_FIRST_STRONG is set,
 	otherwise it returns B_NOT_ALLOWED to make the attempted
 	IncStrong() fail.
-	
+
 	You can override this to return B_OK when you would like an atom
 	to continue allowing primary references.  Note that this also
 	requires overriding FinishAtom() to return an error code,
@@ -1761,16 +1761,16 @@ SLightAtom::SLightAtom()
 #endif
 {
 	NOTE_CREATE();
-	
+
 	init_atom();
-	
+
 	PRINT(("Creating SLightAtom %p\n", this));
 }
 
 SLightAtom::~SLightAtom()
 {
 	NOTE_DESTROY();
-	
+
 	PRINT(("Destroying SLightAtom %p\n", this));
 
 	term_atom();
@@ -1798,7 +1798,7 @@ int32_t SLightAtom::IncStrong(const void *id) const
 	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE)
 		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
-	
+
 	if (r == 0) {
 		// The incstrong count was at zero, this is an error.
 		atomic_fetch_dec(strong_addr());
@@ -1808,7 +1808,7 @@ int32_t SLightAtom::IncStrong(const void *id) const
 		ErrFatalError(buf);
 		return 0;
 	}
-	
+
 	atomic_fetch_inc(&m_constCount);
 
 	add_incstrong(id, r);
@@ -1820,7 +1820,7 @@ int32_t SLightAtom::IncStrong(const void *id) const
 		const_cast<SLightAtom*>(this)->InitAtom();
 		r -= INITIAL_PRIMARY_VALUE;
 	}
-	
+
 	return r;
 #endif
 }
@@ -1831,7 +1831,7 @@ int32_t SLightAtom::IncStrong(const void *id)
 	int32_t r = atomic_fetch_inc(strong_addr());
 	if (r == INITIAL_PRIMARY_VALUE)
 		atomic_fetch_add(strong_addr(), -INITIAL_PRIMARY_VALUE);
-	
+
 	if (r == 0) {
 		// The incstrong count was at zero, this is an error.
 		atomic_fetch_dec(strong_addr());
@@ -1841,7 +1841,7 @@ int32_t SLightAtom::IncStrong(const void *id)
 		ErrFatalError(buf);
 		return 0;
 	}
-	
+
 	add_incstrong(id, r);
 
 	unlock_atom();
@@ -1851,7 +1851,7 @@ int32_t SLightAtom::IncStrong(const void *id)
 		const_cast<SLightAtom*>(this)->InitAtom();
 		r -= INITIAL_PRIMARY_VALUE;
 	}
-	
+
 	return r;
 }
 
@@ -1865,7 +1865,7 @@ int32_t SLightAtom::DecStrong(const void *id) const
 	atomic_fetch_dec(&m_constCount);
 	add_decstrong(id);
 	unlock_atom();
-	
+
 	if (r == 1)	{
 		delete this;
 	} else if (r < 1) {
@@ -1883,7 +1883,7 @@ int32_t SLightAtom::DecStrong(const void *id)
 	const int32_t r = atomic_fetch_dec(strong_addr());
 	add_decstrong(id);
 	unlock_atom();
-	
+
 	if (r == 1)	{
 		delete this;
 	} else if (r < 1) {
@@ -1954,7 +1954,7 @@ void SLightAtom::MovePointersBefore(SLightAtom** newPtr, SLightAtom** oldPtr, si
 	else memcpy(newPtr, oldPtr, sizeof(SLightAtom*)*num);
 	move_pointers(newPtr, oldPtr, num);
 }
-			
+
 void SLightAtom::MovePointersAfter(SLightAtom** newPtr, SLightAtom** oldPtr, size_t num)
 {
 	if (num == 1) *newPtr = *oldPtr;
@@ -1985,5 +1985,5 @@ void SLightAtom::InitAtom()
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

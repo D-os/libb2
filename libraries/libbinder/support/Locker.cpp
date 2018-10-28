@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -46,7 +46,7 @@ static void delete_lock_state(void *state)
 	uint32_t *tsdBase = (uint32_t*)state;
 	if (state) {
 		SysSemaphoreDestroy(tsdBase[kKALTSDSlotIDCurrentThreadKeyID]);
-		
+
 		free(tsdBase);
 	}
 }
@@ -61,7 +61,7 @@ static uint32_t* PrvGetSlotAddress(int32_t)
 			tls_set(baseIndex, NULL);
 			gLockBaseIndex = baseIndex;
 		} else {
-			while ((baseIndex=gLockBaseIndex) == -1) 
+			while ((baseIndex=gLockBaseIndex) == -1)
 				KALCurrentThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
 		}
 	}
@@ -101,7 +101,7 @@ SysCriticalSectionEnter(SysCriticalSectionType *iCS)
 
 	if (old) {
 		SysSemaphoreWait(tsdBase[kKALTSDSlotIDCurrentThreadKeyID], B_WAIT_FOREVER, B_INFINITE_TIMEOUT);
-		
+
 	}
 }
 
@@ -296,7 +296,7 @@ SysConditionVariableBroadcast(ConditionVariableType *iCV)
 //#pragma mark -
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -335,7 +335,7 @@ inline volatile int32_t* remove_ownership_gehnaphore(volatile int32_t* value)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 // -----------------------------------------------------------------
@@ -348,7 +348,7 @@ inline volatile int32_t* remove_ownership_gehnaphore(volatile int32_t* value)
 //#pragma mark -
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -410,7 +410,7 @@ void dbg_unlock_gehnaphore(volatile intptr_t* value)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif
@@ -420,7 +420,7 @@ void dbg_unlock_gehnaphore(volatile intptr_t* value)
 // -----------------------------------------------------------------
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -665,5 +665,5 @@ void SReadWriteLocker::WriteUnlock()
 #endif // TARGET_HOST != TARGET_HOST_WIN32
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

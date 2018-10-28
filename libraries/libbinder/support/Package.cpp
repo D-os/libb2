@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -36,7 +36,7 @@
 #define TRACK_SHARED_OBJECTS 1
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -84,7 +84,7 @@ BSharedObject::BSharedObject(image_id image)
 void BSharedObject::InitAtom()
 {
 	//bout << "Initializing BSharedObject: " << this << endl;
-	
+
 	if (m_source.IsDefined()) {
 		m_handle = dlopen(m_source.AsString().String(), RTLD_LAZY);
 		#if SHOW_LOAD_UNLOAD
@@ -186,7 +186,7 @@ BSharedObject::~BSharedObject()
 	const int32_t r = atomic_fetch_dec(&g_numSharedObjects);
 	bout << "Unloaded BSharedObject, " << (r-1) << " remaining." << endl;
 #endif
-	
+
 #if 0
 	bout << SPrintf("BSharedObject %p destructor called (area %ld)\n", this, m_handle);
 	SCallStack stack;
@@ -269,7 +269,7 @@ SPackage::Data::~Data()
 
 SString SPackage::Data::Name()
 {
-	return m_name; 
+	return m_name;
 }
 
 SString SPackage::Data::Path()
@@ -292,12 +292,12 @@ char* SPackage::Data::get_buffer_for(const SString& locale)
 		SString path(m_resourcePath);
 		path.PathAppend(locale);
 		path.PathAppend("Strings.localized");
-	
+
 		map = new SPackage::MemoryMap(path);
-		m_maps.AddItem(locale, map);	
+		m_maps.AddItem(locale, map);
 	}
 
-	return (char*)map->Buffer(); 
+	return (char*)map->Buffer();
 }
 
 SString SPackage::Data::LoadString(const SString& key, const SString& locale)
@@ -349,11 +349,11 @@ SString SPackage::Data::LoadString(const SString& key, const SString& locale)
 				break;
 			}
 		}
-	
+
 		if (found)
 		{
 			result = SString(buf + indices[mid + COUNT]);
-		}	
+		}
 	}
 
 	return result;
@@ -382,7 +382,7 @@ sptr<SPackage::Data> SPackage::Pool::DataFor(const SString& pkgName)
 		catPath.PathAppend(pkgName);
 
 		SValue value = SContext::UserContext().Lookup(catPath);
-		
+
 		SString path = value[key_path].AsString();
 
 		struct stat sb;
@@ -398,7 +398,7 @@ sptr<SPackage::Data> SPackage::Pool::DataFor(const SString& pkgName)
 			m_packages.AddItem(pkgName, data);
 		}
 	}
-	
+
 	return data;
 }
 
@@ -419,21 +419,21 @@ SPackage::SPackage(const SValue& value, status_t *error)
 	if (value.Type() == B_PACKAGE_TYPE)
 	{
 		const void* data = value.Data();
-		if (data != NULL) 
+		if (data != NULL)
 		{
 			m_data = g_pool.DataFor(SString(static_cast<const char*>(data), value.Length()));
 		}
-	} 
-	else 
+	}
+	else
 	{
 		status_t err;
 		SString packageName = value.AsString(&err);
-		if (err == B_OK) 
+		if (err == B_OK)
 		{
 			m_data = g_pool.DataFor(packageName);
 		}
 	}
-		
+
 	if (error != NULL)
 	{
 		*error = (m_data == NULL) ? B_BAD_VALUE : B_OK;
@@ -447,12 +447,12 @@ SPackage::~SPackage()
 SValue SPackage::AsValue()
 {
 	return SValue::String(Name());
-} 
+}
 
 
 status_t SPackage::StatusCheck()
 {
-	return (m_data == NULL) ? B_NO_INIT : (m_data->Path().Length() == 0) ? B_NO_INIT : B_OK; 
+	return (m_data == NULL) ? B_NO_INIT : (m_data->Path().Length() == 0) ? B_NO_INIT : B_OK;
 }
 
 SString SPackage::Name()
@@ -505,16 +505,16 @@ sptr<IByteInput> SPackage::OpenResource(const SString& fileName, const SString& 
 
 SString SPackage::LoadString(const SString& key, const SString& locale)
 {
-	return (m_data != NULL) ? m_data->LoadString(key, locale) : SString::EmptyString(); 
+	return (m_data != NULL) ? m_data->LoadString(key, locale) : SString::EmptyString();
 }
 
 SString SPackage::LoadString(uint32_t index, const SString& locale)
 {
-	return (m_data != NULL) ? m_data->LoadString(index, locale) : SString::EmptyString(); 
+	return (m_data != NULL) ? m_data->LoadString(index, locale) : SString::EmptyString();
 }
 
 
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

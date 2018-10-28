@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -20,7 +20,7 @@ static inline status_t call_effect_func(const effect_action_def& action,
 		object = reinterpret_cast<unsigned char *>(target.ptr());
 		object += action.parameters->classOffset;
 	}
-	
+
 	switch (state.which)
 	{
 		case B_INVOKE_ACTION:
@@ -38,7 +38,7 @@ static inline status_t call_effect_func(const effect_action_def& action,
 			}
 			out->JoinItem(state.outKey, returnValue);
 			break;
-		
+
 		case B_PUT_ACTION:
 			if (action.put) {
 				err = action.put(target, state.args);
@@ -53,7 +53,7 @@ static inline status_t call_effect_func(const effect_action_def& action,
 				return B_MISMATCHED_VALUES;
 			}
 			break;
-		
+
 		case B_GET_ACTION:
 			if (action.get) {
 				returnValue = action.get(target);
@@ -72,10 +72,10 @@ static inline status_t call_effect_func(const effect_action_def& action,
 		default:
 			return B_BAD_VALUE;
 	}
-	
+
 //	SValue nullll("NULL");
 //	bout << "out is " << (out ? *out : nullll) << endl;
-	
+
 	return err;
 }
 
@@ -91,23 +91,23 @@ static uint32_t finish_logic(bool hasIn, bool hasOut, const effect_action_def &a
 		hasGet = action.get != NULL;
 		hasInvoke = action.invoke != NULL;
 	}
-					
-	// Select the appropriate action to be performed.  Only one 
-	// hook will be called, whichever best matches the effect arguments. 
 
-	// Do an invoke if it is defined and we have both an input 
-	// and output, or only an input and no "put" action. 
-	if (hasInvoke && hasIn && (hasOut || !hasPut)) 
+	// Select the appropriate action to be performed.  Only one
+	// hook will be called, whichever best matches the effect arguments.
+
+	// Do an invoke if it is defined and we have both an input
+	// and output, or only an input and no "put" action.
+	if (hasInvoke && hasIn && (hasOut || !hasPut))
 		return B_INVOKE_ACTION;
 
-	// Do a put if it is defined and we have an input. 
-	else if (hasPut && hasIn) 
+	// Do a put if it is defined and we have an input.
+	else if (hasPut && hasIn)
 		return B_PUT_ACTION;
-	
-	// Do a get if it is defined and we have an output. 
-	else if (hasGet && hasOut) 
+
+	// Do a get if it is defined and we have an output.
+	else if (hasGet && hasOut)
 		return B_GET_ACTION;
-		
+
 	else return B_NO_ACTION;
 }
 
@@ -123,7 +123,7 @@ status_t execute_effect(const sptr<IInterface>& target,
 	effect_call_state state;
 	bool hasIn, hasOut;
 	status_t result = B_OK;
-	
+
 	// Optimize for the common case of the actions being in value-sorted order,
 	// and only one action is being performed.
 	if (	(flags&B_ACTIONS_SORTED_BY_KEY) != 0 &&
@@ -144,7 +144,7 @@ status_t execute_effect(const sptr<IInterface>& target,
 			if (!inN) key = tmpKey;
 			else if (key != tmpKey) key.Undefine();
 		}
-		
+
 		#if 0
 		bout	<< "execute_effect() short path:" << endl << indent
 				<< "Told: " << told << endl
@@ -153,7 +153,7 @@ status_t execute_effect(const sptr<IInterface>& target,
 				<< "args: " << state.args << endl
 				<< "outKey: " << state.outKey << endl << dedent;
 		#endif
-		
+
 		if (key.IsDefined()) {
 			ssize_t mid, low = 0, high = ((ssize_t)num_actions)-1;
 			while (low <= high) {
@@ -177,13 +177,13 @@ status_t execute_effect(const sptr<IInterface>& target,
 					bout	<< "Found action #" << mid << ": in=" << hasIn
 							<< ", out=" << hasOut << endl;
 					#endif
-					
+
 					state.which = finish_logic(hasIn && inN>0, hasOut && outN>0, actions[mid]);
 					return call_effect_func(actions[mid], state, target, out);
 				}
 			}
 		}
-		
+
 		#if 0
 		bout	<< "execute_effect() short path FAILED:" << endl << indent
 				<< "Told: " << told << endl
@@ -193,10 +193,10 @@ status_t execute_effect(const sptr<IInterface>& target,
 				<< "outKey: " << state.outKey << endl << dedent;
 		#endif
 	}
-	
+
 	// Unoptimized version when effect_action_def array is not
 	// in sorted order or multiple bindings are supplied.
-	
+
 	// Iterate through all actions and execute in order.
 
 	while (num_actions > 0 && result == B_OK) {
@@ -209,7 +209,7 @@ status_t execute_effect(const sptr<IInterface>& target,
 			<< "args: " << state.args << endl
 			<< "outKey: " << state.outKey << endl << dedent;
 	#endif
-	
+
 		// First check to see if there are any inputs or outputs in
 		// the effect for this action binding.
 		hasIn		= (	(actions->put || actions->invoke
@@ -219,9 +219,9 @@ status_t execute_effect(const sptr<IInterface>& target,
 		hasOut	= (actions->get || actions->invoke
 								|| (actions->parameters && actions->parameters->get)
 								|| (actions->parameters && actions->parameters->invoke));
-		
+
 		if (hasOut) {
-			state.outKey = (outBindings * SValue(actions->key(), SValue::wild)); // ??? outBindings[actions->key()]; 
+			state.outKey = (outBindings * SValue(actions->key(), SValue::wild)); // ??? outBindings[actions->key()];
 			if (state.outKey.IsDefined()) {
 				void* cookie = NULL;
 				SValue key, val;
@@ -231,23 +231,23 @@ status_t execute_effect(const sptr<IInterface>& target,
 				hasOut = false;
 			}
 		}
-		
+
 		state.which = finish_logic(hasIn, hasOut, *actions);
 		if (state.which != B_NO_ACTION) {
 			result = call_effect_func(*actions, state, target, out);
 		}
-		
+
 		actions = reinterpret_cast<const effect_action_def*>(
 			reinterpret_cast<const uint8_t*>(actions) + actions->struct_size);
 		num_actions--;
 	}
-	
+
 	return result;
 }
 
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace osp {
 #endif
 
@@ -265,7 +265,7 @@ void BAutobinderDummiClass::Method()
 #endif //AUTOBINDER_INCLUDE_EVERYTHING
 
 #if _SUPPORTS_NAMESPACE
-} } //End palmos::osp
+} } //End os::osp
 #endif
 
 
@@ -275,7 +275,7 @@ cleanup_after_call(const BEffectMethodDef *def, uint32_t stackAmt, unsigned char
 {
 	uint32_t i;
 	unsigned char * q = place + stackAmt;
-	
+
 	switch (def->returnType)
 	{
 		case B_STRING_TYPE:
@@ -310,11 +310,11 @@ fill_in_params(const BEffectMethodDef *def, uint32_t stackAmt, const SValue *arg
 {
 	uint32_t i;
 	int32_t data_int32;
-	
+
 	// Bases for where temporary objects go
 	unsigned char * p = place;
 	unsigned char * q = place + stackAmt;
-	
+
 	// Make a place for the return value if it's an object
 	switch (def->returnType)
 	{
@@ -327,19 +327,19 @@ fill_in_params(const BEffectMethodDef *def, uint32_t stackAmt, const SValue *arg
 		default:
 			break;
 	}
-	
+
 	// Add the 'this' pointer
 	*((uint32_t*)p) = object;
 	p += sizeof(uint32_t);
-	
+
 	// Create temporary objects
 	for (i=0; i<def->paramCount; i++) {
-		
+
 		SValue val((*args)[i]);
 		if (!val.IsDefined()) {
 			return B_NAME_NOT_FOUND;
 		}
-		
+
 		switch (def->paramTypes[i].type)
 		{
 			case B_INT32_TYPE:
@@ -367,7 +367,7 @@ fill_in_params(const BEffectMethodDef *def, uint32_t stackAmt, const SValue *arg
 				return B_BAD_TYPE;
 		}
 	}
-	
+
 	return B_OK;
 }
 #endif //AUTOBINDER_INCLUDE_FILLINPARAMS
@@ -389,7 +389,7 @@ make_return_value(unsigned int eax, unsigned char * q, uint32_t returnType, SVal
 		default:
 			break;
 	}
-	
+
 	// bout << "make_return_value returning: " << *rv << endl;
 }
 #endif //AUTOBINDER_INCLUDE_MAKERETURNVALUE
@@ -403,9 +403,9 @@ InvokeAutobinderFunction(	const BEffectMethodDef	* def,
 							SValue					* returnValue)
 {
 	// bout << "Autobinder invoking args: " << args << endl;
-	
+
 	status_t err;
-	
+
 	// Find the function to call, and maybe offset the object pointer
 	int32_t func;
 	unsigned char * obj = (unsigned char *)object;
@@ -423,17 +423,17 @@ InvokeAutobinderFunction(	const BEffectMethodDef	* def,
 		func = vtable_entry.func;
 		obj += vtable_entry.delta;
 	}
-	
+
 	// printf("going to call function 0x%08x\n", (int) func);
-	
+
 	// printf("\tobj: 0x%08x\n", (int)obj);
-	
+
 	// Figure out how much stack space we need
 	unsigned char * place;
 	uint32_t i;
 	uint32_t stackAmt = 0;
 	uint32_t isReturnPointer = 0;
-	
+
 	switch (def->returnType)
 	{
 		case B_STRING_TYPE:
@@ -444,9 +444,9 @@ InvokeAutobinderFunction(	const BEffectMethodDef	* def,
 		default:
 			break;
 	}
-	
+
 	stackAmt += sizeof(uint32_t); // space for 'this' pointer
-	
+
 	for (i=0; i<def->paramCount; i++) {
 		SValue val(args[i]);
 		if (!val.IsDefined()) {
@@ -480,7 +480,7 @@ InvokeAutobinderFunction(	const BEffectMethodDef	* def,
 
 		"subl %1, %%esp;"
 		"movl %%esp, %2;"
-		
+
 		// err = fill_in_params(BEffectMethodDef *def, uint32_t stackAmt, const SValue *args, unsigned char *place, uint32_t object)
 		"movl %%esp, %%edx;"
 
@@ -502,14 +502,14 @@ InvokeAutobinderFunction(	const BEffectMethodDef	* def,
 		  "m"(obj)				// 5
 		 :"%edx"
 	);
-		
+
 	if (err != B_OK) return err;
-		
+
 	__asm__ __volatile__ (
 		// Call the function
 		"movl %%esp, %%edx;"
 		"call %4;"
-		
+
 		// Make the return SValue
 		// make_return_value(unsigned int eax, unsigned char * q, uint32_t returnType, SValue * rv)
 		"movl %%eax, %%ecx;"
@@ -522,7 +522,7 @@ InvokeAutobinderFunction(	const BEffectMethodDef	* def,
 		"pushl %%ecx;"
 		"call make_return_value__Q36palmos3osp10AutobinderUiPUcUlPQ36palmos7support6SValue;"
 		"addl $0x10, %%esp;"
-		
+
 		// Clean up the temporary variables we created.
 		// cleanup_after_call(BEffectMethodDef *def, uint32_t stackAmt, unsigned char *place)
 		"pushl %1;"
@@ -530,7 +530,7 @@ InvokeAutobinderFunction(	const BEffectMethodDef	* def,
 		"pushl %2;"
 		"call cleanup_after_call__Q36palmos3osp10AutobinderPCQ36palmos7support16BEffectMethodDefUlPUc;"
 		"addl $0x0c, %%esp;"
-		
+
 		// Done
 		"ERROR:"
 		"movl %3, %%eax;"
@@ -540,7 +540,7 @@ InvokeAutobinderFunction(	const BEffectMethodDef	* def,
 		"subl $0x04, %%eax;"
 		"POP_STACK_WHEN_DONE:"
 		"addl %%eax, %%esp;"
-		
+
 		 :"=r"(err)						// 0
 		 :"m"(place),					// 1
 		  "m"(def),						// 2
@@ -555,7 +555,7 @@ InvokeAutobinderFunction(	const BEffectMethodDef	* def,
 #endif /* __INTEL__ */
 
 	// bout << "returnValue: " << *returnValue << endl;
-	
+
 	return B_OK;
 }
 #else //AUTOBINDER_IMPLEMENT_INVOKEAUTOBINDERFUNCTION
@@ -586,7 +586,7 @@ PerformRemoteBinderCall(	int						ebp,
 	if (which == B_GET_ACTION) {
 		returned = remote->Get(binding);
 	}
-	else {	
+	else {
 		int rvskip;
 		switch (def->returnType)
 		{
@@ -596,13 +596,13 @@ PerformRemoteBinderCall(	int						ebp,
 			default:
 				rvskip = 0;
 		}
-		
+
 		// ptr now equals the first parameter
 		// +4 is for the this pointer i think
 		//unsigned char *ptr = (unsigned char *)(ebp+8+rvskip);
 		unsigned char *ptr = (unsigned char *)(ebp+8+4+rvskip);
-		
-		
+
+
 		// Go through the info array, pulling out values and adding them to the argv SValue
 		// (and printing them too)
 		SValue argv;
@@ -629,7 +629,7 @@ PerformRemoteBinderCall(	int						ebp,
 					return;
 			}
 		}
-		
+
 		// Call the remote function
 		switch (which)
 		{

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -29,9 +29,9 @@
 #include <app/BCommand.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
-using namespace palmos::storage;
-using namespace palmos::app;
+using namespace os::support;
+using namespace os::storage;
+using namespace os::app;
 #endif
 
 #if TARGET_HOST == TARGET_HOST_PALMOS
@@ -95,14 +95,14 @@ SValue SelfBinder::Inspect(const sptr<IBinder>&, const SValue &which, uint32_t )
 {
 	SValue myint = GetScriptProperty(kINTERFACE, true);
 	SValue result;
-	
+
 	void* cookie = NULL;
 	SValue key, value;
 	while (myint.GetNextItem(&cookie, &key, &value) == B_OK) {
 		if (key.IsWild()) result.Join(which * SValue(value, SValue::Binder(this)));
 		else result.Join(which * SValue(key, value));
 	}
-	
+
 	return result;
 }
 
@@ -156,14 +156,14 @@ void BShell::InitAtom()
 void BShell::SetProperty(const SValue& key, const SValue& value)
 {
 	if (!m_hasEnvironment) SetEnvironmentFromHost();
-	
+
 	status_t err;
 	int32_t idx=key.AsInt32(&err);
 	if (err == B_OK) {
 		// Don't allow setting of position parameters.
 		return;
 	}
-	
+
 	BCommand::SetProperty(key, value);
 }
 
@@ -188,7 +188,7 @@ SValue BShell::GetProperty(const SValue& key) const
 		SLocker::Autolock _l(m_lock);
 		return m_lastResult;
 	}
-	
+
 	return BCommand::GetProperty(key);
 }
 
@@ -205,7 +205,7 @@ void BShell::SetEnvironment(const SValue& env)
 void BShell::SetVMArguments(const SValue& args)
 {
 	if (!m_hasEnvironment) SetEnvironmentFromHost();
-	
+
 	void* cookie=NULL;
 	SValue key, value;
 	while (args.GetNextItem(&cookie, &key, &value) == B_OK) {
@@ -239,7 +239,7 @@ extern char **environ;
 void BShell::SetEnvironmentFromHost()
 {
 	SValue env;
-	
+
 	// Collect all environment variables.
 	char** e = environ;
 	while (e && *e) {
@@ -249,12 +249,12 @@ void BShell::SetEnvironmentFromHost()
 		}
 		e++;
 	}
-	
+
 	// XXX Until we unify the host and binder namespaces,
 	// force the current directory to start at the root.
 	env.Overlay(SValue(kBSH_HOST_PWD, env[kPWD]));
 	env.Overlay(SValue(kPWD, SValue::String("/")));
-	
+
 	SetEnvironment(env);
 }
 
@@ -397,9 +397,9 @@ SValue BShell::Run(const ArgList& args)
 	bool interactive = false;
 
 	const size_t N = args.CountItems();
-	
+
 	SString path;
-	
+
 	if (!m_hasEnvironment) SetEnvironmentFromHost();
 
 	while (opti < N) {
@@ -503,7 +503,7 @@ SValue BShell::Run(const ArgList& args)
 	}
 
 	SVector<SValue> newArgs;
-	
+
 	if (textInput == NULL) {
 		if (opti < N) {
 			if (find_some_input(args[opti], this, &textInput, &path) == false) {
@@ -517,7 +517,7 @@ SValue BShell::Run(const ArgList& args)
 			SetLastResult(args[0]);
 		}
 	}
-	
+
 	if (path != "") {
 		SetLastResult(SValue::String(path));
 	}
@@ -525,34 +525,34 @@ SValue BShell::Run(const ArgList& args)
 	SString parent;
 	path.PathGetParent(&parent);
 	SetProperty(kBSH_SCRIPT_DIR, SValue::String(parent));
-	
+
 	// Collect shell arguments.
 	while (opti < N) {
 		newArgs.AddItem(args[opti++]);
 	}
-	
+
 	SetArguments(newArgs);
-	
+
 	if (textInput == NULL) {
 		// If no input stream was given, run in interactive mode.
-	
+
 		SContext context(Context());
 
 		// we want to show a different "root" prompt to remind you when
 		// you're in a privileged context
-		bool isSystem = ((context.Root() != NULL) && 
+		bool isSystem = ((context.Root() != NULL) &&
 				context.Lookup(SString("/processes/system")).IsDefined());
 
 		// Make sure prompts are set.
 		if (ALWAYS_SET_PROMPTS || !GetProperty(kPS1).IsDefined()) {
-			SetProperty(kPS1, 
-				SValue::String(GetColorFlag() 
-					? (isSystem ? ROOT_PS1_COLOR : USER_PS1_COLOR) 
+			SetProperty(kPS1,
+				SValue::String(GetColorFlag()
+					? (isSystem ? ROOT_PS1_COLOR : USER_PS1_COLOR)
 					: (isSystem ? ROOT_PS1_PLAIN : USER_PS1_PLAIN)));
 		}
 		if (ALWAYS_SET_PROMPTS || !GetProperty(kPS2).IsDefined()) {
-			SetProperty(kPS2, 
-				SValue::String(GetColorFlag() 
+			SetProperty(kPS2,
+				SValue::String(GetColorFlag()
 					? USER_PS2_COLOR : USER_PS2_PLAIN));
 		}
 

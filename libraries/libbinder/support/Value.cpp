@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -60,12 +60,12 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::osp;
+using namespace os::osp;
 #endif
 
 #if DB_INTEGRITY_CHECKS
@@ -103,7 +103,7 @@ static void check_correctness(const SValue& mine, const SValue& correct,
 struct printer_registry {
 	SLocker lock;
 	SKeyedVector<type_code, SValue::print_func> funcs;
-	
+
 #if !(__CC_ARM)
 	printer_registry()	: lock("SValue printer registry"), funcs((SValue::print_func)NULL) { }
 #else
@@ -121,7 +121,7 @@ static printer_registry* Printers()
 		g_printers = new B_NO_THROW printer_registry;
 		atomic_fetch_or(&g_havePrinters, 2);
 	} else {
-		if ((g_havePrinters&2) == 0) 
+		if ((g_havePrinters&2) == 0)
 		   SysThreadDelay(B_MILLISECONDS(10), B_RELATIVE_TIMEOUT);
 	}
 	return g_printers;
@@ -214,7 +214,7 @@ void* SValue::alloc_data(type_code type, size_t len)
 		m_type = B_PACK_SMALL_TYPE(type, len);
 		return m_data.local;
 	}
-	
+
 	if ((m_data.buffer=SSharedBuffer::Alloc(len)) != NULL) {
 		m_type = B_PACK_LARGE_TYPE(type);
 		return const_cast<void*>(m_data.buffer->Data());
@@ -363,7 +363,7 @@ SValue SValue::SSize(ssize_t val)
 status_t SValue::StatusCheck() const
 {
 	status_t val = ErrorCheck();
-	
+
 	if (val == B_OK) {
 		switch (m_type) {
 			case B_PACK_SMALL_TYPE(B_STATUS_TYPE, sizeof(status_t)):
@@ -392,7 +392,7 @@ SValue& SValue::Assign(const SValue& o)
 		FreeData();
 		InitAsCopy(o);
 	}
-	
+
 	return *this;
 }
 
@@ -401,7 +401,7 @@ SValue& SValue::Assign(type_code type, const void* data, size_t len)
 	VALIDATE_TYPE(type);
 	FreeData();
 	InitAsRaw(type, data, len);
-	
+
 	return *this;
 }
 
@@ -426,7 +426,7 @@ void SValue::InitAsCopy(const SValue& o)
 			CHECK_INTEGRITY(*this);
 			return;
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 }
 
@@ -502,7 +502,7 @@ void SValue::InitAsMap(const SValue& key, const SValue& value, uint32_t flags, s
 	} else {
 		InitAsCopy(value);
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 }
 
@@ -588,7 +588,7 @@ status_t SValue::ByteSwap(swap_action action)
 	if ((action == B_SWAP_HOST_TO_BENDIAN) || (action == B_SWAP_BENDIAN_TO_HOST))
 		return B_OK;
 #endif
-	
+
 	const size_t len = Length();
 
 	void* data = edit_data(len);
@@ -602,7 +602,7 @@ SValue& SValue::Join(const SValue& from, uint32_t flags)
 	// If 'from' is wild or an error, propagate it through.
 	if (from.is_final()) {
 		*this = from;
-	
+
 	// If we currently have a value, and that value is not simple or is not
 	// the same as 'from', then we need to build a mapping.
 	} else if (is_specified() && (is_map() || this->Compare(from) != 0)) {
@@ -610,9 +610,9 @@ SValue& SValue::Join(const SValue& from, uint32_t flags)
 		SValue key, value;
 		SValue *cur;
 		BValueMap **map = NULL;
-		
+
 		while (from.GetNextItem(reinterpret_cast<void**>(&i), &key, &value) >= B_OK) {
-		
+
 			if (!key.is_wild() && (cur=BeginEditItem(key)) != NULL) {
 				// Combine with an existing key.
 				if (!(flags&B_NO_VALUE_RECURSION))
@@ -628,15 +628,15 @@ SValue& SValue::Join(const SValue& from, uint32_t flags)
 					set_error(result);
 				}
 			}
-		
+
 		}
-	
+
 	// If we currently aren't defined, then we're now just 'from'.
 	} else if (!is_defined()) {
 		*this = from;
-	
+
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	return *this;
 }
@@ -645,7 +645,7 @@ SValue & SValue::JoinItem(const SValue& key, const SValue& value, uint32_t flags
 {
 	SValue *cur;
 	BValueMap **map;
-	
+
 	if (!is_final() && key.is_defined() && value.is_defined()) {
 		// Most of these checks are to ensure that the value stays
 		// normalized, by not creating a BValueMap unless really needed.
@@ -677,7 +677,7 @@ SValue & SValue::JoinItem(const SValue& key, const SValue& value, uint32_t flags
 			}
 		}
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	return *this;
 }
@@ -695,7 +695,7 @@ SValue& SValue::Overlay(const SValue& from, uint32_t flags)
 	// If 'from' is wild or an error, propagate it through.
 	if (from.is_final()) {
 		*this = from;
-	
+
 	// If we currently have a value, and that value is not simple or the
 	// from value is not simple, then we need to build a mapping.
 	} else if (is_specified() && (is_map() || from.is_map())) {
@@ -704,9 +704,9 @@ SValue& SValue::Overlay(const SValue& from, uint32_t flags)
 		SValue *cur;
 		BValueMap **map = NULL;
 		bool setCleared = false;
-		
+
 		while (from.GetNextItem(reinterpret_cast<void**>(&i), &key, &value) >= B_OK) {
-		
+
 			if (!key.is_wild() && (cur=BeginEditItem(key)) != NULL) {
 				// Combine with an existing key.
 				if (!(flags&B_NO_VALUE_RECURSION))
@@ -729,17 +729,17 @@ SValue& SValue::Overlay(const SValue& from, uint32_t flags)
 					}
 				}
 			}
-		
+
 		}
-	
+
 		if (setCleared) shrink_map(*map);
 
 	// If we aren't an error, overwrite with new value.
 	} else if (!is_error() && from.is_defined()) {
 		*this = from;
-	
+
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	return *this;
 }
@@ -755,11 +755,11 @@ const SValue SValue::OverlayCopy(const SValue& from, uint32_t flags) const
 SValue& SValue::Inherit(const SValue& from, uint32_t flags)
 {
 	INIT_CORRECTNESS(SValue correct(from.OverlayCopy(*this)); SValue orig(*this));
-	
+
 	// If 'from' is an error, propagate it through.
 	if (from.is_error()) {
 		*this = from;
-	
+
 	// If we currently have a value, then we need to see if there are any
 	// new values to add.
 	} else if (is_specified()) {
@@ -779,7 +779,7 @@ SValue& SValue::Inherit(const SValue& from, uint32_t flags)
 					terminals = true;
 				first = false;
 			}
-			
+
 			if (cmp != 0) {
 				if (k2.is_wild()) {
 					// Don't add in new terminal(s) if the current value
@@ -817,10 +817,10 @@ SValue& SValue::Inherit(const SValue& from, uint32_t flags)
 	} else if (!is_defined()) {
 		*this = from;
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	CHECK_CORRECTNESS(*this, correct, orig, "Inherit", from);
-	
+
 	return *this;
 }
 
@@ -842,7 +842,7 @@ SValue& SValue::MapValues(const SValue& from, uint32_t flags)
 const SValue SValue::MapValuesCopy(const SValue& from, uint32_t flags) const
 {
 	SValue out;
-	
+
 	#if DB_CORRECTNESS_CHECKS
 		// This is the formal definition of MapValues().
 		SValue correct;
@@ -852,7 +852,7 @@ const SValue SValue::MapValuesCopy(const SValue& from, uint32_t flags) const
 			correct.JoinItem(key, from.ValueFor(value, flags));
 		}
 	#endif
-	
+
 	if (!is_error()) {
 		if (!from.is_final()) {
 			void* i=NULL;
@@ -869,10 +869,10 @@ const SValue SValue::MapValuesCopy(const SValue& from, uint32_t flags) const
 	} else {
 		out = *this;
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	CHECK_CORRECTNESS(out, correct, *this, "MapValues", from);
-	
+
 	return out;
 }
 
@@ -924,20 +924,20 @@ const SValue SValue::RemoveCopy(const SValue& from, uint32_t flags) const
 	#if DB_CORRECTNESS_CHECKS
 		SValue correct(correct_remove(*this, from, flags));
 	#endif
-	
+
 	// Some day this might be optimized.
 	const SValue result(correct_remove(*this, from, flags));
-	
+
 	CHECK_INTEGRITY(result);
 	CHECK_CORRECTNESS(result, correct, *this, "Remove", from);
-	
+
 	return result;
 }
 
 status_t SValue::RemoveItem(const SValue& key, const SValue& value)
 {
 	status_t result;
-	
+
 	if (!is_error() && key.is_defined()) {
 		if (key.is_wild() &&
 				(*this == value || value.is_wild())) {
@@ -970,7 +970,7 @@ status_t SValue::RemoveItem(const SValue& key, const SValue& value)
 	} else {
 		result = ErrorCheck();
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	return result;
 }
@@ -1025,13 +1025,13 @@ const SValue SValue::RetainCopy(const SValue& from, uint32_t flags) const
 	#if DB_CORRECTNESS_CHECKS
 		SValue correct(correct_retain(*this, from, flags));
 	#endif
-	
+
 	// Some day this might be optimized.
 	const SValue result(correct_retain(*this, from, flags));
-	
+
 	CHECK_INTEGRITY(result);
 	CHECK_CORRECTNESS(result, correct, *this, "Retain", from);
-	
+
 	return result;
 }
 
@@ -1039,7 +1039,7 @@ status_t SValue::RenameItem(const SValue& old_key,
 							const SValue& new_key)
 {
 	status_t result;
-	
+
 	if (is_map()) {
 		BValueMap** map = edit_map();
 		if (map) {
@@ -1058,7 +1058,7 @@ status_t SValue::RenameItem(const SValue& old_key,
 	} else {
 		result = ErrorCheck();
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	return result;
 }
@@ -1134,7 +1134,7 @@ const SValue& SValue::ValueFor(const SValue& key) const
 	}
 	return SValue::Undefined();
 }
-	
+
 const SValue& SValue::ValueFor(const char* key) const
 {
 	if (is_map()) {
@@ -1218,13 +1218,13 @@ SValue SValue::Keys() const
 			val = SValue::Undefined();
 		}
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	return val;
 }
 
 SValue *SValue::BeginEditItem(const SValue& key)
-{		
+{
 	SValue *val;
 	if (key.is_wild()) {
 		val = NULL;
@@ -1239,7 +1239,7 @@ SValue *SValue::BeginEditItem(const SValue& key)
 	} else {
 		val = NULL;
 	}
-	
+
 	return val;
 }
 
@@ -1261,14 +1261,14 @@ void SValue::EndEditItem(SValue* cur)
 status_t SValue::remove_item_index(size_t index)
 {
 	status_t result;
-	
+
 	if (!is_error()) {
 		if (is_map()) {
 			const size_t N = m_data.map->CountMaps();
 			if (index == 0 && N <= 1) {
 				Undefine();
 				result = B_OK;
-			
+
 			} else if (index < m_data.map->CountMaps()) {
 				BValueMap** map = edit_map();
 				if (map) {
@@ -1290,7 +1290,7 @@ status_t SValue::remove_item_index(size_t index)
 	} else {
 		result = ErrorCheck();
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	return result;
 }
@@ -1298,7 +1298,7 @@ status_t SValue::remove_item_index(size_t index)
 status_t SValue::find_item_index(size_t index, SValue* out_key, SValue* out_value) const
 {
 	status_t result;
-	
+
 	if (!is_error()) {
 		if (is_map()) {
 			if (index < m_data.map->CountMaps()) {
@@ -1319,7 +1319,7 @@ status_t SValue::find_item_index(size_t index, SValue* out_key, SValue* out_valu
 	} else {
 		result = ErrorCheck();
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	return result;
 }
@@ -1668,13 +1668,13 @@ int32_t SValue::compare_map(const SValue* key1, const SValue* value1,
 	const bool key2Wild = key2->is_wild();
 	cmp1 = key1Wild ? value1 : key1;
 	cmp2 = key2Wild ? value2 : key2;
-	
+
 	// First, quick check if types are different.  However,
 	// DON'T do this case if key1 is wild, meaning both keys
 	// are wild and we need to use the "simple" case below.
 	if (cmp1->m_type != cmp2->m_type && !key1Wild) {
 		return cmp1->m_type < cmp2->m_type ? -1 : 1;
-	
+
 	// Types aren't different, so they are both either a map
 	// or simple.  First the simple case.
 	} else if (cmp1->is_simple()) {
@@ -1686,7 +1686,7 @@ int32_t SValue::compare_map(const SValue* key1, const SValue* value1,
 		}
 		return c;
 	}
-	
+
 	// Types aren't different and both are maps.  Don't need to
 	// worry about the wild key case here, because the construct
 	// (wild -> (a -> b)) is not a normalized form.
@@ -1721,7 +1721,7 @@ status_t SValue::GetString(const char** a_string) const
 status_t SValue::GetString(SString* a_string) const
 {
 	if (B_UNPACK_TYPE_CODE(m_type) != B_STRING_TYPE) return B_BAD_TYPE;
-	
+
 	switch (B_UNPACK_TYPE_LENGTH(m_type)) {
 		case B_TYPE_LENGTH_LARGE:
 			*a_string = SString(m_data.buffer);
@@ -1836,7 +1836,7 @@ ssize_t SValue::AsSSize(status_t* result) const
 {
 	status_t val = ErrorCheck();
 	status_t r = B_OK;
-	
+
 	if (val == B_OK) {
 		if (m_type == B_PACK_SMALL_TYPE(B_STATUS_TYPE, sizeof(status_t))) {
 			val = m_data.integer;
@@ -1844,7 +1844,7 @@ ssize_t SValue::AsSSize(status_t* result) const
 			val = AsInt32(&r);
 		}
 	}
-	
+
 	if (result) *result = r;
 	return val;
 }
@@ -1867,7 +1867,7 @@ SValue::AsBinder(status_t *result) const
 		if (result) *result = err;
 		return val;
 	}
-		
+
 	if (result) *result = type_conversion_error();
 	return sptr<IBinder>();
 }
@@ -1884,7 +1884,7 @@ SValue::AsWeakBinder(status_t *result) const
 		if (result) *result = err;
 		return val;
 	}
-		
+
 	if (result) *result = type_conversion_error();
 	return wptr<IBinder>();
 }
@@ -3175,7 +3175,7 @@ static bool LooksLikeFourCharCode(uint32_t t)
 		if ((c < ' ') || (c >= 0x7F))
 			return false;
 	}
-	
+
 	return true;
 }
 #endif
@@ -3184,13 +3184,13 @@ status_t SValue::PrintToStream(const sptr<ITextOutput>& io, uint32_t flags) cons
 {
 #if SUPPORTS_TEXT_STREAM
 	if (flags&B_PRINT_STREAM_HEADER) io << "SValue(";
-	
+
 	if (IsSimple()) {
 
 		sptr<IBinder> binder;
 		bool handled = true;
 		char buf[128];
-		
+
 		switch (m_type) {
 			case kUndefinedTypeCode:
 				io << "undefined";
@@ -3366,7 +3366,7 @@ status_t SValue::PrintToStream(const sptr<ITextOutput>& io, uint32_t flags) cons
 				handled = false;
 				break;
 		}
-		
+
 		if (!handled) {
 			const type_code type = Type();
 			const size_t length = Length();
@@ -3453,7 +3453,7 @@ status_t SValue::PrintToStream(const sptr<ITextOutput>& io, uint32_t flags) cons
 				}
 			}
 		}
-				
+
 	} else {
 
 		SValue key, value;
@@ -3480,7 +3480,7 @@ status_t SValue::PrintToStream(const sptr<ITextOutput>& io, uint32_t flags) cons
 			io << dedent << "}";
 		}
 	}
-	
+
 	if (flags&B_PRINT_STREAM_HEADER) io << ")";
 	return B_OK;
 #else
@@ -3519,7 +3519,7 @@ void* SValue::edit_data(size_t len)
 				m_data.buffer = buf;
 				return buf->Data();
 			}
-			
+
 			set_error(B_NO_MEMORY);
 			return NULL;
 
@@ -3541,7 +3541,7 @@ void* SValue::edit_data(size_t len)
 				m_data.buffer = buf;
 				return buf->Data();
 			}
-			
+
 			set_error(B_NO_MEMORY);
 			return NULL;
 
@@ -3615,7 +3615,7 @@ BValueMap** SValue::edit_map()
 BValueMap** SValue::make_map_without_sets()
 {
 	BValueMap **map = NULL;
-	
+
 	if (!is_map()) Undefine();
 	else {
 		size_t N = m_data.map->CountMaps();
@@ -3631,7 +3631,7 @@ BValueMap** SValue::make_map_without_sets()
 			}
 		}
 	}
-	
+
 	return map;
 }
 
@@ -3671,7 +3671,7 @@ static void ReadMallocDebugLevel()
 bool SValue::check_integrity() const
 {
 	bool passed = true;
-	
+
 #if DB_INTEGRITY_CHECKS
 #if !VALIDATES_VALUE
 	if (MallocDebugLevel() <= 0) return passed;
@@ -3777,7 +3777,7 @@ const SValue& SValue::ReplaceValues(const SValue* newValues, const size_t* indic
 			}
 		}
 	}
-	
+
 	CHECK_INTEGRITY(*this);
 	return *this;
 }
@@ -3795,7 +3795,7 @@ void SValue::GetKeyIndices(const SValue* keys, size_t* outIndices, size_t count)
 	{
 		for (size_t i = 0 ; i < count ; i++)
 		{
-			outIndices[i] = ~0; 
+			outIndices[i] = ~0;
 		}
 	}
 }
@@ -3808,7 +3808,7 @@ SValue BArrayAsValue(const SValue* from, size_t count)
 {
 	SValue result;
 	for (size_t i = 0; i < count; i++) {
-		result.JoinItem(SSimpleValue<int32_t>(i), *from);	
+		result.JoinItem(SSimpleValue<int32_t>(i), *from);
 		from++;
 	}
 	return result;
@@ -3824,5 +3824,5 @@ status_t BArrayConstruct(SValue* to, const SValue& value, size_t count)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

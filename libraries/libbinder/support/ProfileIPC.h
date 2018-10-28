@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -25,7 +25,7 @@
 #include <support/KeyedVector.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -46,7 +46,7 @@ struct ipc_stats
 	mutable	SysCriticalSectionType	cs;
 #else
 	mutable	CriticalSectionType	cs;
-#endif	
+#endif
 			int32_t				dumpPeriod;
 			int32_t				maxItems;
 			int32_t				printSymbols;
@@ -61,7 +61,7 @@ struct ipc_stats
 			{
 				size_t		count;
 				nsecs_t		time;
-				
+
 				inline ipc_item()
 					:	count(0), time(0)
 				{
@@ -74,14 +74,14 @@ struct ipc_stats
 
 			SKeyedVector<SCallStack, ipc_item>
 								calls;
-	
+
 								ipc_stats(	int32_t _dumpPeriod, int32_t _maxItems,
 											int32_t _printSymbols, const char* _printLabel);
 	virtual						~ipc_stats();
-	
+
 			void				lock() const;
 			void				unlock() const;
-			
+
 			void				beginCall(ipc_call_state& state);
 			void				finishCall(ipc_call_state& state);
 
@@ -94,7 +94,7 @@ private:
 };
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif	// BUILD_TYPE == BUILD_TYPE_DEBUG

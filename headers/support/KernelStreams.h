@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -23,7 +23,7 @@
 #include <sys/uio.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -38,7 +38,7 @@ class BKernelOStr : public BnByteOutput
 	public:
 								BKernelOStr(int32_t descriptor);
 		virtual					~BKernelOStr();
-		
+
 		virtual	ssize_t			WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
 		virtual	status_t		Sync();
 
@@ -54,7 +54,7 @@ class BKernelIStr : public BnByteInput
 	public:
 								BKernelIStr(int32_t descriptor);
 		virtual					~BKernelIStr();
-		
+
 		virtual	ssize_t			ReadV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
 
 	private:
@@ -67,7 +67,7 @@ class BKernelIStr : public BnByteInput
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_KERNELSTREAMS_H */

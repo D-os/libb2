@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -47,20 +47,20 @@ class BpByteInput : public BpInterface<IByteInput>
 				m_canTransact(true)
 		{
 		}
-		
+
 		virtual ssize_t ReadV(const iovec *vector, ssize_t count, uint32_t flags)
 		{
 			SParcel *replyParcel = SParcel::GetParcel();
 			SValue replyValue;
-			
+
 			ssize_t thisSize,size = 0;
 			ssize_t status = B_OK;
 			ssize_t sizeLeft = 0;
 			const uint8_t* buf=NULL, *pos=NULL;
-			
+
 			// Count total number of bytes being requested.
 			for (int32_t i=0;i<count;i++) size += vector[i].iov_len;
-			
+
 			// If we think the remote binder can handle low-level
 			// transactions, go for it.
 			if (m_canTransact) {
@@ -69,11 +69,11 @@ class BpByteInput : public BpInterface<IByteInput>
 				command->Reserve(sizeof(size)+sizeof(flags));
 				command->WriteInt32(B_HOST_TO_LENDIAN_INT32(size));
 				command->WriteInt32(B_HOST_TO_LENDIAN_INT32(flags));
-				
+
 				// Execute the read operation.
 				status = Remote()->Transact(B_READ_TRANSACTION, *command, replyParcel);
 				sizeLeft = replyParcel->Length();
-				
+
 				// Retrieve status and setup to read data.
 				if (status >= B_OK && sizeLeft >= static_cast<ssize_t>(sizeof(ssize_t))) {
 					buf = static_cast<const uint8_t*>(replyParcel->Data());
@@ -88,7 +88,7 @@ class BpByteInput : public BpInterface<IByteInput>
 					// Return error code.
 					status = B_NO_MEMORY;
 				}
-				
+
 				// If the remote didn't understand our transaction, revert
 				// to the Effect() API and try again.
 				if (status == B_BINDER_UNKNOWN_TRANSACT) {
@@ -96,7 +96,7 @@ class BpByteInput : public BpInterface<IByteInput>
 				}
 				SParcel::PutParcel(command);
 			}
-			
+
 			// If we know the remote binder can't handle remote transactions
 			// (either from an attempt we just did or a previous one), talk
 			// with it through the high-level Effect() API.
@@ -110,7 +110,7 @@ class BpByteInput : public BpInterface<IByteInput>
 				pos = buf = static_cast<const uint8_t*>(replyValue.Data());
 				if (status >= 0 && pos == NULL) status = B_NO_MEMORY;
 			}
-			
+
 			// Retrieve data and write it out.
 			if (status >= B_OK) {
 				for (int32_t i=0;i<count && sizeLeft>0;i++) {
@@ -125,7 +125,7 @@ class BpByteInput : public BpInterface<IByteInput>
 			SParcel::PutParcel(replyParcel);
 			return status;
 		}
-		
+
 		bool m_canTransact;
 };
 
@@ -138,25 +138,25 @@ class BpByteOutput : public BpInterface<IByteOutput>
 				m_canTransact(true)
 		{
 		}
-		
+
 		virtual ssize_t WriteV(const iovec *vector, ssize_t count, uint32_t flags)
 		{
 			ssize_t status(B_OK);
-				
+
 			// If we think the remote binder can handle low-level
 			// transactions, go for it.
 			if (m_canTransact) {
 				SParcel *command = SParcel::GetParcel();
 				SParcel *reply = SParcel::GetParcel();
 				uint32_t code;
-				
+
 				if (count == 1 && flags == 0) {
 					// Optimize the common case to avoid a memcpy().
 					command->Reference(vector->iov_base, vector->iov_len);
 					code = B_WRITE_TRANSACTION;
 				} else {
 					ssize_t size = 0, i;
-					
+
 					// Count number of bytes being written.
 					for (i=0;i<count;i++) size += vector[i].iov_len;
 					// Allocate space for total bytes plus the flags parameter.
@@ -175,7 +175,7 @@ class BpByteOutput : public BpInterface<IByteOutput>
 					}
 					code = B_WRITE_FLAGS_TRANSACTION;
 				}
-				
+
 				// Execute the transaction created above.
 				if (status >= B_OK) {
 					status = Remote()->Transact(code, *command, reply);
@@ -186,7 +186,7 @@ class BpByteOutput : public BpInterface<IByteOutput>
 							status = B_ERROR;
 					}
 				}
-			
+
 				// If the remote didn't understand our transaction, revert
 				// to the Effect() API and try again.
 				if (status == B_BINDER_UNKNOWN_TRANSACT) {
@@ -195,14 +195,14 @@ class BpByteOutput : public BpInterface<IByteOutput>
 				SParcel::PutParcel(reply);
 				SParcel::PutParcel(command);
 			}
-			
+
 			// If we know the remote binder can't handle remote transactions
 			// (either from an attempt we just did or a previous one), talk
 			// with it through the high-level Effect() API.
 			if (!m_canTransact) {
 				SValue data;
 				ssize_t size = 0, i;
-				
+
 				// Count number of bytes being written.
 				for (i=0;i<count;i++) size += vector[i].iov_len;
 				// Copy data into value.
@@ -213,7 +213,7 @@ class BpByteOutput : public BpInterface<IByteOutput>
 						memcpy(buf,vector[i].iov_base,vector[i].iov_len);
 						buf += vector[i].iov_len;
 					}
-					
+
 					// Invoke write command on remote binder.
 					status = Remote()->Invoke(
 							key_Write,
@@ -223,9 +223,9 @@ class BpByteOutput : public BpInterface<IByteOutput>
 				} else {
 					status = B_NO_MEMORY;
 				}
-				
+
 			}
-			
+
 			return status;
 		}
 
@@ -233,7 +233,7 @@ class BpByteOutput : public BpInterface<IByteOutput>
 		{
 			return Remote()->Invoke(key_Sync, B_WILD_VALUE).AsStatus();
 		}
-		
+
 		bool m_canTransact;
 };
 
@@ -251,7 +251,7 @@ class BpByteSeekable : public BpInterface<IByteSeekable>
 			if (v.GetInt64(&off) != B_OK) off = B_ERROR;
 			return static_cast<off_t>(off);
 		}
-		
+
 		virtual off_t Seek(off_t position, uint32_t seek_mode)
 		{
 			SValue v(Remote()->Invoke(
@@ -259,7 +259,7 @@ class BpByteSeekable : public BpInterface<IByteSeekable>
 					SValue(SValue::Int32(0), SValue::Int64(position))
 						.JoinItem(SValue::Int32(1), SValue::Int32(seek_mode))
 				));
-			int64_t off; 
+			int64_t off;
 			if (v.GetInt64(&off) != B_OK) off = B_ERROR;
 			return static_cast<off_t>(off);
 		}
@@ -304,13 +304,13 @@ BnByteInput::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t fla
 				flags = B_LENDIAN_TO_HOST_INT32(*reinterpret_cast<const int32_t*>(params+1));
 			}
 			void* out;
-			
+
 			// Try to allocate a buffer to read data in to (plus room for
 			// a status code at the front).
 			// If an error occurred trying to allocate the buffer,
 			// just return.  The caller will intepret an empty buffer
 			// as being a B_NO_MEMORY error.
-			
+
 			if (size > 0 && reply && (out=reply->Alloc(size+sizeof(ssize_t))) != NULL) {
 				const ssize_t amt = Read(static_cast<uint8_t*>(out)+sizeof(ssize_t), size, flags);
 				*static_cast<ssize_t*>(out) = B_HOST_TO_LENDIAN_INT32(amt);
@@ -319,7 +319,7 @@ BnByteInput::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t fla
 			}
 			return B_OK;
 		}
-		
+
 		return B_BINDER_BAD_TRANSACT;
 	} else {
 		return BBinder::Transact(code, data, reply, flags);
@@ -333,13 +333,13 @@ byteinput_hook_Read(const sptr<IInterface>& This, const SValue& args)
 	uint32_t flags;
 	SValue param;
 	status_t error;
-	
+
 	if (!(param = args[SValue::Int32(0)]).IsDefined()) return SValue::Int32(B_BINDER_MISSING_ARG);
 	readSize = param.AsInt32(&error);
 	if (error != B_OK) return SValue::Int32(B_BINDER_BAD_TYPE);
 
 	flags = args[SValue::Int32(1)].AsInt32();
-	
+
 	SValue result;
 	void* data = result.BeginEditBytes(B_RAW_TYPE, readSize);
 	if (data) {
@@ -349,7 +349,7 @@ byteinput_hook_Read(const sptr<IInterface>& This, const SValue& args)
 	} else {
 		result = SValue::Int32(B_NO_MEMORY);
 	}
-	
+
 	return result;
 }
 
@@ -426,7 +426,7 @@ byteoutput_hook_Write(const sptr<IInterface>& This, const SValue& args)
 	SValue param;
 	uint32_t flags;
 	status_t error;
-	
+
 	// 'flags' parameter is optional
 	if ((param = args[SValue::Int32(1)]).IsDefined()) {
 		flags = param.AsInt32(&error);
@@ -434,10 +434,10 @@ byteoutput_hook_Write(const sptr<IInterface>& This, const SValue& args)
 	} else {
 		flags = 0;
 	}
-	
+
 	if (!(param = args[SValue::Int32(0)]).IsDefined()) return SValue::Int32(B_BINDER_MISSING_ARG);
 	if (!param.IsSimple() && param.Data()) return SValue::Int32(B_BINDER_BAD_TYPE);
-	
+
 	return SValue::Int32(static_cast<IByteOutput*>(This.ptr())
 		->Write(param.Data(), param.Length(), flags));
 }
@@ -496,15 +496,15 @@ byteseekable_hook_Seek(const sptr<IInterface>& This, const SValue& args)
 	off_t position;
 	uint32_t seek_mode;
 	status_t error;
-	
+
 	if (!(param = args[SValue::Int32(0)]).IsDefined()) return SValue::Int32(B_BINDER_MISSING_ARG);
 	position = static_cast<off_t>(param.AsInt64(&error));
 	if (error != B_OK) return SValue::Int32(B_BINDER_BAD_TYPE);
-	
+
 	if (!(param = args[SValue::Int32(1)]).IsDefined()) return SValue::Int32(B_BINDER_MISSING_ARG);
 	seek_mode = param.AsInt32(&error);
 	if (error != B_OK) return SValue::Int32(B_BINDER_BAD_TYPE);
-	
+
 	return SValue::Int64(static_cast<IByteSeekable*>(This.ptr())->Seek(position, seek_mode));
 }
 
@@ -589,7 +589,7 @@ BByteStream::WriteV(const struct iovec *vector, ssize_t count, uint32_t flags)
 	return res;
 }
 
-status_t 
+status_t
 BByteStream::Sync()
 {
 	return m_store->Sync();
@@ -608,7 +608,7 @@ BByteStream::ReadV(const struct iovec *vector, ssize_t count, uint32_t /*flags*/
 
 // ----------------------------------------------------------------- //
 
-off_t 
+off_t
 BByteStream::Seek(off_t position, uint32_t seek_mode)
 {
 	if (seek_mode == SEEK_SET)
@@ -620,7 +620,7 @@ BByteStream::Seek(off_t position, uint32_t seek_mode)
 	return m_pos;
 }
 
-off_t 
+off_t
 BByteStream::Position() const
 {
 	return m_pos;
@@ -768,5 +768,5 @@ off_t BWriteOnlyStream::Position() const
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

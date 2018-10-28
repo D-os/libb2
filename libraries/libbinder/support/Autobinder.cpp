@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -26,7 +26,7 @@
 #include <support_p/WindowsCompatibility.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -55,7 +55,7 @@ autobinder_unmarshal_args(const BParameterInfo* pi, const BParameterInfo* pi_end
 				// as we get parameter values from the remote side, we have
 				// to worry about getting a B_NULL_TYPE.  In that case, we have
 				// an optional parameter that wasn't provided.  We need to duplicate
-				// the NULL parameter on this side so that the function is 
+				// the NULL parameter on this side so that the function is
 				// called with the same semantics.
 			}
 			if (err == B_BINDER_READ_NULL_VALUE) {
@@ -71,7 +71,7 @@ autobinder_unmarshal_args(const BParameterInfo* pi, const BParameterInfo* pi_end
 		pi++;
 		args++;
 	}
-	
+
 	*outDirs = dirs;
 
 	return B_OK;
@@ -134,9 +134,9 @@ autobinder_to_parcel(const BEffectMethodDef &def, void **args, void *result, SPa
 
 		// 2. allocate in the parcel
 		//parcel.Reserve(required);
-		
+
 		// 3. add the values to the parcel
-		
+
 		// return value
 		if (def.returnMarshaller) {
 			amt = def.returnMarshaller->marshal_parcel(parcel, result);
@@ -145,13 +145,13 @@ autobinder_to_parcel(const BEffectMethodDef &def, void **args, void *result, SPa
 			//bout << "Wrote return value " << STypeCode(def.returnType) << ": " << parcel << endl;
 		}
 		if (amt < 0) return amt;
-		
+
 		if (!hasOut) return B_OK;
 
 		// inout and out parameters
 		return autobinder_marshal_args(def.paramTypes, def.paramTypes+def.paramCount, B_OUT_PARAM, args, parcel, &dirs);
 	}
-	
+
 	return B_OK;
 }
 
@@ -246,8 +246,8 @@ parameter_to_value(type_code type, const struct PTypeMarshaller* marshaller, con
 {
 	// value can be NULL if we are dealing with
 	// an optional parameter, in that case
-	// write a B_NULL_VALUE into the stream 
-	// (so the other side can see this, and correctly supply 
+	// write a B_NULL_VALUE into the stream
+	// (so the other side can see this, and correctly supply
 	// a NULL pointer when it calls the function).
 
 	if (value == NULL) {
@@ -263,7 +263,7 @@ parameter_to_value(type_code type, const struct PTypeMarshaller* marshaller, con
 	{
 		case B_BOOL_TYPE:
 			*out = SValue::Bool(*reinterpret_cast<const bool*>(value));
-			
+
 		case B_FLOAT_TYPE:
 			*out = SValue::Float(*reinterpret_cast<const float*>(value));
 			break;
@@ -277,12 +277,12 @@ parameter_to_value(type_code type, const struct PTypeMarshaller* marshaller, con
 		case B_UINT8_TYPE:
 			*out = SValue::Int8(*reinterpret_cast<const int8_t*>(value));
 			break;
-		
+
 		case B_INT16_TYPE:
 		case B_UINT16_TYPE:
 			*out = SValue::Int16(*reinterpret_cast<const int16_t*>(value));
 			break;
-		
+
 		case B_INT32_TYPE:
 		case B_UINT32_TYPE:
 		case B_SIZE_T_TYPE:
@@ -290,7 +290,7 @@ parameter_to_value(type_code type, const struct PTypeMarshaller* marshaller, con
 		case B_WCHAR_TYPE:
 			*out = SValue::Int32(*reinterpret_cast<const int32_t*>(value));
 			break;
-		
+
 		case B_INT64_TYPE:
 		case B_UINT64_TYPE:
 		case B_NSECS_TYPE:
@@ -298,11 +298,11 @@ parameter_to_value(type_code type, const struct PTypeMarshaller* marshaller, con
 		case B_OFF_T_TYPE:
 			*out = SValue::Int64(*reinterpret_cast<const int64_t*>(value));
 			break;
-		
+
 		case B_BINDER_TYPE:
 			*out = SValue::Binder(*reinterpret_cast<const sptr<IBinder>*>(value));
 			break;
-		
+
 		case B_BINDER_WEAK_TYPE:
 			*out = SValue::WeakBinder(*reinterpret_cast<const wptr<IBinder>*>(value));
 			break;
@@ -310,11 +310,11 @@ parameter_to_value(type_code type, const struct PTypeMarshaller* marshaller, con
 		case B_VALUE_TYPE:
 			*out = *reinterpret_cast<const SValue*>(value);
 			break;
-#if 0		
+#if 0
 		case B_CONSTCHAR_TYPE:
 			*out = SValue::String(reinterpret_cast<const char*>(value));
 			break;
-#endif 
+#endif
 		case B_CONSTCHAR_TYPE:
 		case B_STRING_TYPE:
 			*out = SValue::String(*reinterpret_cast<const SString*>(value));
@@ -323,7 +323,7 @@ parameter_to_value(type_code type, const struct PTypeMarshaller* marshaller, con
 		case B_UNDEFINED_TYPE:
 			out->Undefine();
 			break;
-		
+
 		default:
 			return B_BAD_TYPE;
 	}
@@ -349,15 +349,15 @@ parameter_from_value(type_code type, const struct PTypeMarshaller* marshaller, c
 	{
 		case B_BOOL_TYPE:
 			*reinterpret_cast<bool*>(result) = v.AsBool();
-			
+
 		case B_FLOAT_TYPE:
 			*reinterpret_cast<float*>(result) = v.AsFloat();
 			break;
-		
+
 		case B_DOUBLE_TYPE:
 			*reinterpret_cast<double*>(result) = v.AsDouble();
 			break;
-		
+
 		case B_CHAR_TYPE:
 		case B_INT8_TYPE:
 		case B_UINT8_TYPE:
@@ -376,7 +376,7 @@ parameter_from_value(type_code type, const struct PTypeMarshaller* marshaller, c
 		case B_WCHAR_TYPE:
 			*reinterpret_cast<int32_t*>(result) = v.AsInt32();
 			break;
-			
+
 		case B_INT64_TYPE:
 			*reinterpret_cast<int64_t*>(result) = v.AsInt64();
 			break;
@@ -384,7 +384,7 @@ parameter_from_value(type_code type, const struct PTypeMarshaller* marshaller, c
 		case B_BINDER_TYPE:
 			*reinterpret_cast<sptr<IBinder>*>(result) = v.AsBinder();
 			break;
-		
+
 		case B_BINDER_WEAK_TYPE:
 			*reinterpret_cast<wptr<IBinder>*>(result) = v.AsWeakBinder();
 			break;
@@ -400,11 +400,11 @@ parameter_from_value(type_code type, const struct PTypeMarshaller* marshaller, c
 		case B_CONSTCHAR_TYPE:
 		case B_STRING_TYPE:
 			*reinterpret_cast<SString*>(result) = v.AsString();
-			break;	
+			break;
 
 		case B_UNDEFINED_TYPE:
 			break;
-		
+
 		default:
 			break;
 	}
@@ -413,5 +413,5 @@ parameter_from_value(type_code type, const struct PTypeMarshaller* marshaller, c
 
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

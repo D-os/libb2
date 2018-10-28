@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -21,7 +21,7 @@
 #include <support/ByteStream.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -49,11 +49,11 @@ class BBufferIO : public BnByteInput, public BnByteOutput, public BnByteSeekable
 									size_t buf_size = DEFAULT_BUF_SIZE
 								);
 		virtual					~BBufferIO();
-		
+
 		virtual	ssize_t			ReadV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
 		virtual	ssize_t			WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
 		virtual	status_t		Sync();
-		
+
 		virtual off_t			Seek(off_t position, uint32_t seek_mode);
 		virtual	off_t			Position() const;
 
@@ -82,7 +82,7 @@ class BBufferIO : public BnByteInput, public BnByteOutput, public BnByteSeekable
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT2_BUFFERIO_H */

@@ -39,10 +39,10 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::package;
-using namespace palmos::services;
-using namespace palmos::storage;
-using namespace palmos::support;
+using namespace os::package;
+using namespace os::services;
+using namespace os::storage;
+using namespace os::support;
 #endif
 
 B_CONST_STRING_VALUE_LARGE(key_file, "file", )
@@ -369,7 +369,7 @@ void PackageManifestParser::OnDeclareComponent(const SValue& info)
 
 					Example:
 						id:				org.openbinder.widgets.Button
-						local:			widgets.Button	(therefore in package: palmos)
+						local:			widgets.Button	(therefore in package: os)
 						existingLocal:	Button			(therefore in package: org.openbinder.widgets)
 					... or ...
 						id:				org.openbinder.widgets.Button
@@ -747,7 +747,7 @@ void BPackageManager::InitAtom()
     } while (end);
   }
   else {
-    SString dir(get_system_directory());  //opt/palmos
+    SString dir(get_system_directory());  //opt/os
     dir.PathAppend("packages");
     m_packagesPath.AddItem(dir);
     bout << "[PackageManager]: setting package directory '" << dir << "'" << endl;

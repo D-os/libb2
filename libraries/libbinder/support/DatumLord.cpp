@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -13,7 +13,7 @@
 #include <support/DatumLord.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -132,7 +132,7 @@ sptr<IBinder>
 SDatumLord::Datum::Open(uint32_t mode, const sptr<IBinder>& editor, uint32_t /*newType*/)
 {
 	// XXX do we want to allow them to change the type?
-	
+
 	m_lock.Lock();
 
 	sptr<IStorage> storage = m_storage.promote();
@@ -147,13 +147,13 @@ SDatumLord::Datum::Open(uint32_t mode, const sptr<IBinder>& editor, uint32_t /*n
 		}
 
 		m_lock.Lock();
-		
+
 		storage = m_storage.promote();
 		if (storage == NULL) {
 			// if someone got in here while we had the lock open, the return
 			// that one instead, but otherwise (and normally) create one and
 			// return that
-			
+
 			// only allow access to simple values through open
 			if (value.IsSimple()) {
 				m_storageValue = value;
@@ -166,7 +166,7 @@ SDatumLord::Datum::Open(uint32_t mode, const sptr<IBinder>& editor, uint32_t /*n
 			// being a little bit nice... not really required.
 			m_storage = storage;
 		}
-		
+
 	}
 
 	m_lock.Unlock();
@@ -185,7 +185,7 @@ SDatumLord::Datum::StorageDone()
 	m_storage = NULL; // clear out the wptr (releasing the atom's memory)
 	SValue value = m_storageValue;
 	m_lock.Unlock();
-	
+
 	m_owner->SetValue(m_key, value);
 }
 
@@ -203,5 +203,5 @@ SDatumLord::Storage::~Storage()
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

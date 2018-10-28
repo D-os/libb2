@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 #include <support/SortedVector.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -90,22 +90,22 @@ public:
 											const SVector<VALUE>& values,
 											const VALUE& undef = VALUE());
 	virtual					~SKeyedVector();
-	
+
 			//!	Copy another keyed vector in to this one.
 			void			SetTo(const SKeyedVector<KEY,VALUE>& o);
-	
+
 	/* Size stats */
-	
+
 			//!	Set the total space in the keyed vector.
 			void			SetCapacity(size_t total_space);
 			//!	Set the amount of space in the keyed vector for new items.
 			void			SetExtraCapacity(size_t extra_space);
 			//!	Return the total space allocated for the vector.
 			size_t			Capacity() const;
-			
+
 			//!	Return the number of actual items in the vector.
 			size_t			CountItems() const;
-		
+
 	/* Value by Key */
 
 			//!	Retrieve the value corresponding to the given key.
@@ -120,7 +120,7 @@ public:
 
 			//!	Retrieve a value for editing.
 			VALUE&			EditValueFor(const KEY& key, bool* found = NULL);
-			
+
 	/* Value/Key by index */
 
 			//!	Return key at a specific index in the vector.
@@ -129,14 +129,14 @@ public:
 			const VALUE&	ValueAt(size_t i) const;
 			//!	Edit value at a specific index in the vector.
 			VALUE&			EditValueAt(size_t i);
-			
+
 			//!	Return the raw SSortedVector of keys.
 			const SSortedVector<KEY>&	KeyVector() const;
 			//!	Return the raw SSortedVector of values.
 			const SVector<VALUE>&		ValueVector() const;
 			//!	Return an editable SSortedVector of values.
 			SVector<VALUE>&				ValueVector();
-			
+
 	/* List manipulation */
 
 			//!	As per SSortedVector::IndexOf().
@@ -147,21 +147,21 @@ public:
 			ssize_t			CeilIndexOf(const KEY& key) const;
 			//!	As per SSortedVector::GetIndexOf().
 			bool			GetIndexOf(const KEY& key, size_t* index) const;
-			
+
 			//!	Add a new key/value pair to the vector.
 			ssize_t			AddItem(const KEY& key, const VALUE& value);
-			
+
 			//!	Remove one or more items from the vector, starting at 'index'.
 			void			RemoveItemsAt(size_t index, size_t count = 1);
 			//!	Remove the item for the given key.
 			ssize_t			RemoveItemFor(const KEY& key);
-			
+
 			//!	Remove all data.
 			void			MakeEmpty();
-			
+
 			//!	Swap contents of this keyed vector with another.
 			void			Swap(SKeyedVector<KEY,VALUE>& o);
-			
+
 private:
 							SKeyedVector(const SKeyedVector<KEY,VALUE>& o);
 			SKeyedVector<KEY,VALUE>&	operator=(const SKeyedVector<KEY,VALUE>& o);
@@ -274,9 +274,9 @@ const VALUE& SKeyedVector<KEY,VALUE>::ValueFor(const KEY& key, bool* found) cons
 	corresponding to that key.
 
 	For example:
-	
+
 	SVector<int32_t, char> vector;
-	
+
 	vector.AddItem(3, 'a');
 	vector.AddItem(7, 'b');
 
@@ -409,7 +409,7 @@ void BSwap(SKeyedVector<KEY, VALUE>& v1, SKeyedVector<KEY, VALUE>& v2)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif

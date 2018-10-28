@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -27,13 +27,13 @@
 #include <ErrorMgr.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 //-------------------------------------------------------------------
 //Internet style Schemes
 //// "scheme://<user>:<password>@<host>:<port>/<url-path>"
-//http, https, 
+//http, https,
 //	IPV6 addr style
 //		http://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:80/index.html
 
@@ -47,21 +47,21 @@ using namespace palmos::support;
 //	nntp://<host>:<port>/<newsgroup-name>/<article-number>
 
 
-//telnet, 
+//telnet,
 //		telnet://<user>:<password>@<host>:<port>/
 
 
-//wais, 
+//wais,
 //	wais://<host>:<port>/<database>
 //	wais://<host>:<port>/<database>?<search>
 //	wais://<host>:<port>/<database>/<wtype>/<wpath>
 
 
-//file, 
+//file,
 //	file://vms.host.edu/disk$user/my/notes/note12345.txt>
 
 
-//prospero, 
+//prospero,
 //	prospero://<host>:<port>/<hsoname>;<field>=<value>
 //	seperator of name & value is ';'
 
@@ -118,16 +118,16 @@ using namespace palmos::support;
 //-------------------------------------------------------------------
 
 enum Scheme {
-	kNoScheme, 
-	kCustomScheme, 
-	kHTTP, 
-	kHTTPS, 
-	kFile, 
-	kFTP, 
+	kNoScheme,
+	kCustomScheme,
+	kHTTP,
+	kHTTPS,
+	kFile,
+	kFTP,
 	kNNTP,
-	kTelnet, 
-	kWAIS, 
-	kMailTo, 
+	kTelnet,
+	kWAIS,
+	kMailTo,
 	kJavaScript,
 	kAbout
 };
@@ -149,7 +149,7 @@ const char *kSchemes[] = {
 };
 //-------------------------------------------------------------------
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif // _SUPPORTS_NAMESPACE
 
@@ -208,12 +208,12 @@ enum field_offset {
 //	The format of fStrings is:
 //	[Action] \0 //If set by user
 //  [scheme] \0 //If not one of the schemes that we support internally
-//	[user] '\0' 
-//	[password] '\0' 
-//	[hostname] '\0' 
-//	[path] '\0' 
-//	[query/javascript command] '\0' 
-//	[fragment] '\0' 
+//	[user] '\0'
+//	[password] '\0'
+//	[hostname] '\0'
+//	[path] '\0'
+//	[query/javascript command] '\0'
+//	[fragment] '\0'
 //
 //-------------------------------------------------------------------
 
@@ -234,12 +234,12 @@ bool SUrl::IsSchemeSupported(const char *scheme)
 //We build schemes like this
 //"scheme://<user>:<password>@<host>:<port>/<url-path>?<query>&<query>"
 //Any segement of URL is optional, except for scheme itself
-//	By default 
+//	By default
 //	? is used to begin query (queryBeginChar)
 //	& is used to seperate two different queries (querySeperatorChar)
 //  = is used as assignment char is query is of form name=value (queryAssignmentChar)
 //-------------------------------------------------------------------
-status_t	SUrl::SetInternetStyleSchemeSupport(char queryBeginChar, 
+status_t	SUrl::SetInternetStyleSchemeSupport(char queryBeginChar,
 											char queryAssignmentChar,
 											char querySeperatorChar)
 {
@@ -363,7 +363,7 @@ inline const char *get_nth_string(const char *buf, int index)
 	while (index-- > 0)
 		while (*c++ != '\0')
 			;
-	
+
 	return c;
 }
 //-------------------------------------------------------------------
@@ -400,20 +400,20 @@ inline char *append_decimal(char *start, int dec)
 inline bool IsHierarchalScheme(Scheme scheme)
 {
 	switch (scheme) {
-	case kNoScheme: 
-	case kCustomScheme: 
-	case kMailTo: 
-	case kJavaScript: 
+	case kNoScheme:
+	case kCustomScheme:
+	case kMailTo:
+	case kJavaScript:
 	case kAbout:
 		return false;
 
-	case kWAIS: 
+	case kWAIS:
 	case kFile:
 	case kFTP:
-	case kNNTP: 
+	case kNNTP:
 	case kHTTP:
 	case kHTTPS:
-	case kTelnet: 
+	case kTelnet:
 	default:
 		return true;
 	}
@@ -431,7 +431,7 @@ inline int HexToInt(const char *str)
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     };
-    
+
 	return (kHexDigits[static_cast<unsigned char>(str[0])] << 4) |
 		kHexDigits[static_cast<unsigned char>(str[1])];
 }
@@ -488,7 +488,7 @@ inline void UnescapeString(char *out, const char *in, size_t len)
 					char c = HexToInt(in);
 					if (c == '\0')
 						c = ' ';
-					
+
 					*out++ = c;
 					in += 2;
 
@@ -499,12 +499,12 @@ inline void UnescapeString(char *out, const char *in, size_t len)
 
 					break;
 				}
-					
+
 				case '+':
 					*out++ = ' ';
 					in++;
 					break;
-					
+
 				default:
 					*out++ = *in++;
 			}
@@ -570,11 +570,11 @@ char* SUrl::EscapeString(bool escape_all, char *outString, const char *inString,
 				*outString++ = kHexDigits[static_cast<unsigned char>(*c) & 0xf];
 			} else
 				*outString++ = *c;
-	
+
 			inLen--;
 		}
 	} else {
-		// Replace invalid URL characters with escapes.  
+		// Replace invalid URL characters with escapes.
 		for (const char *c = inString; *c && inLen > 0; c++) {
 			if (IsValidURLChar(*c, validMap))
 				*outString++ = *c;
@@ -583,7 +583,7 @@ char* SUrl::EscapeString(bool escape_all, char *outString, const char *inString,
 				*outString++ = kHexDigits[(static_cast<unsigned char>(*c) >> 4) & 0xf];
 				*outString++ = kHexDigits[static_cast<unsigned char>(*c) & 0xf];
 			}
-	
+
 			inLen--;
 		}
 	}
@@ -621,7 +621,7 @@ status_t SUrl::CreateUrlData(int32_t extraSpace, const char *scheme, const char 
 		tempScheme = ExtractScheme(urlString, &schemeEnd);
 
 
-		if (schemeEnd == 0 || schemeEnd == urlString || tempScheme == kNoScheme) 
+		if (schemeEnd == 0 || schemeEnd == urlString || tempScheme == kNoScheme)
 			status = B_INVALID_SCHEME;
 
 		if(tempScheme == kCustomScheme && !escape_all)
@@ -658,7 +658,7 @@ status_t SUrl::CreateUrlData(int32_t extraSpace, const char *scheme, const char 
 		fData->flags.IsSupported = true;
 
 	fData->flags.IsHierarchal =  IsHierarchalScheme(fData->fScheme);
-	
+
 	return status;
 
 }
@@ -923,7 +923,7 @@ status_t SUrl::SetPathInternal(const char *path, int32_t length, bool escape_all
 	free(completePath);
 	return error;
 
-	
+
 	return B_ERROR;
 }
 //-------------------------------------------------------------------
@@ -938,7 +938,7 @@ status_t SUrl::SetTo(const char *urlString, bool escape_all)
 		Reset();
 		return B_OK;
 	}
-	
+
 	if(fData == NULL)
 		status= CreateUrlData(0, NULL, urlString, escape_all);
 	else
@@ -1004,7 +1004,7 @@ status_t SUrl::SetTo(const SUrl &url)
 {
 	if (&url == this)
 		return B_OK;
-		
+
 	// wipe old data
 	if (fData != NULL)
 		Reset();
@@ -1031,7 +1031,7 @@ status_t SUrl::SetTo(const SValue &value)
 	if (fData != NULL)
 		Reset();
 
-	if (value.IsDefined() && value.Type() == B_URL_TYPE && value.Length() > 0) 
+	if (value.IsDefined() && value.Type() == B_URL_TYPE && value.Length() > 0)
 	{
 		ssize_t len = value.Length();
 
@@ -1081,9 +1081,9 @@ status_t SUrl::SetTo(const SUrl &baseURL, const char *relativePath, bool escape_
 		kScanSecondSlash,
 		kScanLeadingSlash,
 		kScanDone,
-	} state = kScanScheme; 
+	} state = kScanScheme;
 
-	if (!baseURL.IsValid()) 
+	if (!baseURL.IsValid())
 	{
 		Reset();
 		return B_INVALID_URL;
@@ -1105,38 +1105,38 @@ status_t SUrl::SetTo(const SUrl &baseURL, const char *relativePath, bool escape_
 				state = kScanLeadingSlash;
 			else if (!isalpha(*s))
 				state = kScanDone;
-			
-			break;			
+
+			break;
 
 		case kScanFirstSlash:
 			if (*s == '/')
 				state = kScanSecondSlash;
-			else if (s > relativePath + 1) 
+			else if (s > relativePath + 1)
 			{
 				int scheme = LookupScheme(relativePath, s - relativePath - 2);
-				if (baseURL.fData->fScheme == scheme && IsHierarchalScheme((Scheme) scheme)) 
+				if (baseURL.fData->fScheme == scheme && IsHierarchalScheme((Scheme) scheme))
 					//If both schemes are same and this scheme is hieriarchal, then we have a relative component
 					return SetToInternal(baseURL, s, escape_all);	// This is of the form scheme:path.
 				else
 					return SetTo(relativePath, escape_all);	// Something like mailto.  Treat as absolute
-			} 
-			else 
+			}
+			else
 			{
 				Reset();
 				return B_INVALID_URL;
 			}
-			
+
 			break;
-		
+
 		case kScanSecondSlash:
 			if (*s == '/')
 				return SetTo(relativePath, escape_all);
 					// The "relative" path is probably a fully qualified URL.
 					// SetTo that.
-			
+
 			// This looks like http:/relative path. Strip off scheme
 			return SetToInternal(baseURL, s - 1, escape_all);
-		
+
 		case kScanLeadingSlash:
 			if (*s == '/') {
 				// Special case.  The url is of the form //machine/stuff
@@ -1149,7 +1149,7 @@ status_t SUrl::SetTo(const SUrl &baseURL, const char *relativePath, bool escape_
 
 			state = kScanDone;
 			break;
-		
+
 		default:
 			;
 		}
@@ -1186,18 +1186,18 @@ status_t SUrl::SetToInternal(const SUrl &baseURL, const char *relativePath, bool
 
 
 	SString	path(baseURL.GetPath());//Start with path of base URL.
-		
-	if (relPathLength > 0) 
+
+	if (relPathLength > 0)
 	{
-		if (relativePath[0] == '/') 
+		if (relativePath[0] == '/')
 		{
 			// If the relative path begins with '/', treat it as beginning from root.
 			// Just append it onto hostname.
 			path.SetTo(relativePath, relPathLength);
-		} 
-		else 
+		}
+		else
 		{
-			// Relative path. 
+			// Relative path.
 			int32_t lastSlashOffset = path.FindLast('/');
 			if(lastSlashOffset == -1)
 				path.SetTo('/', 1);// looks redundant, but handles case where base path has no '/'
@@ -1206,7 +1206,7 @@ status_t SUrl::SetToInternal(const SUrl &baseURL, const char *relativePath, bool
 
 			path.Append(relativePath, relPathLength);
 		}
-	} 
+	}
 
 
 	SetPath(path, escape_all);
@@ -1298,8 +1298,8 @@ SString SUrl::AsString() const
 	dataPtr = get_nth_string(fData->fStrings, kPath);
 	if(dataPtr && *dataPtr)
 		str.Append(dataPtr);
-	
-	
+
+
 	dataPtr = get_nth_string(fData->fStrings, kQuery);
 	if(dataPtr && *dataPtr)
 	{//There is an query
@@ -1313,7 +1313,7 @@ SString SUrl::AsString() const
 		str += '#' ;
 		str.Append(dataPtr);
 	}
-	
+
 	str.EndBuffering();
 
 	return str;
@@ -1379,7 +1379,7 @@ unsigned short SUrl::GetPort() const
 //-------------------------------------------------------------------
 const char* SUrl::GetPath() const
 {
-	if ( fData == 0 || 
+	if ( fData == 0 ||
 			(strcasecmp(GetScheme(), "mailto") == 0))
 		return "";
 
@@ -1455,18 +1455,18 @@ status_t SUrl::SetQueryInternal(const char *query, int32_t length, bool escape_a
 
 	if(error >= B_OK)
 		error = SetNthString(kQuery, escQueryString);
-	
+
 	return error;
 }
 //-------------------------------------------------------------------
-status_t SUrl::ComposeEscapedQuery(const char *name, const char *value, 
+status_t SUrl::ComposeEscapedQuery(const char *name, const char *value,
 								   bool escape_all, SString *outStrP) const
 {
 	if(outStrP == NULL || !name)
 		return B_ERROR;
 
-	if (fData->fScheme == kJavaScript || 
-		fData->fScheme == kAbout || 
+	if (fData->fScheme == kJavaScript ||
+		fData->fScheme == kAbout ||
 		fData->fScheme == kMailTo ||
 		fData->fScheme == kCustomScheme)
 	{
@@ -1507,13 +1507,13 @@ status_t SUrl::ComposeEscapedQuery(const char *name, const char *value,
 	return B_OK;
 }
 //-------------------------------------------------------------------
-status_t SUrl::UnEscapedQuery(const char *query, int32_t length, SString *outStrP) const 
+status_t SUrl::UnEscapedQuery(const char *query, int32_t length, SString *outStrP) const
 {
 	if(length == 0)
 		length = strlen(query);
 
-	if (fData->fScheme == kJavaScript || 
-		fData->fScheme == kAbout || 
+	if (fData->fScheme == kJavaScript ||
+		fData->fScheme == kAbout ||
 		fData->fScheme == kMailTo ||
 		fData->fScheme == kCustomScheme)
 	{
@@ -1561,7 +1561,7 @@ status_t SUrl::AddQueryParameter(const char *name, const char *value, bool escap
 
 	newQuery.Append(queryString);
 
-	//Now set the complete Query 
+	//Now set the complete Query
 	error = SetNthString(kQuery, newQuery);
 
 	return B_OK;
@@ -1572,8 +1572,8 @@ status_t SUrl::GetQueryParameter(const char* name, SString* out_value) const
 {
 	int32_t	nameLength;
 	int32_t	valueLength;
-	
-	const char *queryStrStart =GetQuery(); 
+
+	const char *queryStrStart =GetQuery();
 	const char *nameQ = NULL;
 	const char *valueQ = NULL;
 	status_t	error = GetQueryParameterInternal(queryStrStart, name, &nameQ, &nameLength, &valueQ, &valueLength);
@@ -1591,7 +1591,7 @@ status_t SUrl::GetQueryParameter(const char* name, SString* out_value) const
 
 
 //--------------------------------------------------------------------------
-status_t SUrl::GetQueryParameterInternal(const char *query, const char *name, 
+status_t SUrl::GetQueryParameterInternal(const char *query, const char *name,
 										 const char **namePP, int32_t *nameLengthP,
 										 const char **valuePP, int32_t *valueLengthP) const
 {
@@ -1675,8 +1675,8 @@ status_t SUrl::RemoveQueryParameter(const char *name)
 {
 	int32_t	nameLength;
 	int32_t	valueLength;
-	
-	const char *queryStrStart =GetQuery(); 
+
+	const char *queryStrStart =GetQuery();
 	const char *nameQ = NULL;
 	const char *valueQ = NULL;
 	status_t	error = GetQueryParameterInternal(queryStrStart, name, &nameQ, &nameLength, &valueQ, &valueLength);
@@ -1730,12 +1730,12 @@ status_t SUrl::RemoveQueryParameter(const char *name)
 
 			if(!lastQuery)
 			{	//Part II : Copy all queries after the one being removed
-				
+
 				int32_t	part2Len = strlen(queryStrStart)-(valueQ-queryStrStart+valueLength);
 				newQStr.Append(part2Str, part2Len);
 			}
 		}
-		
+
 		return SetNthString(kQuery, newQStr);
 	}
 
@@ -1746,8 +1746,8 @@ status_t SUrl::ReplaceQueryParameter(const char *name, const char *value, bool a
 {
 	int32_t	nameLength;
 	int32_t	valueLength;
-	
-	const char *queryStrStart =GetQuery(); 
+
+	const char *queryStrStart =GetQuery();
 	const char *nameQ = NULL;
 	const char *valueQ = NULL;
 	status_t	error = GetQueryParameterInternal(queryStrStart, name, &nameQ, &nameLength, &valueQ, &valueLength);
@@ -1802,7 +1802,7 @@ status_t SUrl::ReplaceQueryParameter(const char *name, const char *value, bool a
 			ComposeEscapedQuery(value, NULL, escape_all, &escQueryValue);
 			newQStr.Append(escQueryValue);
 		}
-		
+
 
 		//Part II
 		if(!lastQuery)
@@ -1814,7 +1814,7 @@ status_t SUrl::ReplaceQueryParameter(const char *name, const char *value, bool a
 
 		error =  SetNthString(kQuery, newQStr);
 	}
-	
+
 	return error;
 }
 
@@ -1897,7 +1897,7 @@ bool SUrl::Equals(const char *str) const
 
 bool SUrl::operator==(const char *urlString) const
 {
-	return Equals(urlString);	
+	return Equals(urlString);
 }
 
 bool SUrl::operator==(const SUrl &url) const
@@ -1924,7 +1924,7 @@ status_t SUrl::ParseInternetURL(const char *_src, bool escape_all)
 
 	if(fData->flags.IsHierarchal)
 	{
-		if (src[0] != '/' || src[1] != '/') 
+		if (src[0] != '/' || src[1] != '/')
 		{
 			Reset();
 			return B_ERROR;
@@ -1949,7 +1949,7 @@ status_t SUrl::ParseInternetURL(const char *_src, bool escape_all)
 			src++;
 			begin = src;
 			while(*src && *src != '@')	src++;
-			
+
 			SetNthString(kPassword, begin, src - begin );
 			fData->flags.HasPassword = true;
 		}
@@ -2017,7 +2017,7 @@ status_t SUrl::ParseInternetURL(const char *_src, bool escape_all)
 
 
 //-------------------------------------------------------------------
-//Format 
+//Format
 //username@host?query
 status_t SUrl::ParseMailToURL(const char *src, bool escape_all)
 {
@@ -2030,13 +2030,13 @@ status_t SUrl::ParseMailToURL(const char *src, bool escape_all)
 	// Parse username
 	while (*end && *end != '@')
 			end++;
-	
+
 	status = SetNthString(kUser, begin, end- begin);
 	fData->flags.HasUserName = true;
-	
-	
+
+
 	// Parse hostname
-	if (*end == '@'&& status >= B_OK ) 
+	if (*end == '@'&& status >= B_OK )
 	{
 		end++;
 		begin = end;
@@ -2045,11 +2045,11 @@ status_t SUrl::ParseMailToURL(const char *src, bool escape_all)
 				end++;
 
 		status = SetNthString(kHostname, begin, end- begin );
-	}	
-	
+	}
+
 	// Should the query part of a mailto: URL be escaped?  Other
 	// queries are, but I don't know.  -- Laz, 2001-05-25
-	if (*end == qBegin && status >= B_OK ) 
+	if (*end == qBegin && status >= B_OK )
 	{
 		end++;
 		begin = end;
@@ -2080,7 +2080,7 @@ const char *ExtractQueryString(const char *src, int *query_length, char qChar)
 		queryBegin = src;
 
 		const char *src_query_end = src;
-		while (*src_query_end != '#' && *src_query_end != '\0') 
+		while (*src_query_end != '#' && *src_query_end != '\0')
 		{
 			src_query_end++;
 			query_length++;
@@ -2098,7 +2098,7 @@ const char *ExtractQueryString(const char *src, int *query_length, char qChar)
 //
 char*	NormalizePathString(char *path)
 {
-	const char *pathStart = path;	
+	const char *pathStart = path;
 	const char *in = pathStart;
 	char *out = (char*) pathStart;
 
@@ -2135,7 +2135,7 @@ char*	NormalizePathString(char *path)
 void SUrl::GetUnescapedFileName(char *out, int size) const
 {
 	const char *fname = 0;
-	for (const char *path = GetPath(); *path; path++) 
+	for (const char *path = GetPath(); *path; path++)
 	{
 		if (path && *path == '/')
 			fname = path + 1;
@@ -2181,7 +2181,7 @@ SUrl::SUrl(const char *scheme, const char *hostname, const char *path, int port,
 SUrl::SUrl(const char *name, const SMessage *message)
 	:	fData(0)
 {
-	ExtractFromMessage(name,message); 
+	ExtractFromMessage(name,message);
 }
 //-------------------------------------------------------------------
 uint32_t SUrl::HashString(const char *string, uint32_t hash) const
@@ -2206,7 +2206,7 @@ uint32_t SUrl::HashStringI(const char *string, uint32_t hash) const
 
 		hash = (hash << 7) ^ (hash >> 24) ^ c;
 	}
-	
+
 	return hash;
 }
 //-------------------------------------------------------------------
@@ -2219,26 +2219,26 @@ uint32_t SUrl::HashStringI(const char *string, uint32_t hash) const
 //	the considered because they are generally always the same (http:80).
 uint32_t SUrl::GenerateHash() const
 {
-	uint32_t hash = 0;	
+	uint32_t hash = 0;
 
 	// Hash hostname
 	// Most of the URLs are going to be www.XXX.com.  Strip off the beginning
 	// and end to generate a more unique hash.  Note also the tolower().  As the
 	// host is case insensitive, hash the lowercase version of the letters to
-	// guarantee different case version generate the same hash.  
+	// guarantee different case version generate the same hash.
 	const char *in = GetHostName();
 	while (*in)
 		if (*in++ == '.')
 			break;
-		
+
 	while (*in && *in != '.') {
 		char c = *in++;
 		if (isascii(c))
 			c = tolower(c);
-			
+
 		hash = (hash << 7) ^ (hash >> 24) ^ c;
 	}
-	
+
 	// HashString is case sensitive, because the path and query are.
 	hash = HashString(GetPath(), hash);
 	hash = HashString(GetQuery(), hash);
@@ -2265,7 +2265,7 @@ void SUrl::ExtractFromMessage(const char *name, const SMessage *message)
 	} else {
 		// This was a bad URL
 		Reset();
-	}	
+	}
 }
 
 //-------------------------------------------------------------------
@@ -2280,7 +2280,7 @@ inline void bindump(char *data, int size)
 			else
 				printf("   ");
 		}
-			
+
 		printf("     ");
 		for (int offs2 = 0; offs2 < MIN(size, 16); offs2++)
 			printf("%c", (data[offs2] > 31 && (uint8_t) data[offs2] < 128) ? data[offs2] : '.');

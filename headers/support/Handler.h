@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -28,7 +28,7 @@
 #include <support/Context.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -44,7 +44,7 @@ typedef SHandler BHandler;
 //!	Optimization for retrieving the current time.
 nsecs_t approx_SysGetRunTime();
 //!	Retrieves exact time and updates approx_SysGetRunTime().
-nsecs_t exact_SysGetRunTime();	
+nsecs_t exact_SysGetRunTime();
 
 /*----------------------------------------------------------------*/
 /*----- SHandler class --------------------------------------------*/
@@ -71,7 +71,7 @@ nsecs_t exact_SysGetRunTime();
 
 	SHandler can also be used to serialize with external operations.
 	To do this, pass in an external lock to the constructor.  This
-	lock will then be acquired when calling HandleMessage.  In this way, 
+	lock will then be acquired when calling HandleMessage.  In this way,
 	the serialization of SHandler message handling can be also
 	synchronized with external operations.
 
@@ -87,7 +87,7 @@ public:
 	/*!	@name Bookkeeping
 		Creation, destruction, locking, etc. */
 	//@{
-			
+
 							SHandler();
 			//!	Supply an external lock to be held when dispatching messages.
 							SHandler(SLocker* externalLock);
@@ -241,7 +241,7 @@ public:
 				method_ptr_t	method;
 			};
 
-		
+
 			//!	Iterate through this handler's message queueue, selecting whether to keep or remove messages.
 			/*!	Your filter_func selects the action to perform for each message
 				by the result it turns.  If it selects to remove a message, the
@@ -258,12 +258,12 @@ public:
 			void			FilterMessages(	const filter_functor_base& functor, uint32_t flags,
 											void* data,
 											SMessageList* outRemoved = NULL);
-			
+
 			//!	Perform FilterMessages() where all messages that match \a what are deleted.
 			/*!	@see FilterMessages() */
 			void			RemoveMessages(	uint32_t what, uint32_t flags,
 											SMessageList* outRemoved = NULL);
-			
+
 			//!	Perform FilterMessages() where all messages are deleted.
 			/*!	@see FilterMessages() */
 			void			RemoveAllMessages(SMessageList* outRemoved = NULL);
@@ -282,16 +282,16 @@ public:
 
 			//!	Return the time of the next message in the queue.
 			nsecs_t			NextMessageTime(int32_t* out_priority);
-			
+
 			//!	Remove next pending message with code \a what from the handler's message queue.
 			/*!	You are responsible for deleting the returned message.
 				If there are no matching pending message, NULL is returned.
 			*/
 			SMessage*		DequeueMessage(uint32_t what);
-			
+
 			//!	Immediately handle all messages currently in the queue.
 			void 			DispatchAllMessages();
-			
+
 	//@}
 
 private:
@@ -299,7 +299,7 @@ private:
 
 							SHandler(const SHandler&);
 			SHandler		operator=(const SHandler&);
-	
+
 			enum scheduling {
 				CANCEL_SCHEDULE = 0,
 				DO_SCHEDULE,
@@ -319,7 +319,7 @@ private:
 			SLocker			m_lock;
 			SMessageList	m_msgQueue;
 			uint32_t		m_state;
-			
+
 			SHandler *		m_next;
 			SHandler *		m_prev;
 
@@ -346,7 +346,7 @@ enum {
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_HANDLER_H */

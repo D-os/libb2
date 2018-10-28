@@ -18,7 +18,7 @@
 #include <support/Catalog.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 #endif
 
@@ -616,5 +616,5 @@ BGenericNode::meta_datum::~meta_datum()
 
 #if _SUPPORTS_NAMESPACE
 }
-}  // namespace palmos::storage
+}  // namespace os::storage
 #endif

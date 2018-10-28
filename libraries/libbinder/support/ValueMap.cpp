@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -31,7 +31,7 @@
 #define PROFILE_VALUE_MAP 0
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -168,7 +168,7 @@ BValueMap* BValueMap::Create(SParcel& from, size_t avail, size_t count, ssize_t*
 	ssize_t remain = avail;
 	size_t i = 0;
 	pair* pos;
-	
+
 	BValueMap* This = Create(count);
 	if (This != NULL) {
 		pos = This->m_maps;
@@ -184,7 +184,7 @@ BValueMap* BValueMap::Create(SParcel& from, size_t avail, size_t count, ssize_t*
 			remain -= size;
 			pos++;
 		}
-		
+
 		This->m_size = count;
 		*out_size = This->m_dataSize = (avail-remain);
 		return This;
@@ -254,7 +254,7 @@ ssize_t BValueMap::ComputeArchivedSize() const
 ssize_t BValueMap::Archive(SParcel& into) const
 {
 	AssertEditing();
-	
+
 	ssize_t total = 0, size;
 	const size_t N = CountMaps();
 
@@ -265,7 +265,7 @@ ssize_t BValueMap::Archive(SParcel& into) const
 		if ((size=p.value.Archive(into)) < B_OK) return size;
 		total += size;
 	}
-	
+
 	#if VALIDATES_VALUE
 		if (total != ArchivedSize()) {
 			bout << "Written size: " << total << ", Expected: " << ArchivedSize() << endl;
@@ -273,7 +273,7 @@ ssize_t BValueMap::Archive(SParcel& into) const
 			ErrFatalError("Cached size wrong!");
 		}
 	#endif
-		
+
 	return total;
 }
 
@@ -317,7 +317,7 @@ int32_t BValueMap::LexicalCompare(const BValueMap& o) const
 ssize_t BValueMap::AddNewMap(BValueMap** This, const SValue& key, const SValue& value)
 {
 	(*This)->AssertEditing();
-	
+
 	if (value.is_defined() && key.is_defined() && (!value.is_wild() || !key.is_wild())) {
 		ssize_t index;
 		if (!(*This)->GetIndexOf(key, value, reinterpret_cast<size_t*>(&index))) {
@@ -332,7 +332,7 @@ ssize_t BValueMap::AddNewMap(BValueMap** This, const SValue& key, const SValue& 
 status_t BValueMap::RemoveMap(BValueMap** This, const SValue& key, const SValue& value)
 {
 	(*This)->AssertEditing();
-	
+
 	if (!key.is_wild() || !value.is_wild()) {
 		size_t index;
 		if ((*This)->GetIndexOf(key, value, &index)) {
@@ -344,7 +344,7 @@ status_t BValueMap::RemoveMap(BValueMap** This, const SValue& key, const SValue&
 		(*This)->m_size = 0;
 		(*This)->m_dataSize = B_ERROR;
 	}
-	
+
 	return B_NAME_NOT_FOUND;
 }
 
@@ -390,7 +390,7 @@ void BValueMap::RemoveMapAt(BValueMap** This, size_t index)
 status_t BValueMap::RenameMap(BValueMap** This, const SValue& old_key, const SValue& new_key)
 {
 	(*This)->AssertEditing();
-	
+
 	if (!old_key.is_wild() && old_key.is_defined() && new_key.is_specified()) {
 		ssize_t old_index, new_index;
 		if ((*This)->GetIndexOf(old_key, B_WILD_VALUE, reinterpret_cast<size_t*>(&old_index))) {
@@ -412,7 +412,7 @@ SValue *BValueMap::BeginEditMapAt(BValueMap** This, size_t index)
 {
 	DbgOnlyFatalErrorIf((*This)->m_size < 0 || index >= (size_t)(*This)->m_size, "Bad args to RemoveMapAt()");
 	ErrFatalErrorIf((*This)->m_editIndex >= 0, "Can't edit more than one item at a time.");
-		
+
 	(*This)->m_editIndex = index;
 	return &((*This)->m_maps[index].value);
 }
@@ -427,7 +427,7 @@ void BValueMap::EndEditMapAt(BValueMap** _This)
 	const int32_t index = This->m_editIndex;
 	This->m_editIndex = -1;
 	This->m_dataSize = B_ERROR;
-	
+
 	if (!p.value.IsDefined()) RemoveMapAt(_This, index);
 }
 
@@ -457,7 +457,7 @@ bool BValueMap::GetIndexOf(uint32_t type, const void* data, size_t length, size_
 			return true;
 		}
 	}
-	
+
 	*index = low;
 	return false;
 }
@@ -477,7 +477,7 @@ bool BValueMap::GetIndexOf(const SValue& k, const SValue& v, size_t* index) cons
 			return true;
 		}
 	}
-	
+
 	*index = low;
 	return false;
 }
@@ -522,5 +522,5 @@ ssize_t BValueMap::AddMapAt(BValueMap** This, size_t index, const SValue& key, c
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

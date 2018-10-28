@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -40,10 +40,10 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 
-using namespace palmos::osp;
+using namespace os::osp;
 #endif
 
 struct links_rec {
@@ -51,7 +51,7 @@ struct links_rec {
 		:	targetAtom(NULL), target(NULL)
 	{
 	};
-	
+
 	links_rec(const links_rec &orig)
 		:	value(orig.value), targetAtom(orig.targetAtom), target(orig.target), flags(orig.flags)
 	{
@@ -63,7 +63,7 @@ struct links_rec {
 			else targetAtom->IncStrong(this);
 		}
 	};
-	
+
 	links_rec(const SValue & k, const sptr<IBinder> &t, uint32_t f)
 		:	value(k), targetAtom(t.ptr()), target(t.ptr()), flags(f)
 	{
@@ -75,7 +75,7 @@ struct links_rec {
 			else targetAtom->IncStrong(this);
 		}
 	};
-	
+
 	~links_rec()
 	{
 		if (targetAtom) {
@@ -86,12 +86,12 @@ struct links_rec {
 			else targetAtom->DecStrong(this);
 		}
 	}
-	
+
 	bool operator==(const links_rec & other) const
 	{
 		return value == other.value && target == other.target && flags == other.flags;
 	}
-	
+
 	links_rec& operator=(const links_rec & other)
 	{
 		if (other.targetAtom) {
@@ -114,7 +114,7 @@ struct links_rec {
 		flags = other.flags;
 		return *this;
 	}
-	
+
 	SValue value;
 	SAtom* targetAtom;
 	IBinder* target;
@@ -131,11 +131,11 @@ static void do_push(const SKeyedVector<sptr<IBinder>, SValue>& sendThese)
 		SValue dummiResult;
 		const sptr<IBinder>& target = sendThese.KeyAt(i);
 		const SValue & value = sendThese.ValueAt(i);
-#if BINDER_DEBUG_PUSH_MSGS 
+#if BINDER_DEBUG_PUSH_MSGS
 		bout << "Pushing to target: " << SValue::Binder(target) << endl;
 #endif
 		target->Effect(value, B_WILD_VALUE, B_UNDEFINED_VALUE, &dummiResult);
-	}		
+	}
 }
 
 class AsyncHandler : public BHandler
@@ -144,7 +144,7 @@ public:
 	AsyncHandler()
 	{
 	}
-	
+
 	virtual status_t HandleMessage(const SMessage& msg)
 	{
 		if (msg.What() == 'asyn')
@@ -213,7 +213,7 @@ IInterface::AsBinder()
 {
 	if (this != NULL)
 		return AsBinderImpl();
-	
+
 	return NULL;
 }
 
@@ -228,7 +228,7 @@ IInterface::AsBinder() const
 {
 	if (this != NULL)
 		return AsBinderImpl();
-	
+
 	return NULL;
 }
 
@@ -245,7 +245,7 @@ IInterface::ExecAsInterface(const sptr<IBinder>& binderIn,
 							status_t* out_error)
 {
 	sptr<IInterface> interface;
-	
+
 	if (binderIn != NULL) {
 		sptr<IBinder> binder = NULL;
 		SValue inspected = binderIn->Inspect(binderIn, descriptor);
@@ -284,12 +284,12 @@ IInterface::ExecAsInterfaceNoInspect(const sptr<IBinder>& binder,
 									 status_t* out_error)
 {
 	sptr<IInterface> interface;
-	
+
 	if (binder != NULL) {
 		interface = binder->InterfaceFor(descriptor);
 		if (interface == NULL) interface = proxy_func(binder);
 	}
-	
+
 	if (out_error) {
 		// No type checking -- always succeed.
 		*out_error = B_OK;
@@ -300,13 +300,13 @@ IInterface::ExecAsInterfaceNoInspect(const sptr<IBinder>& binder,
 
 /**************************************************************************************/
 
-status_t 
+status_t
 IBinder::Put(const SValue &in)
 {
 	return Effect(in,B_WILD_VALUE,B_UNDEFINED_VALUE,NULL);
 }
 
-SValue 
+SValue
 IBinder::Get(const SValue &bindings) const
 {
 	SValue out;
@@ -317,13 +317,13 @@ IBinder::Get(const SValue &bindings) const
 	return out;
 }
 
-SValue 
+SValue
 IBinder::Get() const
 {
 	return Get(B_WILD_VALUE);
 }
 
-SValue 
+SValue
 IBinder::Invoke(const SValue &func, const SValue &args)
 {
 	SValue out;
@@ -331,7 +331,7 @@ IBinder::Invoke(const SValue &func, const SValue &args)
 	return out;
 }
 
-SValue 
+SValue
 IBinder::Invoke(const SValue &func) // thunk!
 {
 	SValue out;
@@ -352,7 +352,7 @@ IBinder::LocalBinder()
 	return NULL;
 }
 
-BNS(::palmos::osp::) BpBinder*
+BNS(os::osp::) BpBinder*
 IBinder::RemoteBinder()
 {
 	return NULL;
@@ -379,7 +379,7 @@ static inline status_t call_effect_func(const effect_action_def& action,
 		object = reinterpret_cast<unsigned char *>(target.ptr());
 		object += action.parameters->classOffset;
 	}
-	
+
 	switch (state.which)
 	{
 		case B_INVOKE_ACTION:
@@ -399,7 +399,7 @@ static inline status_t call_effect_func(const effect_action_def& action,
 			}
 			if (out) out->JoinItem(state.outKey, returnValue);
 			break;
-		
+
 		case B_PUT_ACTION:
 			if (action.put) {
 				err = action.put(target, state.args);
@@ -416,7 +416,7 @@ static inline status_t call_effect_func(const effect_action_def& action,
 				return B_MISMATCHED_VALUES;
 			}
 			break;
-		
+
 		case B_GET_ACTION:
 			if (action.get) {
 				returnValue = action.get(target);
@@ -437,10 +437,10 @@ static inline status_t call_effect_func(const effect_action_def& action,
 		default:
 			return B_BAD_VALUE;
 	}
-	
+
 //	SValue nullll("NULL");
 //	bout << "out is " << (out ? *out : nullll) << endl;
-	
+
 	return err;
 }
 
@@ -456,23 +456,23 @@ static uint32_t finish_logic(bool hasIn, bool hasOut, const effect_action_def &a
 		hasGet = action.get != NULL;
 		hasInvoke = action.invoke != NULL;
 	}
-					
-	// Select the appropriate action to be performed.  Only one 
-	// hook will be called, whichever best matches the effect arguments. 
 
-	// Do an invoke if it is defined and we have both an input 
-	// and output, or only an input and no "put" action. 
-	if (hasInvoke && hasIn && (hasOut || !hasPut)) 
+	// Select the appropriate action to be performed.  Only one
+	// hook will be called, whichever best matches the effect arguments.
+
+	// Do an invoke if it is defined and we have both an input
+	// and output, or only an input and no "put" action.
+	if (hasInvoke && hasIn && (hasOut || !hasPut))
 		return B_INVOKE_ACTION;
 
-	// Do a put if it is defined and we have an input. 
-	else if (hasPut && hasIn) 
+	// Do a put if it is defined and we have an input.
+	else if (hasPut && hasIn)
 		return B_PUT_ACTION;
-	
-	// Do a get if it is defined and we have an output. 
-	else if (hasGet && hasOut) 
+
+	// Do a get if it is defined and we have an output.
+	else if (hasGet && hasOut)
 		return B_GET_ACTION;
-		
+
 	else return B_NO_ACTION;
 }
 
@@ -488,7 +488,7 @@ status_t execute_effect(const sptr<IInterface>& target,
 	effect_call_state state;
 	bool hasIn, hasOut;
 	status_t result = B_OK;
-	
+
 	// Optimize for the common case of the actions being in value-sorted order,
 	// and only one action is being performed.
 	if (	(flags&B_ACTIONS_SORTED_BY_KEY) != 0 &&
@@ -509,7 +509,7 @@ status_t execute_effect(const sptr<IInterface>& target,
 			if (!inN) key = tmpKey;
 			else if (key != tmpKey) key.Undefine();
 		}
-		
+
 		#if 0
 		bout	<< "execute_effect() short path:" << endl << indent
 				<< "Told: " << told << endl
@@ -518,7 +518,7 @@ status_t execute_effect(const sptr<IInterface>& target,
 				<< "args: " << state.args << endl
 				<< "outKey: " << state.outKey << endl << dedent;
 		#endif
-		
+
 		if (key.IsDefined()) {
 			ssize_t mid, low = 0, high = ((ssize_t)num_actions)-1;
 			while (low <= high) {
@@ -542,13 +542,13 @@ status_t execute_effect(const sptr<IInterface>& target,
 					bout	<< "Found action #" << mid << ": in=" << hasIn
 							<< ", out=" << hasOut << endl;
 					#endif
-					
+
 					state.which = finish_logic(hasIn && inN>0, hasOut && outN>0, actions[mid]);
 					return call_effect_func(actions[mid], state, target, out);
 				}
 			}
 		}
-		
+
 		#if 0
 		bout	<< "execute_effect() short path FAILED:" << endl << indent
 				<< "Told: " << told << endl
@@ -558,10 +558,10 @@ status_t execute_effect(const sptr<IInterface>& target,
 				<< "outKey: " << state.outKey << endl << dedent;
 		#endif
 	}
-	
+
 	// Unoptimized version when effect_action_def array is not
 	// in sorted order or multiple bindings are supplied.
-	
+
 	// Iterate through all actions and execute in order.
 
 	while (num_actions > 0 && result == B_OK) {
@@ -574,7 +574,7 @@ status_t execute_effect(const sptr<IInterface>& target,
 			<< "args: " << state.args << endl
 			<< "outKey: " << state.outKey << endl << dedent;
 	#endif
-	
+
 		// First check to see if there are any inputs or outputs in
 		// the effect for this action binding.
 		hasIn		= (	(actions->put || actions->invoke
@@ -584,9 +584,9 @@ status_t execute_effect(const sptr<IInterface>& target,
 		hasOut	= (actions->get || actions->invoke
 								|| (actions->parameters && actions->parameters->get)
 								|| (actions->parameters && actions->parameters->invoke));
-		
+
 		if (hasOut) {
-			state.outKey = (outBindings * SValue(actions->key(), B_WILD_VALUE)); // ??? outBindings[actions->key()]; 
+			state.outKey = (outBindings * SValue(actions->key(), B_WILD_VALUE)); // ??? outBindings[actions->key()];
 			if (state.outKey.IsDefined()) {
 				void* cookie = NULL;
 				SValue key, val;
@@ -596,17 +596,17 @@ status_t execute_effect(const sptr<IInterface>& target,
 				hasOut = false;
 			}
 		}
-		
+
 		state.which = finish_logic(hasIn, hasOut, *actions);
 		if (state.which != B_NO_ACTION) {
 			result = call_effect_func(*actions, state, target, out);
 		}
-		
+
 		actions = reinterpret_cast<const effect_action_def*>(
 			reinterpret_cast<const uint8_t*>(actions) + actions->struct_size);
 		num_actions--;
 	}
-	
+
 	return result;
 }
 
@@ -711,9 +711,9 @@ BBinder::Link(const sptr<IBinder>& node, const SValue &binding, uint32_t flags)
 			delete e;
 		}
 	}
-	
+
 	if ((e=m_extensions) == NULL) return B_NO_MEMORY;
-	
+
 	if (!binding.IsWild()) {
 		SValue senderKey, targetKey;
 		SValue remnants;
@@ -784,7 +784,7 @@ BBinder::Link(const sptr<IBinder>& node, const SValue &binding, uint32_t flags)
 			DecStrong(this);
 		}
 	}
-	
+
 	// XXX This could get out of sync with the list of links,
 	// if clients call Unlink() differently.
 	if (result >= B_OK) {
@@ -794,12 +794,12 @@ BBinder::Link(const sptr<IBinder>& node, const SValue &binding, uint32_t flags)
 	return result >= B_OK ? B_OK : result;
 }
 
-status_t 
+status_t
 BBinder::Unlink(const wptr<IBinder>& node, const SValue &binding, uint32_t flags)
 {
 //	bout << "Unlink: node=" << node << ", binding=" << binding
 //		<< ", flags=" << (void*)flags << endl;
-	
+
 	if (!m_extensions) return B_ERROR;
 	status_t err = B_OK;
 	size_t i;
@@ -833,7 +833,7 @@ BBinder::Unlink(const wptr<IBinder>& node, const SValue &binding, uint32_t flags
 				e->links.RemoveItemsAt(i);
 			}
 		}
-		
+
 		i = e->other_links.CountItems();
 		while (i > 0) {
 			--i;
@@ -846,7 +846,7 @@ BBinder::Unlink(const wptr<IBinder>& node, const SValue &binding, uint32_t flags
 				e->other_links.RemoveItemsAt(i);
 			}
 		}
-		
+
 	} else if (!binding.IsWild()) {
 		SValue senderKey, targetKey;
 		SValue remnants;
@@ -898,9 +898,9 @@ BBinder::Unlink(const wptr<IBinder>& node, const SValue &binding, uint32_t flags
 			}
 		}
 	}
-	
+
 	e->lock.Unlock();
-	
+
 	return err;
 }
 
@@ -918,14 +918,14 @@ BBinder::IsLinked() const
 	return linked;
 }
 
-status_t 
+status_t
 BBinder::Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out)
 {
 	EffectCache cache;
 
 	// Remember any previous effect cache context.
 	EffectCache *lastCache = (EffectCache*)tls_get(gBinderTLS);
-	
+
 	if (out) {
 		// Start a new effect cache context where Push() should go.
 		cache.in = &in;
@@ -938,13 +938,13 @@ BBinder::Effect(const SValue &in, const SValue &inBindings, const SValue &outBin
 		// want a Push() call here to modify the caller's effect cache.
 		EndEffectContext();
 	}
-	
+
 	const status_t result(HandleEffect(in, inBindings, outBindings, out));
 
 	// Restore the previous effect context.
 	if (lastCache) BeginEffectContext(*lastCache);
 	else EndEffectContext();
-	
+
 	return result;
 }
 
@@ -968,7 +968,7 @@ status_t BBinder::AutobinderInvoke(const BAutobinderDef* def, void** params, voi
 	status_t err;
 	SValue v;
 	size_t i;
-	
+
 	// in and inout parameters
 	for (i=0; i<def->invoke->paramCount; i++) {
 		const BParameterInfo &p = def->invoke->paramTypes[i];
@@ -978,7 +978,7 @@ status_t BBinder::AutobinderInvoke(const BAutobinderDef* def, void** params, voi
 			args.JoinItem(SValue::Int32(i), v);
 		}
 	}
-	
+
 	// invoke it!
 	v = Invoke(def->key(), args);
 
@@ -994,7 +994,7 @@ status_t BBinder::AutobinderInvoke(const BAutobinderDef* def, void** params, voi
 			if (err != B_OK) return err;
 		}
 	}
-	
+
 	return B_OK;
 }
 
@@ -1010,7 +1010,7 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 		SValue args;
 		SValue out;
 		status_t err;
-		
+
 		// skip the index
 		data.ReadInt32();
 
@@ -1030,7 +1030,7 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 		err = Effect(SValue(name,args), B_WILD_VALUE, name, &out);
 		//if (name.AsString() == "Interface")
 		//	bout << "BBinder::Transact/INVOKE out value: " << out << endl;
-		
+
 		if (reply && err == B_OK) {
 			size_t required = 0;
 
@@ -1038,7 +1038,7 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 			// return value
 			SValue returned = out[key_result];
 			required += returned.ArchivedSize();
-				
+
 			// inout and out parameters
 			SValue out_key, out_value;
 			int32_t i, j, out_count = out.CountItems()-(returned.IsDefined()?1:0);
@@ -1053,11 +1053,11 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 			// 2. allocate in the parcel
 			err = reply->Reserve(required);
 			if (err != B_OK) return err;
-			
+
 			// 3. write the parcel
 			// return value
 			reply->WriteValue(returned);
-				
+
 			// inout and out parameters
 			for (i=0, j=0; j<out_count; i++) {
 				SValue out_param = out[SValue::Int32(i)];
@@ -1070,12 +1070,12 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 				//			<< " as " << out_param << endl;
 			}
 
-			
+
 			// Send it back.
 			reply->Reply();
 		}
 
-		return err;	
+		return err;
 	}
 	else if (code == B_INSPECT_TRANSACTION)
 	{
@@ -1100,7 +1100,7 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 		name.Unarchive(data);
 
 		status_t status = Effect(B_UNDEFINED_VALUE, B_UNDEFINED_VALUE, name, &replyValue);
-		
+
 		if (reply) {
 			if (status >= B_OK) {
 				status = reply->SetValues(&replyValue, NULL);
@@ -1120,15 +1120,15 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 		SValue name;
 		SValue val;
 		SValue replyValue;
-		
+
 		// skip the index
 		data.ReadInt32();
 
 		name.Unarchive(data);
 		val.Unarchive(data);
-		
+
 		SValue in(name, val);
-				
+
 		return Effect(in, B_WILD_VALUE, B_UNDEFINED_VALUE, &replyValue);
 	}
 	else if (code == B_EFFECT_TRANSACTION)
@@ -1136,10 +1136,10 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 		SValue values[3];
 		SValue replyValue;
 		SValue val;
-		
+
 		ssize_t status = data.GetValues(3, values);
 		if (status < B_OK) return status;
-		
+
 #if BINDER_DEBUG_MSGS
 		berr << "BBinder::Transact " << this << " {" << endl << indent;
 		if (status >= 1) berr << "Value 1: " << values[0] << endl;
@@ -1154,7 +1154,7 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 			status = Effect(values[0],values[1],B_UNDEFINED_VALUE,&replyValue);
 		else if (status == 3)
 			status = Effect(values[0],values[1],values[2],&replyValue);
-	
+
 		if (reply) {
 			if (status >= B_OK) {
 				status = reply->SetValues(&replyValue, NULL);
@@ -1201,7 +1201,7 @@ BBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t /*flags
 		}
 		return status;
 	}
-	
+
 	return B_BINDER_UNKNOWN_TRANSACT;
 }
 
@@ -1240,13 +1240,13 @@ BBinder::LocalBinder()
 	return this;
 }
 
-BNS(::palmos::osp::) BpBinder*
+BNS(os::osp::) BpBinder*
 BBinder::RemoteBinder()
 {
 	return NULL;
 }
 
-status_t 
+status_t
 BBinder::HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out)
 {
 	SValue told = inBindings * in;
@@ -1294,7 +1294,7 @@ BBinder::HandleEffect(const SValue &in, const SValue &inBindings, const SValue &
 			out->JoinItem(key, result);
 		}
 	}
-	
+
 	return B_OK;
 }
 
@@ -1309,7 +1309,7 @@ BBinder::Asked(const SValue&, SValue*)
 {
 	return B_OK;
 }
- 
+
 status_t
 BBinder::Called(const SValue&, const SValue&, SValue*)
 {
@@ -1334,15 +1334,15 @@ private:
 	SKeyedVector<sptr<IBinder>, SValue>* m_asyncGroup;
 };
 
-status_t 
-PushMaps::Add(const sptr<IBinder>& target, const SValue& key, const SValue& binding, uint32_t flags, sptr<AsyncHandler>* handler) 
+status_t
+PushMaps::Add(const sptr<IBinder>& target, const SValue& key, const SValue& binding, uint32_t flags, sptr<AsyncHandler>* handler)
 {
 	SKeyedVector<sptr<IBinder>, SValue>* group;
 	if (flags&B_SYNC_BINDER_LINK) {
 		group = &m_syncGroup;
 	}
 	else {
-		// If we are dealing with an async link, then 
+		// If we are dealing with an async link, then
 		// make sure we have allocated the async group,
 		// and that we have an asyc handler
 		if (m_asyncGroup == NULL) {
@@ -1365,7 +1365,7 @@ PushMaps::Add(const sptr<IBinder>& target, const SValue& key, const SValue& bind
 	if (found) {
 		// found - join in current key/value depending on translate flag
 		if (flags & B_NO_TRANSLATE_LINK) {
-#if BINDER_DEBUG_PUSH_MSGS 
+#if BINDER_DEBUG_PUSH_MSGS
 			bout << "Pushing Notification: " << key << endl;
 #endif
 			targetOut.Join(key);
@@ -1382,7 +1382,7 @@ PushMaps::Add(const sptr<IBinder>& target, const SValue& key, const SValue& bind
 	} else {
 		// not found - add key/value depending on translate flag
 		if (flags & B_NO_TRANSLATE_LINK) {
-#if BINDER_DEBUG_PUSH_MSGS 
+#if BINDER_DEBUG_PUSH_MSGS
 			bout << "Pushing Notification: " << key << endl;
 #endif
 			group->AddItem(target, key);
@@ -1397,12 +1397,12 @@ PushMaps::Add(const sptr<IBinder>& target, const SValue& key, const SValue& bind
 			group->AddItem(target, binding);
 		}
 	}
-	
+
 	return B_OK;
 }
 
 status_t
-PushMaps::DoPush(const sptr<AsyncHandler>& handler) 
+PushMaps::DoPush(const sptr<AsyncHandler>& handler)
 {
 	status_t err = B_OK;
 	// Push both the sync group and the async group
@@ -1411,7 +1411,7 @@ PushMaps::DoPush(const sptr<AsyncHandler>& handler)
 	}
 
 	if (m_asyncGroup != NULL) {
-#if !LIBBE_BOOTSTRAP			
+#if !LIBBE_BOOTSTRAP
 		SMessage msg('asyn', SLooper::ThreadPriority());
 		// This is the stuff to push.
 		uintptr_t asyncGroup = (uintptr_t)m_asyncGroup;
@@ -1429,14 +1429,14 @@ PushMaps::DoPush(const sptr<AsyncHandler>& handler)
 		delete m_asyncGroup;
 #endif
 	}
-	
+
 	return err;
 }
 
 status_t
 BBinder::Push(const SValue &out)
 {
-#if BINDER_DEBUG_PUSH_MSGS 
+#if BINDER_DEBUG_PUSH_MSGS
 	bout << "<BBinder::Push>" << endl << indent;
 #endif
 
@@ -1460,7 +1460,7 @@ BBinder::Push(const SValue &out)
 #endif
 		}
 	}
-	
+
 	status_t err = B_OK;
 	// Notify our links about this Push()
 	// Right now we perform the push sychronously if the link
@@ -1479,7 +1479,7 @@ BBinder::Push(const SValue &out)
 		PushMaps pushList;
 		e->lock.Lock();
 		if (e->links.CountItems() > 0) {
-			
+
 			SValue senderKey, senderValue;
 			void * cookie = NULL;
 			bool found;
@@ -1489,7 +1489,7 @@ BBinder::Push(const SValue &out)
 					size_t i, count = rec.CountItems();
 					for (i=0; i<count; i++) {
 						const links_rec & ent = rec[i];
-						
+
 						sptr<IBinder> target;
 						if (ent.flags&B_WEAK_BINDER_LINK) {
 							if (ent.target->AttemptIncStrong(this)) {
@@ -1500,7 +1500,7 @@ BBinder::Push(const SValue &out)
 						} else {
 							target = ent.target;
 						}
-						
+
 						if (target != NULL) {
 							// add current target to push list
 							err = pushList.Add(target, ent.value, SValue(ent.value, senderValue), ent.flags, &e->handler);
@@ -1512,10 +1512,10 @@ BBinder::Push(const SValue &out)
 		if (e->other_links.CountItems() > 0) {
 			SValue binding;
 			size_t i, count = e->other_links.CountItems();
-			
+
 			for (i=0; i<count; i++) {
 				const links_rec & ent = e->other_links[i];
-				
+
 				if (ent.value.IsWild() || (ent.flags&B_NO_TRANSLATE_LINK)) {
 					binding = out;
 				} else {
@@ -1530,7 +1530,7 @@ BBinder::Push(const SValue &out)
 					}
 					if (!binding.IsDefined()) continue;
 				}
-				
+
 				sptr<IBinder> target;
 				if (ent.flags&B_WEAK_BINDER_LINK) {
 					if (ent.target->AttemptIncStrong(this)) {
@@ -1541,7 +1541,7 @@ BBinder::Push(const SValue &out)
 				} else {
 					target = ent.target;
 				}
-				
+
 				if (target != NULL) {
 					err = pushList.Add(target, ent.value, binding, ent.flags, &e->handler);
 				}
@@ -1555,11 +1555,11 @@ BBinder::Push(const SValue &out)
 #if BINDER_DEBUG_PUSH_MSGS
 	bout << dedent << "</BBinder::Push>" << endl;
 #endif
-		
+
 	return err;
 }
 
-status_t 
+status_t
 BBinder::Pull(SValue *)
 {
 	#if _SUPPORTS_WARNING
@@ -1645,5 +1645,5 @@ status_t BpAtom::DeleteAtom(const void* /*id*/)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -57,8 +57,8 @@
 #include "EffectIPC.h"
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
-using namespace palmos::app;
+using namespace os::support;
+using namespace os::app;
 #endif
 
 #ifdef memcpy
@@ -492,7 +492,7 @@ static const uint64_t optionTests[] =
 
 	kLocalEffectIPCTestMask,
 	kRemoteEffectIPCTestMask,
-	
+
 	kFloatSimpleTestMask,
 
 	kLibcTestMask,
@@ -578,7 +578,7 @@ private:
 	SValue RunCriticalSectionTest();
 	SValue RunLockerTest();
 	SValue RunAutolockTest();
-	SValue RunMutexTest();	
+	SValue RunMutexTest();
 	SValue RunNestedLockerTest();
 	SValue RunIncStrongTest();
 	SValue RunAtomPtrTest();
@@ -616,7 +616,7 @@ private:
 	SValue RunDmIsReadyTest();
 	SValue RunDmReadTest();
 	SValue RunICacheTest();
-	
+
 	enum {
 		MAX_DATA = 4096
 	};
@@ -627,7 +627,7 @@ private:
 	int32_t MaxDataSize();
 
 	const sptr<IProcess> BackgroundProcess();
-	
+
 	uint64_t m_which;
 	int32_t m_iterations;
 	int32_t m_priority;
@@ -730,7 +730,7 @@ void BinderPerformance::ReadEventCounters(uint64_t counters[B_MAX_EVENT_COUNTERS
 	if(m_use_pmu) {
 		status_t err;
 		if(m_pmu_fd < 0) {
-			SContext context = get_default_context(); 
+			SContext context = get_default_context();
 
 			SIterator dir(context, SString("/dev/" B_PERFORMANCE_COUNTER_CONTEXT_PATH), SValue::Undefined());
 			if (B_OK != dir.ErrorCheck()) {
@@ -853,7 +853,7 @@ SValue BinderPerformance::Run(const ArgList& args)
 	bool helpRequested = false;
 
 	const SString cmdName(args.CountItems() > 0 ? args[0].AsString() : SString());
-	
+
 	while ((opt=getOpts.Next(this, args)) >= 0) {
 		if (opt < 0) {
 			// All done!
@@ -1634,7 +1634,7 @@ static int32_t kAtomicOpTestDir[] = {
 static void run_atomic_op_test(atomic_op_thread_state& tstate)
 {
 	atomic_op_state& state(*tstate.state);
-	
+
 	switch (state.whichTest) {
 	case 0:
 	{
@@ -1730,20 +1730,20 @@ static void atomic_op_func(void* argument)
 {
 	atomic_op_thread_state& tstate = *(atomic_op_thread_state*)argument;
 	atomic_op_state& state = *tstate.state;
-	
+
 	//bout << "Thread " << SysCurrentThread() << " has entered." << endl;
-	
+
 	// Handshaking to keep as much work out of the timed
 	// portion as possible.
 	if (atomic_fetch_dec(&state.numReady) == 1) state.ready.Open();
 	state.start.Wait();
 
 	run_atomic_op_test(tstate);
-	
+
 	// Now that we are done, decrement the number of running threads
 	// and wake up the main thread when the last one finishes.
 	if (atomic_fetch_dec(&state.numRunning) == 1) state.finished.Open();
-	
+
 	// Wait for all threads to be finished before exiting.
 	state.exit.Wait();
 
@@ -1753,13 +1753,13 @@ static void atomic_op_func(void* argument)
 SValue BinderPerformance::RunAtomicOpsTest()
 {
 	SValue result(SValue::Status(B_OK));
-	
+
 	int32_t numThreads = m_concurrency;
-	
+
 	atomic_op_state state;
 	state.N = (m_iterations*10000)/numThreads;
 	SysTSDAllocate(&state.tsd, NULL, sysTSDAnonymous);
-	
+
 	// This initial value is used so that, in the compare and swap
 	// test, 1/2 of the time the compare fails, the other half it succeeds.
 	const int32_t initialVal = state.N + state.N/2;
@@ -1767,7 +1767,7 @@ SValue BinderPerformance::RunAtomicOpsTest()
 	uint32_t i=0;
 	const char** testName=kAtomicOpTestNames;
 	while (*testName != NULL) {
-		
+
 		state.whichTest = i;
 		state.val = initialVal;
 		state.numReady = numThreads;
@@ -1776,7 +1776,7 @@ SValue BinderPerformance::RunAtomicOpsTest()
 		state.numRunning = numThreads;
 		state.finished.Close();
 		state.exit.Close();
-		
+
 		Timer t(state.N*numThreads);
 		if (numThreads == 1) {
 			// For the case of no concurrency, we will try to be a little more accurate.
@@ -1807,30 +1807,30 @@ SValue BinderPerformance::RunAtomicOpsTest()
 				}
 				SysThreadStart(h);
 			}
-			
+
 			// Wait for all threads to get up and running.
 			state.ready.Wait();
-			
+
 			// Start timer and run the test.
 			t.Start();
 			state.start.Open();
-			
+
 			// Wait for all threads to finish the test.
 			state.finished.Wait();
 			t.Stop();
-			
+
 			// Let the threads go away.
 			state.exit.Open();
 			SysThreadDelay(B_MS2NS(100), B_RELATIVE_TIMEOUT);
 		}
-		
+
 		SString label;
 		if (numThreads > 1) {
 			label << numThreads;
 			label << "x-";
 		}
 		label << *testName;
-		
+
 		int32_t expecting = -1;
 		if (m_validating) {
 			switch (kAtomicOpTestDir[i]) {
@@ -1839,21 +1839,21 @@ SValue BinderPerformance::RunAtomicOpsTest()
 			case kDirectionIncDec:	expecting = initialVal + (state.N*(numThreads&1));	break;
 			}
 		}
-		
+
 		if (expecting > 0 && expecting != state.val) {
 			TextOutput() << "Failed " << label << ": have " << state.val << ", expecting " << expecting << endl;
 			result.Join(SValue::Status(B_BAD_VALUE));
 		} else {
 			WriteResult(TextOutput(), label.String(), t);
 		}
-		
+
 		i++;
 		testName++;
 	}
 
 	SysTSDFree(state.tsd);
-		
-#if 0	
+
+#if 0
 	{
 		Timer t(m_iterations*10000);
 		t.Start();
@@ -2164,7 +2164,7 @@ static void context_switch_func(void* argument)
 	// SConditionVariable for causing the context switch, to
 	// introduce as little overhead as possible.  Also really
 	// need a version that context switches between processes.
-	
+
 	// Second thread must wait for first to wake it up.
 	if (self == state->t2) {
 		selfC = &state->c2;
@@ -3095,7 +3095,7 @@ SValue BinderPerformance::RunInstantiateTest(bool remote)
 SValue BinderPerformance::RunTransactionTest(bool remote, size_t sizeFactor)
 {
 	SValue result(SValue::Status(B_OK));
-	
+
 	RestartDataSize();
 	sptr<IBinder> target;
 
@@ -3106,7 +3106,7 @@ SValue BinderPerformance::RunTransactionTest(bool remote, size_t sizeFactor)
 		str << "xSize ";
 	}
 	str << "Transaction";
-	
+
 	sptr<IProcess> proc;
 	SValue componentArgs(key_validate, SValue::Bool(m_validating));
 	if (remote) {
@@ -3185,7 +3185,7 @@ SValue BinderPerformance::RunTransactionTest(bool remote, size_t sizeFactor)
 SValue BinderPerformance::RunPingPongTransactionTest()
 {
 	SValue result(SValue::Status(B_OK));
-	
+
 	RestartDataSize();
 	sptr<IBinder> target;
 
@@ -3237,13 +3237,13 @@ SValue BinderPerformance::RunPingPongTransactionTest()
 SValue BinderPerformance::RunBinderTransferTest(bool remote, int type)
 {
 	SValue result(SValue::Status(B_OK));
-	
+
 	sptr<IBinder> target;
 	sptr<IBinder> object;
 	wptr<IBinder> wobject;
 
 	bool doweak = type == kOldWeakBinder || type == kSameWeakBinder || type == kNewWeakBinder;
-	
+
 	const char* typeStr;
 	if (type == kOldBinder) typeStr = "Old Binder: ";
 	else if (type == kOldWeakBinder) typeStr = "Old Weak Binder: ";
@@ -3315,7 +3315,7 @@ SValue BinderPerformance::RunBinderTransferTest(bool remote, int type)
 			wobjects[i] = objects[i];
 		}
 	}
-	
+
 	t.Start();
 	if (doweak) {
 		uint32_t code = type == kOldWeakBinder ? kDropSameWeakTransaction : kDropWeakTransaction;
@@ -3351,7 +3351,7 @@ SValue BinderPerformance::RunBinderTransferTest(bool remote, int type)
 		}
 	}
 	t.Stop();
-	
+
 	SParcel::PutParcel(reply);
 
 	if (result.AsStatus() == B_OK)
@@ -3401,19 +3401,19 @@ BinderPerformance::RunEffectIPCTest(bool remote)
 		return SValue::Status(B_ERROR);
 	}
 #endif
-	
+
 	sptr<IProcess> t = IProcess::AsInterface(bt);
 #if TEST_PALMOS_APIS
 	sptr<IView> v = IView::AsInterface(bv);
 #endif
-	
+
 	const char* prefix = remote ? "Remote " : "Local ";
 	SString text;
 
 	Timer timer(m_iterations * (remote ? 1 : 100));
-	
+
 	// IProcess tests...
-	
+
 	timer.Start();
 	for (int32_t i=0; i<timer.N; i++) {
 		t->RestartMallocProfiling();
@@ -3422,7 +3422,7 @@ BinderPerformance::RunEffectIPCTest(bool remote)
 	text = prefix;
 	text += "EffectIPC 0 args, no return";
 	WriteResult(TextOutput(), text.String(), timer);
-	
+
 	timer.Start();
 	for (int32_t i=0; i<timer.N; i++) {
 		t->AtomMarkLeakReport();
@@ -3431,7 +3431,7 @@ BinderPerformance::RunEffectIPCTest(bool remote)
 	text = prefix;
 	text += "EffectIPC 0 args, int32 return";
 	WriteResult(TextOutput(), text.String(), timer);
-	
+
 	timer.Start();
 	for (int32_t i=0; i<timer.N; i++) {
 		t->AtomLeakReport(1,2,3);
@@ -3440,7 +3440,7 @@ BinderPerformance::RunEffectIPCTest(bool remote)
 	text = prefix;
 	text += "EffectIPC 3 int args, no return";
 	WriteResult(TextOutput(), text.String(), timer);
-	
+
 	SValue componentInfo(SValue::String("some_info_not_much"));
 	SString component("lalalalala");
 	SValue args(B_0_INT32, SValue::String("an_arg"));
@@ -3453,7 +3453,7 @@ BinderPerformance::RunEffectIPCTest(bool remote)
 	text += "EffectIPC complex args, no return";
 	WriteResult(TextOutput(), text.String(), timer);
 
-	
+
 #if TEST_PALMOS_APIS
 
 	// IView tests
@@ -3466,7 +3466,7 @@ BinderPerformance::RunEffectIPCTest(bool remote)
 	text = prefix;
 	text += "EffectIPC DrawingBounds";
 	WriteResult(TextOutput(), text.String(), timer);
-		
+
 	BLayoutConstraints cn;
 	timer.Start();
 	for (int32_t i=0; i<timer.N; i++) {
@@ -3476,7 +3476,7 @@ BinderPerformance::RunEffectIPCTest(bool remote)
 	text = prefix;
 	text += "EffectIPC Constraints";
 	WriteResult(TextOutput(), text.String(), timer);
-	
+
 	sptr<IViewParent> p;
 	timer.Start();
 	for (int32_t i=0; i<timer.N; i++) {
@@ -3486,7 +3486,7 @@ BinderPerformance::RunEffectIPCTest(bool remote)
 	text = prefix;
 	text += "EffectIPC Parent";
 	WriteResult(TextOutput(), text.String(), timer);
-	
+
 	timer.Start();
 	for (int32_t i=0; i<timer.N; i++) {
 		v->MarkTraversalPath(0);
@@ -3504,12 +3504,12 @@ BinderPerformance::RunEffectIPCTest(bool remote)
 class WeakTestBinder : public BBinder, public SPackageSptr
 {
 public:
-	
+
 	WeakTestBinder() { SHOW_OBJS(bout << "WeakTestBinder created" << endl);
 	}
 	virtual ~WeakTestBinder() { SHOW_OBJS(bout << "WeakTestBinder destroyed" << endl);
 	}
-	
+
 	wptr<IBinder> m_other;
 };
 
@@ -3570,7 +3570,7 @@ private:
 SValue BinderPerformance::RunAttemptIncStrongTest(bool remote, int32_t threads)
 {
 	SValue result(SValue::Status(B_OK));
-	
+
 	RestartDataSize();
 	Timer t(remote ? m_iterations : (m_iterations*100));
 	handler_test_state state;
@@ -3586,7 +3586,7 @@ SValue BinderPerformance::RunAttemptIncStrongTest(bool remote, int32_t threads)
 
 	SString str;
 	str << (remote ? (threads == 1 ? "Remote " : "Multiple ") : "Local ") << "AttemptIncStrong (pair)";
-	
+
 	sptr<IProcess> proc;
 	if (remote) {
 		proc = BackgroundProcess();
@@ -3603,7 +3603,7 @@ SValue BinderPerformance::RunAttemptIncStrongTest(bool remote, int32_t threads)
 		TextError() << "Unable to run <org.openbinder.tools.commands.BPerf.TransactionTest>!" << endl;
 		return SValue::Status(B_ENTRY_NOT_FOUND);
 	}
-	
+
 	target = starget.ptr();
 	starget->Transact(kIncStrongTransaction, send, reply);
 #if 0
@@ -3618,7 +3618,7 @@ SValue BinderPerformance::RunAttemptIncStrongTest(bool remote, int32_t threads)
 
 	SParcel::PutParcel(reply);
 	reply = NULL;
-	
+
 	if (remote || threads != 1) {
 		t.N /= threads;
 		state.iterations  = t.N;
@@ -3661,7 +3661,7 @@ SValue BinderPerformance::RunAttemptIncStrongTest(bool remote, int32_t threads)
 		TextOutput() << str << ": FAILED (Unable to acquire strong reference in test)" << endl;
 		return result;
 	}
-	
+
 	starget = target.promote();
 	if (starget != NULL) {
 		starget->Transact(kDecStrongTransaction, send, reply);
@@ -3673,7 +3673,7 @@ SValue BinderPerformance::RunAttemptIncStrongTest(bool remote, int32_t threads)
 		TextOutput() << str << ": FAILED (Unable to acquire final strong reference)" << endl;
 		result = SValue::Status(B_BAD_VALUE);
 	}
-	
+
 	return result;
 }
 
@@ -3891,7 +3891,7 @@ SValue BinderPerformance::RunDbCursorOpenTest()
 	uint32_t rowCount = 500;
 	uint32_t rowNum;
 	DbSchemaColumnValueType colVal = { &rowNum, sizeof(uint32_t), 1, 0, 0, 0 };
-	
+
 	err = DbCreateDatabase("bperf_db_cursor_open_test", 'bprf', 'bprf', 1, &tableDef, &dbID);
 	if (err) {
 		return SValue::Status(err);
@@ -4231,7 +4231,7 @@ SValue BinderPerformance::RunICacheTest()
 	//for (mask=-1; mask<=1; mask++)
 
 	mask = 0;
-	
+
 	{
 		for (i_step=0; i_step<STEP_COUNT; i_step++) {
 			int64_t now;
@@ -4268,7 +4268,7 @@ SValue BinderPerformance::RunDmIsReadyTest()
 
 
 #if TEST_PALMOS_APIS
-static SValue 
+static SValue
 setup_db( const DmOpenRef& ref, const uint32_t iterations, uint32_t* rowIDs )
 {
 	status_t err;

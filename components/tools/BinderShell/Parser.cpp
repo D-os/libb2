@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -25,8 +25,8 @@
 #include "bsh.h"
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::storage;
-using namespace palmos::support;
+using namespace os::storage;
+using namespace os::support;
 #endif
 
 B_STATIC_STRING_VALUE_LARGE(kBSH_HOST_PWD, "BSH_HOST_PWD", );
@@ -39,7 +39,7 @@ bool find_some_input(const SValue& val, const sptr<BCommand>& shell, sptr<ITextI
 	sptr<IByteInput> stream;
 	sptr<IStorage> storage;
 	SValue src(val);
-	
+
 	// First, try to resolve path in the Binder namespace.
 	SString path(shell->ArgToPath(val));
 	//bout << "Namespace path: " << path << endl;
@@ -49,7 +49,7 @@ bool find_some_input(const SValue& val, const sptr<BCommand>& shell, sptr<ITextI
 		src = node.Walk(path, (uint32_t)0);
 		*outPath = path;
 	}
-	
+
 	// If this is a byte stream, use it directly.
 	stream = IByteInput::AsInterface(src);
 	if (stream != NULL) goto finish;
@@ -83,7 +83,7 @@ finish:
 		*input = new BTextInput(stream);
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -164,7 +164,7 @@ static void consume_value(int32_t* index, const char* data, SString* outValue)
 		// syntax for the - operator is inconsistent with other
 		// operators.
 		while (	data[i] != '\0' &&
-				!isspace(data[i]) && 
+				!isspace(data[i]) &&
 				data[i] != ',' &&
 				data[i] != '{' &&
 				data[i] != '}' &&
@@ -296,7 +296,7 @@ SValue expand_argument(const sptr<ICommand>& shell, const SString& expand, bool*
 		bool localgotvar = false;
 		ssize_t where = parse_variable(shell, buffer, index, &nuvalue, &localgotvar, command_expansion);
 		if (localgotvar) gotvar = true;
-	
+
 		if (where != B_BAD_VALUE)
 		{
 			start = where;
@@ -384,7 +384,7 @@ void collect_arguments(const SString& expanded, SVector<SValue>* outArgs)
 			{
 				i++;
 			}
-			
+
 			last = i;
 			if (output[i] == 0) i--;
 		}
@@ -436,7 +436,7 @@ struct ExpressionNode
 	int32_t Evaluate(const sptr<ICommand>& shell)
 	{
 		if (op == OP_VALUE) return left.Evaluate(shell);
-		
+
 		int32_t lefti = op != OP_ASSIGN ? left.Evaluate(shell) : 0;
 		int32_t righti = right.Evaluate(shell);
 		int32_t res;
@@ -478,14 +478,14 @@ struct ExpressionNode
 			case OP_ASSIGN:			res = righti; break;
 			default:				res = 0; break;
 		}
-		
+
 		if (op >= OP_ASSIGN && op <= OP_ASSIGN_BITOR) {
 			shell->SetProperty(SValue::String(left.value), SValue::Int32(res));
 		}
-		
+
 		return res;
 	}
-	
+
 	void Print()
 	{
 		if (op == OP_VALUE) {
@@ -542,42 +542,42 @@ struct ExpressionNode
 			bout << ")";
 		} else bout << right.value;
 	}
-	
+
 	void FreeAll()
 	{
 		if (left.expr) left.expr->FreeAll();
 		if (right.expr) right.expr->FreeAll();
 		delete this;
 	}
-	
+
 	struct side
 	{
 		int32_t Evaluate(const sptr<ICommand>& shell)
 		{
 			if (expr) return expr->Evaluate(shell);
 			if (value == "") return 0;
-			
+
 			status_t err;
 			int32_t res=SValue::String(value).AsInt32(&err);
 			if (err == B_OK) return res;
-			
+
 			// XXX deal with errors!
 			res = shell->GetProperty(SValue::String(value)).AsInt32(&err);
 			if (err != B_OK) bout << "expression: can't understand value " << value << endl;
 			return res;
 		}
-		
+
 		ExpressionNode* expr;
 		SString value;
-		
+
 		side() : expr(NULL) { }
 		~side() { }
 	};
-	
+
 	side left;
 	int32_t op;
 	side right;
-	
+
 	ExpressionNode() : op(OP_NULL) { }
 	~ExpressionNode() {  }
 };
@@ -585,14 +585,14 @@ struct ExpressionNode
 static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char** buffer)
 {
 	const char* p = *buffer;
-	
+
 	ExpressionNode cur;
 	int32_t elem = 0;
-	
+
 	while (*p && *p !=')') {
 		// strip spaces
 		while (*p && isspace(*p)) p++;
-		
+
 		int32_t op = OP_NULL;
 		switch (*p) {
 			case '(':
@@ -604,7 +604,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					bout << "expression: mis-placed open paren at " << p << endl;
 				}
 				continue;
-			
+
 			case '-':
 				if (p[1] == '=') {
 					p++;
@@ -618,7 +618,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					}
 				}
 				break;
-				
+
 			case '+':
 				if (p[1] == '=') {
 					p++;
@@ -632,7 +632,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					}
 				}
 				break;
-				
+
 			case '!':
 				op = OP_LOGNOT;
 				if (p[1] == '=') {
@@ -646,7 +646,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					}
 				}
 				break;
-				
+
 			case '~':
 				op = OP_BITNOT;
 				if (elem == 0) {
@@ -655,7 +655,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					bout << "expression: mis-placed '^' at " << p << endl;
 				}
 				break;
-				
+
 			case '*':
 				if (p[1] == '=') {
 					p++;
@@ -669,7 +669,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					}
 				}
 				break;
-				
+
 			case '/':
 				if (p[1] == '=') {
 					p++;
@@ -678,7 +678,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					op = OP_DIV;
 				}
 				break;
-				
+
 			case '%':
 				if (p[1] == '=') {
 					p++;
@@ -687,7 +687,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					op = OP_REM;
 				}
 				break;
-				
+
 			case '<':
 				if (p[1] == '<') {
 					p++;
@@ -704,7 +704,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					op = OP_LT;
 				}
 				break;
-				
+
 			case '>':
 				if (p[1] == '>') {
 					p++;
@@ -721,7 +721,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					op = OP_GT;
 				}
 				break;
-				
+
 			case '=':
 				if (p[1] == '=') {
 					p++;
@@ -730,7 +730,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					op = OP_ASSIGN;
 				}
 				break;
-				
+
 			case '&':
 				if (p[1] == '=') {
 					p++;
@@ -742,7 +742,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					op = OP_BITAND;
 				}
 				break;
-				
+
 			case '|':
 				if (p[1] == '=') {
 					p++;
@@ -754,9 +754,9 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 					op = OP_BITOR;
 				}
 				break;
-				
+
 			case '^':	op = OP_BITXOR; break;
-			
+
 			default: {
 				// Not an operator, so consume the value.
 				const char* e = p+1;
@@ -770,7 +770,7 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 			}
 			continue;
 		}
-		
+
 		// At this point, we have parsed the next operator.  Now
 		// figure out what to do with it.  If 'elem' is 0 or 1,
 		// we are still filling in values for the expression.
@@ -803,12 +803,12 @@ static ExpressionNode* parse_expression(const sptr<ICommand>& shell, const char*
 			}
 			elem = 1;
 		}
-		
+
 		p++;
 	}
-	
+
 	//bout << "Expression: " << SString(*buffer, p-*buffer) << endl;
-	
+
 finished:
 	*buffer = p;
 	return new ExpressionNode(cur);
@@ -821,13 +821,13 @@ public:
 		:	m_binder(binder),
 			m_method(method),
 			m_args(args)
-	{	
+	{
 	}
 
 	virtual SValue Run(const ArgList& /*args*/)
 	{
 		SValue result;
-		
+
 		if (m_binder != NULL)
 		{
 			result = m_args.IsDefined() ? m_binder->Invoke(m_method, m_args) : m_binder->Invoke(m_method);
@@ -835,7 +835,7 @@ public:
 
 		return result["res"];
 	}
-	
+
 private:
 	sptr<IBinder> m_binder;
 	SValue m_method;
@@ -876,7 +876,7 @@ static ssize_t parse_variable(const sptr<ICommand>& shell, const char* buffer, i
 
 	if (one == '$' && (two == '(' || two == '['))
 	{
-		if (two == '(' && buffer[start] == '(') 
+		if (two == '(' && buffer[start] == '(')
 		{
 			if (command_expansion)
 				*command_expansion = false;
@@ -895,7 +895,7 @@ static ssize_t parse_variable(const sptr<ICommand>& shell, const char* buffer, i
 			*outGotValue = true;
 			return node ? index : B_ERROR;
 		}
-		
+
 		sptr<ICommand> subshell = shell->Spawn(SString("sh"));
 		if (subshell == NULL) return B_NO_MEMORY;
 
@@ -909,13 +909,13 @@ static ssize_t parse_variable(const sptr<ICommand>& shell, const char* buffer, i
 		{
 			if (command_expansion)
 				*command_expansion = true;
-			
+
 			//bout << "trying to run " << args << endl;
 			SValue outputed;
 			sptr<BStringIO> outputStream = new BStringIO();
 			subshell->SetByteOutput(outputStream.ptr());
 			subshell->Run(args);
-	
+
 			outputed = SValue::String(outputStream->String());
 			*outGotValue = true;
 			*outValue = outputed;
@@ -937,7 +937,7 @@ static ssize_t parse_variable(const sptr<ICommand>& shell, const char* buffer, i
 				index++;
 			end = index;
 		}
-	
+
 		// Special case: If this is $PROCESS, handle it directly.  This is
 		// because we don't want to publish our process interface as an
 		// environment variable, which others can get access to.  (We
@@ -967,11 +967,11 @@ static ssize_t parse_variable(const sptr<ICommand>& shell, const char* buffer, i
 				while (buffer[index] != '(')
 					index++;
 				end = index;
-				
+
 				SValue method(SString(buffer+start, end-start));
-				
+
 				start = index + 1;
-			
+
 				SValue args;
 				size_t argIndex = 0;
 				bool cmdExpansion = false;
@@ -987,13 +987,13 @@ static ssize_t parse_variable(const sptr<ICommand>& shell, const char* buffer, i
 						start = index + 1;
 					}
 				} while (buffer[index] != ')');
-			
+
 				sptr<ICommand> command = new VariableCommand(binder, method, args);
 				*outValue = SValue::Binder(command->AsBinder());
 				*outGotValue = true;
 			}
 		}
-		
+
 	}
 	else if (one == '@' && two == '{')
 	{
@@ -1055,10 +1055,10 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 	operation_state op = BEGIN_OP;
 	int32_t index = *outIndex;
 	char endc;
- 
+
 	// go passed any white space
 	trim_whitespace(&index, data);
-	
+
 	// make sure that this is a value build up
 	// note that we need to deal with the case of an [] operator
 	if (data[index] == '{')
@@ -1067,20 +1067,20 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 		endc = ']';
 	else
 		return SValue::Undefined();
-	
+
 	index++;
 
 	// we do not like you whitespace
 	trim_whitespace(&index, data);
-	
+
 	SValue returned;
 	SVector<SValue> keys;
 	SValue value;
-	
+
 	while (index < length)
 	{
 		trim_whitespace(&index, data);
-		
+
 		if (data[index] == endc)
 		{
 			// we've reached our wits end.
@@ -1094,7 +1094,7 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 			index++;
 			lookup = true;
 		}
-		
+
 		const char* debbugging = data + index;
 
 		if (data[index] == '$')
@@ -1109,7 +1109,7 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 
 			int32_t start = index;
 			consume_value(&index, data, &string);
-		
+
 			if (data[start] == '(')
 			{
 				// determine the cast.
@@ -1148,7 +1148,7 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 					type = B_BINDER_WEAK_TYPE;
 				else
 					type = B_STRING_TYPE;
-				
+
 				// Retrieve the value itself.
 				trim_whitespace(&index, data);
 				start = index;
@@ -1163,7 +1163,7 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 			else
 			{
 				// we need to determine the type of the value.
-				
+
 				if (data[start] == '"')
 				{
 					type = B_STRING_TYPE;
@@ -1178,7 +1178,7 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 				{
 					//bout << "regular: " << string << endl;
 					if (!lookup)
-					{	
+					{
 						// we only want to do this if there is no lookup
 						if (string == "wild")
 							type = B_WILD_TYPE;
@@ -1201,7 +1201,7 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 
 				value = SValue::String(string);
 			}
-			
+
 			// look up the bvalue at the specified place in the catalog.
 			if (lookup)
 			{
@@ -1230,30 +1230,30 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 					case B_INT32_TYPE:
 						value = SValue::Int32(value.AsInt32());
 						break;
-					
+
 					case B_INT64_TYPE:
 						value = SValue::Int64(value.AsInt64());
 						// !!! %s with empty string -> workaround for EABI changes
 						// wrt. 64-bit vararg parameter alignment changes.
 						//printf("%sConverted to int64_t: %lld\n", "", value.AsInt64());
 						break;
-					
+
 					case B_STATUS_TYPE:
 						value = SValue::Status(value.AsStatus());
 						break;
-					
+
 					case B_NSECS_TYPE:
 						value = SValue::Time(value.AsTime());
 						// !!! %s with empty string -> workaround for EABI changes
 						// wrt. 64-bit vararg parameter alignment changes.
 						//printf("%sConverted to nsecs_t: %lld\n", "", value.AsTime());
 						break;
-					
+
 					case B_BOOL_TYPE:
 						value = SValue::Bool(value.AsBool());
 						//bout << "bool: " << value << " " << SValue::Bool(true) << endl;
 						break;
-						
+
 					case B_FLOAT_TYPE:
 						value = SValue::Float(value.AsFloat());
 						//bout << "float: " << value << " " << SValue::Float(0.5) << endl;
@@ -1282,14 +1282,14 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 		}
 
 		trim_whitespace(&index, data);
-		
+
 		if (data[index] == '{')
 		{
 			// we can disregard the value we created.
 			value = make_value(shell, &index, data, length);
 			trim_whitespace(&index, data);
 		}
-		
+
 		if (data[index] == '-' && data[index+1] == '>')
 		{
 			state = MAPPING_STATE;
@@ -1373,7 +1373,7 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 			}
 		}
 	}
-	
+
 	(*outIndex) = index;
 	return returned;
 }
@@ -1421,16 +1421,16 @@ Lexer::Iterator Lexer::Buffer()
 			m_textOutput << expand_argument(m_shell, m_nextPrompt).AsString();
 			m_textOutput->Flush();
 			//printf("%s", (const char *)m_nextPrompt);
-		
+
 			// save the last prompt so if someone calls GetPrompt they
 			// will get the last one that was printed out not the next one.
 			m_lastPrompt = m_nextPrompt;
-			
+
 			// PS2 is used for every prompt but the first
 			m_nextPrompt = m_ps2;
 			//printf("nextpromt: %s", (const char *)m_nextPrompt);
 		}
-			
+
 		// If we are in SCAN_NORMAL read in the buffer and reset the tokenpos.
 		// if we are in any other state we want to append the to the current buffer.
 
@@ -1455,7 +1455,7 @@ Lexer::Iterator Lexer::Buffer()
 		}
 
 		ssize_t amount = m_textInput->ReadLineBuffer((m_buffer + m_tokenPos), (m_bufferSize - m_tokenPos));
-		if (amount == 0) 
+		if (amount == 0)
 		{
 			// the stream has run dry (or we are out of buffer room) - don't bother checking it again
 			m_state |= Lexer::STREAM_EOF;
@@ -1583,7 +1583,7 @@ void Lexer::ConsumeComments()
 				// we've run out input data - give up
 				break;
 			}
-			
+
 			while (isspace(buffer[m_tokenPos]))
 				m_tokenPos++;
 
@@ -1607,7 +1607,7 @@ void Lexer::ConsumeWhiteSpace()
 	for (size_t index = m_tokenPos ; index < size ; index++)
 	{
 		char c = buffer[m_tokenPos];
-		
+
 		if (c != '\t' && c != '\v' && c != ' ' && c != '\f') {
 			break;
 		}
@@ -1638,13 +1638,13 @@ void Lexer::ConsumeToken()
 	size_t start = m_tokenPos;
 	Iterator begin = line;
 	Iterator end = begin;
-	
+
 	if (!ConsumeDelimeter() && !ConsumeKeyword())
 	{
 		m_state = Lexer::SCAN_NORMAL;
 		int size = 0;
 		int delimeter = Lexer::NOT_A_DELIMETER;
-		
+
 		do
 		{
 			// increment the size of the string that we want to copy.
@@ -1716,7 +1716,7 @@ void Lexer::ConsumeToken()
 				{
 					m_state |= Lexer::PARAMETER_SUBSITUTION;
 					m_depth++;
-					
+
 					// nasty hack so to get around the '{'. which actaully turns out
 					// to be a lot faster. I will probally change the others as well.
 					end++;
@@ -1728,7 +1728,7 @@ void Lexer::ConsumeToken()
 					// we found a varibale. it will either be in the form of $FOO or
 					// $FOO.CallFoo() or $FOO.CallFoo(@{"with this arg"}).
 					m_state |= Lexer::VARIABLE_EXPANSION;
-					
+
 //					bout << "starting = '" << end << "'" << endl;
 					end++;
 					m_tokenPos++;
@@ -1738,7 +1738,7 @@ void Lexer::ConsumeToken()
 			else if (m_state == Lexer::VARIABLE_EXPANSION)
 			{
 //				bout << "end = '" << *end << "'" << endl;
-				
+
 				if (end[0] == '(')
 				{
 					m_depth++;
@@ -1747,7 +1747,7 @@ void Lexer::ConsumeToken()
 				{
 					m_depth--;
 				}
-				
+
 				// XXX Shouldn't variable parsing stop on any non-alphanumeric
 				// character??
 				if (m_depth == 0 && (IsSpace(end[0]) || end[0] < ' ' || end[0] == ';'))
@@ -1815,7 +1815,7 @@ void Lexer::ConsumeToken()
 					if (m_depth == 0)
 					{
 						m_state ^= Lexer::PARAMETER_SUBSITUTION;
-						
+
 						// oh I hate doing this. increment the pointers and
 						// get the hell out of dodge! we have to do this because
 						// the ending '}' will be interpreted as a token.
@@ -1829,12 +1829,12 @@ void Lexer::ConsumeToken()
 
 			end++;
 			m_tokenPos++;
-			
+
 			// if the next character is a delimiter we do not want to include it.
 			delimeter = (escaped) ? false : IsDelimeter();
 		} while (*end && (m_state != Lexer::SCAN_NORMAL || (!IsSpace(*end) && !delimeter && *end != '\n')));
 
-		// determine if the the string is a WORD, ASSIGNMENT_WORD, NEWLINE, NAME 
+		// determine if the the string is a WORD, ASSIGNMENT_WORD, NEWLINE, NAME
 
 		SString token = begin.AsString(size);
 //		bout << "token(" << token.Length() << "): " << token << endl;
@@ -1852,11 +1852,11 @@ void Lexer::ConsumeToken()
 		else
 		{
 			// determine if it a WORD or and ASSIGNMENT_WORD
-			
+
 						// check to see if it is an ASSIGNMENT_WORD
 
 			int equal = token.FindFirst("=");
-	
+
 			if (equal != -1 && equal != 0 && IsValidName(SString(token.String(), equal)))
 				m_tokenTypes.AddItem(Lexer::ASSIGNMENT_WORD);
 			else
@@ -1879,7 +1879,7 @@ bool Lexer::IsValidName(const SString& token)
 {
 	char byte = token.ByteAt(0);
 	bool valid = (isalpha(byte) || byte == '_');
-	
+
 	for (size_t i = 1 ; valid && (ssize_t)i < token.Length() ; i++)
 	{
 		byte = token[i];
@@ -1898,7 +1898,7 @@ bool Lexer::ConsumeKeyword()
 
 	Iterator line = Buffer();
 	line += m_tokenPos;
-	
+
 	switch (line[0])
 	{
 		/* 'case' */
@@ -1942,7 +1942,7 @@ bool Lexer::ConsumeKeyword()
 
 			break;
 		}
-		
+
 		/* 'do' 'done' */
 		case 'd':
 		{
@@ -1958,7 +1958,7 @@ bool Lexer::ConsumeKeyword()
 			}
 			break;
 		}
-		
+
 		/* 'fi' 'for' */
 		case 'f':
 		{
@@ -1983,8 +1983,8 @@ bool Lexer::ConsumeKeyword()
 				increment = 7;
 				m_tokenTypes.AddItem(Lexer::FOREACH);
 			}
-			else if (line[1] == 'u' && 
-					 line[2] == 'n' && 
+			else if (line[1] == 'u' &&
+					 line[2] == 'n' &&
 					 line[3] == 'c' &&
 					 line[4] == 't' &&
 					 line[5] == 'i' &&
@@ -1998,7 +1998,7 @@ bool Lexer::ConsumeKeyword()
 
 			break;
 		}
-		
+
 		/* 'if' 'in' */
 		case 'i':
 		{
@@ -2014,7 +2014,7 @@ bool Lexer::ConsumeKeyword()
 			}
 			break;
 		}
-		
+
 		/* 'over' */
 		case 'o':
 		{
@@ -2040,25 +2040,25 @@ bool Lexer::ConsumeKeyword()
 		case 'u':
 		{
 			if (line[1] == 'n' && line[2] == 't' && line[3] == 'i' && line[4] == 'l' && isspace(line[5]))
-			{	
+			{
 				increment = 5;
 				m_tokenTypes.AddItem(Lexer::UNTIL);
 			}
 
 			break;
 		}
-		
+
 		case 'w':
 		{
 			if (line[1] == 'h' && line[2] == 'i' && line[3] == 'l' && line[4] == 'e' && isspace(line[5]))
-			{	
+			{
 				increment = 5;
 				m_tokenTypes.AddItem(Lexer::WHILE);
 			}
 
 			break;
 		}
-		
+
 		case '!':
 		{
 			// do reconize '!=' as a delimeter
@@ -2074,10 +2074,10 @@ bool Lexer::ConsumeKeyword()
 		case '\0':
 		{
 			increment = 0;
-			
+
 			m_tokens.AddItem(B_EMPTY_STRING);
 			m_tokenTypes.AddItem(Lexer::END_OF_STREAM);
-			
+
 			break;
 		}
 
@@ -2136,12 +2136,12 @@ bool Lexer::ConsumeDelimeter()
 			increment = 3;
 			break;
 		}
-		
+
 		case Lexer::NEWLINE:
 		{
 			increment = 1;
 			consumeComments = true;
-			break;	
+			break;
 		}
 
 		default:
@@ -2207,10 +2207,10 @@ int Lexer::IsDelimeter()
 			break;
 		}
 
-		/* '<<' '<&' '<>' '<<-' */  
+		/* '<<' '<&' '<>' '<<-' */
 		case '<':
 		{
-			if (line[1] == '<') 
+			if (line[1] == '<')
 				type = Lexer::DLESS;
 			else if (line[1] == '&')
 				type = Lexer::LESSAND;
@@ -2223,7 +2223,7 @@ int Lexer::IsDelimeter()
 
 			break;
 		}
-		
+
 		/* '>>' '>&' */
 		case '>':
 		{
@@ -2242,13 +2242,13 @@ int Lexer::IsDelimeter()
 			type = Lexer::LBRACE;
 			break;
 		}
-		
+
 		case '}':
 		{
 			type = Lexer::RBRACE;
 			break;
 		}
-		
+
 		case '(':
 		{
 			type = Lexer::LPAREN;
@@ -2299,18 +2299,18 @@ Parser::Parser(const sptr<BShell>& shell)
 	:	m_shell(shell),
 		m_commandDepth(0)
 {
-	
+
 }
 
 SValue Parser::Parse(const sptr<Lexer>& lexer)
 {
 
 	m_lexer = lexer;
-	
+
 	SValue returned;
 
 	const sptr<ICommand> icommand(m_shell);
-	
+
 	while (true)
 	{
 		m_lexer->SetPrompt(m_shell.ptr());
@@ -2322,11 +2322,11 @@ SValue Parser::Parse(const sptr<Lexer>& lexer)
 		{
 			m_lexer->SetPrompt(m_shell.ptr());
 		}
-		
+
 		sptr<Command> command = make_compelete_command();
 		m_lexer->FlushTokens();
 
-		if (m_shell->GetTraceFlag()) 
+		if (m_shell->GetTraceFlag())
 		{
 			command->Decompile(m_shell->TextError());
 			m_shell->TextError() << endl;
@@ -2335,13 +2335,13 @@ SValue Parser::Parse(const sptr<Lexer>& lexer)
 		bool doExit = false;
 		returned = command->Evaluate(m_shell, icommand, &doExit);
 		m_shell->SetLastResult(returned);
-		if (m_lexer->IsInteractive()) 
+		if (m_lexer->IsInteractive())
 		{
-			if (m_shell->GetEchoFlag()) 
+			if (m_shell->GetEchoFlag())
 			{
 				status_t err;
 				ssize_t status = returned.AsSSize(&err);
-				if (status != B_OK || err != B_OK) 
+				if (status != B_OK || err != B_OK)
 				{
 					m_shell->TextOutput() << "Result: ";
 					returned.PrintToStream(m_shell->TextOutput());
@@ -2349,20 +2349,20 @@ SValue Parser::Parse(const sptr<Lexer>& lexer)
 				}
 			}
 
-			// unload any package that needs to be unloaded as 
+			// unload any package that needs to be unloaded as
 			// a result of executing a command. Note we only
 			// do this for interactive mode.
 			SLooper* looper = SLooper::This();
 			looper->ExpungePackages();
 			looper->Process()->BatchPutReferences();
 		}
-		
+
 		if (doExit)
 		{
 			break;
 		}
 	}
-	
+
 	return returned;
 }
 
@@ -2372,8 +2372,8 @@ void Parser::ParseError()
 
 	m_token = m_lexer->NextToken();
 
-	m_shell->TextOutput() << "bsh: syntax error near unexpected token '"; 
-	
+	m_shell->TextOutput() << "bsh: syntax error near unexpected token '";
+
 	if (m_token == Lexer::NEWLINE)
 		m_shell->TextOutput() << "newline'" << endl;
 	else
@@ -2402,12 +2402,12 @@ bool Parser::remove_newline()
 bool Parser::remove_newline_list()
 {
 	bool newline = false;
-	
+
 	while (m_lexer->NextToken() == Lexer::NEWLINE)
 	{
 		newline = true;
 	}
-	
+
 	// move the lexer back one
 	m_lexer->Rewind();
 
@@ -2422,7 +2422,7 @@ void Parser::remove_linebreak()
 bool Parser::remove_separator_op()
 {
 	bool is = true;
-	
+
 	int m_token = m_lexer->NextToken();
 
 	if (m_token != Lexer::AND && m_token != Lexer::SEMI)
@@ -2453,8 +2453,8 @@ bool Parser::remove_separator()
 
 bool Parser::remove_sequential_separator()
 {
-	bool is = (m_lexer->NextToken() == Lexer::SEMI); 
-	
+	bool is = (m_lexer->NextToken() == Lexer::SEMI);
+
 	if (is)
 	{
 		remove_linebreak();
@@ -2508,10 +2508,10 @@ sptr<AndOr> Parser::make_and_or()
 			andor = new AndOr();
 
 		andor->Add(pipeline);
-		
+
 		if (m_lexer->IsInteractive()) m_shell->ByteOutput()->Sync();
 		m_token = m_lexer->NextToken();
-		
+
 		if (m_token != Lexer::AND_IF && m_token != Lexer::OR_IF)
 		{
 			// we shall go not further
@@ -2537,7 +2537,7 @@ sptr<Pipeline> Parser::make_pipeline()
 	m_token = m_lexer->NextToken();
 
 	bool bang = false;
-	
+
 	if (m_token == Lexer::BANG)
 		bang = true;
 	else
@@ -2546,7 +2546,7 @@ sptr<Pipeline> Parser::make_pipeline()
 	while (true)
 	{
 		sptr<Command> command = make_command();
-		
+
 		if (command == NULL)
 		{
 			// i'm out of here!
@@ -2564,11 +2564,11 @@ sptr<Pipeline> Parser::make_pipeline()
 			m_lexer->Rewind();
 			break;
 		}
-			
+
 		// remove optional linebreak
-		remove_linebreak();	 
+		remove_linebreak();
 	}
-	
+
 	if (bang)
 	{
 		if (pipeline == NULL)
@@ -2582,12 +2582,12 @@ sptr<Pipeline> Parser::make_pipeline()
 
 sptr<Command> Parser::make_brace_group()
 {
-	// increment the command depth since we are 
+	// increment the command depth since we are
 	// starting a new command.
 	m_commandDepth++;
 	sptr<CompoundList> list = make_compound_list();
 	m_commandDepth--;
-	
+
 	sptr<BraceGroup> brace = new BraceGroup(list);
 
 	if (m_lexer->NextToken() != Lexer::RBRACE)
@@ -2595,7 +2595,7 @@ sptr<Command> Parser::make_brace_group()
 		ParseError();
 		return NULL;
 	}
-	
+
 	return brace.ptr();
 }
 
@@ -2659,7 +2659,7 @@ sptr<Command> Parser::make_command()
 	}
 	else if (m_token == Lexer::WORD)
 	{
-		if (m_lexer->NextToken() == Lexer::LPAREN && 
+		if (m_lexer->NextToken() == Lexer::LPAREN &&
 			m_lexer->NextToken() == Lexer::RPAREN)
 		{
 			m_lexer->Rewind(3);
@@ -2674,13 +2674,13 @@ sptr<Command> Parser::make_command()
 	}
 	else if (m_commandDepth > 0)
 	{
-		// we are in a command let the command deal with if 
+		// we are in a command let the command deal with if
 		// it is a syntax error or not.
 		m_lexer->Rewind();
 	}
 	else
 	{
-		// it is not a parse error if we reached the end 
+		// it is not a parse error if we reached the end
 		// of the stream and m_commandDepth <= 0
 		if (m_token != Lexer::END_OF_STREAM &&
 			m_token != Lexer::AND_IF &&
@@ -2705,7 +2705,7 @@ sptr<Command> Parser::make_subshell()
 {
 	sptr<CompoundList> list = make_compound_list();
 	sptr<SubShell> subshell = new SubShell(list);
-		
+
 	if (m_lexer->NextToken() != Lexer::RPAREN)
 	{
 		ParseError();
@@ -2718,19 +2718,19 @@ sptr<Command> Parser::make_subshell()
 sptr<CompoundList> Parser::make_compound_list()
 {
 	sptr<CompoundList> list = NULL;
-	
+
 	// optional remove the newline list before term
 	bool removed = remove_newline_list();
 
 	sptr<AndOr> addme = NULL;
-	
+
 	do
 	{
 		addme = make_and_or();
 
 		if (addme == NULL)
 			break;
-		
+
 		if (list == NULL)
 			list = new CompoundList();
 
@@ -2755,7 +2755,7 @@ sptr<CompoundList> Parser::make_compound_list()
 sptr<Command> Parser::make_for()
 {
 	sptr<For> forwho = new For();
-	
+
 	if (m_lexer->NextToken() != Lexer::WORD)
 	{
 		// parse error!
@@ -2764,10 +2764,10 @@ sptr<Command> Parser::make_for()
 	}
 
 	forwho->SetCondition(m_lexer->CurrentToken());
-	
+
 	// remove optional linebreak
 	remove_linebreak();
-	
+
 	m_token = m_lexer->NextToken();
 
 	if (m_token == Lexer::IN)
@@ -2786,7 +2786,7 @@ sptr<Command> Parser::make_for()
 
 		m_token = m_lexer->NextToken();
 	}
-	
+
 	if (m_token != Lexer::DO)
 	{
 		//parse error!
@@ -2820,7 +2820,7 @@ sptr<Command> Parser::make_for_each()
 	}
 
 	foreach->SetKeyVariable(m_lexer->CurrentToken());
-	
+
 	// remove optional linebreak
 	remove_linebreak();
 	m_token = m_lexer->NextToken();
@@ -2828,7 +2828,7 @@ sptr<Command> Parser::make_for_each()
 	if (m_token != Lexer::IN && m_token != Lexer::OVER)
 	{
 		foreach->SetValueVariable(m_lexer->CurrentToken());
-		
+
 		// remove optional linebreak
 		remove_linebreak();
 		m_token = m_lexer->NextToken();
@@ -2852,7 +2852,7 @@ sptr<Command> Parser::make_for_each()
 
 		m_token = m_lexer->NextToken();
 	}
-	
+
 	if (m_token != Lexer::DO)
 	{
 		//parse error!
@@ -2875,7 +2875,7 @@ sptr<Command> Parser::make_for_each()
 	// the 'for' syntax, which I think is wrong.
 #if 0
 	foreach->SetVariable(m_lexer->CurrentToken());
-	
+
 	m_token = m_lexer->NextToken();
 
 	if (m_token != Lexer::LPAREN)
@@ -2937,7 +2937,7 @@ sptr<Command> Parser::make_case()
 
 	// remove optional linebreak from the stream
 	remove_linebreak();
-	
+
 	sptr<CaseList> prev = NULL;
 	sptr<CaseList> list = NULL;
 
@@ -2946,8 +2946,8 @@ sptr<Command> Parser::make_case()
 	while (true)
 	{
 		m_token = m_lexer->NextToken();
-	
-		// this is applying rule 4. It may need to be checked 
+
+		// this is applying rule 4. It may need to be checked
 		// after the first Lexer::LPAREN as well.
 		if (m_token == Lexer::ESAC)
 		{
@@ -2981,14 +2981,14 @@ sptr<Command> Parser::make_case()
 		//     pattern ')'					linebreak
 		//     pattern ')' compound_list	linebreak
 		// '(' pattern ')'					linebreak
-		// '(' pattern ')' compound_list	linebreak	
-		
+		// '(' pattern ')' compound_list	linebreak
+
 		//     pattern ')' linebreak		DSEMI linebreak
 		//     pattern ')' compound_list	DSEMI linebreak
 		// '(' pattern ')' linebreak		DSEMI linebreak
 		// '(' pattern ')' compound_list	DSEMI linebreak
 
-		
+
 		m_commandDepth++;
 		sptr<CompoundList> compound = make_compound_list();
 		m_commandDepth--;
@@ -2997,18 +2997,18 @@ sptr<Command> Parser::make_case()
 		{
 			list->AddList(compound);
 			m_token = m_lexer->NextToken();
-			
+
 			if (m_token != Lexer::DSEMI)
 				dsemi = false;
-			
+
 			remove_linebreak();
 		}
 		else
 		{
 			remove_linebreak();
-		
+
 			m_token = m_lexer->NextToken();
-				
+
 			if (m_token != Lexer::DSEMI)
 				dsemi = false;
 			else
@@ -3048,15 +3048,15 @@ sptr<Command> Parser::make_if()
 	}
 
 	ifwhat->SetThen(make_compound_list());
-	
+
 	m_token = m_lexer->NextToken();
-	
+
 	if (m_token != Lexer::FI)
 	{
 		sptr<If> next = ifwhat;
 		do
 		{
-			// rewind the lexer because we are going to check 
+			// rewind the lexer because we are going to check
 			// NextToken() in make_else()
 			m_lexer->Rewind();
 			sptr<If> elif = make_else();
@@ -3098,7 +3098,7 @@ sptr<If> Parser::make_else()
 		ParseError();
 		return NULL;
 	}
-	
+
 	return next;
 }
 
@@ -3164,7 +3164,7 @@ sptr<Command> Parser::make_while()
 sptr<Command> Parser::make_simple_command()
 {
 	sptr<SimpleCommand> simple = new SimpleCommand();
-	
+
 	sptr<CommandPrefix> prefix = make_command_prefix(false);
 	simple->SetPrefix(prefix);
 
@@ -3173,7 +3173,7 @@ sptr<Command> Parser::make_simple_command()
 	if (m_token == Lexer::WORD)
 	{
 		simple->SetCommand(m_lexer->CurrentToken());
-	
+
 		sptr<CommandSuffix> suffix = make_command_suffix();
 		simple->SetSuffix(suffix);
 	}
@@ -3189,20 +3189,20 @@ sptr<Command> Parser::make_simple_command()
 sptr<CommandSuffix> Parser::make_command_suffix()
 {
 	sptr<CommandSuffix> suffix = new CommandSuffix();
-	
+
 	sptr<IORedirect> tierOne = NULL;
 	sptr<IORedirect> tierTwo = NULL;
 
 	while (true)
 	{
 		tierTwo = make_io_redirect();
-		
+
 		if (tierTwo == NULL)
 		{
 			// check to see if it is an ASSIGNMENT_WORD
 			m_token = m_lexer->NextToken();
 
-			if (m_token != Lexer::WORD && 
+			if (m_token != Lexer::WORD &&
 				m_token != Lexer::ASSIGNMENT_WORD &&
 				m_token != Lexer::BANG &&
 				m_token != Lexer::LBRACE &&
@@ -3213,7 +3213,7 @@ sptr<CommandSuffix> Parser::make_command_suffix()
 				m_lexer->Rewind();
 				break;
 			}
-			
+
 			//bout << "[Parser] adding '" << m_lexer->CurrentToken() << "'" << endl;
 			suffix->AddWord(m_lexer->CurrentToken());
 		}
@@ -3246,18 +3246,18 @@ sptr<CommandPrefix> Parser::make_command_prefix(bool isExport)
 	{
 		if (!isExport)
 			tierTwo = make_io_redirect();
-		
+
 		if (tierTwo == NULL)
 		{
 			// check to see if it is an ASSIGNMENT_WORD
-			m_token = m_lexer->NextToken();			
+			m_token = m_lexer->NextToken();
 			if (m_token != Lexer::ASSIGNMENT_WORD)
 			{
 				// not for me
 				m_lexer->Rewind();
 				break;
 			}
-					
+
 			prefix->AddAssignment(m_lexer->CurrentToken());
 		}
 		else
@@ -3282,10 +3282,10 @@ sptr<IORedirect> Parser::make_io_redirect()
 	sptr<IORedirect> redirect = new IORedirect();
 
 	m_token = m_lexer->NextToken();
-	
+
 	bool hadIONumber = false;
 	bool isRedirect = true;
-	
+
 	if (m_token == Lexer::IO_NUMBER)
 	{
 		redirect->SetFileDescriptor(m_lexer->CurrentToken());
@@ -3338,7 +3338,7 @@ sptr<IORedirect> Parser::make_io_redirect()
 			}
 			else
 			{
-//				printf("Parser: make_io_redirect reached NEWLINE or END_OF_STREAM\n");	
+//				printf("Parser: make_io_redirect reached NEWLINE or END_OF_STREAM\n");
 			}
 
 			isRedirect = false;
@@ -3374,12 +3374,12 @@ sptr<Command> Parser::make_function()
 		ParseError();
 		return NULL;
 	}
-		
+
 	function->SetName(m_lexer->CurrentToken());
 
 	// just double check to see if this really is a function definition
 
-	if (m_lexer->NextToken() == Lexer::LPAREN && 
+	if (m_lexer->NextToken() == Lexer::LPAREN &&
 		m_lexer->NextToken() == Lexer::RPAREN)
 	{
 		// remove optional linebreak
@@ -3421,7 +3421,7 @@ sptr<RedirectList> Parser::make_redirect_list()
 	while (true)
 	{
 		tierTwo = make_io_redirect();
-		
+
 		if (tierTwo == NULL)
 		{
 			// we are out of here

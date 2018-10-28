@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
  */
- 
+
 #ifndef _TOKEN_SOURCE_H
 #define _TOKEN_SOURCE_H
 
@@ -25,7 +25,7 @@
 #include <support/Package.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -40,9 +40,9 @@ namespace support {
 	reference to this IBinder, it gives you the same one.  If
 	nobody else has it, it gives you a new one.  When the IBinder
 	is created, a binder method you specify is called on an object
-	you specify.  When the last reference on the IBinder is 
+	you specify.  When the last reference on the IBinder is
 	released, another binder method is called.
-	
+
 	To specify which
 	objects and binder calls are made, pass the following into
 	the args parameter of the constructor:
@@ -69,7 +69,7 @@ public:
 
 	virtual void 		InitAtom();
 	virtual	SValue		Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
-	
+
 	/*! @name INode Interface */
 	//@{
 	virtual	sptr<INode> Attributes() const;
@@ -78,7 +78,7 @@ public:
 	virtual	nsecs_t CreationDate() const;
 	virtual	void SetCreationDate(nsecs_t value);
 	virtual	nsecs_t ModifiedDate() const;
-	virtual	void SetModifiedDate(nsecs_t value);	
+	virtual	void SetModifiedDate(nsecs_t value);
 	virtual	status_t Walk(SString* path, uint32_t flags, SValue* node);
 	//@}
 
@@ -97,7 +97,7 @@ public:
 protected:
 	// Disambiguate.
 	const SContext&	Context() const;
-	
+
 private:
 	class Token : public BBinder
 	{

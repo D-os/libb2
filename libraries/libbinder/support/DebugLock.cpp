@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -27,7 +27,7 @@
 #include <stdlib.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -48,7 +48,7 @@ struct link_info
 			count(o.count)
 	{
 	}
-	
+
 	DebugLockNode*		target;		// next lock being acquired
 	DebugLockNode*		source;		// last lock held while 'target' was acquired
 	SysHandle			thread;		// thread that created this link
@@ -64,7 +64,7 @@ struct block_links
 		:	targets(link_info(NULL, NULL))
 	{
 	}
-	
+
 	SKeyedVector<DebugLockNode*, link_info>			targets;
 	SSortedVector<DebugLockNode*>					sources;
 };
@@ -103,7 +103,7 @@ int32_t LockDebugLevelSlow() {
 			printf("LOCK DEBUGGING ENABLED!  LOCK_DEBUG=%d  LOCK_DEBUG_STACK_CRAWLS=%d\n",
 					gLockDebugLevel, gLockDebugStackCrawls);
 	}
-	while ((gHasLockDebugLevel&2) == 0) 
+	while ((gHasLockDebugLevel&2) == 0)
 	   SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
 	return gLockDebugLevel;
 }
@@ -185,7 +185,7 @@ static SVector<const link_info*>* FindSourceLock(	DebugLockNode* source,
 				}
 			}
 		}
-		
+
 		return shortest;
 	}
 	return NULL;
@@ -272,7 +272,7 @@ static bool RegisterDebugNode(SVector<DebugLockNode*>& vec, DebugLockNode* who, 
 	const int32_t C = valGetter(who);
 	const int32_t N = vec.CountItems();
 	DebugLockNode* node;
-	
+
 	// Determine where this item should go.
 	ssize_t mid, low = 0, high = N-1;
 	while (low <= high) {
@@ -431,7 +431,7 @@ static void AllocContentionLock() {
 		gStartTime = SysGetRunTime();
 		atomic_fetch_or(&gHasContentionSem, 2);
 	}
-	while ((gHasContentionSem&2) == 0) 
+	while ((gHasContentionSem&2) == 0)
 	   SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
 }
 
@@ -470,13 +470,13 @@ DebugLockNode::~DebugLockNode()
 			DebugLockNode* source = m_links->sources.ItemAt(i);
 			if (source && source->m_links) {
 				DebugLockNode* this_node = this;
-				source->m_links->targets.RemoveItemFor(this_node);			
+				source->m_links->targets.RemoveItemFor(this_node);
 			}
 		}
 		RemLockHeld(this);
 		UnlockGraph();
 	}
-	
+
 	delete m_links;
 	delete m_createStack;
 }
@@ -484,7 +484,7 @@ DebugLockNode::~DebugLockNode()
 void DebugLockNode::Delete()
 {
 	DecRefs();
-	
+
 	//if (bout != NULL) bout << "Deleting lock " << this << " (taken=" << taken << "): " << m_name << endl;
 
 	PrintContentionIfNeeded();
@@ -548,7 +548,7 @@ inline void DebugLockNode::UnlockGraph() const
 bool DebugLockNode::AddToGraph()
 {
 	bool succeeded = true;
-	
+
 	// Add this block to the block graph, checking to see if it creates
 	// a cycle.
 	SSortedVector<DebugLockNode*>* held = LocksHeld();
@@ -557,7 +557,7 @@ bool DebugLockNode::AddToGraph()
 		for (int32_t i=0; i<N; i++) {
 			DebugLockNode* source = held->ItemAt(i);
 			if (source && source->m_links) {
-			
+
 				DebugLockNode* this_node = this;
 				const int32_t idx = source->m_links->targets.IndexOf(this_node);
 				SVector<const link_info*>* deadlock = NULL;
@@ -619,7 +619,7 @@ bool DebugLockNode::AddToGraph()
 			}
 		}
 	}
-	
+
 	return succeeded;
 }
 
@@ -853,10 +853,10 @@ void DebugLock::Delete()
 			ErrFatalError("DebugLock: need to implement LOCK_ANYONE_CAN_DELETE!");
 		}
 	}
-	
+
 	m_deleted = true;
 	//SysSemaphoreDestroy(m_sem);
-	
+
 	DebugLockNode::Delete();
 }
 
@@ -883,16 +883,16 @@ status_t DebugLock::do_lock(uint32_t flags, nsecs_t timeout, uint32_t debug_flag
 		printf("%s", dirtyADSHack->String());
 		ErrFatalError(dirtyADSHack->String());
 	}
-	
+
 	if (timeout != 0
 			&& ((GlobalFlags()|debug_flags)&LOCK_SKIP_DEADLOCK_CHECK) == 0
 			&& LockGraph()) {
 		AddToGraph();
 		UnlockGraph();
 	}
-	
+
 	SetMaxContention(atomic_fetch_add(&m_contention, 1));
-	
+
 	status_t err = B_OK;
 	if (!restoreOnly) {
 		dbg_lock_gehnaphore(&m_gehnaphore);
@@ -919,7 +919,7 @@ status_t DebugLock::do_lock(uint32_t flags, nsecs_t timeout, uint32_t debug_flag
 		printf("%s", dirtyADSHack->String());
 		ErrFatalErrorIf(err != B_NO_INIT, dirtyADSHack->String());
 	}
-	
+
 	return err;
 }
 
@@ -956,24 +956,24 @@ status_t DebugLock::do_unlock(bool removeOnly)
 			ErrFatalError(dirtyADSHack->String());
 		}
 	}
-	
+
 	m_owner = SysHandle(B_ERROR);
-	
+
 	if (LockGraph()) {
 		UnregisterAsHeld();
 		UnlockGraph();
 	}
-	
+
 	m_held = 0;
 
 	atomic_fetch_add(&m_contention, -1);
-	
+
 	status_t err = B_OK;
 	if (!removeOnly) {
 		dbg_unlock_gehnaphore(&m_gehnaphore);
 		// SysSemaphoreSignal(m_sem);
 	}
-	
+
 	if (err != B_OK) {
 		BStringIO* dirtyADSHack = new BStringIO();
 		sptr<ITextOutput> msg = dirtyADSHack;
@@ -981,7 +981,7 @@ status_t DebugLock::do_unlock(bool removeOnly)
 		PrintStacksToStream(msg);
 		ErrFatalError(dirtyADSHack->String());
 	}
-	
+
 	return err;
 }
 
@@ -1024,7 +1024,7 @@ void DebugLock::PrintSubclassToStream(const sptr<ITextOutput>& io) const
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif	// SUPPORTS_LOCK_DEBUG

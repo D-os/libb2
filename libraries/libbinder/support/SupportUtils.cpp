@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -31,12 +31,12 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::osp;
+using namespace os::osp;
 #endif
 
 static team_id g_team = B_ERROR;
@@ -44,7 +44,7 @@ static team_id g_team = B_ERROR;
 int32_t this_team()
 {
 	if (g_team >= B_OK) return g_team;
-	
+
 	return (g_team=SysProcessID());
 }
 
@@ -160,7 +160,7 @@ void rename_object(const small_flat_data& obj, const void* newWho, const void* o
 {
 	SAtom* atom = NULL;
 	bool matched = false;
-	
+
 	switch (obj.type) {
 		case kPackedSmallAtomType:
 		{
@@ -195,7 +195,7 @@ void rename_object(const small_flat_data& obj, const void* newWho, const void* o
 		} break;
 #endif
 	}
-	
+
 	if (atom) atom->RenameOwnerID(newWho, oldWho);
 	else if (!matched) DbgOnlyFatalError("Bad type supplied to rename_object()");
 }
@@ -246,7 +246,7 @@ void flatten_binder(const wptr<IBinder>& binder, small_flat_data* out)
 			// we will do a direct dynamic_cast<> on the binder, since we
 			// know an BpBinder doesn't get destroyed until all weak references
 			// are removed.
-			
+
 			SAtom::weak_atom_ptr* weak = binder.get_weak_atom_ptr();
 			IBinder* local = static_cast<IBinder*>(weak->cookie);
 			BpBinder* proxy = local->RemoteBinder();
@@ -411,7 +411,7 @@ void flatten_binder(const wptr<IBinder>& binder, flat_binder_object* out)
 			// we will do a direct dynamic_cast<> on the binder, since we
 			// know an BpBinder doesn't get destroyed until all weak references
 			// are removed.
-			
+
 			SAtom::weak_atom_ptr* weak = binder.get_weak_atom_ptr();
 			IBinder* local = static_cast<IBinder*>(weak->cookie);
 			BpBinder* proxy = local->RemoteBinder();
@@ -477,5 +477,5 @@ status_t unflatten_binder(const flat_binder_object& flat, wptr<IBinder>* out)
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

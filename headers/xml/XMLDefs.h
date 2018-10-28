@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -17,7 +17,7 @@
 #include <support/TypeConstants.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace xml {
 using namespace support;
 #endif
@@ -44,9 +44,9 @@ enum
 	B_XML_ELEMENT_DECL_OBJECT					= 0x00000200,
 	B_XML_ENTITY_DECL_OBJECT					= 0x00000400,
 	B_XML_DTD_OBJECT							= 0x00000800,
-	
+
 	B_XML_ANY_CONTENT							= 0xFFFFFFFF,
-	
+
 	B_XML_BEOS_CONTENT_TYPE_MASK	= 0x0000FFFF	// Anything that masks with this
 													// is reserved for use by Be. Other
 													// people can use the rest for their
@@ -73,7 +73,7 @@ enum {
 	B_XML_INVALID_XPATH,
 	B_XML_INVALID_XSLT_DOCUMENT,
 	B_XML_BAD_ELEMENT_NESTING,
-	
+
 	B_XML_MAX_TOKEN_LENGTH_EXCEEDED,			// Names, etc. can only be 256 chars long
 												// because you need to set some limit
 	B_XML_BAD_NAME_CHARACTER,					// Names for elements, etc.
@@ -90,13 +90,13 @@ enum {
 	B_XML_AMBIGUOS_CHILDREN_PATTERN,
 	B_XML_NO_EMPTY_NAMES,
 	B_XML_ATTR_NAME_IN_USE,
-	
+
 	B_XML_NAMESPACE_NOT_DECLARED,
 	B_XML_BAD_NAMESPACE_PREFIX,
 	B_XML_NAMESPACE_PREFIX_COLLISION,
 	B_XML_ATTRS_WITH_COLLIDING_NAMESPACES,
 	B_XML_ALREADY_DECLARED,
-	
+
 	// Validation Errors
 	B_XML_ELEMENT_NOT_DECLARED,
 	B_XML_ATTRIBUTE_NOT_DECLARED,
@@ -109,13 +109,13 @@ enum {
 	B_XML_CHILD_TEXT_NOT_ALLOWED,
 	B_XML_CHILD_CDATA_NOT_ALLOWED,
 	B_XML_CHILD_PATTERN_NOT_FINISHED,
-	
+
 	// These are only warnings.  The default OnParseError fails on them.
 	// Maybe this behavior should be changed.
 	B_XML_WARNINGS_BASE,
-	
+
 	B_XML_ENTITY_ALREADY_EXISTS,				// The first one is the one that's used.
-	
+
 	B_XML_ERRORS_END
 };
 
@@ -158,7 +158,7 @@ enum
 
 #if _SUPPORTS_NAMESPACE
 }; // namespace xml
-}; // namespace palmos
+}; // namespace os
 #endif
 
 #endif // _B_XML2_DEFS_H

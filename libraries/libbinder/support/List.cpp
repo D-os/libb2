@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -15,7 +15,7 @@
 #include <support/Value.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -39,14 +39,14 @@ SAbstractList::~SAbstractList(void)
 		sprintf(complaint, "SAbstractList: subclass must call MakeEmpty() in destructor (%d items remain)", m_numItems);
 		ErrFatalError(complaint);;
 	}
-	
+
 	delete m_end;
 }
 
 SAbstractList& SAbstractList::Duplicate(const SAbstractList& o)
 {
 	MakeEmpty();
-	
+
 	AbstractIterator i = o.Begin();
 	for ( ; i != o.End(); i++) {
 		Add(i.Data());
@@ -94,12 +94,12 @@ SAbstractList::_ListNode* SAbstractList::AddAt(const void* newItem, const Abstra
 		// create a new item
 		PerformConstruct(&newNode->_data, 1);
 	}
-	
+
 	// hook newNode up to the list
 	Insert(newNode, *i);
-	
+
 	m_numItems++;
-	
+
 	return newNode;
 }
 
@@ -122,17 +122,17 @@ SAbstractList::SpliceAt(SAbstractList &subList, const AbstractIterator &i)
 		return *i;
 	}
 	subListLast--;
-	
+
 	SpliceNodes(*(subListFirst), *(subListLast), *i);
-	
+
 	m_numItems += subList.m_numItems;
-	
+
 	// truncate subList
-	subList.m_end->_next = subList.m_end; 
-	subList.m_end->_prev = subList.m_end; 
-	
+	subList.m_end->_next = subList.m_end;
+	subList.m_end->_prev = subList.m_end;
+
 	subList.m_numItems = 0;
-	
+
 	return *subListFirst;
 }
 
@@ -148,23 +148,23 @@ SAbstractList::AbstractIterator SAbstractList::Remove(AbstractIterator& i)
 
 	// call the stored object's destructor
 	PerformDestroy(&killMe->_data, 1);
-	
+
 	// prepare to return iterator pointing to next node
 	AbstractIterator next(this, killMe->_next);
-	
+
 	// unhook node from the list
 	Extract(killMe);
-	
+
 	// call the _ListNode's destructor
 	killMe->~_ListNode();
 
 	// free the node's storage
 	free(killMe);
-	
+
 	m_numItems--;
-	
+
 	return next;
-}	
+}
 
 SAbstractList::AbstractIterator SAbstractList::Begin(void) const
 {
@@ -179,7 +179,7 @@ SAbstractList::AbstractIterator SAbstractList::End(void) const
 void SAbstractList::MakeEmpty(void)
 {
 	AbstractIterator i = Begin();
-	
+
 	while (i != End()) {
 		i = Remove(i);
 	}
@@ -198,16 +198,16 @@ void SAbstractList::Insert(_ListNode* node, _ListNode* before)
 }
 
 // hook many nodes up to list
-void 
+void
 SAbstractList::SpliceNodes(_ListNode *sublist_head, _ListNode *sublist_tail, _ListNode *before)
 {
 	if (before == NULL) before = m_end;
 	if (sublist_tail == NULL) sublist_tail = sublist_head;
-	
+
 	// place sublist_head before "before"
 	(before->_prev)->_next = sublist_head;
 	sublist_head->_prev = (before->_prev);
-	
+
 	before->_prev = sublist_tail;
 	sublist_tail->_next = before;
 }
@@ -263,32 +263,32 @@ SAbstractList::_ListNode* SAbstractList::AbstractIterator::operator*(void) const
 SAbstractList::AbstractIterator& SAbstractList::AbstractIterator::operator++(void)
 {
 	m_current = m_current->_next;
-	
+
 	return *this;
 }
 
 SAbstractList::AbstractIterator SAbstractList::AbstractIterator::operator++(int)
 {
 	AbstractIterator tmp = *this;
-	
+
 	++*this;
-	
+
 	return tmp;
 }
 
 SAbstractList::AbstractIterator& SAbstractList::AbstractIterator::operator--(void)
 {
 	m_current = m_current->_prev;
-	
+
 	return *this;
 }
 
 SAbstractList::AbstractIterator SAbstractList::AbstractIterator::operator--(int)
 {
 	AbstractIterator tmp = *this;
-	
+
 	--*this;
-	
+
 	return tmp;
 }
 
@@ -296,7 +296,7 @@ SAbstractList::AbstractIterator& SAbstractList::AbstractIterator::operator=(cons
 {
 	m_current = o.m_current;
 	m_domain = o.m_domain;
-	
+
 	return *this;
 }
 
@@ -304,7 +304,7 @@ bool SAbstractList::AbstractIterator::operator==(const AbstractIterator& o) cons
 {
 	// it should be impossible to have equal node pointers from different list
 	// domains, so this test will be sufficient.
-	return m_current == o.m_current; 
+	return m_current == o.m_current;
 }
 
 bool SAbstractList::AbstractIterator::operator!=(const AbstractIterator& o) const
@@ -341,5 +341,5 @@ SAbstractList::_ListNode::~_ListNode(void)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

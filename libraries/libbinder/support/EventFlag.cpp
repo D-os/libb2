@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,7 +18,7 @@
 #include <assert.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -33,7 +33,7 @@ enum {
  * test it, which I doubt.  It's only intended to support the crap-layer
  * EventQueue.cpp.
  */
-	
+
 SEventFlag::SEventFlag()
 	:m_bits(SET)
 {
@@ -77,41 +77,41 @@ SEventFlag::Wait(nsecs_t timeout)
 {
 	status_t err;
 	timespec abstime;
-	
+
 	pthread_mutex_lock(&m_mutex);
-	
+
 	if (m_bits == SET) {
 		goto done;
 	}
-	
+
 	if (timeout != -1) {
 		clock_gettime(CLOCK_REALTIME, &abstime);
-		palmos::clock_timespec_add_nano(&abstime, timeout);
+		os::clock_timespec_add_nano(&abstime, timeout);
 	}
-	
+
 	int result;
-loop:	
+loop:
 	if (timeout == -1) {
 		result = pthread_cond_wait(&m_cond, &m_mutex);
 	} else {
 		result = pthread_cond_timedwait(&m_cond, &m_mutex, &abstime);
 	}
-	
+
 	if (result == EINTR) {
 		goto loop;
 	}
-	
+
 done:
-	
+
 	m_bits = CLEARED;
-	   
+
 	pthread_mutex_unlock(&m_mutex);
-	
+
 	return B_OK;
 }
-	
+
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 

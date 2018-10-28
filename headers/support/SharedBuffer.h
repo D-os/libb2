@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -24,7 +24,7 @@
 #include <support/atomic.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -58,7 +58,7 @@ enum {
 //!	A chunk of memory that supports copy-on-write semantics.
 /*! A class for managing raw blocks of memory, which also includes support
 	for sharing among multiple users with copy-on-write semantics.
-	
+
 	To correctly use the class, you will usually keep a const SSharedBuffer*
 	to your buffer, and call Edit() when you would like to modify its data.
 	This ensures you follow the correct copy-on-write semantics, not allowing
@@ -76,7 +76,7 @@ public:
 			//!	Create a new buffer of the given size.
 			/*!	A buffer starts out with a user count of 1; call DecUsers() to free it. */
 	static	SSharedBuffer*	Alloc(size_t length);
-			
+
 			//!	Return a read-only version of the buffer's data.
 	inline	const void*		Data() const;
 			//!	Return a read/write version of the buffer's data.
@@ -87,7 +87,7 @@ public:
 	inline	void*			Data();
 			//!	Return the number of bytes in this buffer.
 	inline	size_t			Length() const;
-			
+
 			//!	Inverse of Data().
 			/*! Given a data pointer returned by Data(),
 				returns the SSharedBuffer that the pointer came from.  This
@@ -109,7 +109,7 @@ public:
 				and if it is greater than one, you can't assume it will stay
 				that way. */
 	inline	int32_t			Users() const;
-			
+
 			//!	Given a read-only buffer, start modifying it.
 			/*!	If the buffer currently has multiple users, it will be
 				copied and a new one returned to you.
@@ -162,7 +162,7 @@ public:
 private:
 	inline					SSharedBuffer() { }
 	inline					~SSharedBuffer() { }
-	
+
 	struct	extended_info;
 			extended_info*	get_extended_info() const;
 			bool			unpool() const;
@@ -242,7 +242,7 @@ sptr<SSharedBuffer>& sptr<SSharedBuffer>::operator = (SSharedBuffer* p)
 
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif	/* _SUPPORT_SHARED_BUFFER_H_ */

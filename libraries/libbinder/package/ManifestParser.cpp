@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -21,11 +21,11 @@
 #include <linux/cramfs_fs.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace package {
 
-using namespace palmos::support;
-using namespace palmos::xml;
+using namespace os::support;
+using namespace os::xml;
 #endif
 
 B_CONST_STRING_VALUE_LARGE(key_package, "package", )
@@ -34,7 +34,7 @@ class BManifestParseCreator : public BCreator
 {
 public:
 	BManifestParseCreator(const SString& filename, const sptr<SManifestParser>& parser, const SPackage& resources, const SString& package);
-	
+
 	virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
 	virtual status_t OnEndTag(SString& name);
 	virtual status_t OnText(SString& data);
@@ -57,12 +57,12 @@ class BManifestParseComponent : public BCreator
 {
 public:
 	BManifestParseComponent(const SString& filename, const SValue &attributes, SValue &componentInfo, const SPackage &resources);
-	
+
 	virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
 	virtual status_t OnEndTag(SString& name);
 	virtual status_t OnText(SString& data);
 	virtual status_t Done();
-	
+
 private:
 	SValue &m_componentInfo;
 	const SPackage m_resources;
@@ -73,12 +73,12 @@ class BManifestParseApplication : public BCreator
 {
 public:
 	BManifestParseApplication(const SString& filename, const SValue &attributes, SValue &appInfo, const SPackage& resources);
-	
+
 	virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
 	virtual status_t OnEndTag(SString& name);
 	virtual status_t OnText(SString& data);
 	virtual status_t Done();
-	
+
 private:
 	SValue &m_appInfo;
 	SValue m_intent;
@@ -91,12 +91,12 @@ class BManifestParseAddon : public BCreator
 {
 public:
 	BManifestParseAddon(const SString& filename, const SValue &attributes, SValue &componentInfo, const SPackage &resources);
-	
+
 	virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
 	virtual status_t OnEndTag(SString& name);
 	virtual status_t OnText(SString& data);
 	virtual status_t Done();
-	
+
 private:
 	SString m_filename;
 };
@@ -160,7 +160,7 @@ status_t BManifestParseCreator::OnStartTag(SString& name, SValue& attributes, sp
 		}
 		break;
 	}
-	
+
 	return B_OK;
 }
 
@@ -204,7 +204,7 @@ status_t BManifestParseCreator::OnEndTag(SString& name)
 			}
 			break;
 		}
-		
+
 		case ADDON:
 		{
 			m_state = MANIFEST;
@@ -218,7 +218,7 @@ status_t BManifestParseCreator::OnEndTag(SString& name)
 			}
 			break;
 		}
-		
+
 		default:
 		{
 			break;
@@ -267,7 +267,7 @@ status_t BManifestParseComponent::OnStartTag(SString& name, SValue& attributes, 
 		m_componentInfo.JoinItem(SValue::String("process"), attributes);
 		return B_OK;
 	}
-	
+
 	berr << m_filename << ": Manifest error:  Require <value>, <property>, <process>, or <interface> inside <component>." << endl;
 	return B_BAD_VALUE;
 }
@@ -276,7 +276,7 @@ status_t BManifestParseComponent::OnStartTag(SString& name, SValue& attributes, 
 status_t BManifestParseComponent::OnEndTag(SString& name)
 {
 	(void) name;
-	
+
 	return B_OK;
 }
 
@@ -387,13 +387,13 @@ status_t BManifestParseAddon::Done()
 // ==================================================================================
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::osp
+} } // namespace os::osp
 
-namespace palmos {
+namespace os {
 namespace package {
 
-using namespace palmos::xml;
-using namespace palmos::osp;
+using namespace os::xml;
+using namespace os::osp;
 #endif
 
 
@@ -414,22 +414,22 @@ SManifestParser::ParseManifest(const SString& filename, const sptr<SManifestPars
 
 	We need this adapter for reading the manifest stuffed into the 'image' block of a
 	cramfs filesystem image, which is within a larger file (hence the need to cap), and
-	may have up to 3 NUL padding bytes placed at the end. 
+	may have up to 3 NUL padding bytes placed at the end.
 */
 
 class CappedXMLIByteInputSource : public BXMLIByteInputSource
 {
 public:
 	CappedXMLIByteInputSource(const sptr<IByteInput>& data, size_t cap)
-		:	BXMLIByteInputSource(data), 
+		:	BXMLIByteInputSource(data),
 			m_cap(cap)
 	{
 	}
-	
+
 	virtual ~CappedXMLIByteInputSource()
 	{
 	}
-	
+
 	virtual status_t GetNextBuffer(size_t * size, uint8_t ** data, int * done)
 	{
 		status_t result = BXMLIByteInputSource::GetNextBuffer(size, data, done);
@@ -439,7 +439,7 @@ public:
 		if (*size > m_cap) {
 			*size = m_cap;
 		}
-		
+
 		if (*size > 0) {
 			void * v;
 			if (v = memchr(*data, '\0', *size)) {
@@ -447,10 +447,10 @@ public:
 				*done = 1;
 			}
 		}
-		
+
 		if (*size == 0 && !*done)
 			*done = 1;
-		 
+
 		m_cap -= *size;
 		return result;
 	}
@@ -485,5 +485,5 @@ SManifestParser::ParseManifestFromPackageFile(const SString& filename, const spt
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

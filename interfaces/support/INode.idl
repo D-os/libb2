@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -16,7 +16,7 @@
 	@brief Basic interface to a container in the Binder namespace.
 */
 
-namespace palmos {
+namespace os {
 namespace support {
 
 //!	Basic interface to a container in the Binder namespace.
@@ -128,7 +128,7 @@ methods:
 		@return B_OK if the Walk() was successful (the @a node contains the
 			result); else an error code on failure.  A common error is
 			B_ENTRY_NOT_FOUND if the path could not be resolved.
-	
+
 		The Walk() method is used to find an object below the node, by traversing
 		the given path through the namespace. You use separators ('/' -- forward
 		slash) to separate components of the path. If your path contains no
@@ -140,7 +140,7 @@ methods:
 		attribute namespace.  Thus a Walk() of just the path ":" will return the
 		attributes catalog (and continue walking into it if needed); for a name
 		with ':' as a prefix and additional text the node strips off the ':' and
-		then calls Walk() on the attributes catalog with the remaining text. 
+		then calls Walk() on the attributes catalog with the remaining text.
 
 		Clients will generally not call Walk() directly, instead relying
 		on SNode::Walk(). The latter hides a lot of the complexity of
@@ -175,7 +175,7 @@ methods:
 
 		- CREATE_CATALOG flag asks for the nodes parsing your path to automatically
 		create intermediate objects if the requested entries along the path don't exist.
-		
+
 		- CREATE_DATUM flags asks that the final node in the path create a datum for
 		you if one doesn't already exist.
 
@@ -206,14 +206,14 @@ methods:
 		should be treated as a datum (as its primary identity), and the REQUEST_DATA
 		flag honored if possible.
 		@par
-		Why is Walk() defined this way, instead of simply returning the final leaf?  
+		Why is Walk() defined this way, instead of simply returning the final leaf?
 		The primary reason is to give the node hierarchy the ability to control how much
 		recursion happens. If it couldn't break the walk up into separate steps, then
 		you may be required to recurse (potentially across many processes) extremely
 		deep in order to perform the walk. In addition, performance should be better by
 		splitting up the walk at each process boundary (though it is completely up to
 		the implementation of a particular INode to decide whether or not to return
-		early from walk). 
+		early from walk).
 
 		@todo COLLAPSE_NODE should probably be removed.
 	*/
@@ -258,7 +258,7 @@ events:
 		for those APIs.
 	*/
 	void EntryModified(INode who, SString name, IBinder entry);
-	
+
 	//! This event is sent when an existing entry is removed from the node.
 	/*! @param[in] who The parent node in which this change occured.
 		@param[in] name The name of the entry that was removed.
@@ -291,4 +291,4 @@ events:
     void EntryRenamed(INode who, SString old_name, SString new_name, IBinder entry);
 }
 
-} }	// namespace palmos::support
+} }	// namespace os::support

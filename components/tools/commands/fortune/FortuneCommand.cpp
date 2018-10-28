@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -25,9 +25,9 @@
 #include <CPMLib.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
-using namespace palmos::storage;
-using namespace palmos::app;
+using namespace os::support;
+using namespace os::storage;
+using namespace os::app;
 #endif
 
 BFortune::BFortune(const SContext& context)
@@ -38,7 +38,7 @@ BFortune::BFortune(const SContext& context)
 float frandom_0_1(status_t * errP) {
 	/*
 	// Non-CPM lame version:
-	return (float)SysRandom(B_NS2MS(KALGetTime(B_TIMEBASE_RUN_TIME)) % sysRandomMax) 
+	return (float)SysRandom(B_NS2MS(KALGetTime(B_TIMEBASE_RUN_TIME)) % sysRandomMax)
 		/ (float)sysRandomMax;
 	*/
 	uint16_t randval;
@@ -50,7 +50,7 @@ float frandom_0_1(status_t * errP) {
 	}
 
 	uint64_t now = B_NS2MS(KALGetTime(B_TIMEBASE_RUN_TIME));
-	
+
 	err = CPMLibAddRandomSeed((uint8_t*)(&now), sizeof(now));
 	err = CPMLibGenerateRandomBytes((uint8_t*)&randval, &buflen);
 	if (err != errNone) {
@@ -62,7 +62,7 @@ float frandom_0_1(status_t * errP) {
 	(void) CPMLibClose();
 
 	*errP = errNone;
-	
+
 	return ((float)randval / (float)0xFFFF);
 }
 
@@ -100,18 +100,18 @@ SString BFortune::GetFortuneFromFile(SString filename, int32_t selectedFortune)
 		}
 
 		//bout << "numCookies: " << numCookies << endl;
-		
+
 		if (numCookies > 0) {
 			status_t err = errNone;
 			if (selectedFortune == BFortune::kRandomFortune) {
-				selectedFortune = 
+				selectedFortune =
 					(int32_t)(
 						frandom_0_1(&err) * numCookies
 					);
 				if (err != errNone) {
 					char buf[12];
 					sprintf(buf,"0x%08lx", err);
-					s 	<< "fortune: error: system too deterministic (CPMLib error " 
+					s 	<< "fortune: error: system too deterministic (CPMLib error "
 						<< buf << ")\n";
 					return s;
 				}
@@ -121,11 +121,11 @@ SString BFortune::GetFortuneFromFile(SString filename, int32_t selectedFortune)
 						<< " out of range (" << numCookies << ")\n";
 					return s;
 				}
-				s << "fortune: " << selectedFortune << " of " 
+				s << "fortune: " << selectedFortune << " of "
 					<< numCookies << ":\n";
 			}
 
-			
+
 			int32_t fortune = -1;
 			incomment = true;
 			store->Seek(0, SEEK_SET);
@@ -142,7 +142,7 @@ SString BFortune::GetFortuneFromFile(SString filename, int32_t selectedFortune)
 					if (incomment && line != "\n") {
 						fortune ++;
 						incomment = false;
-					}	
+					}
 					if (fortune == selectedFortune)
 						s << line;
 				}
@@ -153,7 +153,7 @@ SString BFortune::GetFortuneFromFile(SString filename, int32_t selectedFortune)
 					<< " (selected "
 					<< selectedFortune
 					<< " of "
-					<< numCookies 
+					<< numCookies
 					<< ")\n";
 			}
 		}
@@ -161,7 +161,7 @@ SString BFortune::GetFortuneFromFile(SString filename, int32_t selectedFortune)
 			s << "fortune: error: no fortunes found in cookie file\n";
 		}
 	}
-	
+
 	if (s == "") {
 		s << "fortune: error: could not read fortune cookies file\n";
 	}
@@ -177,7 +177,7 @@ SValue BFortune::Run(const SValue& args)
 	else
 		out << GetFortuneFromFile(SString("fortunes.txt"));
 
-	
+
 
 	return SValue::Status(B_OK);
 }

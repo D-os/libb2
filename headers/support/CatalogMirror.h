@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -32,7 +32,7 @@
 #include <support/Value.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -61,40 +61,40 @@ public:
 	virtual	status_t			AddEntry(const SString& name, const SValue& entry);
 	virtual	status_t			RemoveEntry(const SString& name);
 	virtual	status_t			RenameEntry(const SString& entry, const SString& name);
-	
+
 	virtual	sptr<INode>			CreateNode(SString* name, status_t* err);
 	virtual	sptr<IDatum>		CreateDatum(SString* name, uint32_t flags, status_t* err);
 	virtual	sptr<IIterator>		NewIterator(const SValue& args, status_t* error = NULL);
-	
+
 	virtual	status_t			Walk(SString* path, uint32_t flags, SValue* node);
 
 	// INode implementation
 	virtual	sptr<INode> Attributes() const;
-	
+
 	virtual	SString MimeType() const;
 	virtual	void SetMimeType(const SString& value);
-	
+
 	virtual	nsecs_t CreationDate() const;
 	virtual	void SetCreationDate(nsecs_t value);
-		
+
 	virtual	nsecs_t ModifiedDate() const;
 	virtual	void SetModifiedDate(nsecs_t value);
-	
+
 	// ICatalogPermissions implementation
 	virtual	bool				Writable() const;
 	virtual	void				SetWritable(bool value);
-	
+
 	virtual	status_t			HideEntry(const SString& name);
 	virtual	status_t			ShowEntry(const SString& name);
-	
+
 	virtual	status_t			OverlayEntry(const SString& location, const SValue& item);
 	virtual	status_t			RestoreEntry(const SString& location);
-	
+
 	virtual status_t			Merge(const sptr<ICatalog>& catalog);
 
 	// BObserver implementation
 	virtual void Observed(const SValue& key, const SValue& value);
-	
+
 	// IBinder implementation
 	virtual SValue				Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags);
 	virtual status_t			Link(const sptr<IBinder>& target, const SValue& bindings, uint32_t flags);
@@ -128,7 +128,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif // _SUPPORT_DIRECTORYMIRROR_H

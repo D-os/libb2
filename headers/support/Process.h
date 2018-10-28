@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -35,7 +35,7 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -66,14 +66,14 @@ public:
 								BProcess(team_id tid);
 
 			team_id				ID() const;
-	
+
 #if !LIBBE_BOOTSTRAP
 	//!	Create a new, empty team, which you can start instantiating
 	//!	components in.
 	static	sptr<IProcess>			Spawn(	const SString& name = SString(),
 										const SValue& env = B_UNDEFINED_VALUE,
 										uint32_t flags = 0);
-	
+
 	//!	Load the requested image as a new team, and return its root object.
 	static	sptr<IBinder>		SpawnFile(	const SString& file_path,
 											const SValue& env = B_UNDEFINED_VALUE,
@@ -103,20 +103,20 @@ public:
 
 	typedef	void				(*catchReleaseFunc)(IBinder* obj);
 			void				CatchHandleRelease(const sptr<IBinder>& remoteObject, catchReleaseFunc callbackFunc);
-			
+
 			nsecs_t				GetNextEventTime() const;
 			void				SetHandlerConcurrency(int32_t maxConcurrency);
 			void				BatchPutReferences();
-			
+
 	// ----------- The remaining methods are not for public use -----------
-	
+
 			void				DispatchMessage(SLooper* looper);
 
 			sptr<IBinder>		GetStrongProxyForHandle(int32_t handle);
 			wptr<IBinder>		GetWeakProxyForHandle(int32_t handle);
 			void				ExpungeHandle(int32_t handle, IBinder* binder);
 			void				StrongHandleGone(IBinder* binder);
-			
+
 			void				Shutdown();
 			bool				IsShuttingDown() const;
 			nsecs_t				GetEventDelayTime(SLooper* caller) const;
@@ -124,7 +124,7 @@ public:
 			class ComponentImage : public BSharedObject
 			{
 			public:
-				
+
 				inline	ComponentImage(const SValue& file, const SPackage& package, bool fake, attach_func attach)
 					: BSharedObject(file, package, attach)
 					, m_instantiate(NULL)
@@ -136,19 +136,19 @@ public:
 
 				// Ask this .so to instantiate a component
 				inline	sptr<IBinder>	InstantiateComponent(const SString& component, const SContext& context, const SValue &args) const;
-				
+
 				inline status_t			InitCheck() const { return (m_instantiate || m_fake) ? B_OK : B_NO_INIT; }
-				
+
 				inline	int32_t			DecPending() { return atomic_fetch_dec(&m_numPendingExpunge); }
 				inline	void			MakeExpunged() { atomic_fetch_or(&m_expunged, 1U); }
-				
+
 			protected:
 				virtual					~ComponentImage() { }
-				
+
 				virtual	void			InitAtom();
 				virtual	status_t		FinishAtom(const void* id);
 				virtual	status_t		IncStrongAttempted(uint32_t flags, const void* id);
-				
+
 			private:
 				instantiate_component_func	m_instantiate;
 				bool						m_fake;
@@ -161,7 +161,7 @@ public:
 			};
 
 			bool				ExpungePackage(const wptr<ComponentImage>& image);
-			
+
 protected:
 	virtual						~BProcess();
 	virtual	void				InitAtom();
@@ -171,7 +171,7 @@ private:
 	friend	class SHandler;
 	friend	class SLooper;
 	friend	class ProcessFreeKey;
-	
+
 	static	bool				ResumingScheduling();
 	static	void				ClearSchedulingResumed();
 	static	bool				InsertHandler(SHandler **handlerP, SHandler *handler);
@@ -194,7 +194,7 @@ private:
 			enum {
 				MAX_LOOPERS_PER_TEAM= 63
 			};
-	
+
 			const team_id				m_id;
 	mutable	SLocker						m_lock;
 			SHandler*					m_pendingHandlers;
@@ -202,23 +202,23 @@ private:
 			int32_t						m_maxEventConcurrency;
 			int32_t						m_currentEventConcurrency;
 			bool						m_shutdown;
-			
+
 			// Information about loaded component images.
 			SNestedLocker				m_imageLock;
 			struct ImageData;
 			ImageData*					m_imageData;
-			
+
 			// Information about remote binders.
 	mutable	SNestedLocker				m_handleRefLock;
 			bool						m_remoteRefsReleased;
 			SVector<IBinder*>			m_handleRefs;
 			SKeyedVector<IBinder*, catchReleaseFunc>
 										m_catchers;
-	
+
 	// -----------------------------------------------
 	// These are used for scheduling handlers when
 	// there is no driver available to do so.
-			
+
 			//! The amount of idle time before the thread exits.
 			nsecs_t				GetIdleTimeout() const;
 			//! Pops 'looper' if on top and if when is <= the next event time.
@@ -262,7 +262,7 @@ BProcess::ComponentImage::InstantiateComponent(const SString& component, const S
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_PROCESS_H */

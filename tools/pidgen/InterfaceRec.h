@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -17,7 +17,7 @@
 #include "idlc.h"
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 enum dcltype {
@@ -47,7 +47,7 @@ class InterfaceRec;
 
 // jnamedtype & jmember - goes away when we can describe types in idl
 class jnamedtype : public SAtom
-{	
+{
 	public:
 								jnamedtype();
 								jnamedtype(SString id, SString type);
@@ -61,7 +61,7 @@ class jnamedtype : public SAtom
 // if used to storing members, member type=m_returnType and member name=m_id
 class jmember : public SAtom
 {
-	public:	
+	public:
 											jmember();
 											jmember(SString id, SString rtype);
 											jmember(const sptr<const jmember>& orig);
@@ -71,7 +71,7 @@ class jmember : public SAtom
 			sptr<jnamedtype>				ParamAt(int32_t i);
 			SString							ID();
 			SString							ReturnType();
-	
+
 	private:
 			SString							m_id;
 			SString							m_returnType;
@@ -86,7 +86,7 @@ class IDLCommentBlock : public SAtom
 		void								AppendToComment(const SString& more);
 
 		void								Output(const sptr<ITextOutput> &stream, bool startWithTab = true) const;
-	
+
 	private:
 		SVector<SString>					m_comments;
 };
@@ -95,7 +95,7 @@ class IDLCommentBlock : public SAtom
 class IDLType : public SAtom
 {
 	public:
-	
+
 											IDLType();
 											IDLType(SString code);
 											IDLType(SString name, uint32_t code);
@@ -134,7 +134,7 @@ class IDLType : public SAtom
 class IDLNameType : public IDLType
 {
 	public:
-	
+
 										IDLNameType();
 										IDLNameType(SString id, sptr<IDLType> typeptr, const sptr<IDLCommentBlock>& comment, bool custom =false);
 										IDLNameType(const sptr<const IDLNameType>& orig);
@@ -158,11 +158,11 @@ class IDLNameType : public IDLType
 class IDLTypeScope : public IDLNameType
 {
 	public:
-			
+
 										IDLTypeScope();
 										IDLTypeScope(SString id, const sptr<IDLCommentBlock>& comment);
 										IDLTypeScope(const sptr<const IDLTypeScope>& orig);
-	
+
 			status_t					AddParam(SString id, const sptr<IDLType>& typeptr, const sptr<IDLCommentBlock>& comment);
 			int32_t						CountParams();
 			sptr<IDLNameType>			ParamAt(int32_t i);
@@ -179,11 +179,11 @@ private:
 class IDLMethod : public IDLNameType
 {
 	public:
-			
+
 											IDLMethod();
 											IDLMethod(SString id, const sptr<IDLType>& typeptr, const sptr<IDLCommentBlock>& comment, bool isconst=false);
 											IDLMethod(const sptr<const IDLMethod>& orig, bool isconst=false);
-	
+
 			status_t						AddParam(SString id, const sptr<IDLType>& typeptr, const sptr<IDLCommentBlock>& comment);
 			int32_t							CountParams();
 			sptr<IDLNameType>				ParamAt(int32_t i);
@@ -216,7 +216,7 @@ class InterfaceRec
 	public:
 										InterfaceRec();
 										InterfaceRec(SString aId, SString nspace, SVector<SString> cppnspace, const sptr<IDLCommentBlock>& aComment, dcltype adecl);
-					
+
 			SString						ID() const;
 			SString						Namespace() const;
 			SVector<SString>			CppNamespace() const;
@@ -224,7 +224,7 @@ class InterfaceRec
 			dcltype						Declaration() const;
 
 			SString						FullInterfaceName() const;
-	
+
 			bool						InNamespace() const;
 			SString						FullClassName(const SString &classPrefix) const;
 
@@ -241,16 +241,16 @@ class InterfaceRec
 			status_t					AddParent(SString parent);
 			status_t					SetNamespace(SString nspace);
 			status_t					SetDeclaration(dcltype adecl);
-	
+
 			int32_t						CountTypedefs();
 			sptr<IDLNameType>			TypedefAt(int32_t i);
 
 			int32_t						CountProperties();
 			sptr<IDLNameType>			PropertyAt(int32_t i);
-	
+
 			int32_t			 			CountMethods();
 			sptr<IDLMethod>				MethodAt(int32_t i);
-	
+
 			int32_t						CountEvents();
 			sptr<IDLEvent>				EventAt(int32_t i);
 
@@ -261,8 +261,8 @@ class InterfaceRec
 			status_t					View();
 
 			status_t					SetAttribute(AttributeKind attr);
-			bool						HasAttribute(AttributeKind attr) const; 
-	
+			bool						HasAttribute(AttributeKind attr) const;
+
 			void						OutputComment(const sptr<ITextOutput> &stream, bool startWithTab = true);
 
 	private:
@@ -271,7 +271,7 @@ class InterfaceRec
 			bool						look_in_properties(const SString & id);
 			bool						look_in_methods_and_events(const SString & id);
 
-				
+
 			SString							m_id;
 			SString							m_namespace;
 			SVector<SString>				m_cppNamespace;

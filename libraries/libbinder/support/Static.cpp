@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif /* _SUPPORTS_NAMESPACE */
 
@@ -127,7 +127,7 @@ const sptr<IByteOutput>& NullByteOutput(void) { return NullOutput; }
 sptr<ITextOutput> bout(new BTextOutput(Stdout, B_TEXT_OUTPUT_THREADED|B_TEXT_OUTPUT_FROM_ENV));
 sptr<ITextOutput> berr(new BTextOutput(Stderr, B_TEXT_OUTPUT_THREADED|B_TEXT_OUTPUT_FROM_ENV));
 
-#else 
+#else
 
 #undef bout
 #undef berr
@@ -162,13 +162,13 @@ extern void __terminate_profile_ipc();
 #endif
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif /* _SUPPORTS_NAMESPACE */
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace osp {
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 #if TARGET_HOST != TARGET_HOST_PALMOS
@@ -230,7 +230,7 @@ SKeyedVector<sptr<IBinder>, area_translation_info> gAreaTranslationCache;
 SLocker gAreaTranslationLock("RMemory lock");
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::osp
+} } // namespace os::osp
 #endif
 
 #include "./AtomDebug.cpp"

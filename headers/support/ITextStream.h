@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -24,7 +24,7 @@
 #include <sys/uio.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -59,17 +59,17 @@ public:
 			int32_t		reserved : 30;
 			SValue*		extra;
 		};
-		
+
 		//!	Print the given text to the stream.  The current indentation
 		//!	level, and possibly other formatting, will be applied to each line.
 		/*!	If \a len is negative, all text up to the first NUL character will
 			be printed.  Otherwise, up to \a len characters will be printed. */
 		virtual	status_t				Print(	const char *debugText,
 												ssize_t len = -1) = 0;
-		
+
 		//!	Adjust the current indentation level by \a delta amount.
 		virtual void					MoveIndent(	int32_t delta) = 0;
-		
+
 		//!	Write a log line.
 		/*!	Metadata about the text is supplied in \a info.  The text itself
 			is supplied in the iovec, which is handled as one atomic unit.
@@ -166,14 +166,14 @@ inline const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, ITextOut
 /*-----------------------------------------------------------------*/
 
 //!	Type code container for formatting to an ITextOutput.
-class STypeCode 
+class STypeCode
 {
 public:
 	STypeCode(type_code type);
 	~STypeCode();
 
 	type_code TypeCode() const;
-	
+
 private:
 	type_code fType;
 	int32_t _reserved;
@@ -241,12 +241,12 @@ class SHexDump
 public:
 	SHexDump(const void *buf, size_t length, size_t bytesPerLine=16);
 	~SHexDump();
-	
+
 	SHexDump& SetBytesPerLine(size_t bytesPerLine);
 	SHexDump& SetSingleLineCutoff(int32_t bytes);
 	SHexDump& SetAlignment(size_t alignment);
 	SHexDump& SetCArrayStyle(bool enabled);
-	
+
 	const void* Buffer() const;
 	size_t Length() const;
 	size_t BytesPerLine() const;
@@ -325,7 +325,7 @@ inline const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SC
 	str[3] = n[3];
 #endif
 	str[4] = 0;
-	return io << str; 
+	return io << str;
 }
 
 /*-----------------------------------------------------------------*/
@@ -333,7 +333,7 @@ inline const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SC
 //@}
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_TEXTSTREAM_INTERFACE_H */

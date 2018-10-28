@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,8 +22,8 @@
 #include <app/BCommand.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
-using namespace palmos::app;
+using namespace os::support;
+using namespace os::app;
 #endif
 
 class AndOr;
@@ -84,7 +84,7 @@ class Pipeline : public SyntaxTree
 public:
 
 	Pipeline();
-	
+
 	virtual SValue Evaluate(const sptr<BShell>& parent, const sptr<ICommand>& shell, bool* outExit);
 	virtual void Decompile(const sptr<ITextOutput>& out);
 
@@ -96,7 +96,7 @@ private:
 	bool m_bang;
 };
 
-class AndOr : public SyntaxTree 
+class AndOr : public SyntaxTree
 {
 public:
 
@@ -184,7 +184,7 @@ public:
 
 	virtual SValue Evaluate(const sptr<BShell>& parent, const sptr<ICommand>& shell, bool* outExit);
 	virtual void Decompile(const sptr<ITextOutput>& out);
-	
+
 private:
 	sptr<CompoundList> m_list;
 };
@@ -192,7 +192,7 @@ private:
 class Commands : public Command
 {
 public:
-	
+
 	Commands(const sptr<List>& list);
 
 	virtual SValue Evaluate(const sptr<BShell>& parent, const sptr<ICommand>& shell, bool* outExit);
@@ -216,7 +216,7 @@ public:
 
 	// this function is called when the function is 'executed'.
 	SValue Execute(const sptr<BShell>& shell);
-	
+
 private:
 	SString m_name;
 	sptr<Command> m_command;
@@ -253,7 +253,7 @@ class Case : public Command
 public:
 
 	Case();
-	
+
 	virtual SValue Evaluate(const sptr<BShell>& parent, const sptr<ICommand>& shell, bool* outExit);
 	virtual void Decompile(const sptr<ITextOutput>& out);
 
@@ -326,11 +326,11 @@ public:
 
 	void SetCondition(const SString& word);
 	void SetDoList(const sptr<CompoundList>& list);
-	
+
 private:
 	SString m_condition;
 	sptr<CompoundList> m_dolist;
-	SVector<SString> m_words;	
+	SVector<SString> m_words;
 };
 
 class Foreach : public Command
@@ -347,7 +347,7 @@ public:
 	void SetValueVariable(const SString& var);
 	void SetOverMode(bool overMode);
 	void SetDoList(const sptr<CompoundList>& list);
-	
+
 private:
 	SString m_keyVariable;
 	SString m_valueVariable;
@@ -440,7 +440,7 @@ public:
 private:
 	SString m_command;
 	sptr<CommandPrefix> m_prefix;
-	sptr<CommandSuffix> m_suffix;	
+	sptr<CommandSuffix> m_suffix;
 };
 
 #endif

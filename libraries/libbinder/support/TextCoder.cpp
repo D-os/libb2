@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,7 +18,7 @@
 #include <ErrorMgr.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 // ----------------------------------------------------------------------
@@ -47,7 +47,7 @@ STextDecoder::~STextDecoder()
 }
 
 static const wchar32_t kByteMask = 0x000000BF;
-static const wchar32_t kByteMark = 0x00000080; 
+static const wchar32_t kByteMark = 0x00000080;
 
 // Surrogates aren't valid for UTF-32 characters, so define some
 // constants that will let us screen them out.
@@ -122,7 +122,7 @@ STextDecoder::DeviceToUTF8(char const *text, size_t srcLen,
 				// Invalid UTF-32 character.
 				bytesToWrite = 0;
 			}
-			
+
 			dstPos += bytesToWrite;
 
 			if (dstPos >= dstAvail) {
@@ -180,7 +180,7 @@ STextDecoder::DeviceToUTF8(wchar32_t srcChar,
 {
 	char text[maxCharBytes]; // from TextMgr.h, maximum octets in a wchar
 	size_t srcLen = TxtSetNextChar(text, 0, srcChar);
-	return DeviceToUTF8(text, srcLen, 
+	return DeviceToUTF8(text, srcLen,
 			substitutionStr, substitutionLen);
 }
 
@@ -189,9 +189,9 @@ STextDecoder::EncodingToUTF8(const SValue & text,
 		char const * substitutionStr, size_t substitutionLen)
 {
 	if (text.Type() == B_ENCODED_TEXT_TYPE) {
-		CharEncodingType encoding = 
+		CharEncodingType encoding =
 			((STextEncoder::encoding_info_block*)text.Data())->encoding;
-		char const * textBuf = 
+		char const * textBuf =
 			(char const *)text.Data() + sizeof(STextEncoder::encoding_info_block);
 		int16_t srcLen = text.Length() - sizeof(STextEncoder::encoding_info_block);
 		return EncodingToUTF8(textBuf, srcLen, encoding,
@@ -217,7 +217,7 @@ STextDecoder::EncodingToUTF8(
 
 	size_t srcLength = srcLen;
 	size_t dstLength;
-	status_t result = 
+	status_t result =
 		TxtConvertEncoding(true,
 			NULL,
 			text, &srcLength, fromEncoding,
@@ -253,15 +253,15 @@ STextDecoder::EncodingToUTF8(
 
 	// Now really do the conversion.
 	srcLength = srcLen;
-	result = 
+	result =
 		TxtConvertEncoding(true,
 			NULL,
 			text, &srcLength, fromEncoding,
 			buf,  &dstLength, charEncodingUTF8,
 			substitutionStr,
 			substitutionLen);
-	if (result != errNone || 
-			(result == txtErrNoCharMapping && substitutionStr == NULL)) 
+	if (result != errNone ||
+			(result == txtErrNoCharMapping && substitutionStr == NULL))
 	{
 		DbgOnlyFatalError("STextDecoder: conversion pre-flight was OK, but actual conversion failed");
 		return result;
@@ -319,19 +319,19 @@ STextEncoder::~STextEncoder()
 
 status_t
 STextEncoder::UTF8ToDevice(
-		const SString & text, 
+		const SString & text,
 		char const * substitutionStr,
 		size_t substitutionLen)
 {
-	return UTF8ToEncoding(text, 
-			STextCoderUtils::DeviceEncoding(), 
+	return UTF8ToEncoding(text,
+			STextCoderUtils::DeviceEncoding(),
 			substitutionStr, substitutionLen);
 }
 
 status_t
 STextEncoder::UTF8ToEncoding(
-		const SString & _text, 
-		CharEncodingType toEncoding, 
+		const SString & _text,
+		CharEncodingType toEncoding,
 		char const * substitutionStr,
 		size_t substitutionLen)
 
@@ -352,7 +352,7 @@ STextEncoder::UTF8ToEncoding(
 	char const * text = _text.String();
 	size_t srcLength = _text.Length();
 	size_t dstLength;
-	status_t result = 
+	status_t result =
 		TxtConvertEncoding(true,
 			NULL,
 			text, &srcLength, charEncodingUTF8,
@@ -385,15 +385,15 @@ STextEncoder::UTF8ToEncoding(
 
 	// Now really do the conversion.
 	srcLength = _text.Length();
-	result = 
+	result =
 		TxtConvertEncoding(true,
 			NULL,
 			text, &srcLength, charEncodingUTF8,
 			buf,  &dstLength, toEncoding,
 			substitutionStr,
 			substitutionLen);
-	if (result != errNone || 
-			(result == txtErrNoCharMapping && substitutionStr == NULL)) 
+	if (result != errNone ||
+			(result == txtErrNoCharMapping && substitutionStr == NULL))
 	{
 		DbgOnlyFatalError("STextEncoder: conversion pre-flight was OK, but actual conversion failed (or required substitution but none was provided)");
 		return result;

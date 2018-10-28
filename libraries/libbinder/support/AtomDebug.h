@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -35,10 +35,10 @@
 #include <support/String.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace osp {
 
-using namespace palmos::support;
+using namespace os::support;
 using namespace std;
 #endif // _SUPPORTS_NAMESPACE
 
@@ -52,10 +52,10 @@ class SAtomLeakChecker {
 public:
 	SAtomLeakChecker();
 	~SAtomLeakChecker();
-	
+
 	void Reset();
 	void Shutdown();
-	
+
 	void NoteCreate();
 	void NoteDestroy();
 	void NoteFree();
@@ -74,10 +74,10 @@ struct atom_ref_info {
 	nsecs_t			when;
 	char*			note;
 	atom_ref_info*	next;
-	
+
 					atom_ref_info();
 					~atom_ref_info();
-	
+
 	bool			operator==(const atom_ref_info& o) const;
 	void			report(const sptr<ITextOutput>& io, bool longForm=false) const;
 
@@ -97,11 +97,11 @@ struct atom_debug : public SLocker {
 	atom_ref_info*		decStrongs;
 	atom_ref_info*		incWeaks;
 	atom_ref_info*		decWeaks;
-	
+
 					atom_debug(SAtom* inAtom);
 					atom_debug(SLightAtom* inAtom);
 					~atom_debug();
-	
+
 	void			report(const sptr<ITextOutput>& io, uint32_t flags) const;
 };
 
@@ -110,18 +110,18 @@ class SAtomTracker
 public:
 	SAtomTracker();
 	~SAtomTracker();
-	
+
 	void Reset();
 	void Shutdown();
-	
+
 	void AddAtom(atom_debug* info);
 	void RemoveAtom(atom_debug* info);
-	
+
 	inline int32_t CurrentMark() const { return fCurMark; }
 	inline int32_t IncrementMark() { return atomic_fetch_add(&fCurMark, 1) + 1; }
-	
+
 	void PrintActive(const sptr<ITextOutput>& io, int32_t mark, int32_t last, uint32_t flags) const;
-	
+
 	bool HasAtom(SAtom* a, bool primary);
 	bool HasLightAtom(SLightAtom* a);
 	void GetActiveTypeNames(SSortedVector<SString>* outNames);
@@ -131,14 +131,14 @@ public:
 	void StopWatching(const B_SNS(std::)type_info* type);
 	void WatchAction(const SAtom* which, const char* action);
 	void WatchAction(const SLightAtom* which, const char* action);
-	
+
 private:
 	mutable SNestedLocker fAccess;
 	bool fGone;
 	bool fWatching;
 	int32_t fFirstMark;
 	atomic_int fCurMark;
-	
+
 	SSortedVector<atom_debug*> fActiveAtoms;
 	SSortedVector<B_SNS(std::)type_info*> fWatchTypes;
 };
@@ -146,8 +146,8 @@ private:
 SAtomLeakChecker* LeakChecker();
 SAtomTracker* Tracker();
 
-#if _SUPPORTS_NAMESPACE	
-} }	// namespace palmos::osp
+#if _SUPPORTS_NAMESPACE
+} }	// namespace os::osp
 #endif // _SUPPORTS_NAMESPACE
 
 #endif /* SUPPORTS_ATOM_DEBUG */

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -15,7 +15,7 @@
 #include <support_p/WindowsCompatibility.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -39,9 +39,9 @@ SLooper::_ConstructPlatform()
 	m_next = NULL;
 	m_spawnedInternally = true;
 	m_rescheduling = false;
-	
+
 	// This key is used to by other loopers to wake
-	// this looper up to handler pending messages. 
+	// this looper up to handler pending messages.
 	m_keyID = (int32_t)CreateEvent(NULL, false, false, NULL);
 
 	SysThreadExitCallbackID idontcare;
@@ -62,7 +62,7 @@ SLooper::_DestroyPlatform()
 #endif
 }
 
-status_t 
+status_t
 SLooper::_InitMainPlatform()
 {
 	const char* env;
@@ -86,11 +86,11 @@ SLooper::_InitMainPlatform()
 status_t SLooper::SpawnLooper()
 {
 	status_t status = B_BINDER_TOO_MANY_LOOPERS;
-	
+
 	SysHandle thid;
-	status_t err = SysThreadCreate(NULL, "SLooper", B_NORMAL_PRIORITY, DEFAULT_STACK_SIZE, 
+	status_t err = SysThreadCreate(NULL, "SLooper", B_NORMAL_PRIORITY, DEFAULT_STACK_SIZE,
 		(SysThreadEnterFunc*) _EnterLoop, This(), &thid);
-	
+
 	if (err == errNone)
 		status = (SysThreadStart(thid) != errNone) ? B_ERROR : B_OK;
 
@@ -116,9 +116,9 @@ void SLooper::_SetThreadPriority(int32_t priority)
 			DWORD err = GetLastError();
 			printf("Reducing requested priority of thread %ld to %ld!\n", find_thread(NULL), priority);
 			LPVOID lpMsgBuf;
-			if (!FormatMessage( 
-				FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-				FORMAT_MESSAGE_FROM_SYSTEM | 
+			if (!FormatMessage(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_FROM_SYSTEM |
 				FORMAT_MESSAGE_IGNORE_INSERTS,
 				NULL,
 				GetLastError(),
@@ -150,14 +150,14 @@ status_t SLooper::Loop()
 	return B_OK;
 }
 
-sptr<IBinder> 
+sptr<IBinder>
 SLooper::_GetRootObject(SysHandle id, team_id team)
 {
 	bout << "GetRootObject() not implemented for Windows!" << endl;
 	return NULL;
 }
 
-void 
+void
 SLooper::SetRootObject(const sptr<IBinder>& root)
 {
 	bout << "SetRootObject() not implemented for Windows!" << endl;
@@ -200,11 +200,11 @@ int32_t SLooper::_LoopSelf()
 
 	SLooper* looper = This();
 	m_team->PushLooper(looper);
-	
+
 	nsecs_t currentTime;
 	bool atBottom = false;
 	bool repeatReschedule = false;
-	
+
 	bout << "SLooper::_LoopSelf(): entering " << looper << " (" << looper->m_thid << ")@" << SysGetRunTime() << endl;
 
 	m_idleTime = 0;
@@ -212,7 +212,7 @@ int32_t SLooper::_LoopSelf()
 	while (true)
 	{
 		_ExpungeImages();
-	
+
 		nsecs_t timeout = 0;
 
 		if (atBottom) {
@@ -257,8 +257,8 @@ int32_t SLooper::_LoopSelf()
 
 		repeatReschedule = false;
 		currentTime = SysGetRunTime();
-	
-		if (Process()->PopLooper(looper, currentTime)) 
+
+		if (Process()->PopLooper(looper, currentTime))
 		{
 			// go and handle the message.
 			//bout << "Looper " << this << " popped and dispatching..." << endl;
@@ -272,9 +272,9 @@ int32_t SLooper::_LoopSelf()
 
 			// increment the idle time so we can eventually commit seppuku!
 			m_idleTime += SysGetRunTime() - m_lastTimeISlept;
-		
+
 			//bout << "Looper " << this << " has new idle time " << m_idleTime << endl;
-			
+
 			if (currentTime < Process()->GetNextEventTime() && m_idleTime >= Process()->GetIdleTimeout() && m_spawnedInternally)
 			{
 				// we have out lasted our usefullness. WE MUST DIE!
@@ -283,11 +283,11 @@ int32_t SLooper::_LoopSelf()
 			}
 		}
 	}
-	
+
 	return B_OK;
 }
 
-status_t 
+status_t
 SLooper::IncrefsHandle(int32_t handle)
 {
 	TRACE();
@@ -297,7 +297,7 @@ SLooper::IncrefsHandle(int32_t handle)
 	return B_OK;
 }
 
-status_t 
+status_t
 SLooper::DecrefsHandle(int32_t handle)
 {
 	TRACE();
@@ -307,7 +307,7 @@ SLooper::DecrefsHandle(int32_t handle)
 	return B_OK;
 }
 
-status_t 
+status_t
 SLooper::AcquireHandle(int32_t handle)
 {
 	TRACE();
@@ -317,7 +317,7 @@ SLooper::AcquireHandle(int32_t handle)
 	return B_OK;
 }
 
-status_t 
+status_t
 SLooper::ReleaseHandle(int32_t handle)
 {
 	TRACE();
@@ -327,7 +327,7 @@ SLooper::ReleaseHandle(int32_t handle)
 	return B_OK;
 }
 
-status_t 
+status_t
 SLooper::AttemptAcquireHandle(int32_t handle)
 {
 	TRACE();
@@ -347,7 +347,7 @@ SLooper::Transact(int32_t handle, uint32_t code, const SParcel& data,
 		if (reply) reply->Reference(NULL, data.Length());
 		return (m_lastError = data.ErrorCheck());
 	}
-	
+
 	bout << "Transact() not implemented for Windows" << endl;
 	return B_UNSUPPORTED;
 }
@@ -363,5 +363,5 @@ void SLooper::SetNext(SLooper* next)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

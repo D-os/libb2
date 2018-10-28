@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -20,10 +20,10 @@
 #include <package_p/ManifestParser.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace package {
-using namespace palmos::services;
-using namespace palmos::support;
+using namespace os::services;
+using namespace os::support;
 #endif
 
 class BPackageManager : public BCatalog
@@ -113,7 +113,7 @@ public:
 
 		void add_package_l(const sptr<BPackageManager::Package>& package);
 		sptr<BPackageManager::Package> remove_package_l(const SValue& key);
-		
+
 		SLocker lock;
 		SKeyedVector<sptr<IBinder>, sptr<Query> > queries;
 		SVector< sptr<BPackageManager::Package> > packages;
@@ -125,21 +125,21 @@ public:
 protected:
 	virtual ~BPackageManager();
 
-private:	
+private:
 	sptr<Package> scan_for_packages(const SString& packagesPath, const SString& pkgName, const SString& filePath, int32_t file, const SValue& info, bool verbose);
 	uint32_t look_for_databases(const SString& dirPath, const sptr<BCatalog>& catalog);
 	void register_with_informant(const sptr<IInformant>& informant);
 	void run_queries();
-	
+
 	SVector<SString> m_packagesPath;
-	
+
 	atomic_int m_nextDatabaseID;
 	Data m_data;
 };
 
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::package
+} } // namespace os::package
 #endif
 
 #endif // _PACKAGE_MANAGER_H

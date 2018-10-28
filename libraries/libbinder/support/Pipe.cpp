@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,7 +18,7 @@
 #include <support_p/SupportMisc.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -65,7 +65,7 @@ BPipe::PrvWrite (const void *data, size_t size, uint32_t flags)
 	if (size <= mSize-mWriteOffset)
 	{
 		memcpy((char *)mBuffer + mWriteOffset,data,size);
-		
+
 		mWriteOffset += size;
 
 		if (mWriteOffset == mSize)
@@ -146,7 +146,7 @@ BPipe::PrvRead (void *data, size_t size, uint32_t flags)
 		const size_t chunk = mSize-mReadOffset;
 
 		// size > chunk guaranteed
-		
+
 		memcpy(data,(const char *)mBuffer + mReadOffset,chunk);
 		memcpy((char *)data + chunk,mBuffer,size-chunk);
 
@@ -162,7 +162,7 @@ BPipe::PrvRead (void *data, size_t size, uint32_t flags)
 	return size;
 }
 
-ssize_t 
+ssize_t
 BPipe::WriteV (const struct iovec *iov, ssize_t count, uint32_t flags)
 {
 	if (count < 0) return count;
@@ -199,7 +199,7 @@ BPipe::WriteV (const struct iovec *iov, ssize_t count, uint32_t flags)
 	return total;
 }
 
-ssize_t 
+ssize_t
 BPipe::ReadV (const struct iovec *iov, ssize_t count, uint32_t flags)
 {
 	if (count < 0) return count;
@@ -231,13 +231,13 @@ BPipe::ReadV (const struct iovec *iov, ssize_t count, uint32_t flags)
 	return total;
 }
 
-status_t 
+status_t
 BPipe::Sync()
 {
 	return B_OK;
 }
 
-SValue	
+SValue
 BPipe::Inspect (const sptr<IBinder>& caller, const SValue &which, uint32_t flags)
 {
 	return BnByteInput::Inspect(caller,which,flags)
@@ -245,5 +245,5 @@ BPipe::Inspect (const sptr<IBinder>& caller, const SValue &which, uint32_t flags
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -19,7 +19,7 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace xml {
 #endif
 
@@ -28,47 +28,47 @@ ValueToXML (BWriter &writer, const SValue &key, const SValue &value)
 {
 	SValue attributes;
 	uint32_t hints=0;
-	
+
 	if (key.IsSpecified())
 	{
 		ASSERT(key.IsSimple());
-		
+
 		attributes.JoinItem(SValue::String("id"), SValue::String(key.AsString()));
 
 		SString type;
-				
+
 		switch (key.Type())
 		{
 			case B_STRING_TYPE:
 				type="string";
 				break;
-				
+
 			case B_INT32_TYPE:
 				type="int32_t";
 				break;
-			
+
 			default:
 				type="unknown";
 				TRESPASS();
-				
+
 				return B_BAD_TYPE;
 				break;
-		}				
+		}
 
 		if (type!="string")
 			attributes.JoinItem(SValue::String("id_type"),SValue::String(type));
 	}
-	
+
 	bool write_data = true;
 	bool type_is_raw = false;
 	SString tc;
 	char *tcs;
 	uint32_t t;
-	
+
 	if (value.IsSimple())
 	{
 		hints=BWriter::NO_EXTRA_WHITESPACE;
-		
+
 		SString type;
 		if (!value.IsDefined())
 		{
@@ -86,11 +86,11 @@ ValueToXML (BWriter &writer, const SValue &key, const SValue &value)
 				type="string";
 				hints=0;
 				break;
-			
+
 			case B_INT8_TYPE:
 				type="int8_t";
 				break;
-			
+
 			case B_INT16_TYPE:
 				type="int16_t";
 				break;
@@ -118,7 +118,7 @@ ValueToXML (BWriter &writer, const SValue &key, const SValue &value)
 			case B_DOUBLE_TYPE:
 				type="double";
 				break;
-			
+
 			default:
 				type="raw";
 				type_is_raw = true;
@@ -137,7 +137,7 @@ ValueToXML (BWriter &writer, const SValue &key, const SValue &value)
 				attributes.JoinItem(SValue::String("size"), SValue::Int32(value.Length()));
 				break;
 		}
-				
+
 		attributes.JoinItem(SValue::String("type"), SValue::String(type));
 	}
 
@@ -147,7 +147,7 @@ ValueToXML (BWriter &writer, const SValue &key, const SValue &value)
 	{
 		if (!type_is_raw)
 		{
-			SString s = value.AsString();	
+			SString s = value.AsString();
 			writer.TextData(s.String(),s.Length());
 		}
 		else
@@ -163,40 +163,40 @@ ValueToXML (BWriter &writer, const SValue &key, const SValue &value)
 	{
 		SValue sub_key;
 		SValue sub_value;
-		
+
 		void *cookie=NULL;
 		while (value.GetNextItem(&cookie,&sub_key,&sub_value)>=B_OK)
 		{
 			status_t result=ValueToXML(writer,sub_key,sub_value);
-			
+
 			if (result<B_OK)
 			{
 				return result;
 			}
 		}
 	}
-	
+
 	writer.EndTag();
-	
+
 	return B_OK;
 }
 
 status_t
 ValueToXML (const sptr<IByteOutput>& stream, const SValue &value)
-{	
+{
 	BWriter writer(stream,BWriter::BALANCE_WHITESPACE);
 
-	return ValueToXML(writer,B_WILD_VALUE,value);		
+	return ValueToXML(writer,B_WILD_VALUE,value);
 }
 
-status_t 
+status_t
 XMLToValue (const sptr<IByteInput>& stream, SValue &value)
 {
 	sptr<BCreator> creator = new BXML2ValueCreator(value, SValue::Undefined());
 	BXMLIByteInputSource source(stream);
-	return ParseXML(creator,&source,0);	
+	return ParseXML(creator,&source,0);
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // palmos::xml
+} } // os::xml
 #endif

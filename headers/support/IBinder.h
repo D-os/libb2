@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -21,16 +21,16 @@
 #include <support/Atom.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos { 
-namespace osp { 
+namespace os {
+namespace osp {
 #endif
-	class BpBinder; 
+	class BpBinder;
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::osp
+} } // namespace os::osp
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -75,7 +75,7 @@ enum {
 	/*!	This allows your linked-to object to be destroyed while the link
 		still exists.  Be sure to still clean up the link, for example
 		calling Unlink() (with B_WEAK_BINDER_LINK!) in your destructor.
-		
+
 		@todo Should this be the default for links?  It is safer
 		than holding a strong reference, and usually what you want. */
 	B_WEAK_BINDER_LINK		= 0x00000001,
@@ -118,7 +118,7 @@ public:
 			virtual	SValue				Inspect(const sptr<IBinder>& caller,
 												const SValue &which,
 												uint32_t flags = 0) = 0;
-			
+
 			//!	Retrieve direct interface for this binder.
 			/*!	Given a SValue interface descriptor, return an IInterface
 				implementing it.  The default implementation of this
@@ -126,7 +126,7 @@ public:
 				direct interface to it.  If the return is non-NULL, you
 				are guaranteed to be able to static_cast<> the returned
 				interface into the requested subclass and have it work.
-				
+
 				Note that this is NOT the same as calling Inspect(),
 				which performs conversion between different IBinder objects.
 				This method converts to an IInterface only for @e this
@@ -134,7 +134,7 @@ public:
 			*/
 	virtual	sptr<IInterface>		InterfaceFor(	const SValue &descriptor,
 														uint32_t flags = 0) = 0;
-			
+
 			//!	Link registers the IBinder "target" for notification of events.
 			/*!	The \a bindings is a mapping of keys that will get pushed on this
 				IBinder, to keys that will get pushed on the "target" IBinder.
@@ -153,7 +153,7 @@ public:
 	virtual	status_t					Unlink(	const wptr<IBinder>& target,
 												const SValue &bindings,
 												uint32_t flags = 0) = 0;
-	
+
 			//!	Perform an action on the binder.
 			/*!	Either a get, put, or invocation, depending on the supplied
 				and requested bindings. */
@@ -180,7 +180,7 @@ public:
 			SValue						Invoke(const SValue &func, const SValue &args);
 			//!	Synonym for Effect(SValue(func,SValue::wild), SValue::wild, func, [result]).
 			SValue						Invoke(const SValue &func);
-	
+
 			//!	Low-level data transfer.
 			/*!	This is the Binder's IPC primitive.  It allows you to send a parcel of
 				data to another Binder (possibly in another process or language) and
@@ -196,7 +196,7 @@ public:
 													SParcel& data,
 													SParcel* reply = NULL,
 													uint32_t flags = 0) = 0;
-	
+
 			//! Register the IBinder "target" for a notification if this binder goes away.
 			/*! The \a method is the name of a method to call if this binder unexpectedly
 				goes away.  This is accomplished by performing an Effect() on \a target
@@ -232,14 +232,14 @@ SomethingDied(const wptr<IBinder>& who)
 
 			//!	Return true if this binder still existed as of the last executed operation.
 	virtual	bool						IsBinderAlive() const = 0;
-	
+
 			//!	Send a ping to the remote binder, and return status.
 			/*!	If this is a local binder, ping always returns B_OK.
 				If this is a remote binder, it performs a Transact()
 				to the local binder and returns that status.  This
 				should be either B_OK or B_BINDER_DEAD. */
 	virtual	status_t					PingBinder() = 0;
-	
+
 			//!	Use this function instead of a dynamic_cast<> to up-cast to a BBinder.
 			/*!	Since multiple BBinder instances can appear in a
 				single object, a regular dynamic_cast<> is ambiguous.
@@ -252,7 +252,7 @@ SomethingDied(const wptr<IBinder>& who)
 			//!	Internal function to retrieve remote proxy object.
 			/*!	This is for internal use by the system.  Use LocalBinder()
 				to determine if this IBinder is a local object. */
-	virtual	BNS(palmos::osp::) BpBinder*	RemoteBinder();
+	virtual	BNS(os::osp::) BpBinder*	RemoteBinder();
 
 protected:
 	inline								IBinder() { }
@@ -267,7 +267,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif	// _SUPPORT_BINDER_INTERFACE_H_

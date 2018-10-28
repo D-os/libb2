@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -31,7 +31,7 @@
 #include <ErrorMgr.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -50,33 +50,33 @@ public:
 							SAbstractVector(const SAbstractVector& o);
 							//! WARNING: Your subclass must call MakeEmpty() in its own destructor!
 	virtual					~SAbstractVector();
-	
+
 			SAbstractVector&operator=(const SAbstractVector& o);
-	
+
 	/* Size stats */
-	
+
 			void			SetCapacity(size_t total_space);
 			void			SetExtraCapacity(size_t extra_space);
 			size_t			Capacity() const;
-			
+
 			size_t			ItemSize() const;
-			
+
 			size_t			CountItems() const;
-			
+
 	/* Data access */
 
 			const void*		At(size_t index) const;
 			void*			EditAt(size_t index);
-			
+
 			const void*		Array() const;
 			void*			EditArray();
-			
+
 	/* Array modification */
-	
+
 			ssize_t			Add(const void* newElement);
 			ssize_t			AddAt(const void* newElement, size_t index);
 			status_t		SetSize(size_t total_count, const void *protoElement);
-			
+
 			ssize_t			AddVector(const SAbstractVector& o);
 			ssize_t			AddVectorAt(const SAbstractVector& o, size_t index = SSIZE_MAX);
 			ssize_t			AddArray(const void* array, size_t count);
@@ -87,11 +87,11 @@ public:
 			void			MakeEmpty();
 			void			RemoveItemsAt(size_t index, size_t count = 1);
 			status_t		MoveItems(size_t newIndex, size_t oldIndex, size_t count = 1);
-			
+
 	static	void			MoveBefore(SAbstractVector* to, SAbstractVector* from, size_t count);
 	static	void			MoveAfter(SAbstractVector* to, SAbstractVector* from, size_t count);
 			void			Swap(SAbstractVector& o);
-	
+
 	/* To/From SValue */
 			SValue			AsValue() const;
 			status_t		SetFromValue(const SValue& value);
@@ -101,17 +101,17 @@ protected:
 	virtual	void			PerformCopy(void* to, const void* from, size_t count) const = 0;
 	virtual	void			PerformReplicate(void *to, const void* protoElement, size_t count) const = 0;
 	virtual	void			PerformDestroy(void* base, size_t count) const = 0;
-	
+
 	virtual	void			PerformMoveBefore(void* to, void* from, size_t count) const = 0;
 	virtual	void			PerformMoveAfter(void* to, void* from, size_t count) const = 0;
-	
+
 	virtual	void			PerformAssign(void* to, const void* from, size_t count) const = 0;
 
 	virtual SValue			PerformAsValue(const void* from, size_t count) const = 0;
 	virtual status_t		PerformSetFromValue(void* to, const SValue& value, size_t count) = 0;
 
 private:
-	
+
 	virtual	status_t		_ReservedUntypedVector1();
 	virtual	status_t		_ReservedUntypedVector2();
 	virtual	status_t		_ReservedUntypedVector3();
@@ -122,7 +122,7 @@ private:
 	virtual	status_t		_ReservedUntypedVector8();
 	virtual	status_t		_ReservedUntypedVector9();
 	virtual	status_t		_ReservedUntypedVector10();
-	
+
 			uint8_t*		grow(size_t amount, size_t factor=3, size_t pos=0xFFFFFFFF);
 			uint8_t*		shrink(size_t amount, size_t factor=4, size_t pos=0xFFFFFFFF);
 			const uint8_t*	data() const;
@@ -131,15 +131,15 @@ private:
 			const size_t	m_elementSize;
 			size_t			m_size;
 			uint8_t*		m_base;
-			
+
 			const size_t	m_localSpace;
 			size_t			m_avail;
-			
+
 			union {
 				uint8_t*	heap;
 				uint8_t		local[8];
 			} m_data;
-			
+
 			int32_t			_reserved[2];
 };
 
@@ -176,28 +176,28 @@ public:
 							SVector();
 							SVector(const SVector<TYPE>& o);
 	virtual					~SVector();
-	
+
 			SVector<TYPE>&	operator=(const SVector<TYPE>& o);
-	
+
 	/* Size stats */
-	
+
 			void			SetCapacity(size_t total_space);
 			void			SetExtraCapacity(size_t extra_space);
 			size_t			Capacity() const;
-			
+
 			size_t			CountItems() const;
-	
+
 	/* Data access */
 
 			const TYPE&		operator[](size_t i) const;
 			const TYPE&		ItemAt(size_t i) const;
 			TYPE&			EditItemAt(size_t i);
-	
+
 			const TYPE*		Array() const;
 			TYPE*			EditArray();
-	
+
 	/* Array modification */
-	
+
 			ssize_t			AddItem();
 			ssize_t			AddItem(const TYPE& item);
 #if !(__CC_ARM)
@@ -206,24 +206,24 @@ public:
 			ssize_t			AddItemAt(const TYPE& item, size_t index);
 			status_t		SetSize(size_t total_count);
 			status_t		SetSize(size_t total_count, const TYPE& protoElement);
-			
+
 			ssize_t			ReplaceItemAt(const TYPE& item, size_t index);
-	
+
 			ssize_t			AddVector(const SVector<TYPE>& o);
 			ssize_t			AddVectorAt(const SVector<TYPE>& o, size_t index);
 			ssize_t			AddArray(const TYPE *array, size_t count);
 			ssize_t			AddArrayAt(const TYPE *array, size_t count, size_t index);
-			
+
 			void			MakeEmpty();
 			void			RemoveItemsAt(size_t index, size_t count = 1);
 			status_t		MoveItems(size_t newIndex, size_t oldIndex, size_t count = 1);
-	
+
 	static	void			MoveBefore(SVector<TYPE>& to, SVector<TYPE>& from, size_t count);
 	static	void			MoveAfter(SVector<TYPE>& to, SVector<TYPE>& from, size_t count);
 			void			Swap(SVector<TYPE>& o);
-			
+
 	/* Use as a stack */
-	
+
 			void			Push();
 			void			Push(const TYPE& item);
 			TYPE &			EditTop();
@@ -239,10 +239,10 @@ protected:
 	virtual	void			PerformCopy(void* to, const void* from, size_t count) const;
 	virtual	void			PerformReplicate(void* to, const void* protoElement, size_t count) const;
 	virtual	void			PerformDestroy(void* base, size_t count) const;
-	
+
 	virtual	void			PerformMoveBefore(void* to, void* from, size_t count) const;
 	virtual	void			PerformMoveAfter(void* to, void* from, size_t count) const;
-	
+
 	virtual	void			PerformAssign(void* to, const void* from, size_t count) const;
 
 	virtual SValue			PerformAsValue(const void* from, size_t count) const;
@@ -262,10 +262,10 @@ void BSwap(SVector<TYPE>& v1, SVector<TYPE>& v2);
 #endif // _MSC_VER
 
 /*-------------------------------------------------------------*/
-// BArrayAsValue and BArrayConstruct 
+// BArrayAsValue and BArrayConstruct
 // (called by PerformAsValue and PerformSetFromValue)
-// have default implementations that just return errors.  
-// These two functions have been specialized for plain old data 
+// have default implementations that just return errors.
+// These two functions have been specialized for plain old data
 // types, but to marshal an SVector of a user type, you must
 // use one of the implement macros (or write your own).
 // B_IMPLEMENT_SIMPLE_TYPE_FLATTEN_FUNCS
@@ -649,7 +649,7 @@ void BSwap(SVector<TYPE>& v1, SVector<TYPE>& v2)
 #endif // _MSC_VER
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif

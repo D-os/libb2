@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 #endif
 
@@ -99,7 +99,7 @@ status_t BVFSFile::SetTo(const char* path, int flags, int mode)
 	{
 		close(m_fd);
 	}
-	
+
 	m_fd = open(path, flags, mode);
 	if (m_fd < 0)
 	{
@@ -120,7 +120,7 @@ status_t BVFSFile::SetTo(const SUrl & url, int flags, int mode)
 
 	// +++ we currently don't support wildcard "volume" matching -- this needs
 	// to be revisited +++
-	
+
 	if (strcmp(url.GetScheme(), "file") != 0)
 	{
 		// not a file URL
@@ -139,7 +139,7 @@ bool BVFSFile::IsReadable() const
 {
 	if (m_fd < 0)
 		return false;
-		
+
 	return ((m_flags & O_ACCMODE) == O_RDONLY) || ((m_flags & O_ACCMODE) == O_RDWR);
 }
 
@@ -147,7 +147,7 @@ bool BVFSFile::IsWritable() const
 {
 	if (m_fd < 0)
 		return false;
-		
+
 	return ((m_flags & O_ACCMODE) == O_WRONLY) || ((m_flags & O_ACCMODE) == O_RDWR);
 }
 
@@ -173,7 +173,7 @@ status_t BVFSFile::SetSize(off_t size)
 ssize_t BVFSFile::ReadAtV(off_t position, const struct iovec *vector, ssize_t count)
 {
 	status_t err;
-	
+
 	if (position != m_pos)
 	{
 		off_t seekResult = lseek(m_fd, position, SEEK_SET);
@@ -189,7 +189,7 @@ ssize_t BVFSFile::ReadAtV(off_t position, const struct iovec *vector, ssize_t co
 	{
 		return readResult;
 	}
-	
+
 	m_pos += readResult;
 	return readResult;
 }
@@ -213,9 +213,9 @@ ssize_t BVFSFile::WriteAtV(off_t position, const struct iovec *vector, ssize_t c
 	{
 		return writeResult;
 	}
-	
+
 	m_pos += writeResult;
-	return writeResult;	
+	return writeResult;
 }
 
 

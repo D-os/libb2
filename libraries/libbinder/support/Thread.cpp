@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -67,13 +67,13 @@ SThread::Run(const char* name, int32_t priority, size_t stackSize)
 
 	(void) stackSize;	// XXX currently ignored.
 	m_thread = SLooper::SpawnThread((thread_func)top_entry, name, priority, this);
-	if (m_thread != B_ERROR) 
+	if (m_thread != B_ERROR)
 	{
 		m_status = AboutToRun(m_thread);
 		if (m_status == B_OK)
 		{
 			m_status = (SysThreadStart(m_thread) != errNone) ? B_ERROR : B_OK;
-			if (m_status < B_OK) 
+			if (m_status < B_OK)
 			{
 				m_thread = m_status;
 			}
@@ -134,7 +134,7 @@ int32_t SThread::top_entry(void* object)
 			sptr<SThread> thread = new myThreadSubclass();
 			thread->Run();
 		}
-		
+
 		In this case the external reference on the object
 		will go away immediately, and by the time we get
 		to this function it may be gone.
@@ -149,7 +149,7 @@ int32_t SThread::top_entry(void* object)
 	// later attempt to acquire a strong pointer.
 	((SThread*)object)->IncWeak(object);
 
-	do 
+	do
 	{
 		result = ((SThread*)object)->ThreadEntry();
 
@@ -170,7 +170,7 @@ int32_t SThread::top_entry(void* object)
 		}
 
 		// expunge any packages that might have been unloaded
-		// before we run again. 
+		// before we run again.
 		SLooper* looper = SLooper::This();
 		looper->ExpungePackages();
 
@@ -189,5 +189,5 @@ int32_t SThread::top_entry(void* object)
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // end namespace palmos::support
+} } // end namespace os::support
 #endif

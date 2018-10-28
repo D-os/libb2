@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -21,7 +21,7 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 enum {
@@ -76,17 +76,17 @@ public:
 
 	virtual	status_t HandleMessage(const SMessage &msg)
 	{
-		if (msg.What() == kTestHandler) 
+		if (msg.What() == kTestHandler)
 		{
-			if (atomic_fetch_add(&m_state->current, 1) < m_state->iterations) 
+			if (atomic_fetch_add(&m_state->current, 1) < m_state->iterations)
 			{
 				sptr<HandlerTest> next = m_other.promote();
-				if (next != NULL) 
+				if (next != NULL)
 				{
 					next->PostMessage(msg);
 				}
-			} 
-			else 
+			}
+			else
 			{
 				m_state->finished.Open();
 			}

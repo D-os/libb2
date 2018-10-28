@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -24,7 +24,7 @@
 #include <support/Value.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -60,7 +60,7 @@ typedef void	(*attach_func)(const sptr<BSharedObject>& image);
 /*----- SPackage ------------------------------------------------*/
 //! A convenience class for getting information about a package,
 //! and doing useful things with it.
-class SPackage 
+class SPackage
 {
 public:
 	SPackage();
@@ -73,9 +73,9 @@ public:
 	status_t StatusCheck();
 	SString Name();
 	SString Path();
-			
+
 	sptr<IByteInput> OpenResource(const SString& fileName, const SString& locale = SString::EmptyString());
-	
+
 	SString LoadString(const SString& key, const SString& locale = SString::EmptyString());
 	SString LoadString(uint32_t index, const SString& locale = SString::EmptyString());
 
@@ -92,7 +92,7 @@ private:
 
 	private:
 		int m_fd;
-		void* m_buffer;	
+		void* m_buffer;
 		size_t m_length;
 	};
 
@@ -100,20 +100,20 @@ private:
 	{
 	public:
 		Data(const SString& name, const SString& path);
-		
+
 		SString Name();
 		SString Path();
 		SString ResourcePath();
-		
+
 		SString LoadString(const SString& key, const SString& locale);
 		SString LoadString(uint32_t index, const SString& locale);
 
 	protected:
 		virtual ~Data();
 
-	private:	
+	private:
 		char* get_buffer_for(const SString& locale);
-		
+
 		SLocker m_lock;
 		SString m_name;
 		SString m_path;
@@ -126,7 +126,7 @@ private:
 	{
 	public:
 		Pool();
-		
+
 		sptr<SPackage::Data> DataFor(const SString& pkgName);
 
 	private:
@@ -144,7 +144,7 @@ extern const SPackage B_NO_PACKAGE;
 
 /*---------------------------------------------------------------*/
 /*----- BSharedObject -------------------------------------------*/
-//!	A representation of a loaded executable image.  
+//!	A representation of a loaded executable image.
 class BSharedObject : public virtual SAtom
 {
 public:
@@ -224,7 +224,7 @@ private:
 	binary compatibility issues; references to SPackageSptr objects should
 	never pass outside the confines of the PRC in which they are
 	created.
-	
+
 	@note The visibility control on this class is very important -- every
 	shared library must get its own copy of the implementation of the
 	class, so that it can correctly track references on that code and not
@@ -253,14 +253,14 @@ public:
 
 	//!	Convenience to retrieve resource data from your package via SPackage::OpenResource().
 	sptr<IByteInput> OpenResource(const SString& fileName, const SString& locale = SString::EmptyString()) const ATTRIBUTE_VISIBILITY_HIDDEN;
-	
+
 	//! Convenience to retrieve a string from your package via SPackage::LoadString().
 	SString LoadString(const SString& key, const SString& locale = SString::EmptyString()) const ATTRIBUTE_VISIBILITY_HIDDEN;
 	//! Convenience to retrieve a string from your package via SPackage::LoadString().
 	SString LoadString(uint32_t index, const SString& locale = SString::EmptyString()) const ATTRIBUTE_VISIBILITY_HIDDEN;
-	
+
 	// XXX This are old APIs from Cobalt.
-	
+
 	//!	Convenience to retrieve resource data from your package.
 	inline	sptr<IByteInput>		OpenResource(uint32_t type, int32_t id) const ATTRIBUTE_VISIBILITY_HIDDEN;
 	//!	Convenience to retrieve a string from your package.
@@ -312,7 +312,7 @@ typedef SPackageSptr SDontForgetThis;
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif

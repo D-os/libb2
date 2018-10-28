@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -32,10 +32,10 @@
 #include <services/IInformant.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::storage;
-using namespace palmos::support;
-using namespace palmos::services;
-using namespace palmos::xml;
+using namespace os::storage;
+using namespace os::support;
+using namespace os::services;
+using namespace os::xml;
 #endif
 
 class BSettingsCatalog;
@@ -49,7 +49,7 @@ public:
 	virtual void InitAtom();
 	virtual void EntryCreated(const sptr<INode>& node, const SString& name, const sptr<IBinder>& entry);
 	virtual status_t HandleMessage(const SMessage& msg);
-	
+
 	virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
 	virtual status_t OnEndTag(SString& name);
 	virtual status_t OnText(SString& data);
@@ -65,7 +65,7 @@ public:
 	status_t EntryAtLocked(const sptr<IBinder>& binder, size_t index, uint32_t flags, SValue* key, SValue* entry);
 	size_t CountEntriesLocked(const sptr<IBinder>& binder);
 
-	
+
 	bool HasEntry(const sptr<IBinder>& binder, const SString& name);
 	inline const SContext& Context() const { return BObserver::Context(); }
 
@@ -87,12 +87,12 @@ public:
 		SKeyedVector<SString, sptr<IBinder> > data;
 	};
 private:
-	
+
 	void parse_xml_file();
 	void write_xml_file();
 	void save();
 	void catalog_to_xml(const sptr<IBinder>& binder, const sptr<BStringIO>& string);
-	
+
 	void load_default_settings();
 
 	void write_out_cache();
@@ -111,17 +111,17 @@ private:
 	SLocker m_databaseLock;
 	SKeyedVector<IBinder*, sptr<CatalogEntry> > m_data;
 	SKeyedVector<IBinder*, sptr<CatalogEntry> > m_cache;
-	
+
 	sptr<INode> m_root;
-	
+
 	// xml parsing state
 	SVector<sptr<INode> > m_stack;
 	sptr<INode> m_currentCatalog;
 	SValue m_value;
-	
+
 	bool m_parsing;
 	bool m_syncing;
-	
+
 	bool m_powerLinked;
 	bool m_syncLinked;
 

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -31,7 +31,7 @@
 //#include <os_p/priv_syscalls.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -63,7 +63,7 @@ struct BTextOutput::thread_styles
 {
 	SLocker								lock;
 	SKeyedVector<int32_t, style_state*>	styles;
-	
+
 	thread_styles()
 		: lock("BTextOutput thread_styles")
 	{
@@ -112,11 +112,11 @@ static const uint32_t tagFlags	= B_TEXT_OUTPUT_COLORED
 void BTextOutput::InitStyles()
 {
 	size_t i;
-	
+
 	m_numColors = 7;
 	m_colors[0] = 0;
 	for (i=1; i<m_numColors; i++) m_colors[i] = 30+i;
-					
+
 	if ((m_flags&B_TEXT_OUTPUT_FROM_ENV) != 0) {
 		const char* env = getenv("TEXT_OUTPUT_FORMAT");
 		bool enable = true;
@@ -178,7 +178,7 @@ void BTextOutput::InitStyles()
 		}
 	}
 
-	if ((m_flags&B_TEXT_OUTPUT_THREADED) != 0) 
+	if ((m_flags&B_TEXT_OUTPUT_THREADED) != 0)
 	{
 		m_threadStyles = new thread_styles;
 	}
@@ -191,14 +191,14 @@ void BTextOutput::InitStyles()
 BTextOutput::style_state* BTextOutput::Style()
 {
 	if (m_threadStyles == NULL) return &m_globalStyle;
-	
+
 	SAutolock _l(m_threadStyles->lock.Lock());
 	style_state* style = m_threadStyles->styles.ValueFor(SysCurrentThread());
-	if (!style) 
+	if (!style)
 	{
 		SysThreadExitCallbackID idontcare;
 		status_t err = SysThreadInstallExitCallback(DeleteStyle, this, &idontcare);
-		if (err == B_OK) 
+		if (err == B_OK)
 		{
 			style = new style_state;
 			if ((m_flags & B_TEXT_OUTPUT_COLORED_MASK) != 0)
@@ -253,28 +253,28 @@ status_t BTextOutput::Print(const char *debugText, ssize_t len)
 		log.thread = SysCurrentThread();
 		log.time = SysGetRunTime();
 		log.indent = style->startIndent;
-			
+
 		if (style && style->buffering) {
 			const ssize_t totalLen = len;
 			int32_t count = 0;
-			
+
 			while (len >= 1 && debugText[len-1] != '\n') len--;
-			
+
 			if (len >= 1 && debugText[len-1] == '\n') {
 				if ((vec[count].iov_len=style->bufferLen) > 0) {
 					vec[count++].iov_base = style->buffer;
 				}
 				vec[count].iov_base = const_cast<char*>(debugText);
 				vec[count++].iov_len = len;
-				
+
 				log.front = true;
 				if ((result=LogV(log, vec, count)) >= B_OK) result = B_OK;
-				
+
 				style->bufferLen = 0;
 			} else {
 				result = B_OK;
 			}
-			
+
 			const ssize_t extra = totalLen-len;
 			if (extra > 0) {
 				if (style->bufferAvail < style->bufferLen+extra) {
@@ -289,7 +289,7 @@ status_t BTextOutput::Print(const char *debugText, ssize_t len)
 					style->bufferLen = style->bufferAvail = 0;
 				}
 			}
-		
+
 		} else {
 			vec[0].iov_base = const_cast<char*>(debugText);
 			vec[0].iov_len = len;
@@ -299,7 +299,7 @@ status_t BTextOutput::Print(const char *debugText, ssize_t len)
 				result = B_OK;
 			}
 		}
-	
+
 	} else {
 		vec[0].iov_base = const_cast<char*>(debugText);
 		vec[0].iov_len = len;
@@ -336,22 +336,22 @@ status_t BTextOutput::LogV(	const log_info& info,
 	int32_t len;
 	int front = info.front;
 	bool tagged = false;
-	
+
 	for (ssize_t i = 0; i<count; i++) {
 		start = end = static_cast<char*>(vector[i].iov_base);
 		len = vector[i].iov_len;
-		
+
 		// Loop while either the next current is not '0' -or- we have
 		// been given an exact number of bytes to write.
 		while (len && *start) {
 			// Look for end of text or next newline.
 			while (len && *end && (*end != '\n')) { len--; end++; };
-			
+
 			// If we are going to write the start of a line, first
 			// insert an indent.
 			if (front) {
 				front = false;
-				
+
 				if (plen == 0 && (m_flags&tagFlags) != 0) {
 					prefix[0] = 0;
 					if ((m_flags&B_TEXT_OUTPUT_COLORED) != 0) {
@@ -380,31 +380,31 @@ status_t BTextOutput::LogV(	const log_info& info,
 						plen += strlen(prefix+plen);
 					}
 				}
-				
+
 				if (plen) io.AddVector(prefix, plen);
 				if (indentLen > 0) {
 					if (indentText == NULL) indentText = MakeIndent(&indentLen);
 					io.AddVector(const_cast<char*>(indentText), indentLen);
 				}
 			}
-			
+
 			// Skip ahead to include all newlines in this section.
 			while (len && *end == '\n') {
 				len--;
 				end++;
 				front = true;
 			}
-			
+
 			// Write this line of text and get ready to process the next.
 			//m_stream->Write(start, end-start);
 			io.AddVector(const_cast<char*>(start), end-start);
 			start = end;
 		}
-	
+
 	}
-	
+
 	if (front && resetText) io.AddVector(const_cast<char*>(resetText), strlen(resetText));
-	
+
 	const int32_t N = io.CountVectors();
 	status_t err = (N > 0) ? m_stream->WriteV(io, N) : B_OK;
 	if (err < B_OK && N > 1) {
@@ -449,7 +449,7 @@ status_t BTextOutput::Sync()
 		log.time = SysGetRunTime();
 		log.indent = style->startIndent;
 		log.front = style->front;
-		
+
 		vec.iov_len = style->bufferLen;
 		vec.iov_base = style->buffer;
 		style->bufferLen = 0;
@@ -489,7 +489,7 @@ void BTextOutput::MoveIndent(int32_t delta)
 {
 #if SUPPORTS_TEXT_STREAM
 	style_state* style = Style();
-	
+
 	atomic_fetch_add(&style->indent, delta);
 	if (style->indent < 0) style->indent = 0;
 #else
@@ -667,7 +667,7 @@ ssize_t BTextInput::AppendLineTo(SString* outString)
 			break;
 		}
 	}
-	
+
 	if (total_read > 0) {
 		(*outString) << temp;
 		return total_read;
@@ -787,7 +787,7 @@ static char* TypeToString(type_code type, char* out,
 		*pos = 0;
 		return pos;
 	}
-	
+
 	if( fullContext ) {
 		*pos++ = '0';
 		*pos++ = 'x';
@@ -795,7 +795,7 @@ static char* TypeToString(type_code type, char* out,
 	return appendhexnum(type, pos);
 }
 #endif
-	
+
 /* ---------------------------------------------------------------- */
 
 #if SUPPORTS_TEXT_STREAM
@@ -1142,7 +1142,7 @@ SString SStatus::AsString() const
 		result += ")";
 		return result;
 	}
-	
+
 	return SString("No error");
 }
 
@@ -1205,40 +1205,40 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SHexDump&
 {
 #if SUPPORTS_TEXT_STREAM
 	size_t offset;
-	
+
 	size_t length = data.Length();
 	unsigned char *pos = (unsigned char *)data.Buffer();
 	size_t bytesPerLine = data.BytesPerLine();
 	const size_t alignment = data.Alignment();
 	const bool cStyle = data.CArrayStyle();
-	
+
 	if (pos == NULL) {
 		if (data.SingleLineCutoff() < 0) io << endl;
 		io << "(NULL)";
 		return io;
 	}
-	
+
 	if (length == 0) {
 		if (data.SingleLineCutoff() < 0) io << endl;
 		io << "(empty)";
 		return io;
 	}
-	
+
 	if ((int32_t)length < 0) {
 		if (data.SingleLineCutoff() < 0) io << endl;
 		io << "(bad length: " << (int32_t)length << ")";
 		return io;
 	}
-	
+
 	char buffer[256];
 	static const size_t maxBytesPerLine = (sizeof(buffer)-1-11-4)/(3+1);
-	
+
 	if (bytesPerLine > maxBytesPerLine) bytesPerLine = maxBytesPerLine;
-	
+
 	const bool oneLine = (int32_t)length <= data.SingleLineCutoff();
 	if (cStyle) io << "{" << endl << indent;
 	else if (!oneLine) io << endl;
-	
+
 	for (offset = 0; ; offset += bytesPerLine, pos += bytesPerLine) {
 		long remain = length;
 
@@ -1250,7 +1250,7 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SHexDump&
 
 		size_t index;
 		size_t word;
-		
+
 		for (word = 0; word < bytesPerLine; ) {
 
 #if B_HOST_IS_LENDIAN
@@ -1262,12 +1262,12 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SHexDump&
 #endif
 
 			for (index = 0; index < alignment || (alignment == 0 && index < bytesPerLine); index++) {
-			
+
 				if (!cStyle) {
 					if (index == 0 && word > 0 && alignment > 0) {
 						*c++ = ' ';
 					}
-				
+
 					if (remain-- > 0) {
 						const unsigned char val = *(pos+startIndex+(index*dir));
 						*c++ = makehexdigit(val>>4);
@@ -1293,7 +1293,7 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SHexDump&
 					}
 				}
 			}
-			
+
 			word += index;
 		}
 
@@ -1310,7 +1310,7 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SHexDump&
 					*c++ = ' ';
 				}
 			}
-			
+
 			*c++ = '\'';
 			if (length > bytesPerLine) *c++ = '\n';
 		} else {
@@ -1320,7 +1320,7 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SHexDump&
 
 //		if (!oneLine) io << indent;
 		io->Print(buffer, (size_t)(c-buffer));
-		
+
 		if (length <= bytesPerLine) break;
 		length -= bytesPerLine;
 	}
@@ -1396,7 +1396,7 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SFloatDum
 
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 // ----------------------------------------------------------------- //

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -14,7 +14,7 @@
 #include <support/Value.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -46,7 +46,7 @@ SHasher::SHasher(int32_t bits)
 		polynomial and shift it right to generate the polynomials for fewer
 		bits.  Note that the polynomial for N bits has no bit set above N-8.
 		This allows us to do a simple table-driven CRC. */
-	
+
 	Poly[64].h1 = POLY1;
 	Poly[64].h2 = POLY2;
 	for (i = 63; i >= 16; --i) {
@@ -58,7 +58,7 @@ SHasher::SHasher(int32_t bits)
 		int j;
 		int v = i;
 		hash_t hv = { 0, 0 };
-		
+
 		for (j = 0; j < 8; ++j, (v <<= 1)) {
 			hv.h1 <<= 1;
 			if (hv.h2 & 0x80000000UL) hv.h1 |= 1;
@@ -72,15 +72,15 @@ SHasher::SHasher(int32_t bits)
 	}
 }
 
-uint32_t 
+uint32_t
 SHasher::BaseHash(const void *data, int32_t len) const
 {
 	hash_t hv = { HINIT1, HINIT2 };
-	
+
 	uint8_t *p = (uint8_t*)data;
 	int s = m_bits - 8;
 	hint_t m = (hint_t)-1 >> (32 - m_bits);
-	
+
 	hv.h1 = 0;
 	hv.h2 &= m;
 
@@ -89,10 +89,10 @@ SHasher::BaseHash(const void *data, int32_t len) const
 		hv.h2 = ((hv.h2 << 8) & m) ^ *p ^ m_crcxor[i];
 		++p;
 	}
-	
+
 	return hv.h2;
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

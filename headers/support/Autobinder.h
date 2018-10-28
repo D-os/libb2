@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -26,9 +26,9 @@
 */
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace osp {
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 class BAutobinderDummiClass
@@ -40,13 +40,13 @@ public:
 typedef void (BAutobinderDummiClass::*BSomeMethod)();
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::osp
+} } // namespace os::osp
 #endif
 
 
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -221,7 +221,7 @@ struct BEffectMethodDef
 	const BParameterInfo				*paramTypes;
 	autobinder_local_hook_t				localFunc;
 	union {
-		BNS(palmos::osp::)BSomeMethod	pointer;
+		BNS(os::osp::)BSomeMethod	pointer;
 		PPointerToMemberFunction		pmf;
 	};
 };
@@ -234,7 +234,7 @@ struct BAutobinderDef
 	const BEffectMethodDef	* get;
 	const BEffectMethodDef	* invoke;
 	int32_t					classOffset;	// B_FIND_CLASS_OFFSET(LSuck, ISuck)
-	
+
 	const SValue&		key() const;
 };
 
@@ -244,26 +244,26 @@ inline const SValue& BAutobinderDef::key() const
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 /*!
 	Use this macro to create a static array of func_info structs.
 	It's not really necessary, but it does the casting for you.
-	
+
 XXX Put example here.
 */
-#define B_FUNC_INFO(method)		{ NULL }//(BNS(palmos::osp::)BSomeMethod)&(method)}
+#define B_FUNC_INFO(method)		{ NULL }//(BNS(os::osp::)BSomeMethod)&(method)}
 
 
 /*!
-	
+
 */
 #define B_FIND_BINDER_I_CLASS_OFFSET(L) ((((int)static_cast<IInterface*>((L*)10))-10)) // use 10-10 because 0 is special cased for NULL
 
 
 /*!
-	
+
 */
 #define B_IMPLEMENT_MARSHAL_PLAN(def, returnValue, remote, binding, which) \
 		{ \

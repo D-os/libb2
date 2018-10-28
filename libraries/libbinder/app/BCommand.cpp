@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -28,9 +28,9 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace app {
-using namespace palmos::support;
+using namespace os::support;
 #endif /* _SUPPORTS_NAMESPACE */
 
 B_STATIC_STRING_VALUE_SMALL(kPWD,		"PWD", );
@@ -229,7 +229,7 @@ sptr<ICommand> BCommand::Clone() const
 	return NULL;
 }
 
-void BCommand::AddCommand(const SString& name, const sptr<ICommand>& command) 
+void BCommand::AddCommand(const SString& name, const sptr<ICommand>& command)
 {
 	SAutolock _l(m_lock.Lock());
 	m_functions.AddItem(name, command);
@@ -260,7 +260,7 @@ sptr<ICommand> BCommand::Spawn(const SString& name) const
 sptr<ICommand> BCommand::SpawnCustom(const SString & name, const SContext& _context, const sptr<IProcess>& team) const
 {
 //	bout << "trying to spawn command " << name;
-	
+
 	m_lock.Lock();
 	sptr<ICommand> command = m_functions.ValueFor(name);
 	m_lock.Unlock();
@@ -277,7 +277,7 @@ sptr<ICommand> BCommand::SpawnCustom(const SString & name, const SContext& _cont
 			path.Append(name);
 //			bout << " path = " << path << endl;
 			SValue component = context.Lookup(path);
-		
+
 			if (component.IsDefined())
 			{
 //				bout << "spawning command " << name << " interface " << component << endl;
@@ -300,7 +300,7 @@ sptr<ICommand> BCommand::SpawnCustom(const SString & name, const SContext& _cont
 		command->SetByteOutput(ByteOutput());
 		command->SetByteError(ByteError());
 	}
-	
+
 	return command;
 }
 
@@ -459,7 +459,7 @@ SString BCommand::ArgToPath(const SValue& arg) const
 sptr<IBinder> BCommand::ArgToBinder(const SValue& arg) const
 {
 	sptr<IBinder> binder = arg.AsBinder();
-	
+
 	if (binder == NULL)
 	{
 		SString path(ArgToPath(arg));
@@ -485,7 +485,7 @@ void BCommand::SetByteOutput(const sptr<IByteOutput>& output)
 	m_out = output;
 	m_textOut = NULL;
 }
-	
+
 void BCommand::SetByteError(const sptr<IByteOutput>& error)
 {
 	SAutolock _l(m_lock.Lock());
@@ -660,10 +660,10 @@ BUnixCommand::BUnixCommand(const SContext& context)
 
 SValue BUnixCommand::Run(const ArgList& args)
 {
-//	bout << "BUnixCommand::Run: " << args << endl; 
+//	bout << "BUnixCommand::Run: " << args << endl;
 	size_t index;
 	const size_t count = args.CountItems();
-	
+
 	char** argv = (char**)malloc(sizeof(char*) * (count+1));
 
 	for (index=0; index<count; index++)
@@ -671,7 +671,7 @@ SValue BUnixCommand::Run(const ArgList& args)
 		status_t err = B_OK;
 		SValue value = args[index];
 		SString string = value.AsString(&err);
-	
+
 		if (err == B_OK)
 		{
 			argv[index] = (char*)malloc(string.Length()+1);
@@ -696,7 +696,7 @@ SValue BUnixCommand::Run(const ArgList& args)
 				default:
 				{
 					argv[index] = (char*)malloc(sizeof("UNKNOWN VALUE"));
-					strncpy(argv[index], "UNKNOWN VALUE", sizeof("UNKNOWN VALUE")); 
+					strncpy(argv[index], "UNKNOWN VALUE", sizeof("UNKNOWN VALUE"));
 					break;
 				}
 			}
@@ -709,9 +709,9 @@ SValue BUnixCommand::Run(const ArgList& args)
 	// copy the argv table as the main may modify it (i.e. keep a copy of the pointers to the args)
 	char** argv_copy = (char**)malloc(sizeof(char*) * (count+1));
 	memcpy(argv_copy, argv, sizeof(char*) * (count+1));
-	
+
 	SValue result = main(count, argv_copy);
-	
+
 	for (index = 0 ; index < count-1 ; index++)
 	{
 		free(argv[index]);
@@ -752,5 +752,5 @@ static void do_options(const sptr<ITextOutput>& out, const SValue& opt)
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::app
+} } // namespace os::app
 #endif /* _SUPPORTS_NAMESPACE */

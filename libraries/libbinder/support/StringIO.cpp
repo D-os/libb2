@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -19,7 +19,7 @@
 #include <unistd.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -57,7 +57,7 @@ size_t BStringIO::StringLength() const
 // ----------------------------------------------------------------- //
 
 void BStringIO::Clear(off_t to)
-{ 
+{
 	off_t pos = Position();
 
 	if ((to + pos >= Size()))
@@ -68,9 +68,9 @@ void BStringIO::Clear(off_t to)
 	{
 		char* copy = pos + to + (char*)Buffer();
 		off_t size = ((const char*)Buffer() + Size()) - copy;
-	
+
 		//do the copy
-		Write(copy, (size_t)size, 0); 
+		Write(copy, (size_t)size, 0);
 		// null out thr rest.
 		WriteV(NULL, 0, B_WRITE_END);
 		// reset our position to the position before the clear.
@@ -97,5 +97,5 @@ void BStringIO::PrintAndReset(const sptr<ITextOutput>& io)
 // ----------------------------------------------------------------- //
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

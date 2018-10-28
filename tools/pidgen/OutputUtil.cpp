@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -33,10 +33,10 @@ HeaderGuard(const SString &in, SString &out, bool system)
 		berr << "filename must start with a letter " << in << endl;
 		return B_ERROR;
 	}
-	
+
 	char * p;
 	int l;
-	
+
 	// Header Guard define name
 
 	out = in;
@@ -48,9 +48,9 @@ HeaderGuard(const SString &in, SString &out, bool system)
 		p++;
 	}
 	out.UnlockBuffer(l);
-	
+
 	if (system) out.Prepend('_', 1);
-	
+
 	return B_OK;
 }
 
@@ -93,7 +93,7 @@ TypeToCPPType(const InterfaceRec* rec, const sptr<IDLType>& obj, bool asConst)
 		bout << "<----- outpututil.cpp -----> invalid type when converting to CPP;"  << endl;
 		_exit(1);
 	}
-	else {		
+	else {
 		// Binder Types
 		// IClass* -> sptr<IClass>
 		// [weak] IClass* -> wptr<IClass>
@@ -102,7 +102,7 @@ TypeToCPPType(const InterfaceRec* rec, const sptr<IDLType>& obj, bool asConst)
 			if (obj->HasAttribute(kWeak) == true) {
 				cpptype = "wptr";
 			}
-			InterfaceRec* iface=FindInterface(obj->GetIface());				
+			InterfaceRec* iface=FindInterface(obj->GetIface());
 			cpptype.Append("<");
 			if (iface->ID()== "Binder") { cpptype.Append("I"); }
 			cpptype.Append(iface->ID());
@@ -112,30 +112,30 @@ TypeToCPPType(const InterfaceRec* rec, const sptr<IDLType>& obj, bool asConst)
 				cpptype.Append("&");
 			}
 
-		} 
+		}
 		else if ((cpptype=="SString") || (cpptype=="SValue") || (cpptype=="SMessage")) {
 			if (asConst) {
 				cpptype.Prepend("const ");
 				cpptype.Append("&");
 			}
-		} 
+		}
 		else if (cpptype=="char*") {
-			if (asConst) {			
+			if (asConst) {
 				// in the rare case this is a const char*
 				cpptype.Prepend("const ");
 			}
 			else {
 				cpptype="SString";
 			}
-		} 
+		}
 		else if (cpptype=="void") {
 			;	// cpptype is fine as is
-		} 
+		}
 		else {
 
 			// deal with typedefs...
 			// If the stored type is different than the object type, then
-			// we have a user defined typedef... 
+			// we have a user defined typedef...
 			// add in the class name as a qualifier, because they are defined
 			// inside the IClass definition.
 			sptr<IDLType> storedtype=FindType(obj);
@@ -155,7 +155,7 @@ TypeToCPPType(const InterfaceRec* rec, const sptr<IDLType>& obj, bool asConst)
 					cpptype.Prepend("const ");
 					cpptype.Append("&");
 				}
-			}	
+			}
 		}
 	}
 
@@ -171,20 +171,20 @@ TypeToDefaultValue(const InterfaceRec* rec, const sptr<IDLType>& obj)
 		bout << "<----- outpututil.cpp -----> invalid type when converting to CPP;"  << endl;
 		_exit(1);
 	}
-	else {		
+	else {
 		// Binder Types
 		if (cpptype=="sptr") {
 			cpptype = "NULL";
-		} 
+		}
 		else if (cpptype=="char*") {
 			cpptype = "NULL";
-		} 
+		}
 		else if (cpptype=="SValue") {
 			cpptype = "B_UNDEFINED_VALUE";
-		} 
+		}
 		else if (cpptype=="SString") {
 			cpptype = "SString::EmptyString()";
-		} 
+		}
 		else if (cpptype=="SPoint") {
 			// The default constructor for SPoint does not initialize the object,
 			// for performance reasons.
@@ -208,7 +208,7 @@ TypeToDefaultValue(const InterfaceRec* rec, const sptr<IDLType>& obj)
 				(cpptype=="float") ||
 				(cpptype=="double")) {
 			cpptype = "0";
-		} 
+		}
 		else {
 			cpptype = TypeToCPPType(rec, obj, false);
 			cpptype.Append("()");
@@ -226,17 +226,17 @@ ToSValueConversion(const sptr<IDLType>& type, const SString &variable)
 	SString tn=type->GetName();
 
 	sptr<IDLType> storedtype=FindType(type);
-	if (storedtype->CountMembers()>0) {	
-		sptr<jmember> toBV=storedtype->GetMemberAt(0); 
+	if (storedtype->CountMembers()>0) {
+		sptr<jmember> toBV=storedtype->GetMemberAt(0);
 
-		if (tn=="SValue") {		
-			s=variable; 
+		if (tn=="SValue") {
+			s=variable;
 		}
-		else if ((tn=="SMessage")) {		
+		else if ((tn=="SMessage")) {
 			s =variable;
 			s.Append(".AsValue()");
-		}		
-		else if (tn=="sptr") {		
+		}
+		else if (tn=="sptr") {
 			s.Append("Binder");
 			s.Append("(");
 			s.Append(variable);
@@ -253,8 +253,8 @@ ToSValueConversion(const sptr<IDLType>& type, const SString &variable)
 			}
 			s.Append(")");
 		}
-		else if ((tn!=NULL) && (storedtype->GetCode()==B_WILD_TYPE)) {		
-			//bout << "<----- outpututil.cpp -----> ToSValueConversion - " << tn << " is a custom type " << endl; 
+		else if ((tn!=NULL) && (storedtype->GetCode()==B_WILD_TYPE)) {
+			//bout << "<----- outpututil.cpp -----> ToSValueConversion - " << tn << " is a custom type " << endl;
 			s=variable;
 			s.Append(".");
 			s.Append(toBV->ID());
@@ -281,10 +281,10 @@ ToSValueConversion(const sptr<IDLType>& type, const SString &variable)
 			s.Append(")");
 		}
 
-		return s;	
+		return s;
 	}
-	else {	
-		bout << "<----- outpututil.cpp -----> there is no function to marshall type=" << tn << endl; 
+	else {
+		bout << "<----- outpututil.cpp -----> there is no function to marshall type=" << tn << endl;
 		_exit(1);
 	}
 	return NULL;
@@ -300,15 +300,15 @@ FromSValueConversion(const sptr<IDLType>& type, const SString &variable, bool se
 	SString tn=type->GetName();
 
 	sptr<IDLType> storedtype=FindType(type);
-	if (storedtype->CountMembers()>1) {	
+	if (storedtype->CountMembers()>1) {
 		sptr<jmember> fromBV=storedtype->GetMemberAt(1);
 
 		if ((tn=="SValue") || (tn=="SMessage")) {
 			// simple assignment
-			s = variable; 
+			s = variable;
 			return s;
 		}
-		if (tn=="sptr") {		
+		if (tn=="sptr") {
 			//bout << "interface id=" << type->GetIface() << endl;
 			if (type->GetIface() == "IBinder") {
 				s=variable;
@@ -336,12 +336,12 @@ FromSValueConversion(const sptr<IDLType>& type, const SString &variable, bool se
 					s.Append(")");
 				}
 			}
-			return s;	
+			return s;
 		}
-		else if ((tn!=NULL) && (storedtype->GetCode() == B_WILD_TYPE)) {		
+		else if ((tn!=NULL) && (storedtype->GetCode() == B_WILD_TYPE)) {
 			// custom types which have Code==B_WILD_TYPE
 			// all custom types use explicit constructor
-			//bout << "<----- outpututil.cpp -----> FromSValueConversion - " << tn << " is a custom type " << endl; 
+			//bout << "<----- outpututil.cpp -----> FromSValueConversion - " << tn << " is a custom type " << endl;
 
 			s=fromBV->ID();
 			s.Append("(");
@@ -352,7 +352,7 @@ FromSValueConversion(const sptr<IDLType>& type, const SString &variable, bool se
 			else {
 				s.Append(")");
 			}
-			//s.Prepend(".");	
+			//s.Prepend(".");
 			return s;
 		}
 		else if ((tn!=NULL) && storedtype->GetCode() == B_VARIABLE_ARRAY_TYPE) {
@@ -377,7 +377,7 @@ FromSValueConversion(const sptr<IDLType>& type, const SString &variable, bool se
 			else {
 				s.Append("()");
 			}
-	
+
 			if ((tn=="size_t") ||
 					(tn=="char") ||
 					(tn=="wchar32_t") ||
@@ -386,16 +386,16 @@ FromSValueConversion(const sptr<IDLType>& type, const SString &variable, bool se
 					(tn=="uint8_t") ||
 					(tn=="uint16_t") ||
 					(tn=="uint32_t") ||
-					(tn=="uint64_t")) { 
+					(tn=="uint64_t")) {
 				s.Prepend(")");
 				s.Prepend(tn);
-				s.Prepend("("); 
+				s.Prepend("(");
 			}
 			return s;
 		}
 	}
-	else {	
-		bout << "<----- outpututil.cpp -----> there is no function to marshall type=" << tn << endl; 
+	else {
+		bout << "<----- outpututil.cpp -----> there is no function to marshall type=" << tn << endl;
 		_exit(1);
 	}
 	return NULL;
@@ -415,7 +415,7 @@ SString IndexToSValue(int32_t index)
 
 static const char* kAssignStr = " = ";
 
-SString 
+SString
 FromSValueExpression(const InterfaceRec* rec,
 					 const sptr<IDLType>& vartype,
 					 const SString& varname,
@@ -513,7 +513,7 @@ FromSValueExpression(const InterfaceRec* rec,
 
 void
 AddFromSValueStatements(const InterfaceRec* rec,
-						sptr<StatementList> statementList, 
+						sptr<StatementList> statementList,
 						const sptr<IDLType>& vartype,
 						const SString& varname,
 						const SString& valuename)
@@ -533,13 +533,13 @@ AddFromSValueStatements(const InterfaceRec* rec,
 }
 
 
-int32_t 
+int32_t
 CountStringTabs(const SString& str, int32_t tabLen)
 {
 	return (str.Length()+(tabLen-1))/tabLen;
 }
 
-const char* 
+const char*
 PadString(const SString& str, int32_t fieldTabs, int32_t tabLen)
 {
 	static const char tabs[] =
@@ -592,7 +592,7 @@ void NamespaceGenerator::EnterNamespace(const sptr<ITextOutput> stream, const SS
 	if (!diff) return;
 
 	bool haveNamespaces = false;
-	
+
 	if (prevNamespace != newNS) {
 		if (prevNamespace.Length() > 0) {
 			stream << endl;
@@ -633,13 +633,13 @@ void NamespaceGenerator::EnterNamespace(const sptr<ITextOutput> stream, const SS
 		}
 	}
 
-	if (newNS != "palmos::support" && prevUsing.IndexOf(SString("palmos::support")) < 0) {
+	if (newNS != "os::support" && prevUsing.IndexOf(SString("os::support")) < 0) {
 		if (!haveNamespaces) {
 			stream << "#if _SUPPORTS_NAMESPACE" << endl;
 		}
 		haveNamespaces = true;
-		stream << "using namespace palmos::support;" << endl;
-		prevUsing.AddItem(SString("palmos::support"));
+		stream << "using namespace os::support;" << endl;
+		prevUsing.AddItem(SString("os::support"));
 	}
 
 	for (i=0; i<newUsing.CountItems(); i++) {

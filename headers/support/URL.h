@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 #include <support/Value.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -70,12 +70,12 @@ class SUrl
 		//We build schemes like this
 		//"scheme://<user>:<password>@<host>:<port>/<url-path>?<query>&<query>"
 		//Any segement of URL is optional, except for scheme itself
-		//	By default 
+		//	By default
 		//	? is used to begin query (queryBeginChar)
 		//	& is used to seperate two different queries (querySeperatorChar)
 		//  = is used as assignment char is query is of form name=value (queryAssignmentChar)
 		//-------------------------------------------------------------------
-		status_t	SetInternetStyleSchemeSupport(char queryBeginChar = '?', 
+		status_t	SetInternetStyleSchemeSupport(char queryBeginChar = '?',
 												char queryAssignmentChar = '=',
 												char querySeperatorChar = '&');
 		//-------------------------------------------------------------------
@@ -125,7 +125,7 @@ class SUrl
 
 		const char* GetScheme() const;
 
-		
+
 		const char* GetExtension() const;
 		const char* GetQuery() const;
 
@@ -138,14 +138,14 @@ class SUrl
 		status_t RemoveQueryParameter(const char* name);
 		status_t GetQueryParameter(const char* name, SString* out_value) const;
 
-		
+
 		/*! GetUnescapedFileName(), GetUnescapedPath(), GetUnescapedQuery():
 		    Extract the filename, path, or query, converting any %-escapes
 		    and "+"s appropriately.
-		    
+
 		    \param out A buffer that you have allocated for the
 		    null-terminated result.
-		    
+
 		    \param size The size of the buffer that you allocated. Note that
 		    this is the full size of the buffer, including the room for the
 		    null terminator.
@@ -161,10 +161,10 @@ class SUrl
 
 
 		/*! EscapePathString() and EscapeQueryString():
-		    
+
 		    Convert inString to a legal URL string by %-escaping any characters that
 		    need it, and put the null-terminated result in outString.
-		    
+
 		    EscapePathString() will escape "&"s.  EscapeQueryString() will not.
 		    The RFC implies that escaping "&"s in paths should be harmless,
 		    though of dubious utility, but {a certain engineer who used to
@@ -177,11 +177,11 @@ class SUrl
 		    in \c inString.  Set to \c false if that string might already contain
 			%-escapes that you don't want escaped a second time.  Any other
 			characters that are unsafe in URLs are %-escaped in either case.
-		    
+
 		    \param outString Pointer to a buffer where you want the resulting
 		    escaped string. You must have previously allocated this buffer to
 		    be at least GetEscapedLength() + 1 bytes long.
-		    
+
 		    \param inString The string that needs escaping.
 
 		    \param inLen The length of inString that you want to escape.  Useful
@@ -217,7 +217,7 @@ class SUrl
 		//uint32_t HashString(const char *string, uint32_t hash = 0) const;
 		//uint32_t HashStringI(const char *string, uint32_t hash = 0) const;
 
-		
+
 		//---------------------------------------------------------------------
 
 
@@ -238,17 +238,17 @@ class SUrl
 		/*! Extract our internal representation of a query string (escaped, stripped
 		    of "?" and "#", and null-terminated) from src into dest.  Typical usage
 		    is: dest = ExtractQueryString(dest, &src);
-		    
+
 		    \param dest Pointer to the buffer where you want the escaped, null-terminated
 		    query string.
-		    
+
 		    \param src *src is a pointer to the source query string. It must be
 		    unescaped. It may be followed by a "#" (fragment). If it does not
 		    begin with "?", then ExtractQueryString() assumes there is no query,
 		    and merely puts a null terminator into dest. *src is incremented to
 		    one past the end of the source query (so it points to either the "#"
 		    or the null terminator).
-		    
+
 		    \returns A pointer to one past the null terminator of the query string
 		    in dest.
 		*/
@@ -263,11 +263,11 @@ class SUrl
 
 		status_t SetQueryInternal(const char *query,int32_t length, bool escape_all);
 
-		status_t GetQueryParameterInternal(const char *query, const char *name, 
+		status_t GetQueryParameterInternal(const char *query, const char *name,
 										 const char **namePP, int32_t *nameLengthP,
 										 const char **valuePP, int32_t *valueLengthP) const;
 
-		status_t ComposeEscapedQuery(const char *name, const char *value, 
+		status_t ComposeEscapedQuery(const char *name, const char *value,
 								   bool escape_all, SString *outStrP) const ;
 
 		status_t UnEscapedQuery(const char *query, int32_t length, SString *outStrP) const  ;
@@ -282,7 +282,7 @@ class SUrl
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif

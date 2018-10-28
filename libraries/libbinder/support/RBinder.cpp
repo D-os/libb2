@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -29,13 +29,13 @@
 #define OBIT_DEBUG_MSGS 0
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace osp {
 #endif
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::osp;
-using namespace palmos::support;
+using namespace os::osp;
+using namespace os::support;
 #endif
 
 BpBinder::BpBinder(int32_t handle)
@@ -63,7 +63,7 @@ BpBinder::~BpBinder()
 	delete obits;
 }
 
-status_t 
+status_t
 BpBinder::Link(const sptr<IBinder>& node, const SValue &binding, uint32_t flags)
 {
 	SParcel *data = SParcel::GetParcel();
@@ -86,7 +86,7 @@ BpBinder::Link(const sptr<IBinder>& node, const SValue &binding, uint32_t flags)
 	return error;
 }
 
-status_t 
+status_t
 BpBinder::Unlink(const wptr<IBinder>& node, const SValue &binding, uint32_t flags)
 {
 	SParcel *data = SParcel::GetParcel();
@@ -109,7 +109,7 @@ BpBinder::Unlink(const wptr<IBinder>& node, const SValue &binding, uint32_t flag
 	return error;
 }
 
-SValue 
+SValue
 BpBinder::Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags)
 {
 	SParcel *data = SParcel::GetParcel();
@@ -140,11 +140,11 @@ BpBinder::InterfaceFor(const SValue &/*descriptor*/, uint32_t /*flags*/)
 	return sptr<IInterface>(NULL);
 }
 
-status_t 
+status_t
 BpBinder::Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out)
 {
 	SParcel *buffer = SParcel::GetParcel();
-	
+
 	const SValue *outBindingsP = outBindings.IsDefined() ? &outBindings : NULL;
 	const SValue *inBindingsP = (outBindingsP || (!inBindings.IsWild())) ? &inBindings : NULL;
 	ssize_t result = buffer->SetValues(&in,inBindingsP,outBindingsP,NULL);
@@ -205,7 +205,7 @@ BpBinder::AutobinderGet(const BAutobinderDef *def, void *result)
 	status_t err;
 	SParcel *parcel = SParcel::GetParcel();
 	SParcel *reply = SParcel::GetParcel();
-	
+
 	// index of property
 	parcel->WriteInt32(def->index);
 
@@ -215,7 +215,7 @@ BpBinder::AutobinderGet(const BAutobinderDef *def, void *result)
 	// get it!
 	err = Transact(B_GET_TRANSACTION, *parcel, reply);
 	if (err != B_OK) goto clean_up;
-	
+
 	// value of the property
 	if (def->get->returnMarshaller) {
 		err = def->get->returnMarshaller->unmarshal_parcel(*reply, result);
@@ -253,11 +253,11 @@ BpBinder::AutobinderInvoke(const BAutobinderDef* def, void** params, void *resul
 	// in and inout parameters
 	err = autobinder_marshal_args(pi, pi_end, B_IN_PARAM, params, *parcel, &dirs);
 	if (err < 0) goto clean_up;
-	
+
 	// invoke it!
 	err = Transact(B_INVOKE_TRANSACTION, *parcel, reply);
 	if (err != B_OK) goto clean_up;
-	
+
 	if (inv->returnType != B_UNDEFINED_TYPE || (dirs&B_OUT_PARAM) != 0) {
 
 		// return value
@@ -290,7 +290,7 @@ BpBinder::Transact(uint32_t code, SParcel& data, SParcel* reply, uint32_t flags)
 		if (status == B_BINDER_DEAD) SendObituary();
 		return status;
 	}
-	
+
 	return B_BINDER_DEAD;
 }
 
@@ -404,7 +404,7 @@ BpBinder::SendObituary()
 	for (size_t i=0; i<N; i++) {
 		report_one_death(obits->ItemAt(i));
 	}
-	
+
 	delete obits;
 }
 
@@ -507,5 +507,5 @@ BpBinder::IncStrongAttempted(uint32_t, const void* )
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

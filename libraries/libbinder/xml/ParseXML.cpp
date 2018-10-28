@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -15,8 +15,8 @@
 #include <xml_p/XMLParserCore.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
-namespace xml {	
+namespace os {
+namespace xml {
 #endif
 
 
@@ -53,7 +53,7 @@ _does_the_parsing_yo::~_does_the_parsing_yo(void)
 {
 	if(m_realBuff)
 	{
-		free(m_realBuff);	
+		free(m_realBuff);
 		m_realBuff = NULL;
 	}
 };
@@ -76,7 +76,7 @@ status_t _does_the_parsing_yo::_do_the_parsing_yo_()
 		m_context->OnError(err, true, __LINE__);
 		errorExit = true;
 	}
-	
+
 	while (!done && !errorExit)
 	{
 
@@ -94,7 +94,7 @@ status_t _does_the_parsing_yo::_do_the_parsing_yo_()
 	}
 
 	err = ProcessEnd(done != 0);
-	
+
 	return err;
 }
 
@@ -121,5 +121,5 @@ ParseXML(BXMLParseContext *context, BXMLDataSource *data, uint32_t flags)
 
 #if _SUPPORTS_NAMESPACE
 }; // namespace xml
-}; // namespace palmos
+}; // namespace os
 #endif

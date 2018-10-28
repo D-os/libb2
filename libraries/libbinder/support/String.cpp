@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -54,7 +54,7 @@
 
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -3408,7 +3408,7 @@ int32_t path_normalize_root(SString& normalme)
 status_t path_normalize(SString& normalme)
 {
 	//bout << "Normalizing: " << normalme << endl;
-	
+
 	int32_t base = path_normalize_root(normalme);
 
 	if (base < 0) {
@@ -3483,13 +3483,13 @@ status_t path_normalize(SString& normalme)
 
 		i++;
 	}
-	
+
 	// Trim trailing delimiter
 	i = normalme.Length()-1;
 	if (i > size_t(base) && path_equals_delimiter(normalme[i])) {
 		normalme.Remove(i, 1);
 	}
-	
+
 	//bout << "Result: " << normalme << endl;
 	return 0;
 }
@@ -3802,7 +3802,7 @@ void SString::EndBuffering()
 	}
 }
 
-SValue 
+SValue
 BArrayAsValue(const SString* from, size_t count)
 {
 	SValue result;
@@ -3813,7 +3813,7 @@ BArrayAsValue(const SString* from, size_t count)
 	return result;
 }
 
-status_t 
+status_t
 BArrayConstruct(SString* to, const SValue& value, size_t count)
 {
 	for (size_t i = 0; i < count; i++) {
@@ -3825,5 +3825,5 @@ BArrayConstruct(SString* to, const SValue& value, size_t count)
 
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

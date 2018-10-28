@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,13 +18,13 @@
 
 #include <support/StdIO.h>
 
-using namespace palmos::app;
+using namespace os::app;
 
 class AtomCommand : public BCommand, public SPackageSptr
 {
 public:
 	AtomCommand(const SContext& context);
-	
+
 	virtual SValue Run(const ArgList& args);
 	virtual SString Documentation() const;
 };
@@ -38,7 +38,7 @@ AtomCommand::AtomCommand(const SContext& context)
 SValue AtomCommand::Run(const ArgList& args)
 {
 	sptr<ITextOutput> out = TextOutput();
-	
+
 	SValue value;
 	SString one;
 	wptr<SAtom> atom;
@@ -82,7 +82,7 @@ SValue AtomCommand::Run(const ArgList& args)
 				goto ERROR;
 			}
 		}
-		
+
 	}
 	else if (one == "mark")
 	{
@@ -91,7 +91,7 @@ SValue AtomCommand::Run(const ArgList& args)
 			TextError() << "atom: no process supplied" << endl;
 			goto ERROR;
 		}
-		
+
 		mark = team->AtomMarkLeakReport();
 		if (mark < 0) {
 			TextError() << "atom: reference tracking not enabled!" << endl;
@@ -106,7 +106,7 @@ SValue AtomCommand::Run(const ArgList& args)
 			TextError() << "atom: no process supplied" << endl;
 			goto ERROR;
 		}
-		
+
 		mark = arg3.AsInt32(&error);
 		if (error != B_OK) mark = 0;
 		last = arg4.AsInt32(&error);
@@ -162,7 +162,7 @@ ERROR:
 		TextError() << Documentation() << endl;
 		return SValue::Status(B_BAD_VALUE);
 	}
-	
+
 	return SValue::Int32(B_OK);
 }
 
@@ -201,6 +201,6 @@ sptr<IBinder> InstantiateComponent(const SString& component, const SContext& con
 	{
 		return new AtomCommand(context);
 	}
-	
+
 	return NULL;
 }

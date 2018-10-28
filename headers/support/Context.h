@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -23,7 +23,7 @@
 #include <support/Vector.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -44,9 +44,9 @@ public:
 	SContext(const sptr<INode>& node);
 	SContext(const SContext& context);
 	~SContext();
-	
+
 	SContext& operator=(const SContext& o);
-	
+
 	bool operator==(const SContext& o) const;
 	bool operator!=(const SContext& o) const;
 	bool operator<(const SContext& o) const;
@@ -60,7 +60,7 @@ public:
 	enum new_flags_enum {
 		//!	All bits specifying the process preference.
 		PROCESS_MASK	= 0x000f,
-		
+
 		//!	We would like to use a local process, if that is possible.
 		/*!	This will always use the local process, unless that conflicts with the
 			preferences of the component or is prevented by security restrictions. */
@@ -82,7 +82,7 @@ public:
 			instantiation will fail. */
 		REQUIRE_REMOTE	= 0x0003
 	};
-	
+
 	//!	Instantiate a new component, possibly hosted by the local process.
 	/*!	@param[in]	component	Name of the component to instantiate.  This
 								may be a complex SValue combining the name
@@ -90,7 +90,7 @@ public:
 		@param[in]	args		Additional component arguments.
 		@param[in]	flags		Behavior modifiers, selected from @ref new_flags_enum.
 		@param[out]	outError	Result code, B_OK if no error.
-		
+
 		@return Non-NULL if the component was instantiated.  If NULL, @a
 		outError will contain the reason for the error. */
 	sptr<IBinder> New(	const SValue& component,
@@ -106,10 +106,10 @@ public:
 		@param[in]	args		Additional component arguments.
 		@param[in]	flags		Behavior modifiers, selected from @ref new_flags_enum.
 		@param[out]	outError	Result code, B_OK if no error.
-		
+
 		@return Non-NULL if the component was instantiated.  If NULL, @a
 		outError will contain the reason for the error.
-		
+
 		This is like New(), but allows you to specify a different process than your
 		own into which the component should be instantiated.  Otherwise, the @a process
 		is treated as if it is your own -- i.e., PREFER_LOCAL means that you would
@@ -119,16 +119,16 @@ public:
 								const SValue& args = B_UNDEFINED_VALUE,
 								uint32_t flags = PREFER_LOCAL,
 								status_t* outError = NULL) const;
-	
+
 	//!	Instantiate a new process.
 	/*!	@param[in]	name		Name of the new process.
 		@param[in]	flags		Behavior modifiers, selected from @ref new_flags_enum.
 		@param[in]	env			Evironment variables for process (not currently implemented).
 		@param[out]	outError	Result code, B_OK if no error.
-		
+
 		@return Non-NULL if a new process was created.  If NULL, @a outError
 		will contain the reason for failure.
-		
+
 		This function creates a new, empty process, which you can then use
 		with RemoteNew() to instantiate components inside of.  The name you
 		give is currently just a convenience and not really used.  The
@@ -138,22 +138,22 @@ public:
 								uint32_t flags = PREFER_REMOTE,
 								const SValue& env = B_UNDEFINED_VALUE,
 								status_t* outError = NULL) const;
-	
-	//!	 Low-level process instantiation function.  Use NewProcess() instead.					
+
+	//!	 Low-level process instantiation function.  Use NewProcess() instead.
 	sptr<IBinder> NewCustomProcess(	const SString& executable,
 									const SVector<SString>& args = SVector<SString>(),
 									uint32_t flags = 0,
 									const SValue& env = B_UNDEFINED_VALUE,
 									status_t* outError = NULL) const;
-	
+
 	SValue Lookup(const SString& location) const;
 	sptr<IBinder> LookupService(const SString& name) const;
 	template<class INTERFACE> sptr<INTERFACE> LookupServiceAs(const SString& name) const;
-	
+
 	status_t Publish(const SString& location, const SValue& val) const;
 	status_t PublishService(const SString& name, const sptr<IBinder>& object) const;
 	status_t Unpublish(const SString& location) const;
-	
+
 	sptr<INode> Root() const;
 
 	status_t LookupComponent(const SString& id, SValue* out_info) const;
@@ -165,13 +165,13 @@ public:
 	/*!	@note You should @em only use this API if you are not
 		running as a normal Binder components.  Binder components
 		should always access their context through BBinder::Context().
-		
+
 		This returns the least-trusted "user" context.  This context
 		is always guaranteed to exist, though the functionality offered
 		through it may be quite limited.
 	*/
 	static SContext UserContext();
-	
+
 	//!	Back-door for retrieving the global system context.
 	/*!	This returns the "root" or system context.  This is the initial
 		context created by smooved, with full permissions.  Access to
@@ -185,7 +185,7 @@ public:
 		should always exist (corresponding to the UserContext() and
 		SystemContext() APIs here). */
 	static SContext GetContext(const SString& name);
-	
+
 	//!	Low-level version of GetContext() taking an explicit process.
 	/*!	The other context retrieval calls funnel down to this one,
 		passing the local IProcess in to 'caller'. */
@@ -204,11 +204,11 @@ template<class INTERFACE>
 sptr<INTERFACE> SContext::LookupServiceAs(const SString& name) const
 {
 	return interface_cast<INTERFACE>(LookupService(name));
-}	
+}
 #endif // !LIBBE_BOOTSTRAP
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif // SUPPORT_CONTEXT_H_

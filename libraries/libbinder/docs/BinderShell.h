@@ -280,7 +280,7 @@ As mentioned, environment variables in the Binder Shell are typed:
 @verbatim
 /# VAR=something
 Result: "something"
-	
+
 /# VAR=@{ 10 -> "99" }
 Result: int32_t(10 or 0xa) -> "99"
 @endverbatim
@@ -421,7 +421,7 @@ We can now look at the informant IDL file to see just what we were
 doing to that service:
 
 @code
-namespace palmos {
+namespace os {
 namespace services {
 
 interface IInformant
@@ -439,7 +439,7 @@ methods:
 	status_t	Inform(SValue key, SValue information);
 }
 
-} }	// namespace palmos::services
+} }	// namespace os::services
 @endcode
 
 You can use the @c inspect command in the shell to find out about the
@@ -532,7 +532,7 @@ identify a component by name, and we use a Java-style naming
 convention &mdash; the prefix being a domain name.  For example, components
 that are part of the OpenBinder package start with <tt>org.openbinder</tt>.
 In addition, for historical reasons components that are a part of the
-Binder runtime itself use the prefix <tt>palmos</tt>.
+Binder runtime itself use the prefix <tt>os</tt>.
 
 A new component instance is created with the @c new command, which takes
 the name of the component to instantiate and returns an IBinder object
@@ -989,7 +989,7 @@ component is a shell command.
 		<property id="bin" type="string">service_command</property>
 	</component>
 </manifest>
-@endverbatim	
+@endverbatim
 
 @section ShellAdvancedTopics Advanced Topics
 
@@ -1092,7 +1092,7 @@ interfaces/support/INode.idl.  The thing we are interested in is this
 event declared towards the end:
 
 @code
-namespace palmos {
+namespace os {
 namespace support {
 
 interface INode
@@ -1101,26 +1101,27 @@ interface INode
 
 events:
 	...
-	
+
     // This event is sent when a new entry appears in the catalog.
     /*	"who" is the parent node in which this change occured.
         "name" is the name of the entry that changed.
         "entry" is the entry itself, usually either an INode or IDatum.
     */
-    void EntryCreated(INode who, SString name, IBinder entry);
-	
-	...
+void EntryCreated(INode who, SString name, IBinder entry);
+
+...
 }
 @endcode
 
-Given that, let's write a shell function that handles the same
-method signature:
+    Given                                                     that,
+    let's write a shell function that handles the same method signature :
 
-@verbatim
-/# function handleEntryCreated() {
-	echo "Created: parent=" $1
-	echo "Created: name=" $2
-	echo "Created: entry=" $3
+    @verbatim
+    / #function handleEntryCreated()
+{
+  echo "Created: parent=" $1
+      echo "Created: name=" $2
+          echo "Created: entry=" $3
 }
 @endverbatim
 
@@ -1232,7 +1233,7 @@ Result: "1"
 Result: "true"
 @endverbatim
 
-A value can also contain a complex mapping of other values. 
+A value can also contain a complex mapping of other values.
 Such mappings (and sets) are constructed with the <tt>-\></tt> and
 <tt>,</tt> operators:
 

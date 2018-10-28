@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,7 +18,7 @@
 
 import <support/IIterator.idl>
 
-namespace palmos {
+namespace os {
 namespace support {
 
 //!	Interface implemented by objects that support iteration over their data.
@@ -78,7 +78,7 @@ methods:
 		  result set will be the rows matching both of them.
 	    - "order_by" (a.k.a. BV_ITERABLE_ORDER_BY) specifies how to order
 		  entries returned by the iterator.
-		
+
 		See @ref BinderDataModel for more detail on these options.
 
 		@par Implementation Details
@@ -102,4 +102,4 @@ methods:
 	IIterator NewIterator([optional]SValue args, [optional out]status_t error);
 }
 
-} }	// namespace palmos::support
+} }	// namespace os::support

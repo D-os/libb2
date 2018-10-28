@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 #include <sys/uio.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -74,10 +74,10 @@ class IByteInput : public IInterface
 				//!	Read the bytes described by "iovec" from the stream.
 				/*!	Returns the number of bytes actually read, or a
 					negative error code.  A NULL 'vector' is valid if 'count'
-					is <= 0, in which case 'count' is returned.  
+					is <= 0, in which case 'count' is returned.
 				*/
 		virtual	ssize_t		ReadV(const iovec *vector, ssize_t count, uint32_t flags = 0) = 0;
-		
+
 				//!	Convenience for reading a vector of one buffer.
 				ssize_t		Read(void *buffer, size_t size, uint32_t flags = 0);
 };
@@ -102,10 +102,10 @@ class IByteOutput : public IInterface
 					use B_DO_NOT_BLOCK to allow partial writes.
 				*/
 		virtual	ssize_t		WriteV(const iovec *vector, ssize_t count, uint32_t flags = 0) = 0;
-		
+
 				//!	Convenience for writing a vector of one buffer.
 				ssize_t		Write(const void *buffer, size_t size, uint32_t flags = 0);
-				
+
 				//!	Make sure all data in the stream is written to its physical device.
 				/*!	Returns B_OK if the data is safely stored away, else an error code.
 				*/
@@ -124,7 +124,7 @@ class IByteSeekable : public IInterface
 
 				//!	Return the current location in the stream, or a negative error code.
 		virtual	off_t		Position() const = 0;
-		
+
 				//!	Move to a new location in the stream.
 				/*!	The seek_mode can be either SEEK_SET, SEEK_END, or SEEK_CUR.
 					Returns the new location, or a negative error code.
@@ -156,7 +156,7 @@ inline ssize_t IByteOutput::Write(const void *buffer, size_t size, uint32_t flag
 /*-------------------------------------------------------------*/
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_BYTESTREAM_INTERFACE_H */

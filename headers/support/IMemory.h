@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -23,7 +23,7 @@
 #include <support/Value.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -65,7 +65,7 @@ public:
 	deallocated until all references on this object (in all
 	processes) have gone away.  You do not explicitly free
 	the memory yourself.
-	
+
 	This object can be passed across processes, in which case access
 	to the entire heap is transfered to the destination process.
 
@@ -180,7 +180,7 @@ private:
 
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif // _SUPPORT_IMEMORY_H_

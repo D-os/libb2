@@ -13,7 +13,7 @@
 import <support/IDatum.idl>
 import <support/INode.idl>
 
-namespace palmos {
+namespace os {
 namespace support {
 
 //!	Generic modification interface for INode objects.
@@ -53,16 +53,16 @@ methods:
 		AddEntry() is a general way to place new entries into a
 		catalog.  There are two main ways it can be useful.  The
 		first is as an equivalent to the INode::REQUEST_DATA hint
-		for reading entries –- if you supply an SValue of data to 
+		for reading entries ï¿½- if you supply an SValue of data to
 		ddEntry(), it can create a new entry with that data, without
 		requiring an intermediate operation through an IDatum object.
-		
+
 		The second reason for using this API is to add new types of
-		objects to the catalog – if the SValue contains an IBinder
+		objects to the catalog ï¿½ if the SValue contains an IBinder
 		object, the given object will be directly added as the new
 		entry.  This latter approach allows you to create places where
 		the namespace crosses processes, mount new types of directories
-		in the namespace, etc.  Note, however, that many catalogs 
+		in the namespace, etc.  Note, however, that many catalogs
 		(such as one representing a filesystem) will
 		not be able to host references to external objects.
 
@@ -109,7 +109,7 @@ methods:
 			entry with that name already exists.
 		@param[out] err B_OK on success, else an error code.
 		@result The newly created INode, or NULL on failure.
-		
+
 		Use this API to create a new subdirectory kind of
 		object inside of this catalog.  The returned object
 		will be at least an INode that can itself contain
@@ -150,7 +150,7 @@ methods:
 		@param[in] flags Additional options.  Always set to 0.
 		@param[out] err B_OK on success, else an error code.
 		@result The newly created IDatum, or NULL on failure.
-		
+
 		This is like CreateNode() (see that API for further details),
 		but creates an object implementing the IDatum interface and
 		thus allowing you to place actual data under this entry.
@@ -163,4 +163,4 @@ methods:
 }
 
 
-} }	// namespace palmos::support
+} }	// namespace os::support

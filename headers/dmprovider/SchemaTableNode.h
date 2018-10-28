@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -30,9 +30,9 @@
 #include <SchemaDatabases.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace dmprovider {
-using namespace palmos::storage;
+using namespace os::storage;
 #endif
 
 /*!	@addtogroup CoreDataManagerProvider
@@ -55,7 +55,7 @@ B_CONST_STRING_VALUE_LARGE(BV_DATABASE_NAME,		"name", );
 	@todo Make everything update when columns are added/removed.
 
 	@nosubgrouping
-	
+
 	@note These classes are not a part of the OpenBinder build, but included
 	as an example for other similar implementations.
 */
@@ -103,7 +103,7 @@ public:
 
 			//!	By default, clients are not allowed to modify the MIME type.
 			/*!	To use the normal BMetaDataNode implementation, override
-				this to call directly to BGenericNode::SetMimeType(). 
+				this to call directly to BGenericNode::SetMimeType().
 				To change the MIME type yourself, you can call
 				SetMimeTypeLocked(). */
 	virtual	void					SetMimeType(const SString& value);
@@ -190,7 +190,7 @@ public:
 	virtual	status_t				AddEntry(const SString& name, const SValue& entry);
 	virtual	status_t				RemoveEntry(const SString& name);
 	virtual	status_t				RenameEntry(const SString& entry, const SString& name);
-	
+
 	virtual	sptr<INode>				CreateNode(SString* name, status_t* err);
 	virtual	sptr<IDatum>			CreateDatum(SString* name, uint32_t flags, status_t* err);
 
@@ -575,7 +575,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::dmprovider
+} } // namespace os::dmprovider
 #endif
 
 #endif // _DMPROVIDER_SCHEMATABLENODE_H

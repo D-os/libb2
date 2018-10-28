@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -23,7 +23,7 @@ _CRTIMP int __cdecl setmode(int, int);
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -42,7 +42,7 @@ BKernelOStr::~BKernelOStr()
 	m_descriptor = B_NO_INIT;
 }
 
-ssize_t 
+ssize_t
 BKernelOStr::WriteV(const struct iovec *vector, ssize_t count, uint32_t flags)
 {
 	if (m_descriptor >= 0) {
@@ -53,7 +53,7 @@ BKernelOStr::WriteV(const struct iovec *vector, ssize_t count, uint32_t flags)
 		else amt = 0;
 		if (amt < 0) return -errno;
 		if (!(flags&B_WRITE_END)) return amt;
-		
+
 		// Need to figure out if we wrote everything, so the stream
 		// can be ended.  XXX This flag is actually supposed to
 		// just truncate the file to this size, so I think we shouldn't
@@ -74,7 +74,7 @@ BKernelOStr::WriteV(const struct iovec *vector, ssize_t count, uint32_t flags)
 		return m_descriptor;
 }
 
-status_t 
+status_t
 BKernelOStr::Sync()
 {
 	if (m_descriptor >= 0)
@@ -96,7 +96,7 @@ BKernelIStr::~BKernelIStr()
 	m_descriptor = B_NO_INIT;
 }
 
-ssize_t 
+ssize_t
 BKernelIStr::ReadV(const struct iovec *vector, ssize_t count, uint32_t /*flags*/)
 {
 	if (m_descriptor >= 0) {
@@ -115,5 +115,5 @@ BKernelIStr::ReadV(const struct iovec *vector, ssize_t count, uint32_t /*flags*/
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

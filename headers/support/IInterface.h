@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -25,7 +25,7 @@
 #include <support/IBinder.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -43,9 +43,9 @@ class IBinder;
 class IInterface : virtual public SAtom
 {
 public:
-	
+
 								IInterface();
-	
+
 			sptr<IBinder>		AsBinder();
 			sptr<const IBinder>	AsBinder() const;
 
@@ -56,7 +56,7 @@ protected:
 	virtual	sptr<const IBinder>	AsBinderImpl() const;
 
 	typedef sptr<IInterface>	(*instantiate_proxy_func)(const sptr<IBinder>& binder);
-	
+
 	static	sptr<IInterface>	ExecAsInterface(const sptr<IBinder>& binder,
 												const SValue& descriptor,
 												instantiate_proxy_func proxy_func,
@@ -98,25 +98,25 @@ interface_cast(const SValue &v)
 	similar code from an IDL file. */
 #define B_DECLARE_META_INTERFACE(iname)																		\
 																											\
-		static	const BNS(::palmos::support::) SValue&														\
+		static	const BNS(os::support::) SValue&														\
 			Descriptor();																					\
-		static	BNS(::palmos::support::) sptr<I ## iname>													\
-			AsInterface(const BNS(::palmos::support::) sptr< BNS(::palmos::support::) IBinder> &o,			\
+		static	BNS(os::support::) sptr<I ## iname>													\
+			AsInterface(const BNS(os::support::) sptr< BNS(os::support::) IBinder> &o,			\
 						status_t* out_error = NULL);														\
-		static	BNS(::palmos::support::) sptr<I ## iname>													\
-			AsInterface(const BNS(::palmos::support::) SValue &v,											\
+		static	BNS(os::support::) sptr<I ## iname>													\
+			AsInterface(const BNS(os::support::) SValue &v,											\
 						status_t* out_error = NULL);														\
-		static	BNS(::palmos::support::) sptr<I ## iname>													\
-			AsInterfaceNoInspect(const BNS(::palmos::support::) sptr< BNS(::palmos::support::) IBinder> &o,	\
+		static	BNS(os::support::) sptr<I ## iname>													\
+			AsInterfaceNoInspect(const BNS(os::support::) sptr< BNS(os::support::) IBinder> &o,	\
 								 status_t* out_error = NULL);												\
-		static	BNS(::palmos::support::) sptr<I ## iname>													\
-			AsInterfaceNoInspect(const BNS(::palmos::support::) SValue &v,									\
+		static	BNS(os::support::) sptr<I ## iname>													\
+			AsInterfaceNoInspect(const BNS(os::support::) SValue &v,									\
 								 status_t* out_error = NULL);												\
 
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_INTERFACE_INTERFACE_H */

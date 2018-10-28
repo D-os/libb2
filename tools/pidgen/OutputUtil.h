@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -19,7 +19,7 @@
 #include "AST.h"
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 extern const char* gNativePrefix;
@@ -54,14 +54,14 @@ enum ExpressionKind {
 };
 
 SString FromSValueExpression(const InterfaceRec* rec,
-							 const sptr<IDLType>& type, 
-							 const SString& varname, 
-							 const SString& valuename, 
+							 const sptr<IDLType>& type,
+							 const SString& varname,
+							 const SString& valuename,
 							 ExpressionKind kind,
 							 bool setError);
 
 void AddFromSValueStatements(const InterfaceRec* rec,
-							 sptr<StatementList> statementList, 
+							 sptr<StatementList> statementList,
 							 const sptr<IDLType>& vartype,
 							 const SString& varname,
 							 const SString& valuename);

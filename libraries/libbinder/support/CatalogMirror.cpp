@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -20,9 +20,9 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::storage;
+using namespace os::storage;
 
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -53,7 +53,7 @@ private:
 	SKeyedVector<SValue, SValue> m_data;
 	SValue m_options;
 };
-	
+
 
 // ----------------------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ void BMergedIterator::Merge(const sptr<IIterator>& it)
 
 	// determine if the iterator supports the same options as
 	// we do. if it does not then we have to sort it ourselves
-	
+
 	IIterator::ValueList keys;
 	IIterator::ValueList values;
 
@@ -171,7 +171,7 @@ class BCatalogMirror::IteratorWrapper : public BnRandomIterator
 {
 public:
 						IteratorWrapper(const sptr<BCatalogMirror>& mirror, const SValue& args = B_UNDEFINED_VALUE);
-	
+
 	virtual	SValue		Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
 
 	void				ModifyNext(IIterator::ValueList* keys, IIterator::ValueList* values, uint32_t flags);
@@ -243,7 +243,7 @@ BCatalogMirror::IteratorWrapper::Options() const
 
 status_t
 BCatalogMirror::IteratorWrapper::Next(IIterator::ValueList* keys, IIterator::ValueList* values, uint32_t flags, size_t count)
-{		
+{
 	// If we remove all items in ModifyNext, then
 	// we need to go back and get another batch
 	// so we have to wrap up our Next into a loop
@@ -316,7 +316,7 @@ BCatalogMirror::IteratorWrapper::ModifyNext(IIterator::ValueList* keys, IIterato
 		// if not, then check if in overlay list and replace
 		if (m_mirror->m_hidden.IndexOf(key) >=0) {
 			keys->RemoveItemsAt(i);
-			values->RemoveItemsAt(i);	
+			values->RemoveItemsAt(i);
 		}
 		else {
 			bool found = false;
@@ -494,7 +494,7 @@ bool BCatalogMirror::is_writable(const SString& name) const
 status_t BCatalogMirror::AddEntry(const SString& name, const SValue& entry)
 {
 	if (m_catalog == NULL) return B_UNSUPPORTED;
-	
+
 	status_t err = B_PERMISSION_DENIED;
 	if (is_writable(name)) {
 		err = m_catalog->AddEntry(name, entry);
@@ -753,7 +753,7 @@ BCatalogMirror::OverlayEntry(const SString& location, const SValue& item)
 	// the item
 
 	SLocker::Autolock _l(m_permissionsLock);
-	
+
 	SValue store;
 	if (item.AsBinder() == NULL) {
 		sptr<IDatum> datum = new BValueDatum();
@@ -786,5 +786,5 @@ status_t BCatalogMirror::Merge(const sptr<ICatalog>& catalog)
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

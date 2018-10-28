@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -17,7 +17,7 @@
 	@ingroup CoreSupportDataModel
 	@brief A BByteStream converts byte stream operations in to
 	IStorage operations.
-	
+
 	In other words, it provides byte input, output, and seeking interfaces to an
 	underlying random-access storage.
 */
@@ -29,7 +29,7 @@
 #include <sys/uio.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -50,14 +50,14 @@ public:
 		virtual	status_t		Unlink(const wptr<IBinder>& from, const SValue &bindings, uint32_t flags = 0);
 		virtual	status_t		Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
 		virtual	status_t		Transact(uint32_t code, SParcel& data, SParcel* reply = NULL, uint32_t flags = 0);
-		
+
 protected:
 		inline					BnByteInput() : BnInterface<IByteInput>() { }
 		inline					BnByteInput(const SContext& c) : BnInterface<IByteInput>(c) { }
 		inline virtual			~BnByteInput() { }
-		
+
 		virtual	status_t		HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
-	
+
 private:
 								BnByteInput(const BnByteInput& o);	// no implementation
 		BnByteInput&			operator=(const BnByteInput& o);	// no implementation
@@ -72,14 +72,14 @@ public:
 		virtual	status_t		Unlink(const wptr<IBinder>& from, const SValue &bindings, uint32_t flags = 0);
 		virtual	status_t		Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
 		virtual	status_t		Transact(uint32_t code, SParcel& data, SParcel* reply = NULL, uint32_t flags = 0);
-		
+
 protected:
 		inline					BnByteOutput() : BnInterface<IByteOutput>() { }
 		inline					BnByteOutput(const SContext& c) : BnInterface<IByteOutput>(c) { }
 		inline virtual			~BnByteOutput() { }
-		
+
 		virtual	status_t		HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
-	
+
 private:
 								BnByteOutput(const BnByteOutput& o);	// no implementation
 		BnByteOutput&			operator=(const BnByteOutput& o);		// no implementation
@@ -94,14 +94,14 @@ public:
 		virtual	status_t		Unlink(const wptr<IBinder>& from, const SValue &bindings, uint32_t flags = 0);
 		virtual	status_t		Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
 		virtual	status_t		Transact(uint32_t code, SParcel& data, SParcel* reply = NULL, uint32_t flags = 0);
-		
+
 protected:
 		inline					BnByteSeekable() : BnInterface<IByteSeekable>() { }
 		inline					BnByteSeekable(const SContext& c) : BnInterface<IByteSeekable>(c) { }
 		inline virtual			~BnByteSeekable() { }
-		
+
 		virtual	status_t		HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
-	
+
 private:
 								BnByteSeekable(const BnByteSeekable& o);	// no implementation
 		BnByteSeekable&			operator=(const BnByteSeekable& o);			// no implementation
@@ -122,13 +122,13 @@ class BByteStream : public BnByteInput, public BnByteOutput, public BnByteSeekab
 public:
 
 							BByteStream(const sptr<IStorage>& store);
-	
+
 	virtual	SValue			Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
-	
+
 	virtual	ssize_t			ReadV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
 	virtual	ssize_t			WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
 	virtual	status_t		Sync();
-	
+
 	virtual off_t			Seek(off_t position, uint32_t seek_mode);
 	virtual	off_t			Position() const;
 
@@ -152,11 +152,11 @@ class BReadOnlyStream : public BnByteInput, public BnByteSeekable
 public:
 
 							BReadOnlyStream(const sptr<IStorage>& store);
-	
+
 	virtual	SValue			Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
-	
+
 	virtual	ssize_t			ReadV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
-	
+
 	virtual off_t			Seek(off_t position, uint32_t seek_mode);
 	virtual	off_t			Position() const;
 
@@ -180,12 +180,12 @@ class BWriteOnlyStream : public BnByteOutput, public BnByteSeekable
 public:
 
 							BWriteOnlyStream(const sptr<IStorage>& store);
-	
+
 	virtual	SValue			Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
-	
+
 	virtual	ssize_t			WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
 	virtual	status_t		Sync();
-	
+
 	virtual off_t			Seek(off_t position, uint32_t seek_mode);
 	virtual	off_t			Position() const;
 
@@ -206,7 +206,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_BYTESTREAM_H */

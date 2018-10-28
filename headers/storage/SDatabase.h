@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -21,9 +21,9 @@
 #include <SchemaDatabases.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 //!	Convenience class for opening and managing reference on a Data Manager database.
@@ -34,7 +34,7 @@ using namespace palmos::support;
  * instances of \c SDatabase in the same process which refer to the same
  * open database will increment a reference count on that database.
  * When the last \c SDatabase instance referring to a particular
- * database is freed, that database is closed again.  
+ * database is freed, that database is closed again.
  *
  * \par
  * Use GetOpenRef() to recover a \c DmOpenRef with which standard Data
@@ -70,12 +70,12 @@ public:
 						//!	Open a database by DatabaseID.
 						SDatabase(DatabaseID dbID,
 								DmOpenModeType mode, DbShareModeType share);
-						
-						//!	Open a database by name and creator.  
+
+						//!	Open a database by name and creator.
 						/*!	@see DmFindDatabase() */
 						SDatabase(const char *dbName, type_code dbCreator,
 								DmOpenModeType mode, DbShareModeType share);
-						
+
 						//!	Open a database by type and creator.
 						//*	@see DmFindDatabaseByTypeCreator() */
 						SDatabase(type_code dbType, type_code dbCreator,
@@ -113,7 +113,7 @@ public:
 
 private:
 	status_t			open_database(DatabaseID dbID, uint16_t attr, DmOpenModeType mode, DbShareModeType share);
-	
+
 	class PrvOpenDbAtom : public virtual SAtom
 	{
 		public:
@@ -133,7 +133,7 @@ private:
 };
 
 #if _SUPPORTS_NAMESPACE
-} } // palmos::storage
+} } // os::storage
 #endif
 
 #endif // STORAGE_PDATABASE_H_

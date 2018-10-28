@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -15,9 +15,9 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::storage;
-using namespace palmos::support;
-using namespace palmos::xml;
+using namespace os::storage;
+using namespace os::support;
+using namespace os::xml;
 #endif
 
 enum {

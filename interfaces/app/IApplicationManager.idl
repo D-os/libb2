@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -12,7 +12,7 @@
 
 import <app/IApplication.idl>
 
-namespace palmos {
+namespace os {
 namespace app {
 
 interface IApplicationManager
@@ -46,9 +46,9 @@ methods:
 	/*! Tells the application stack to quit, and starts a new one.
 	*/
 	status_t	SwitchApplications(uint32_t appDB, uint16_t cmd, SValue paramValue);
-	
+
 	/*!	Pushes another application on to the application stack.  Will
-		make sure that if an app is sublaunched twice in the stack, 
+		make sure that if an app is sublaunched twice in the stack,
 		it is run in only one process at a time.  SysAppLaunch (the
 		purely local one) does not affect this behavior.
 			- The app paramater is as in SwitchApplications.
@@ -67,7 +67,7 @@ methods:
 	*/
 	status_t	FinishRecursiveSublaunch(IBinder token, [inout]uint32_t recurse, [inout]uint32_t recurseAppDB, [inout]uint16_t recurseCMD,
 											[inout]SValue recurseParamValue, [inout]uint32_t recurseFlags, [inout]uint32_t result);
-	
+
 	/*!	Enqueues a deferred sublaunch.  Eventually, hopefully, the event
 		loop will get to a point where either someone does a RemoteSublaunch,
 		or into EvtGetEvent, where someone will call DoDeferredSublaunch.
@@ -80,20 +80,20 @@ methods:
 	*/
 	status_t	DoDeferredSublaunch([out]uint32_t recurse,
 								[out]uint32_t recurseAppDB, [out]uint16_t recurseCMD, [out]SValue recurseParamValue, [out]uint32_t recurseFlags);
-	
+
 
 	/*! Called when a new process is started, and wants to be told what to do.
 		Hold onto the token as long as you want the app manager to think you're alive.
 	*/
 	status_t	ProcessReady([out] uint32_t processType, [out]uint32_t appDB, [out]uint16_t cmd, [out]SValue paramValue, [out]uint32_t flags, [out]IBinder token);
-	
+
 	/*! Called when that process is done.  After you've called this, you can release
 		the token, as it's no longer needed.
 	*/
 	void		ProcessFinished(IBinder token, SValue paramValue, uint32_t result);
 
 
-	
+
 	/*!	Called when an application starts up to make itself the
 		current active app.  Returns the nesting level of the
 		application (0 if this is the top app) or an error code.
@@ -139,5 +139,5 @@ events:
 	void		ApplicationIdle();
 }
 
-} }	// namespace palmos::app
+} }	// namespace os::app
 

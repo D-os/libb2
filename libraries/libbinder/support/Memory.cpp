@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -28,12 +28,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/shm.h>
-              
+
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
-using namespace palmos::osp;
+using namespace os::osp;
 #endif
 
 B_STATIC_STRING_VALUE_8	(key_HeapID,	"HeapID",);
@@ -78,9 +78,9 @@ static void *convert_to_pointer(const sptr<IMemoryHeap>& real_heap, ssize_t offs
 	if (real_heap == NULL) return NULL;
 	const heap_id_t id = real_heap->HeapID();
 	if (!IS_VALID_HEAP_ID(id)) return NULL;
-	
+
 	void * base = real_heap->HeapBase();
-	
+
 	return ((char*)base) + offset;
 }
 
@@ -284,15 +284,15 @@ heap_id_t BpMemoryHeap::HeapID() const
 			SParcel::PutParcel(reply);
 			return err;
 		}
-		
+
 		m_heap_id = reply->ReadInt32();
 
 
 #if 1
 		/* shm */
-		
+
 		shmid_ds buf;
-		
+
 		m_heap_base = shmat(m_heap_id, NULL, 0);
 		if (!m_heap_base) {
 			fprintf(stderr, "[MemoryDealer] Proxy had failure attaching shm id %d\n", m_heap_id);
@@ -303,7 +303,7 @@ heap_id_t BpMemoryHeap::HeapID() const
 			abort();
 		}
 		m_heap_size = buf.shm_segsz;
-		
+
 		if (!m_heap_base) {
 			m_heap_size = 0;
 		}
@@ -315,7 +315,7 @@ heap_id_t BpMemoryHeap::HeapID() const
 
 		int fd = open(name, O_RDWR);
 		if (fd != -1) {
-		  
+
 			int filesize = lseek(fd, 0, SEEK_END);
 			lseek(fd, 0, SEEK_SET);
 
@@ -323,7 +323,7 @@ heap_id_t BpMemoryHeap::HeapID() const
 			m_heap_size = filesize;
 
 			printf("[MemoryDealer] Proxy memory heap in process %d mapped area %d of size (%d) at address %x\n", getpid(), heapID, m_heap_size, m_heap_base);
-		
+
 			if (!m_heap_base) {
 				m_heap_size = 0;
 			}
@@ -335,7 +335,7 @@ heap_id_t BpMemoryHeap::HeapID() const
 
 		SParcel::PutParcel(reply);
 	}
-	
+
 	return m_heap_id;
 }
 
@@ -426,7 +426,7 @@ static SValue memorydealer_hook_Allocate(const sptr<IInterface>& This, const SVa
 {
 	const SValue size(args[SValue::Int32(0)]);
 	const SValue properties(args[SValue::Int32(1)]);
-	if (!size.IsDefined() || !properties.IsDefined()) return SValue::Int32(B_BINDER_MISSING_ARG);	
+	if (!size.IsDefined() || !properties.IsDefined()) return SValue::Int32(B_BINDER_MISSING_ARG);
 	return SValue((static_cast<IMemoryDealer*>(This.ptr()))->Allocate(size.AsInt32(), properties.AsInt32())->AsBinder());
 }
 
@@ -484,5 +484,5 @@ void * BMemoryHeap::HeapBase() const
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -16,7 +16,7 @@
 #include "WSDL.h"
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::soap;
+using namespace os::soap;
 #endif
 
 B_CONST_STRING_VALUE_8	(key_id, 				"id",);
@@ -42,7 +42,7 @@ class BXSDComplexTypeCreator : public BCreator
 {
 public:
 	BXSDComplexTypeCreator(const sptr<BXSDComplexType>& type);
-	
+
 	virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
 	virtual status_t OnEndTag(SString& name);
 	virtual status_t OnText(SString& data);
@@ -55,7 +55,7 @@ class BXSDComplexContentCreator : public BCreator
 {
 public:
 	BXSDComplexContentCreator(const sptr<BXSDComplexContent>& content);
-	
+
 	virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
 	virtual status_t OnEndTag(SString& name);
 	virtual status_t OnText(SString& data);
@@ -69,7 +69,7 @@ class BXSDSimpleContentCreator : public BCreator
 {
 public:
 	BXSDSimpleContentCreator(const sptr<BXSDSimpleContent>& schema);
-	
+
 	virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
 	virtual status_t OnEndTag(SString& name);
 	virtual status_t OnText(SString& data);
@@ -105,7 +105,7 @@ void SXMLTag::split(const SString& tag)
 		tag.CopyInto(m_namespace, 0, colon);
 		tag.CopyInto(m_accessor, colon + 1, tag.Length() - colon - 1);
 	}
-	else 
+	else
 	{
 		m_namespace = "";
 		m_accessor = tag;
@@ -121,7 +121,7 @@ SString SXMLTag::Accessor()
 {
 	return m_accessor;
 }
-	
+
 
 // #################################################################################
 // ## BXMLSchema ###################################################################
@@ -203,17 +203,17 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const sptr<BXML
 	size_t elementCount = schema->CountElements();
 	size_t complexCount = schema->CountComplexTypes();
 	size_t simpleCount = schema->CountSimpleTypes();
-	
+
 	io << "BXMLSchema:   elements = " << elementCount << endl;
 	io << "              complex types = " << complexCount << endl;
 	io << "              simple types = " << simpleCount << endl;
 	io << "---------------------------------------------------------" << endl;
-	
+
 	for (size_t i = 0 ; i < elementCount ; i++)
 	{
 		bout << schema->ElementAt(i) << endl << endl;
 	}
-	
+
 	for (size_t i = 0 ; i < complexCount ; i++)
 	{
 		bout << schema->ComplexTypeAt(i) << endl << endl;
@@ -222,7 +222,7 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const sptr<BXML
 	for (size_t i = 0 ; i < simpleCount ; i++)
 	{
 	}
-	
+
 	io << "---------------------------------------------------------" << endl;
 #endif
 	return io;
@@ -489,11 +489,11 @@ status_t BXMLSchemaCreator::OnStartTag(SString& name, SValue& attributes, sptr<B
 	}
 	else if (accessor == "simpleType")
 	{
-#if 0	
+#if 0
 		sptr<BXSDSimpleType> type = new BXSDSimpleType(attributes);
 		m_schema->AddSimpleType(type);
 		newCreator = new BXSDSimpleTypeCreator(type);
-#endif	
+#endif
 	}
 
 	return B_OK;
@@ -541,7 +541,7 @@ status_t BXSDComplexTypeCreator::OnStartTag(SString& name, SValue& attributes, s
 	}
 	else if (tag.Accessor() == "element")
 	{
-		m_complexType->AddElement(new BXSDElement(attributes));	
+		m_complexType->AddElement(new BXSDElement(attributes));
 	}
 	else
 	{
@@ -592,7 +592,7 @@ status_t BXSDComplexContentCreator::OnStartTag(SString& name, SValue& attributes
 		content.Overlay(attributes);
 		m_complexContent->AddAttribute(content);
 	}
-	
+
 	return B_OK;
 }
 

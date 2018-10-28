@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -27,7 +27,7 @@
 #include <stdint.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -61,7 +61,7 @@ public:
 	SIterator(const sptr<IIterator>& it);
 	SIterator(const sptr<INode>& node, const SValue& args = B_UNDEFINED_VALUE);
 	~SIterator();
-	
+
 	status_t SetTo(const SContext& context, const SString& path, const SValue& args = B_UNDEFINED_VALUE);
 	status_t SetTo(const sptr<IIterable>& dir, const SValue& args = B_UNDEFINED_VALUE);
 	status_t SetTo(const sptr<IIterator>& it);
@@ -104,10 +104,10 @@ public:
 	virtual	SValue Options() const;
 	virtual status_t Next(IIterator::ValueList* keys, IIterator::ValueList* values, uint32_t flags, size_t count = 0);
 	virtual status_t Remove();
-	
+
 protected:
 	virtual ~BValueIterator();
-	
+
 private:
 	SLocker m_lock;
 	SValue m_value;
@@ -153,7 +153,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif // _SUPPORT_ITERATOR_H

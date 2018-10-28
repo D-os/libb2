@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -28,10 +28,10 @@ extern "C" void ErrFatalErrorInContext(const char*, uint32_t, const char* errMsg
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace osp {
 
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 class BRangedVector
@@ -39,7 +39,7 @@ class BRangedVector
 public:
 	void		AddItem(uint32_t start, uint32_t end, const SString &value);
 	SString		FindItem(uintptr_t key, bool *found) const;
-	
+
 	struct range
 	{
 		range();
@@ -133,7 +133,7 @@ BRangedVector::AddItem(uint32_t start, uint32_t end, const SString &value)
 			}
 		}
 	}
-	
+
 	if (added) {
 		count=m_ranges.CountItems();
 		// clean up the rest of them after in the list, if we need to
@@ -181,10 +181,10 @@ BRangedVector::FindItem(uintptr_t key, bool *found) const
 
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::osp
+} } // namespace os::osp
 
-using namespace palmos::osp;
-using namespace palmos::support;
+using namespace os::osp;
+using namespace os::support;
 
 #endif
 
@@ -195,13 +195,13 @@ size_t g_debugFieldWidth = 12;
 
 
 void
-add_debug_atom(BNS(palmos::support::) SAtom * atom, const char *name)
+add_debug_atom(BNS(os::support::) SAtom * atom, const char *name)
 {
 //	add_debug_sized(atom, atom->AtomObjectSize(), name);
 }
 
 void
-add_debug_atom(const BNS(::palmos::support::)sptr<BNS(palmos::support::) SAtom>& atom, const char *name)
+add_debug_atom(const BNS(os::support::)sptr<BNS(os::support::) SAtom>& atom, const char *name)
 {
 //	add_debug_sized(atom.ptr(), atom->AtomObjectSize(), name);
 }
@@ -226,7 +226,7 @@ set_debug_fieldwidth(int width)
 
 
 SString
-lookup_debug(const BNS(::palmos::support::)sptr<BNS(palmos::support::) SAtom>& atom, bool padding)
+lookup_debug(const BNS(os::support::)sptr<BNS(os::support::) SAtom>& atom, bool padding)
 {
 	SString empty;
 	return empty;
@@ -274,75 +274,75 @@ test_ranged_vector()
 	BRangedVector v;
 
 	bout << "Empty: " << v << endl;
-	
+
 	v.AddItem(13, 12, SString("Wrong!"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(100, 200, SString("100-200"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(10, 20, SString("10-20"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(100, 200, SString("100-200"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(50, 60, SString("50-60"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(80, 100, SString("80-100"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(60, 80, SString("60-80"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(110, 120, SString("110-120"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(180, 200, SString("180-200"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(190, 210, SString("190-210"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(500, 600, SString("500-600"));
 	bout << v << endl << endl;
-	
+
 	v.AddItem(500, 550, SString("500-600"));
 	bout << v << endl << endl;
-	
+
 	uint32_t n;
 	bool found;
 	SString s;
-	
+
 	n = 15;
 	s = v.FindItem(n, &found);
 	bout << "finding: " << n << "  " << s << "   found: " << found << endl;
-	
+
 	n = 25;
 	s = v.FindItem(n, &found);
 	bout << "finding: " << n << "  " << s << "   found: " << found << endl;
-	
+
 	n = 55;
 	s = v.FindItem(n, &found);
 	bout << "finding: " << n << "  " << s << "   found: " << found << endl;
-	
+
 	n = 80;
 	s = v.FindItem(n, &found);
 	bout << "finding: " << n << "  " << s << "   found: " << found << endl;
-	
+
 	n = 81;
 	s = v.FindItem(n, &found);
 	bout << "finding: " << n << "  " << s << "   found: " << found << endl;
-	
+
 	n = 100;
 	s = v.FindItem(n, &found);
 	bout << "finding: " << n << "  " << s << "   found: " << found << endl;
-	
+
 	n = 550;
 	s = v.FindItem(n, &found);
 	bout << "finding: " << n << "  " << s << "   found: " << found << endl;
-	
+
 	bout << "-------------- finished with ranged vector test ----------------------------------------" << endl << endl;
 }
 

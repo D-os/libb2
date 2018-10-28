@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -15,10 +15,10 @@
 #include <support/SharedBuffer.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
-            
+
 status_t StringSplit(const SString& srcStr, const SString& splitOn, SVector<SString>* strList, bool append)
 {
     return StringSplit((const char*)srcStr, srcStr.Length(), (const char*)splitOn, splitOn.Length(), strList, append);
@@ -56,7 +56,7 @@ status_t StringSplit(const char* srcStr, int32_t srcStrLen, const char* splitOn,
         {
             if(*srcPos != *sponPos)
                 break;
-            
+
             //If we are at the end of the splitOn string break out before we increment
             //the pointers.
             if(!(sponPos < sponEnd))
@@ -64,7 +64,7 @@ status_t StringSplit(const char* srcStr, int32_t srcStrLen, const char* splitOn,
             srcPos++;
             sponPos++;
         }while(true);
-        
+
         //Check to see if the match was long enough
         if(sponPos == sponEnd)
         {
@@ -102,10 +102,10 @@ status_t StringSplit(const char* srcStr, int32_t srcStrLen, const char* splitOn,
         //Reset the sponPos variable to the start of the splitOn string
         sponPos = (char*)splitOn;
     }while(srcPos < srcEnd);
-    
+
     return B_OK;
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // palmos::support
+} } // os::support
 #endif

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -15,7 +15,7 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -39,26 +39,26 @@ void SEvent::Shutdown()
 {
 	if (fSem >= B_OK)
 		SysSemaphoreDestroy(fSem);
-	
+
 	fSem = B_NO_INIT;
 }
 
 status_t SEvent::Wait(uint32_t flags, nsecs_t timeout)
 {
 	atomic_fetch_add(&fCountWaiting,1);
-	
+
 	status_t err;
 	nsecs_t starttime = SysGetRunTime(), remainingtime = timeout;
 
 	/*NOTE: the original acquire_sem_etc never returned a value = B_INFINITE_TIMEOUT.
 	   1st condition of the while loop always returned false.
 	   For this reason the original while loop was replaced with the following code*/
-	timeoutFlags_t  timeoutflags = 
+	timeoutFlags_t  timeoutflags =
 	   ((flags & B_TIMEOUT) && remainingtime != B_INFINITE_TIMEOUT) ?
 	   B_RELATIVE_TIMEOUT : B_WAIT_FOREVER;
 	err= SysSemaphoreWait(fSem, timeoutflags, remainingtime);
-	
-	
+
+
 	if (err != B_OK && !(err != B_TIMED_OUT && timeout > 0)) {
 		int32_t newVal,oldVal = fCountWaiting;
 		do {
@@ -68,7 +68,7 @@ status_t SEvent::Wait(uint32_t flags, nsecs_t timeout)
 		if (newVal == oldVal)
 		   SysSemaphoreWait(fSem, B_WAIT_FOREVER, 0);
 	};
-	
+
 	return err;
 }
 
@@ -93,5 +93,5 @@ int32_t SEvent::Fire(int32_t count)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

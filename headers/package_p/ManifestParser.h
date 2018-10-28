@@ -19,7 +19,7 @@
 #include <support/String.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace package {
 #endif
 
@@ -45,7 +45,7 @@ class SManifestParser : public support::SLightAtom
 
 #if _SUPPORTS_NAMESPACE
 }
-}  // namespace palmos::package
+}  // namespace os::package
 #endif
 
 #endif  // _PACKAGE_MANIFESTPARSER_H

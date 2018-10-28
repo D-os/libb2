@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -21,7 +21,7 @@
 #include <support/Vector.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -41,29 +41,29 @@ public:
 							// WARNING: Your subclass must call MakeEmpty()
 							// in its own destructor!
 	inline virtual			~SAbstractSortedVector();
-	
+
 	inline	SAbstractSortedVector& operator=(const SAbstractSortedVector& o);
-			
+
 			// Note that we inherit the assignment operator, so you can
 			// assign a plain SAbstractVector to an instance of this class.
-	
+
 			ssize_t			AddOrdered(const void* newElement, bool* added = NULL);
-			
+
 			ssize_t			OrderOf(const void* element) const;
 			ssize_t			FloorOrderOf(const void* element) const;
 			ssize_t			CeilOrderOf(const void* element) const;
 			bool			GetOrderOf(const void* element, size_t* index) const;
-			
+
 			ssize_t			RemoveOrdered(const void* element);
 
 	static	void			MoveBefore(SAbstractSortedVector* to, SAbstractSortedVector* from, size_t count);
 	static	void			MoveAfter(SAbstractSortedVector* to, SAbstractSortedVector* from, size_t count);
 			void			Swap(SAbstractSortedVector& o);
-			
+
 protected:
 	virtual	int32_t			PerformCompare(const void* d1, const void* d2) const = 0;
 	virtual	bool			PerformLessThan(const void* d1, const void* d2) const = 0;
-	
+
 private:
 	virtual	status_t		_ReservedUntypedOrderedVector1();
 	virtual	status_t		_ReservedUntypedOrderedVector2();
@@ -71,7 +71,7 @@ private:
 	virtual	status_t		_ReservedUntypedOrderedVector4();
 	virtual	status_t		_ReservedUntypedOrderedVector5();
 	virtual	status_t		_ReservedUntypedOrderedVector6();
-	
+
 			int32_t			_reserved[2];
 };
 
@@ -99,55 +99,55 @@ public:
 							SSortedVector();
 							SSortedVector(const SSortedVector<TYPE>& o);
 	virtual					~SSortedVector();
-	
+
 			SSortedVector<TYPE>&	operator=(const SSortedVector<TYPE>& o);
-	
+
 	/* Size stats */
-	
+
 			void			SetCapacity(size_t total_space);
 			void			SetExtraCapacity(size_t extra_space);
 			size_t			Capacity() const;
-			
+
 			size_t			CountItems() const;
-	
+
 	/* Data access */
 
 			const TYPE&		operator[](size_t i) const;
 			const TYPE&		ItemAt(size_t i) const;
-	
+
 			ssize_t			IndexOf(const TYPE& item) const;
 			ssize_t			FloorIndexOf(const TYPE& item) const;
 			ssize_t			CeilIndexOf(const TYPE& item) const;
 			bool			GetIndexOf(const TYPE& item, size_t* index) const;
-			
+
 			bool			HasItem(const TYPE& item) const;
-			
+
 			const TYPE*		Array() const;
 
 	/* Array modification */
-	
+
 			ssize_t			AddItem(const TYPE& item, bool* added = NULL);
-			
+
 			void			MakeEmpty();
 			void			RemoveItemsAt(size_t index, size_t count = 1);
-	
+
 			ssize_t			RemoveItemFor(const TYPE& item);
-			
+
 	static	void			MoveBefore(SSortedVector<TYPE>& to, SSortedVector<TYPE>& from, size_t count);
 	static	void			MoveAfter(SSortedVector<TYPE>& to, SSortedVector<TYPE>& from, size_t count);
 			void			Swap(SSortedVector<TYPE>& o);
-			
+
 protected:
 	virtual	void			PerformConstruct(void* base, size_t count) const;
 	virtual	void			PerformCopy(void* to, const void* from, size_t count) const;
 	virtual	void			PerformReplicate(void* to, const void* protoElement, size_t count) const;
 	virtual	void			PerformDestroy(void* base, size_t count) const;
-	
+
 	virtual	void			PerformMoveBefore(void* to, void* from, size_t count) const;
 	virtual	void			PerformMoveAfter(void* to, void* from, size_t count) const;
-	
+
 	virtual	void			PerformAssign(void* to, const void* from, size_t count) const;
-	
+
 	virtual	int32_t			PerformCompare(const void* d1, const void* d2) const;
 	virtual	bool			PerformLessThan(const void* d1, const void* d2) const;
 
@@ -490,7 +490,7 @@ void BSwap(SSortedVector<TYPE>& v1, SSortedVector<TYPE>& v2)
 #endif // _MSC_VER
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif

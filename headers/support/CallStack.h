@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -25,7 +25,7 @@
 #include <support/Locker.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -50,27 +50,27 @@ public:
 							SCallStack(const SCallStack& o);
 							SCallStack(const SValue &value);
 	virtual					~SCallStack();
-							
+
 			SValue			AsValue() const;
-							
+
 			SCallStack		&operator=(const SCallStack& o);
-			
+
 			void			Update(int32_t ignoreDepth=0, int32_t maxDepth=B_CALLSTACK_DEPTH);
-			
+
 			intptr_t		AddressAt(int32_t level) const;
 			void			SPrint(char *buffer) const;
 			void			Print(const sptr<ITextOutput>& io) const;
 			void			LongPrint(const sptr<ITextOutput>& io, b_demangle_func demangler=NULL) const;
-		
+
 			bool			operator==(const SCallStack& o) const;
 	inline	bool			operator!=(const SCallStack& o) const	{ return !(*this == o); }
-	
+
 			int32_t			Compare(const SCallStack& o) const;
 	inline	bool			operator<(const SCallStack& o) const	{ return Compare(o) < 0; }
 	inline	bool			operator<=(const SCallStack& o) const	{ return Compare(o) <= 0; }
 	inline	bool			operator>=(const SCallStack& o) const	{ return Compare(o) >= 0; }
 	inline	bool			operator>(const SCallStack& o) const	{ return Compare(o) > 0; }
-	
+
 private:
 			intptr_t		GetCallerAddress(int32_t level) const;
 
@@ -88,18 +88,18 @@ class SCallTreeNode {
 public:
 							SCallTreeNode();
 	virtual					~SCallTreeNode();
-	
+
 			void			PruneNode();
 			void			ShortReport(const sptr<ITextOutput>& io);
 			void			LongReport(const sptr<ITextOutput>& io, b_demangle_func demangler=NULL,
 									   char *buffer=NULL, size_t bufferSize=0);
-	
+
 private:
 							SCallTreeNode(const SCallTreeNode& o);
 			SCallTreeNode&	operator=(const SCallTreeNode& o);
-	
+
 	friend	class					SCallTree;
-			
+
 			intptr_t				addr;
 			int32_t					count;
 			SCallTreeNode *			higher;
@@ -112,7 +112,7 @@ class SCallTree : public SCallTreeNode {
 public:
 							SCallTree(const char *name);
 	virtual					~SCallTree();
-	
+
 			void			Prune();
 			void			AddToTree(SCallStack *stack, const sptr<ITextOutput>& io);
 			void			Report(const sptr<ITextOutput>& io, int32_t count, bool longReport=false);
@@ -120,7 +120,7 @@ public:
 private:
 							SCallTree(const SCallTree& o);
 			SCallTree&		operator=(const SCallTree& o);
-			
+
 			SCallTreeNode*	highest;
 			SCallTreeNode*	lowest;
 };
@@ -137,9 +137,9 @@ public:
 			void			Reset();
 			void			Print(const sptr<ITextOutput>& io, size_t maxItems=-1) const;
 			void			LongPrint(const sptr<ITextOutput>& io, size_t maxItems=-1, b_demangle_func demangler=NULL) const;
-			
+
 			size_t			TotalCount() const;
-			
+
 private:
 	struct stack_info {
 		size_t count;
@@ -153,7 +153,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif /* _SUPPORT_CALLSTACK_H */

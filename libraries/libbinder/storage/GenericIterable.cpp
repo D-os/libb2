@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -15,7 +15,7 @@
 #include <support/Autolock.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 #endif
 
@@ -84,9 +84,9 @@ static status_t add_order_value(SString* query, bool* started, SValue* newArgs, 
 }
 
 static void parse_where(const SValue& where, const SSQLBuilder& builder, SString* result)
-{	
+{
 	SValue lhs = where[BV_ITERABLE_WHERE_LHS];
-	
+
 	// do the lhs recursion first
 	if (lhs[BV_ITERABLE_WHERE_LHS].IsDefined())
 	{
@@ -98,13 +98,13 @@ static void parse_where(const SValue& where, const SSQLBuilder& builder, SString
 	{
 		result->Append(lhs.AsString());
 	}
-	
+
 	result->Append(" ");
 	result->Append(where[BV_ITERABLE_WHERE_OP].AsString());
 	result->Append(" ");
-	
+
 	SValue rhs = where[BV_ITERABLE_WHERE_RHS];
-	
+
 	if (rhs[BV_ITERABLE_WHERE_LHS].IsDefined())
 	{
 		result->Append("(");
@@ -394,11 +394,11 @@ status_t BGenericIterable::GenericIterator::Next(IIterator::ValueList* keys, IIt
 	// we need to make sure they are empty
 	keys->MakeEmpty();
 	values->MakeEmpty();
-	
+
 	status_t err = B_OK;
 	SValue key;
 	SValue value;
-	
+
 	// Avoid repeatedly acquiring/releasing references.
 	const sptr<GenericIterator> me(this);
 
@@ -469,5 +469,5 @@ status_t BGenericIterable::GenericIterator::RemoveLocked()
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::storage
+} } // namespace os::storage
 #endif

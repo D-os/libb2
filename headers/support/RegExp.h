@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -51,7 +51,7 @@
 #include <support/SupportDefs.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -63,7 +63,7 @@ class SString;
 
 const int32_t kSubExpressionMax = 10;
 
-struct regexp 
+struct regexp
 {
 	const char *startp[kSubExpressionMax];
 	const char *endp[kSubExpressionMax];
@@ -74,7 +74,7 @@ struct regexp
 	char program[1];	/* Unwarranted chumminess with compiler. */
 };
 
-class SRegExp 
+class SRegExp
 {
 
 public:
@@ -82,12 +82,12 @@ public:
 	SRegExp(const char *);
 	SRegExp(const SString &);
 	~SRegExp();
-	
+
 	status_t InitCheck() const;
-	
+
 	status_t SetTo(const char*);
 	status_t SetTo(const SString &);
-	
+
 	bool Matches(const char *string) const;
 	bool Matches(const SString &) const;
 
@@ -142,10 +142,10 @@ private:
 	// Work variables for Compile().
 
 	const char *fInputScanPointer;
-	int32_t fParenthesisCount;		
+	int32_t fParenthesisCount;
 	char fDummy;
 	char *fCodeEmitPointer;		// &fDummy = don't.
-	long fCodeSize;		
+	long fCodeSize;
 
 	// Work variables for RunMatcher().
 

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -14,7 +14,7 @@
 
 //#include <storage/Entry.h> - it's not in storage2 now
 
-using namespace palmos::storage;
+using namespace os::storage;
 
 SearchPath gSearchPath;
 
@@ -29,13 +29,13 @@ status_t
 SearchPath::FindFullPath(const SString &file, SString &path)
 {
 	if (file.Length() <= 0) return B_BAD_VALUE;
-	
+
 	// If absolute
 	if (file.ByteAt(0) == '/') {
 		path = file;
 		return B_OK;
 	}
-	
+
 	BEntry inCWD(file.String());
 	if (inCWD.Exists()) {
 		SString yo;
@@ -54,7 +54,7 @@ SearchPath::FindFullPath(const SString &file, SString &path)
 			return B_OK;
 		}
 	}
-	
+
 	return B_FILE_NOT_FOUND;
 }
 */

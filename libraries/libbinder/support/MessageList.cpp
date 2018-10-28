@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -24,7 +24,7 @@
 #include <ErrorMgr.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -88,12 +88,12 @@ void SMessageList::EnqueueMessage(SMessage* msg)
 		thisStamp = approx_SysGetRunTime();
 		msg->SetWhen(thisStamp);
 	}
-	
+
 	SMessage* pos = fTail;
 	while (pos && pos->When() > thisStamp) {
 		pos = pos->m_prev;
 	}
-	
+
 	InsertAfter(msg, pos);
 }
 
@@ -101,7 +101,7 @@ SMessage* SMessageList::EnqueueMessageRemoveDups(const SMessage& inmsg, nsecs_t 
 {
 	if (thisStamp <= 0) thisStamp = approx_SysGetRunTime();
 	uint32_t thisWhat = inmsg.What();
-	
+
 	//bout << "Enqueue Message Remove Dups " << STypeCode(thisWhat) << " @ " << thisStamp << endl;
 
 	SMessage* pos = fTail;
@@ -114,7 +114,7 @@ SMessage* SMessageList::EnqueueMessageRemoveDups(const SMessage& inmsg, nsecs_t 
 		prev = pos;
 		pos = pos->m_prev;
 	}
-	
+
 	SMessage* msg;
 	if (prev && prev->What() == thisWhat) {
 		// There is already a message at this location with the same
@@ -130,7 +130,7 @@ SMessage* SMessageList::EnqueueMessageRemoveDups(const SMessage& inmsg, nsecs_t 
 		InsertAfter(msg, pos);
 	}
 	msg->SetWhen(thisStamp);
-	
+
 	// Now remove any others.
 	if (removeOldMsgs) {
 		prev = msg->m_next;
@@ -161,7 +161,7 @@ SMessage* SMessageList::EnqueueUniqueMessage(const SMessage& inmsg, nsecs_t this
 {
 	if (thisStamp <= 0) thisStamp = approx_SysGetRunTime();
 	uint32_t thisWhat = inmsg.What();
-	
+
 	//bout << "Enqueue Unique Message " << STypeCode(thisWhat) << " @ " << thisStamp << endl;
 
 	SMessage* pos = fHead;
@@ -399,14 +399,14 @@ int32_t SMessageList::CountMessages(uint32_t what) const
 #endif
 
 	if (what == B_ANY_WHAT) return fCount;
-	
+
 	int32_t count = 0;
 	SMessage *msg = fHead;
 	while (msg) {
 		if (what == msg->What()) count++;
 		msg = msg->m_next;
 	};
-	
+
 	return count;
 }
 
@@ -455,5 +455,5 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SMessageL
 /* ---------------------------------------------------------------- */
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

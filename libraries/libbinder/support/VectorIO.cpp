@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -66,7 +66,7 @@ void SVectorIO::MakeEmpty()
 		delete m_heapData;
 		m_heapData = NULL;
 	}
-	
+
 	m_vectorCount = 0;
 	m_totalLength = 0;
 	m_localData.size = sizeof(m_localDataBuffer);
@@ -81,7 +81,7 @@ void SVectorIO::SetError(status_t err)
 ssize_t SVectorIO::AddVector(void* base, size_t length)
 {
 	if (m_vectorCount < B_OK || length == 0) return m_vectorCount;
-	
+
 	const int32_t i = m_vectorCount++;
 	if (i < MAX_LOCAL_VECTOR) {
 		m_localVector[i].iov_base = base;
@@ -111,7 +111,7 @@ ssize_t SVectorIO::AddVector(void* base, size_t length)
 			return result;
 		}
 	}
-	
+
 	m_totalLength += length;
 	return i;
 }
@@ -165,7 +165,7 @@ void* SVectorIO::Allocate(size_t length)
 			}
 		}
 	}
-	
+
 	if (ad) {
 		void* data = reinterpret_cast<uint8_t*>(ad+1)+ad->next_pos;
 		result = AddVector(data, length);
@@ -174,7 +174,7 @@ void* SVectorIO::Allocate(size_t length)
 			return data;
 		}
 	}
-	
+
 	m_vectorCount = result;
 	return NULL;
 }
@@ -227,5 +227,5 @@ status_t SVectorIO::_ReservedVectorIO9()	{ return B_UNSUPPORTED; }
 status_t SVectorIO::_ReservedVectorIO10()	{ return B_UNSUPPORTED; }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

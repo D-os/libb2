@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::xml;
+using namespace os::xml;
 #endif
 
 class StringsParser : public BCreator

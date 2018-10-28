@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -25,7 +25,7 @@
 #include <LocaleMgr.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -56,8 +56,8 @@ public:
 									char const * substitutionStr = "",
 									size_t substitutionLen = 0);
 	status_t					EncodingToUTF8(
-									char const *text, 
-									size_t srcLen, 
+									char const *text,
+									size_t srcLen,
 									CharEncodingType fromEncoding,
 									char const * substitutionStr = "",
 									size_t substitutionLen = 0);
@@ -73,7 +73,7 @@ public:
 									{ return m_consumed; }
 private:
 								STextDecoder(const STextDecoder&);
-	
+
 	static size_t const 		kInternalBufferSize = 60;
 
  	SString  					m_text;
@@ -95,12 +95,12 @@ public:
 	// conversion to abort on an untranslatable character, pass NULL for
 	// substitutionStr.
 	status_t					UTF8ToDevice(
-									const SString & text, 
+									const SString & text,
 									char const * substitutionStr = "",
 									size_t substitutionLen = 0);
 	status_t					UTF8ToEncoding(
-									const SString & text, 
-									CharEncodingType toEncoding, 
+									const SString & text,
+									CharEncodingType toEncoding,
 									char const * substitutionStr = "",
 									size_t substitutionLen = 0);
 
@@ -118,7 +118,7 @@ private:
 		CharEncodingType 		encoding;
 		uint16_t				_unused;
 	};
-	friend class STextDecoder;	// STextEncoder needs to know about 
+	friend class STextDecoder;	// STextEncoder needs to know about
 	                          	// encoding_info_block
 
 	static size_t const 		kInternalBufferSize = 60;
@@ -134,7 +134,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namepsace palmos::support
+} } // namepsace os::support
 #endif
 
 #endif //_PDK__SUPPORT_TEXTCODER__H_

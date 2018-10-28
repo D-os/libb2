@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -16,7 +16,7 @@
 #include <support/Bitfield.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -143,7 +143,7 @@ status_t SBitfield::Set(size_t start, size_t len)
 	compute_masks(start, len, info);
 	if (is_inline()) {
 		m_inlineBits |= (info.leftMask & info.rightMask);
-	} else {	
+	} else {
 		if (info.startWord == info.endWord) {
 			m_bits[info.startWord] |= (info.leftMask & info.rightMask);
 		} else {
@@ -167,12 +167,12 @@ bool SBitfield::TestAndSet(size_t bit)
 status_t SBitfield::Clear(size_t start, size_t len)
 {
 	if ((ssize_t)(start+len) > m_numBits)
-		return B_BAD_VALUE;	
+		return B_BAD_VALUE;
 	bitfield_fill_info info;
 	compute_masks(start, len, info);
 	if (is_inline()) {
 		m_inlineBits &= ~(info.leftMask & info.rightMask);
-	} else {	
+	} else {
 		if (info.startWord == info.endWord) {
 			m_bits[info.startWord] &= ~(info.leftMask & info.rightMask);
 		} else {
@@ -203,7 +203,7 @@ status_t SBitfield::Resize(size_t bits)
 		}
 		return B_OK;
 	}
-	
+
 	// ... or growing the bitfield (We need to allocate more bits)
 	if (bits > BF_NUM_INLINE_BITS) {
 		const ssize_t oldBits = m_numBits;
@@ -282,5 +282,5 @@ ssize_t SBitfield::FirstClear() const
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

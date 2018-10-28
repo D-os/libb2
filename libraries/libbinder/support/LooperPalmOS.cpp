@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -30,7 +30,7 @@
 #include <support_p/SupportMisc.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -274,9 +274,9 @@ SLooper::_ConstructPlatform()
 
 #if SHOW_LOOPER_INFO || BINDER_DEBUG_MSGS
 	KALResourceBankInfoType rbit;
-	
+
 	KALResourceBankGetInfo(kKeyIDResourceBank, kKALResourceBankInfoTypeCurrentVersion, &rbit);
-	
+
 	int maxThreads = rbit.maxThreads;
 	int freeThreads = rbit.freeThreads;
 
@@ -338,7 +338,7 @@ static int32_t g_transSeq = 1;
 status_t SLooper::_SpawnTransactionLooper(char code)
 {
 	status_t status = B_BINDER_TOO_MANY_LOOPERS;
-	
+
 	const int32_t seq = atomic_fetch_inc(&g_transSeq);
 	char name[32]; // smooved server threads get lowercase initial letters
 	sprintf(name, "%03ld%c Transaction #%ld\n", seq%1000, code, seq);
@@ -409,7 +409,7 @@ SLooper::_SetNextEventTime(nsecs_t when, int32_t priority)
 {
 	//TRACE();
 //	bout << "SLooper::_SetNextEventTime:enter (" << SysCurrentThread() << ")@" << SysGetRunTime() << " when = " << when << endl;
-	
+
 	if (when != B_INFINITE_TIMEOUT)
 	{
 		const nsecs_t now = approx_SysGetRunTime();
@@ -1049,8 +1049,8 @@ restartKALBinderReceive:
 									result = B_OK;
 								}
 							}
-					
-							// if authorized send the context. 
+
+							// if authorized send the context.
 							if (result == B_OK)
 							{
 								if (!remoteReply) {
@@ -1388,7 +1388,7 @@ SLooper::Transact(int32_t handle, uint32_t code, const SParcel& data,
 		else
 			result = B_BINDER_DEAD;
 	}
-	
+
 	// clean up any outstanding PutRefs
 	// _HandleResponse() called this before it returned
 	// m_team->BatchPutReferences();
@@ -1413,5 +1413,5 @@ SLooper::_AvailStack(void) const
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

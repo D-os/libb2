@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -17,8 +17,8 @@
 #include <xml/Parser.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
-namespace xml {	
+namespace os {
+namespace xml {
 #endif
 
 /*
@@ -130,37 +130,37 @@ private:
 	// Characters remaining from the last iteration
 	uint8_t	* m_remainingChars;
 	int32_t	m_remainingCharsSize;
-	
+
 	uint8_t	* m_parseText;
 	int32_t	m_parseTextLength;
-	
+
 	int32_t	m_characterSize;
-	
+
 	parser_state			m_state;
 	forward_looking_state	m_upcomming;
 	parser_sub_state		m_subState;
-	
+
 	// The current token, until it has been completed, and we're ready to
 	// move on to the next one.
 	SString		m_currentToken;
-	
+
 	// Current Name meaning element, target, notation, or any of those other thigns
 	SString		m_currentName;
 	SString		m_savedName;
 	SString		m_currentSubName;
 	SString		m_entityValue;
 	uint8_t		m_delimiter;
-	
+
 	// Mapping of name/values.  Use for attributes, everything.
 	SValue		m_stringMap;
 
 	uint8_t		* m_longStringData ;
 	uint8_t		m_carryoverLongData[4];
 	uint8_t		m_someChars[3];
-	
+
 	bool		m_inDTD;
 	decl_type	m_declType;
-	
+
 	SString		m_emptyString;
 
 
@@ -168,7 +168,7 @@ private:
 
 #if _SUPPORTS_NAMESPACE
 }; // namespace xml
-}; // namespace palmos
+}; // namespace os
 #endif
 
 #endif // #define _XMLParserCore_P_H

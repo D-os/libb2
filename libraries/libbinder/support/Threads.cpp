@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -30,7 +30,7 @@
 
 pthread_key_t currentThreadRecord = 0; // Process global key to thread specific storage for current thread record
 
-namespace palmos {
+namespace os {
 
 
 // Fetch current thread record, which will cause initialization of
@@ -43,7 +43,7 @@ struct libpalmroot_constructor  {
 
 extern void cleanupNamedTSDKeys(void); // TSD.cpp
 
-} // namespace palmos
+} // namespace os
 
 struct our_thread_group_record;
 
@@ -52,7 +52,7 @@ struct our_thread_exit_record
 {
 	int magic; // should be our_thread_exit_record_MAGIC;
 	struct our_thread_exit_record * next;
-	
+
 	void (*exit_func)(void*);
 	void * exit_func_arg;
 };
@@ -69,12 +69,12 @@ struct our_thread_init_record
 	sem_t startup;
 	sem_t blockThread; // used for critical sections
 	our_thread_init_record * nextWaitingThread; // linked list of waiting threads, for critical sections
-	
+
 	char const * name;
 	our_thread_group_record * group;
 	void (*startup_func)(void*);
 	void * startup_func_arg;
-	
+
 	void * stack_base;
 };
 
@@ -211,7 +211,7 @@ void cleanup(void * arg)
 
 	assert(thread->magic == our_thread_init_record_MAGIC);
 
-	palmos::cleanupNamedTSDKeys();
+	os::cleanupNamedTSDKeys();
 
 	while (thread->exit_records) {
 		our_thread_exit_record * e = thread->exit_records;

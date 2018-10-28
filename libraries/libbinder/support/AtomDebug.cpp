@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -44,7 +44,7 @@
 #define AtomIO berr
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace osp {
 #endif // _SUPPORTS_NAMESPACE
 
@@ -307,7 +307,7 @@ void SAtomTracker::PrintActive(const sptr<ITextOutput>& io, int32_t mark, int32_
 bool SAtomTracker::HasAtom(SAtom* a, bool primary)
 {
 	SAutolock _l(fAccess.Lock());
-	
+
 	// Note that there are race conditions here between the last
 	// reference going away, the destructor being called, and the
 	// atom being unregistered.  But this is just for debugging,
@@ -327,7 +327,7 @@ bool SAtomTracker::HasAtom(SAtom* a, bool primary)
 bool SAtomTracker::HasLightAtom(SLightAtom* a)
 {
 	SAutolock _l(fAccess.Lock());
-	
+
 	// Note that there are race conditions here between the last
 	// reference going away, the destructor being called, and the
 	// atom being unregistered.  But this is just for debugging,
@@ -347,7 +347,7 @@ bool SAtomTracker::HasLightAtom(SLightAtom* a)
 void SAtomTracker::GetActiveTypeNames(SSortedVector<SString>* outNames)
 {
 	SAutolock _l(fAccess.Lock());
-	
+
 	const size_t N = fActiveAtoms.CountItems();
 	for (size_t i=0; i<N; i++) {
 		outNames->AddItem(fActiveAtoms[i]->typenm);
@@ -357,7 +357,7 @@ void SAtomTracker::GetActiveTypeNames(SSortedVector<SString>* outNames)
 void SAtomTracker::GetAllWithTypeName(const char* typeName, SVector<wptr<SAtom> >* outAtoms, SVector<sptr<SLightAtom> >* outLightAtoms)
 {
 	SAutolock _l(fAccess.Lock());
-	
+
 	// Same race conditions as above.  Whatever.
 	const size_t N = fActiveAtoms.CountItems();
 	for (size_t i=0; i<N; i++) {
@@ -383,8 +383,8 @@ void SAtomTracker::StopWatching(const B_SNS(std::)type_info* type)
 {
 	SAutolock _l(fAccess.Lock());
 	fWatchTypes.RemoveItemFor((B_SNS(std::)type_info*)type);
-	
-	if (fWatchTypes.CountItems() <= 0) 
+
+	if (fWatchTypes.CountItems() <= 0)
 		fWatching = false;
 }
 
@@ -440,7 +440,7 @@ static SAtomLeakChecker* gLeakChecker = NULL;
 static atomic_int gHasTracker(0);
 static SAtomTracker* gTracker = NULL;
 
-SAtomLeakChecker* LeakChecker() 
+SAtomLeakChecker* LeakChecker()
 {
 	if ((gHasLeakChecker&2) != 0) return gLeakChecker;
 	if (atomic_fetch_or(&gHasLeakChecker, 1) == 0) {
@@ -453,14 +453,14 @@ SAtomLeakChecker* LeakChecker()
 	return gLeakChecker;
 }
 
-SAtomTracker* Tracker() 
+SAtomTracker* Tracker()
 {
 	if ((gHasTracker&2) != 0) return gTracker;
 	if (atomic_fetch_or(&gHasTracker, 1) == 0) {
 		gTracker = new SAtomTracker;
 		atomic_fetch_or(&gHasTracker, 2);
 	} else {
-		while ((gHasTracker&2) == 0) 
+		while ((gHasTracker&2) == 0)
 		    SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
 	}
 	return gTracker;
@@ -475,7 +475,7 @@ struct atom_cleanup
 		if (gLeakChecker) gLeakChecker->Reset();
 		if (gTracker) gTracker->Reset();
 	}
-	
+
 	~atom_cleanup()
 	{
 		if (gTracker) gTracker->Shutdown();
@@ -485,7 +485,7 @@ struct atom_cleanup
 static atom_cleanup gCleanup;
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::osp
+} }	// namespace os::osp
 #endif // _SUPPORTS_NAMESPACE
 
 #endif

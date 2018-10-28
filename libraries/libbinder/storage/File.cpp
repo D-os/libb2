@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -19,7 +19,7 @@
 
 #include <support/StdIO.h>
 
-#include <storage/File.h> 
+#include <storage/File.h>
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -32,7 +32,7 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 #endif
 
@@ -51,7 +51,7 @@ BFile::BFile(const char *path, uint32_t open_mode)
 BFile::BFile(const BFile &file)
 	:	BnStorage()
 {
-	if (file.m_fd > -1) 
+	if (file.m_fd > -1)
 	{
 		m_fd = dup(file.m_fd);
 		if (m_fd >= 0) {
@@ -64,7 +64,7 @@ BFile::BFile(const BFile &file)
 	else
 	{
 		m_fd = -1;
-		m_mode = 0; 
+		m_mode = 0;
 	}
 }
 
@@ -73,7 +73,7 @@ BFile::~BFile()
 	if (m_fd > -1)
 		close(m_fd);
 }
-		
+
 status_t BFile::SetTo(const char *path, uint32_t open_mode)
 {
 	status_t status = B_OK;
@@ -90,7 +90,7 @@ status_t BFile::SetTo(const char *path, uint32_t open_mode)
 	}
 
 	m_mode = open_mode;
-	
+
 	return status;
 }
 
@@ -98,20 +98,20 @@ bool BFile::IsReadable() const
 {
 	if (m_fd <= -1)
 		return false;
-	return !((m_mode & O_ACCMODE) == O_WRONLY); 
+	return !((m_mode & O_ACCMODE) == O_WRONLY);
 }
 
 bool BFile::IsWritable() const
 {
 	if (m_fd <= -1)
 		return false;
-	return !((m_mode & O_ACCMODE) == O_RDONLY);  
+	return !((m_mode & O_ACCMODE) == O_RDONLY);
 }
 
 off_t BFile::Size() const
 {
 	if (m_fd < 0) return m_fd;
-	
+
 	struct stat64 st;
 	int res = fstat64(m_fd, &st);
 	return res >= 0 ? st.st_size : -errno;
@@ -128,14 +128,14 @@ status_t BFile::SetSize(off_t size)
 ssize_t BFile::ReadAtV(off_t position, const struct iovec *vector, ssize_t count)
 {
 	if (m_fd < 0) return m_fd;
-	
+
 	ssize_t total;
 	if (count == 1) {
 		// Common case.
 		total = pread64(m_fd, vector->iov_base, vector->iov_len, position);
 		return total >= 0 ? total : -errno;
 	}
-	
+
 	// XXX This is not quite right, because we should be reading the iovec atomically.
 	total=0;
 	while (count > 0) {
@@ -150,21 +150,21 @@ ssize_t BFile::ReadAtV(off_t position, const struct iovec *vector, ssize_t count
 		vector++;
 		count--;
 	}
-	
+
 	return total;
 }
 
 ssize_t BFile::WriteAtV(off_t position, const struct iovec *vector, ssize_t count)
 {
 	if (m_fd < 0) return m_fd;
-	
+
 	ssize_t total;
 	if (count == 1) {
 		// Common case.
 		total = pwrite64(m_fd, vector->iov_base, vector->iov_len, position);
 		return total >= 0 ? total : -errno;
 	}
-	
+
 	// XXX This is not quite right, because we should be writing the iovec atomically.
 	total=0;
 	while (count > 0) {
@@ -179,7 +179,7 @@ ssize_t BFile::WriteAtV(off_t position, const struct iovec *vector, ssize_t coun
 		vector++;
 		count--;
 	}
-	
+
 	return total;
 }
 
@@ -189,5 +189,5 @@ status_t BFile::Sync()
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::storage
+} }	// namespace os::storage
 #endif

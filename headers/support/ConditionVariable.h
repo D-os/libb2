@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 #include <support/Atom.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -41,7 +41,7 @@ class SConditionVariable
 public:
 							SConditionVariable();
 							SConditionVariable(const char* name);
-							~SConditionVariable();	
+							~SConditionVariable();
 
 		//!	Block until this condition is open.
 		void				Wait();
@@ -81,13 +81,13 @@ class SConditionAtom : public virtual SAtom
 public:
 	inline 			SConditionAtom(SConditionVariable *cv) :m_cv(cv) { }
 	inline virtual	~SConditionAtom()	{ m_cv->Open(); }
-	
+
 	inline void	Wait()					{ m_cv->Wait(); }
 	inline void Wait(SLocker &locker)	{ m_cv->Wait(locker); }
 	inline void Open()					{ m_cv->Open(); }
 	inline void Close()					{ m_cv->Close(); }
 	inline void Broadcast()				{ m_cv->Broadcast(); }
-	
+
 private:
 	SConditionAtom();
 	SConditionAtom(const SConditionAtom &);
@@ -100,7 +100,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif /* _SUPPORT_CONDITIONVARIABLE_H */

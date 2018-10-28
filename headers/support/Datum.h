@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 #include <support/IByteStream.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -99,7 +99,7 @@ public:
 				directly.  Otherwise, if IDatum::Value() succeeds, that
 				value is returned.  Otherwise, we try to read the data
 				by opening the datum and streaming in the bytes.
-				
+
 				If, in case of reading the data, IDatum::Size() is larger than maxSize,
 				B_UNDEFINED_VALUE is returned and @a outError is set to B_OUT_OF_RANGE.
 				Otherwise the data is read in.  The function may return an
@@ -134,7 +134,7 @@ public:
 				@param[out] outError Status code from IDatum::Open(), B_OK on success.
 				@result The input stream ready for you to read from.  If NULL,
 					@a outError will be set to an error code.
-				
+
 				This is a wrapper for calling IDatum::Open() to read, specifically
 				returning an IByteInput stream to you.  You can use interface_cast<T>
 				to also retrieve the IByteSeekable interface.
@@ -150,7 +150,7 @@ public:
 				@param[out] outError Status code from IDatum::Open(), B_OK on success.
 				@result The output stream ready for you to write to.  If NULL,
 					@a outError will be set to an error code.
-				
+
 				This is a wrapper for calling IDatum::Open() to write, specifically
 				returning an IByteOutput stream to you.  You can use interface_cast<T>
 				to also retrieve the IByteSeekable or IByteInput interfaces.
@@ -170,7 +170,7 @@ public:
 				@param[out] outError Status code from IDatum::Open(), B_OK on success.
 				@result The output stream ready for you to write to.  If NULL,
 					@a outError will be set to an error code.
-				
+
 				This is a wrapper for calling IDatum::Open() to write, specifically
 				returning an IByteOutput stream to you.  You can use interface_cast<T>
 				to also retrieve the IByteSeekable or IByteInput interfaces.
@@ -195,7 +195,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif // _SUPPORT_DATUM_H

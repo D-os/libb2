@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -70,12 +70,12 @@
 #define CHECK_INTEGRITY 0
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::osp;
+using namespace os::osp;
 #endif
 
 /**************************************************************************************/
@@ -90,7 +90,7 @@ struct BProcess::ImageData
 		wptr<ComponentImage>	image;
 	};
 	SKeyedVector<SValue, sptr<ImageEntry> >	images;
-	
+
 #if !LIBBE_BOOTSTRAP
 	// All virtual machines that are running.
 	SKeyedVector<SString, sptr<IVirtualMachine> >	vms;
@@ -112,7 +112,7 @@ BProcess::BProcess(team_id tid)
 	, m_handleRefLock("BProcess handle ref access")
 	, m_remoteRefsReleased(false)
 
-	// These are used when running without the driver.	
+	// These are used when running without the driver.
 	, m_shutdown(false)
 	, m_idleCount(0)
 	, m_idleLooper(NULL)
@@ -121,7 +121,7 @@ BProcess::BProcess(team_id tid)
 	, m_maxLoopers(7)
 	, m_minLoopers(2)
 {
-	
+
 	INFO(bout << "************* Creating BProcess " << this << " (id " << m_id << ") *************" << endl;)
 
 	m_lock.LockQuick();
@@ -293,7 +293,7 @@ inline void BProcess::CheckIntegrity() const
 #if CHECK_INTEGRITY
 	int32_t idle = 0;
 	SLooper* next = m_idleLooper;
-	
+
 	while (next != NULL)
 	{
 		idle++;
@@ -304,7 +304,7 @@ inline void BProcess::CheckIntegrity() const
 	{
 		printf("%d loopers on the stack with an idle count of %d\n", idle, m_idleCount);
 	}
-	
+
 	ErrFatalErrorIf(idle != m_idleCount, "Looper stack and m_idleCount are inconsistent!");
 
 	next = m_idleLooper;
@@ -354,7 +354,7 @@ bool BProcess::PopLooper(SLooper* looper, nsecs_t when)
 {
 	bool poped = false;
 	bool spawnLooper = false;
-	
+
 	// Only remove a 'looper' if the looper is at the top of the stack and
 	// if the 'when' is greater than the next event time and if there are
 	// more than one looper to handle incoming messages.
@@ -364,22 +364,22 @@ bool BProcess::PopLooper(SLooper* looper, nsecs_t when)
 	//printf("PopLooper %p: top=%p, when=%Ld, nextTime=%Ld, count=%d\n",
 	//		looper, m_idleLooper, when, m_nextEventTime, m_idleCount);
 	CheckIntegrity();
-	
+
 	if (m_idleLooper && (looper == m_idleLooper) && (when >= m_nextEventTime) && (m_idleCount > 1))
 	{
 		SLooper* pop = m_idleLooper;
-		m_idleLooper = m_idleLooper->GetNext();		
+		m_idleLooper = m_idleLooper->GetNext();
 		pop->SetNext(NULL);
 		m_idleCount--;
 		poped = true;
 	}
 
 	nsecs_t nextTime = m_pendingHandlers ? m_pendingHandlers->NextMessageTime(NULL) : B_INFINITE_TIMEOUT;
-	
+
 	if ((m_idleCount == 1 || m_loopers < m_minLoopers) && (m_loopers < m_maxLoopers) && (approx_SysGetRunTime() >= nextTime))
 	{
 		status_t status = SLooper::SpawnLooper();
-		
+
 		if (status == B_OK)
 		{
 			IncrementLoopers();
@@ -390,7 +390,7 @@ bool BProcess::PopLooper(SLooper* looper, nsecs_t when)
 	CheckIntegrity();
 
 	m_lock.Unlock();
-	
+
 	// We have to have at least one looper around to accept transactions
 	// from remote teams. Otherwise system go boom boom! Do not lock
 	// while making a call to SpawnLooper!!!
@@ -400,7 +400,7 @@ bool BProcess::PopLooper(SLooper* looper, nsecs_t when)
 void BProcess::PushLooper(SLooper* looper)
 {
 	m_lock.LockQuick();
-	
+
 	//printf("Pushing looper %p, top is %p\n", looper, m_idleLooper);
 
 #if CHECK_INTEGRITY
@@ -437,8 +437,8 @@ SLooper* BProcess::UnsafePopLooper()
 	SLooper* pop = m_idleLooper;
 
 	if (pop != NULL)
-	{	
-		m_idleLooper = m_idleLooper->GetNext();		
+	{
+		m_idleLooper = m_idleLooper->GetNext();
 		pop->SetNext(NULL);
 		m_idleCount--;
 	}
@@ -453,9 +453,9 @@ SLooper* BProcess::UnsafePopLooper()
 bool BProcess::RemoveLooper(SLooper* looper)
 {
 	bool removed = false;
-	
+
 	m_lock.LockQuick();
-	
+
 	if (m_shutdown || (m_loopers > m_minLoopers && m_idleLooper))
 	{
 		// This looper is allowed to exit.
@@ -464,13 +464,13 @@ bool BProcess::RemoveLooper(SLooper* looper)
 
 		SLooper* prev = NULL;
 		SLooper* pos = m_idleLooper;
-	
+
 		while (pos != NULL && pos != looper)
 		{
 			prev = pos;
 			pos = pos->GetNext();
 		}
-	
+
 		// remove references to the looper if it is on the idle list.
 		if (pos)
 		{
@@ -482,7 +482,7 @@ bool BProcess::RemoveLooper(SLooper* looper)
 	}
 
 	CheckIntegrity();
-	
+
 	m_lock.Unlock();
 
 	return removed;
@@ -550,7 +550,7 @@ bool BProcess::ScheduleNextEvent()
 	const nsecs_t nextTime	= m_pendingHandlers
 								? m_pendingHandlers->NextMessageTime(&priority)
 								: B_INFINITE_TIMEOUT;
-	
+
 	if (nextTime < m_nextEventTime) {
 #if 0
 		bout << "Setting next event time: from " << m_nextEventTime << " to " << nextTime
@@ -576,34 +576,34 @@ void BProcess::ScheduleHandler(BHandler *handler)
 	} else {
 		UnscheduleHandler(handler,false);
 	}
-	
+
 	ScheduleNextHandler();		//  releases the lock
 }
 
 void BProcess::ScheduleNextHandler()
 {
 	const bool reschedule = ScheduleNextEvent();
-	
+
 	SLooper* top = NULL;
-	
+
 	if (reschedule)
 	{
 		// we need to send a message to the looper on top of the stack.
-		// we remove it then inform it that we are about to send it a 
+		// we remove it then inform it that we are about to send it a
 		// message by setting m_reschedule.
 		top = UnsafePopLooper();
-	
+
 		if (top)
 			top->m_rescheduling = true;
 	}
-	
+
 	m_lock.Unlock();
 
-	if (top) 
+	if (top)
 	{
 		top->_Signal();
 		top->m_rescheduling = false;
-	} 
+	}
 }
 
 void BProcess::DispatchMessage(SLooper* looper)
@@ -612,7 +612,7 @@ void BProcess::DispatchMessage(SLooper* looper)
 	BHandler* handler = NULL;
 	int32_t priority = B_NORMAL_PRIORITY;
 	bool firstTime = true;
-	
+
 	m_lock.LockQuick();
 	//DbgOnlyFatalErrorIf(m_currentEventConcurrency >= m_maxEventConcurrency, "We have gone past the limit on concurrent handlers!");
 	if (m_currentEventConcurrency >= m_maxEventConcurrency) {
@@ -624,7 +624,7 @@ void BProcess::DispatchMessage(SLooper* looper)
 	// The binder driver clears its event time when processing an event,
 	// so we always must inform it if there is another one to schedule.
 	m_nextEventTime = B_INFINITE_TIMEOUT;
-	
+
 	nsecs_t curTime = exact_SysGetRunTime();
 
 	while (1) {
@@ -638,7 +638,7 @@ void BProcess::DispatchMessage(SLooper* looper)
 			// Nothing to do right now, time to leave.
 			break;
 		}
-		
+
 		// If this is the first time through the loop, we need to schedule
 		// the next pending handler so that another SLooper thread can be
 		// activated to execute it.
@@ -649,7 +649,7 @@ void BProcess::DispatchMessage(SLooper* looper)
 
 		// We are now going to enter user code, don't hold the lock.
 		m_lock.Unlock();
-		
+
 		if (handler->AttemptAcquire(this)) {
 shortcutDispatch:
 			// bout << "BProcess: Thread " << SysCurrentThread() << " dispatch to " << handler << " at pri " << priority << endl;
@@ -749,14 +749,14 @@ BProcess::GetStrongProxyForHandle(int32_t handle)
 
 	{
 		SNestedLocker::Autolock _l(m_handleRefLock);
-	
+
 #if COUNT_PROXIES
 		if (handle > maxProxy) {
 			maxProxy = handle;
 			bout << "Now using descriptor #" << handle << endl;
 		}
 #endif
-	
+
 #if 0
 #ifdef TRACK_CLASS_NAME
 		TEST_TRACKED_CLASS(handle);
@@ -767,7 +767,7 @@ BProcess::GetStrongProxyForHandle(int32_t handle)
 #endif
 
 		IBinder* &b = BinderForHandle(handle);
-	
+
 		// We need to create a new BpBinder if there isn't currently one, OR we
 		// are unable to acquire a weak reference on this current one.  See comment
 		// in GetWeakProxyForHandle() for more info about this.
@@ -803,7 +803,7 @@ BProcess::GetWeakProxyForHandle(int32_t handle)
 
 	{
 		SNestedLocker::Autolock _l(m_handleRefLock);
-	
+
 #if 0
 #ifdef TRACK_CLASS_NAME
 		TEST_TRACKED_CLASS(handle);
@@ -821,7 +821,7 @@ BProcess::GetWeakProxyForHandle(int32_t handle)
 #endif
 
 		IBinder* &b = BinderForHandle(handle);
-		
+
 		// We need to create a new BpBinder if there isn't currently one, OR we
 		// are unable to acquire a weak reference on this current one.  The
 		// AttemptIncWeak() is safe because we know the BpBinder destructor will always
@@ -852,7 +852,7 @@ void
 BProcess::ExpungeHandle(int32_t handle, IBinder* binder)
 {
 	SNestedLocker::Autolock _l(m_handleRefLock);
-	
+
 	IBinder* &b = BinderForHandle(handle);
 #if HANDLE_DEBUG_MSGS
 	bout << "BProcess Expunging BpBinder " << b << " for handle " << handle << endl;
@@ -874,7 +874,7 @@ BProcess::ExpungeHandle(int32_t handle, IBinder* binder)
 void BProcess::StrongHandleGone(IBinder* binder)
 {
 	if (m_catchers.CountItems() == 0) return;
-	
+
 	SNestedLocker::Autolock _l(m_handleRefLock);
 	catchReleaseFunc callbackFunc = m_catchers.ValueFor(binder);
 	if (callbackFunc) {
@@ -889,7 +889,7 @@ void BProcess::StrongHandleGone(IBinder* binder)
 void BProcess::ComponentImage::InitAtom()
 {
 	BSharedObject::InitAtom();
-	
+
 	status_t error = GetSymbolFor("InstantiateComponent", 0, (void**)&m_instantiate);
 	if (error != B_OK || m_instantiate == NULL) {
 		berr << "*** The symbol \"InstantiateComponent\" could not be found in \"" << Source() << "\"";
@@ -946,7 +946,7 @@ status_t BProcess::ComponentImage::IncStrongAttempted(uint32_t flags, const void
 	bout << "IncStrongAttempted pending to " << oldVal+1 << " on image \"" << Source() << "\" (id " << ID() << ")" << endl;
 #endif
 	DbgOnlyFatalErrorIf(oldVal <= 0, "BProcess::ComponentImage: Bad pending expunge count!");
-	
+
 	// In this case allow the image to be re-acquired.
 	return B_OK;
 }
@@ -968,7 +968,7 @@ BProcess::get_shared_object(const SValue& file, const SValue& componentInfo, boo
 	sptr<ComponentImage> image;
 	sptr<BProcess::ImageData::ImageEntry> imageEntry;
 	bool found;
-	
+
 	do {
 		// See if the .so that the component is in is already loaded
 		m_imageLock.LockQuick();
@@ -986,7 +986,7 @@ BProcess::get_shared_object(const SValue& file, const SValue& componentInfo, boo
 			}
 		}
 		m_imageLock.Unlock();
-		
+
 		// If the image wasn't found, load it now.
 		if (!found) {
 			// First expunge any images that are pending for this
@@ -1021,13 +1021,13 @@ BProcess::get_shared_object(const SValue& file, const SValue& componentInfo, boo
 			}
 			m_imageLock.Unlock();
 			if (imageEntry != NULL) imageEntry->loading.Open();
-		
+
 		// If an entry image was found, but it hasn't yet been loaded,
 		// wait for whoever is doing so to complete.
 		} else if (image == NULL && imageEntry != NULL) {
 			imageEntry->loading.Wait();
 		}
-	
+
 	// Continue until we have either found/loaded an image, or found
 	// a bad entry or had an error.
 	} while (image == NULL && imageEntry != NULL);
@@ -1054,7 +1054,7 @@ BProcess::DoInstantiate(	const SContext& context,
 	SValue v;
 	bool found;
 	size_t i, count;
-	
+
 //#if BUILD_TYPE == BUILD_TYPE_DEBUG
 //	SContext default_context = get_default_context();
 //	if (default_context.AsBinder() != context.AsBinder()) {
@@ -1072,10 +1072,10 @@ BProcess::DoInstantiate(	const SContext& context,
 //#endif
 
 	SValue virtualMachineNameValue = componentInfo["vm"];
-	
+
 	// If there is no VM specified, then it's an executable file
 	if (!virtualMachineNameValue.IsDefined()) {
-		
+
 		const SValue file = componentInfo["file"];
 		if (!file.IsDefined()) {
 			if (outError) *outError = B_ENTRY_NOT_FOUND;
@@ -1085,7 +1085,7 @@ BProcess::DoInstantiate(	const SContext& context,
 
 		// Load the image for this package.
 		sptr<ComponentImage> image = get_shared_object(file, componentInfo);
-		
+
 		// And now, if we found the image, instantiate the requested component,
 		// using the component name, not the full ID.
 		if (image != NULL) {
@@ -1110,7 +1110,7 @@ BProcess::DoInstantiate(	const SContext& context,
 			if (outError) *outError = B_OK;
 			return obj;
 		}
-		
+
 		if (outError) *outError = B_ERROR;
 		return NULL;
 	}
@@ -1119,12 +1119,12 @@ BProcess::DoInstantiate(	const SContext& context,
 #if !LIBBE_BOOTSTRAP
 	{
 		SString virtualMachineComponent = virtualMachineNameValue.AsString();
-		
+
 		SValue vmComponentInfo;
 		SString vmComponentName;
-		
+
 		context.LookupComponent(virtualMachineComponent, &vmComponentInfo);
-		
+
 		// If we found a cycle, fail
 		count = vmIDs.CountItems();
 		for (i=0; count; i++) {
@@ -1134,25 +1134,25 @@ BProcess::DoInstantiate(	const SContext& context,
 			}
 		}
 		vmIDs.AddItem(virtualMachineComponent);
-		
+
 		// Get a running vm!
 		m_imageLock.LockQuick();
 		sptr<IVirtualMachine> vm = m_imageData->vms.ValueFor(virtualMachineComponent, &found);
-		
+
 		if (!found) {
 			// Oooh.  Recursion.  Instantiate the virtual machine.
 			// There's no good way of passing args through to the vm also, so pass B_UNDEFINED_VALUE
 			b = this->DoInstantiate(context, vmComponentInfo, vmComponentName, vmIDs, B_UNDEFINED_VALUE, outError);
 			vm = IVirtualMachine::AsInterface(b);
-			
+
 			ErrFatalErrorIf(vm == NULL, "could not instantiate VM");
-			
+
 			m_imageData->vms.AddItem(virtualMachineComponent, vm);
-			
+
 			vm->Init();
 		}
 		m_imageLock.Unlock();
-		
+
 		// Have the vm instantiate the object
 		return vm->InstantiateComponent(componentInfo, component, args, outError);
 	}
@@ -1189,7 +1189,7 @@ bool
 BProcess::ExpungePackage(const wptr<ComponentImage>& image)
 {
 	bool expunged = false;
-	
+
 #if IMAGE_DEBUG_MSGS
 	bout << "ExpungePackage: " << image << endl;
 #endif
@@ -1237,7 +1237,7 @@ BProcess::ExpungePackage(const wptr<ComponentImage>& image)
 			}
 		}
 	}
-	
+
 	return expunged;
 }
 
@@ -1266,13 +1266,13 @@ sptr<IProcess> BProcess::Spawn(const SString& name, const SValue& env, uint32_t 
 #if BINDER_DEBUG_LIB
 		(void)env;
 		(void)flags;
-		
+
 		team_id teamid = this_team()+atomic_fetch_add(&nextFakeProcessIDDelta,1);
 		bout << "spawning pretend team " << teamid << endl;
-		
+
 		SysHandle thid = spawn_thread((thread_entry)pretend_team,"pretend_team",B_NORMAL_PRIORITY,(void *)teamid);
 		ErrFatalErrorIf(thid < 0, "could not spawn pretend_team");
-		
+
 		sptr<IProcess> team
 			= IProcess::AsInterface(SLooper::GetRootObject(thid, teamid));
 		ErrFatalErrorIf(team == NULL, "pretend_team gave us a root object that wasn't an IProcess");
@@ -1288,7 +1288,7 @@ sptr<IProcess> BProcess::Spawn(const SString& name, const SValue& env, uint32_t 
 		sptr<IProcess> team = IProcess::AsInterface(teamBinder);
 		ErrFatalErrorIf(team == NULL && teamBinder != NULL, "remote_place did not publish an IProcess");
 #endif // BINDER_DEBUG_LIB
-	
+
 	return team;
 }
 
@@ -1392,5 +1392,5 @@ sptr<IBinder> BProcess::SpawnFile(const SString& image_path, const SValue& env, 
 #endif
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

@@ -21,7 +21,7 @@
 #include <storage/GenericNode.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 #endif
 
@@ -95,7 +95,7 @@ class BMetaDataNode : public BGenericNode
 
 #if _SUPPORTS_NAMESPACE
 }
-}  // namespace palmos::storage
+}  // namespace os::storage
 #endif
 
 #endif  // _STORAGE_METADATANODE_H

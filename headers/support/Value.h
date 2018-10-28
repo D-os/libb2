@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -31,7 +31,7 @@
 #include <string.h>
 #include <stdint.h>
 
-BNS(namespace palmos {)
+BNS(namespace os {)
 BNS(namespace support {)
 
 /*!	@addtogroup CoreSupportUtilities
@@ -147,11 +147,11 @@ class SSimpleValue : public static_small_value
 public:
 	inline SSimpleValue(T v) {
 		type = get_type(v);
-		*reinterpret_cast<T*>(data) = v; 
+		*reinterpret_cast<T*>(data) = v;
 	}
 	inline SSimpleValue(int32_t tc, T v) {
 		type = B_PACK_SMALL_TYPE(tc, sizeof(v));
-		*reinterpret_cast<T*>(data) = v; 
+		*reinterpret_cast<T*>(data) = v;
 	}
 private:
 	int32_t get_type(int8_t)	{ return B_PACK_SMALL_TYPE(B_INT8_TYPE,		sizeof(int8_t)); }
@@ -173,7 +173,7 @@ class SSimpleStatusValue : public static_small_value
 public:
 	inline SSimpleStatusValue(status_t v) {
 		type = B_PACK_SMALL_TYPE(B_STATUS_TYPE,	sizeof(status_t));
-		*reinterpret_cast<status_t*>(data) = v; 
+		*reinterpret_cast<status_t*>(data) = v;
 	}
 };
 
@@ -209,7 +209,7 @@ public:
 	//@{
 			inline 			SValue();
 			inline 			SValue(const SValue& o);
-							
+
 			//! NOTE THAT THE DESTRUCTOR IS NOT VIRTUAL!
 			inline			~SValue();
 	//@}
@@ -239,12 +239,12 @@ public:
 							SValue(const wptr<IBinder>& binder);
 							SValue(const sptr<SKeyID>& binder);
 	//@}
-							
-	
+
+
 	/*!	@name Creating Special Values
 		Convenience functions to access special value types. */
 	//@{
-	
+
 			//! Not-a-value, synonym for B_UNDEFINED_VALUE.
 	static inline const SValue& Undefined()		{ return B_UNDEFINED_VALUE; }
 			//!	The all-encompassing value, synonym for B_WILD_VALUE.
@@ -287,7 +287,7 @@ public:
 	static	SValue			WeakAtom(const wptr<SAtom>& value);
 	static	SValue			Status(status_t error);
 	static	inline SValue	KeyID(const sptr<SKeyID>& value)		{ return SValue(value); }
-	
+
 	static inline SValue	SSize(ssize_t value)					{ return SValue(int32_t(value)); }
 	static inline SValue	Offset(off_t value)						{ return Int64(value); }
 
@@ -319,7 +319,7 @@ public:
 				inside of SValue itself.  Users will normally want
 				to create a status value with SValue::Status(). */
 			void			SetError(status_t error);
-			
+
 			SValue&			Assign(const SValue& o);
 			SValue&			Assign(type_code type, const void* data, size_t len);
 	inline	SValue&			operator=(const SValue& o)			{ return Assign(o); }
@@ -331,7 +331,7 @@ public:
 
 			//!	Exchange contents of 'this' and 'with'.
 			void			Swap(SValue& with);
-			
+
 			//!	Set value to B_UNDEFINED_VALUE.
 			void			Undefine();
 			//!	Check whether the value is not B_UNDEFINED_VALUE.
@@ -339,19 +339,19 @@ public:
 
 			//!	Checking whether this value is B_WILD_VALUE.
 	inline	bool			IsWild() const;
-			
+
 			//!	Check whether this value is neither B_UNDEFINED_VALUE nor B_WILD_VALUE.
 	inline	bool			IsSpecified() const;
-			
+
 			//!	Check whether this value is a single item of the form <tt>{WILD->A}</tt>.
 	inline	bool			IsSimple() const;
-			
+
 			//!	Check whether this value is an object, such as a binder.
 			bool			IsObject() const;
-			
+
 			status_t		CanByteSwap() const;
 			status_t		ByteSwap(swap_action action);
-			
+
 	//@}
 
 	/*!	@name Raw Data Operations
@@ -360,7 +360,7 @@ public:
 		simple values.  That is, values that are only the single mapping
 		<tt>{WILD->data}</tt>. */
 	//@{
-	
+
 			//!	Return type code of data in this value.
 			type_code		Type() const;
 			//!	Return raw data in the value.
@@ -369,7 +369,7 @@ public:
 			size_t			Length() const;
 			//!	Return raw value data as a SSharedBuffer.
 			const SSharedBuffer*	SharedBuffer() const;
-			
+
 			//! Make sure value's data is in the SSharedBuffer pool.
 			void			Pool();
 
@@ -413,27 +413,27 @@ public:
 					resized to this amount, otherwise it is left unchanged.
 			*/
 			status_t		EndEditBytes(ssize_t final_length=-1);
-	
+
 	//@}
 
 	/*!	@name Mapping Operations
 		Working with an SValue as structured data. */
 	//@{
-	
+
 			//!	Combine contents to two values together.
 			/*!	Joins all mappings in both values to create the final
 				result.  Duplicate terminal values will create sets.
-				
+
 				For example:
 @code
 { (A->B), (D->E) }.Join( { (A->G), (B->I) } )
 @endcode
-				
+
 				Results in:
 @code
 { (A->(B,G)), (B->I), (D->E) }
 @endcode
-				
+
 				Note that key A now contains the contents of both mappings,
 				resulting in a set.
 				@see Overlay(), Inherit().
@@ -441,64 +441,64 @@ public:
 			SValue&			Join(const SValue& from, uint32_t flags = 0);
 			//!	Non-destructive version of Join().
 			const SValue	JoinCopy(const SValue& from, uint32_t flags = 0) const;
-			
+
 			//!	Convenience function for overlaying a single map item.
 			/*!	\note JoinItem(B_WILD_VALUE, A) is the same as Join(A).
 			*/
 			SValue&			JoinItem(const SValue& key, const SValue& value, uint32_t flags=0);
-			
+
 			//!	Apply mappings on top of this value.
 			/*!	Overwrites any existing mappings in the value that are the
 				same as the new mappings.
-				
+
 				For example:
 @code
 { (A->B), (D->E) }.Overlay( { (A->G), (B->I) } )
 @endcode
-				
+
 				Results in:
 @code
 { (A->G), (B->I), (D->E) }
 @endcode
-				
+
 				Note that key A contains the value from the right-hand side.
 				@see Inherit(), Join().
 			*/
 			SValue&			Overlay(const SValue& from, uint32_t flags = 0);
 			//!	Non-destructive version of Overlay().
 			const SValue	OverlayCopy(const SValue& from, uint32_t flags = 0) const;
-			
+
 			//!	Apply mappings underneath this value.
 			/*!	Does not modify any existing mappings in the value.
-			
+
 				For example:
 @code
 { (A->B), (D->E) }.Inherit( { (A->G), (B->I) } )
 @endcode
-				
+
 				Results in:
 @code
 { (A->B), (B->I), (D->E) }
 @endcode
-				
+
 				Note that key A contains the value from the left-hand side.
 				@see Overlay(), Join().
 			*/
 			SValue&			Inherit(const SValue& from, uint32_t flags = 0);
 			//!	Non-destructive version of Inherit().
 			const SValue	InheritCopy(const SValue& from, uint32_t flags = 0) const;
-			
+
 			//!	Perform a value remapping operation.
 			/*!	This operation is defined as
 				<tt>(A->B).MapValues((D->E)) == (A->((D->E)[B]))</tt>.  This is performed for
 				every mapping in 'this', the results of which are aggregated
 				using Join().
-				
+
 				For example:
 @code
 { (A->B), (D->E) }.MapValues( { (A->G), (B->I) } )
 @endcode
-				
+
 				Results in:
 @code
 { (A->I) }
@@ -507,7 +507,7 @@ public:
 			SValue&			MapValues(const SValue& from, uint32_t flags = 0);
 			//!	Non-destructive version of MapValues().
 			const SValue	MapValuesCopy(const SValue& from, uint32_t flags = 0) const;
-	
+
 			//!	Remove mappings from this value.
 			/*!	For every mapping in \a from, if that \e mapping appears in
 				\a this then it is removed.  To remove an entire key, use
@@ -520,7 +520,7 @@ public:
 			//!	Convenience for Remove() of a single item/mapping.
 			status_t		RemoveItem(	const SValue& key,
 										const SValue& value = B_WILD_VALUE);
-			
+
 			//! Keep mappings in this value.
 			/*!	For every mapping in \a this, if that mapping \e doesn't appear
 				in \a from then it is removed.  This is equivalent to a set
@@ -529,7 +529,7 @@ public:
 			SValue&			Retain(const SValue& from, uint32_t flags = 0);
 			//!	Non-destructive version of Retain().
 			const SValue	RetainCopy(const SValue& from, uint32_t flags = 0) const;
-			
+
 			//!	Change the name of a key in the value.
 			/*!	@note The old and new keys must be a specified value --
 				you can not rename using WILD values.
@@ -537,11 +537,11 @@ public:
 			*/
 			status_t		RenameItem(	const SValue& old_key,
 										const SValue& new_key);
-			
+
 			//!	Check whether this value contains the given mapping.
 			bool			HasItem(const SValue& key,
 									const SValue& value = B_UNDEFINED_VALUE) const;
-	
+
 			//!	Given an array @a keys of values, returns their indices in @a this's value mapping.
 			/*!	This is used in conjunction with ReplaceValues() to efficiently change
 				a set of items in an SValue mapping.  This function is called first, filling
@@ -553,17 +553,17 @@ public:
 				this mapping, you can use ReplaceValues() to set the values of each of
 				those mappings to the new @a values. */
 			const SValue&	ReplaceValues(const SValue* values, const size_t* indices, size_t count);
-			
+
 			//!	Look up a key in this value.
 			/*!	Looking up a WILD key returns the entire value as-is.
 				Looking up with a key that is a map will match all items
 				of the map.
-				
+
 				For example:
 @code
 { (A->(B->(D->E))) }.ValueFor( { (A->(B->D)) } )
 @endcode
-				
+
 				Results in:
 @code
 { E }
@@ -587,7 +587,7 @@ public:
 			//!	Optimization of ValueFor() for static values.
 			inline const SValue&	ValueFor(const static_large_string_value& str) const { return ValueFor(reinterpret_cast<const SValue&>(str)); }
 
-	
+
 			//!	Count the number of mappings in the value.
 			int32_t			CountItems() const;
 			//!	Iterate over the mappings in the value.
@@ -599,10 +599,10 @@ public:
 					mappings in the SValue.
 			*/
 			status_t		GetNextItem(void** cookie, SValue* out_key, SValue* out_value) const;
-			
+
 			//! Get the keys from this value
 			SValue			Keys() const;
-			
+
 			//! Direct editing of sub-items in the value.
 			/*!	@param key The key of the item you would like to edit.  This must be
 					a simple value, not a complex mapping.
@@ -617,7 +617,7 @@ public:
 			/*	@param[in] item The item returned by BeginEditItem().
 			*/
 			void			EndEditItem(SValue* item);
-			
+
 			//!	Synonym for ValueFor().
 	inline	const SValue&	operator[](const SValue& key) const						{ return ValueFor(key); }
 			//!	Synonym for ValueFor().
@@ -630,7 +630,7 @@ public:
 	inline	const SValue&	operator[](const static_small_string_value& key) const	{ return ValueFor(key); }
 			//!	Synonym for ValueFor().
 	inline	const SValue&	operator[](const static_large_string_value& key) const	{ return ValueFor(key); }
-	
+
 			//!	Synonym for JoinCopy().
 	inline	const SValue	operator+(const SValue& o) const						{ return JoinCopy(o); }
 			//!	Synonym for RemoveCopy().
@@ -644,19 +644,19 @@ public:
 	inline	SValue&			operator-=(const SValue& o)								{ return Remove(o); }
 			//!	Synonym for MapValues().
 	inline	SValue&			operator*=(const SValue& o)								{ return MapValues(o); }
-	
+
 	//@}
 
 	/*!	@name Archiving
 		Reading and writing as flat byte streams. */
 	//@{
-	
+
 			ssize_t			ArchivedSize() const;
 			ssize_t			Archive(SParcel& into) const;
 			ssize_t			Archive(const sptr<IByteOutput>& into) const;
 			ssize_t			Unarchive(SParcel& from);
 			ssize_t			Unarchive(const sptr<IByteInput>& from);
-			
+
 	//@}
 
 	/*!	@name Comparison
@@ -666,33 +666,33 @@ public:
 		change.  The Compare() method and all comparison operators
 		use this approach. */
 	//@{
-	
+
 			int32_t			Compare(const SValue& o) const;
 			int32_t			Compare(const char* str) const;
 			int32_t			Compare(const SString& str) const;
 			int32_t			Compare(type_code type, const void* data, size_t length) const;
-			
+
 	inline	bool			operator==(const SValue& o) const						{ return Compare(o) == 0; }
 	inline	bool			operator!=(const SValue& o) const						{ return Compare(o) != 0; }
 	inline	bool			operator<(const SValue& o) const						{ return Compare(o) < 0; }
 	inline	bool			operator<=(const SValue& o) const						{ return Compare(o) <= 0; }
 	inline	bool			operator>=(const SValue& o) const						{ return Compare(o) >= 0; }
 	inline	bool			operator>(const SValue& o) const						{ return Compare(o) > 0; }
-	
+
 	inline	bool			operator==(const char* str) const						{ return Compare(str) == 0; }
 	inline	bool			operator!=(const char* str) const						{ return Compare(str) != 0; }
 	inline	bool			operator<(const char* str) const						{ return Compare(str) < 0; }
 	inline	bool			operator<=(const char* str) const						{ return Compare(str) <= 0; }
 	inline	bool			operator>=(const char* str) const						{ return Compare(str) >= 0; }
 	inline	bool			operator>(const char* str) const						{ return Compare(str) > 0; }
-	
+
 	inline	bool			operator==(const SString& str) const					{ return Compare(str) == 0; }
 	inline	bool			operator!=(const SString& str) const					{ return Compare(str) != 0; }
 	inline	bool			operator<(const SString& str) const						{ return Compare(str) < 0; }
 	inline	bool			operator<=(const SString& str) const					{ return Compare(str) <= 0; }
 	inline	bool			operator>=(const SString& str) const					{ return Compare(str) >= 0; }
 	inline	bool			operator>(const SString& str) const						{ return Compare(str) > 0; }
-	
+
 	inline	bool			operator==(const static_small_string_value& str) const	{ return Compare(reinterpret_cast<const SValue&>(str)) == 0; }
 	inline	bool			operator!=(const static_small_string_value& str) const	{ return Compare(reinterpret_cast<const SValue&>(str)) != 0; }
 	inline	bool			operator<(const static_small_string_value& str) const	{ return Compare(reinterpret_cast<const SValue&>(str)) < 0; }
@@ -715,14 +715,14 @@ public:
 				operation.
 			*/
 			int32_t			LexicalCompare(const SValue& o) const;
-	
+
 	//@}
 
 	/*!	@name Type Conversions
 		Retrieve the value as a standard type, potentially performing
 		a conversion. */
 	//@{
-	
+
 			//!	Convert value to a status code.
 			/*!	This is the same as AsSSize(), except it does not return positive
 				integers -- in that case B_OK is returned and 'result' is set to
@@ -730,7 +730,7 @@ public:
 				without performing any conversions.
 			*/
 			status_t		AsStatus(status_t* result = NULL) const;
-			
+
 			//!	Convert value to a status/size code.
 			/*!	Result will be:
 					- If the value's ErrorCheck() is not B_OK, this is returned.
@@ -740,7 +740,7 @@ public:
 				AsStatus() instead to only retrieve valid status codes.
 			*/
 			ssize_t			AsSSize(status_t* result = NULL) const;
-			
+
 			//!	Convert value to a strong IBinder pointer.
 			/*!	Converts from the following types:
 					- B_BINDER_TYPE: Returned as-is.
@@ -752,7 +752,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			sptr<IBinder>	AsBinder(status_t* result = NULL) const;
-			
+
 			//!	Convert value to a weak IBinder pointer.
 			/*!	Converts from the following types:
 					- B_BINDER_TYPE: Returned as a weak pointer.
@@ -764,7 +764,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			wptr<IBinder>	AsWeakBinder(status_t* result = NULL) const;
-			
+
 			//!	Convert value to a SString.
 			/*!	Converts from the following types:
 					- B_STRING_TYPE: Returned as-is.
@@ -779,7 +779,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			SString			AsString(status_t* result = NULL) const;
-			
+
 			//!	Convert value to boolean.
 			/*!	Converts from the following types:
 					- B_BOOL_TYPE: Returned as-is.
@@ -797,7 +797,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			bool			AsBool(status_t* result = NULL) const;
-			
+
 			//!	Convert value to int32_t.
 			/*!	Converts from the following types:
 					- B_INT32_TYPE: Returned as-is.
@@ -817,7 +817,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			int32_t			AsInt32(status_t* result = NULL) const;
-			
+
 			//!	Convert value to int64_t.
 			/*!	Converts from the following types:
 					- B_INT64_TYPE: Returned as-is.
@@ -832,7 +832,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			int64_t			AsInt64(status_t* result = NULL) const;
-			
+
 			//!	Convert value to nsecs_t.
 			/*!	Converts from the following types:
 					- B_BIGTIME_TYPE: Returned as-is.
@@ -847,7 +847,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			nsecs_t			AsTime(status_t* result = NULL) const;
-			
+
 			//!	Convert value to float.
 			/*!	Converts from the following types:
 					- B_FLOAT_TYPE: Returned as-is.
@@ -862,7 +862,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			float			AsFloat(status_t* result = NULL) const;
-			
+
 			//!	Convert value to double.
 			/*!	Converts from the following types:
 					- B_DOUBLE_TYPE: Returned as-is.
@@ -876,7 +876,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			double			AsDouble(status_t* result = NULL) const;
-			
+
 			//!	Convert value to a strong SAtom pointer.
 			/*!	Converts from the following types:
 					- B_ATOM_TYPE: Returned as-is.
@@ -886,7 +886,7 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			sptr<SAtom>		AsAtom(status_t* result = NULL) const;
-			
+
 			//!	Convert value to a weak SAtom pointer.
 			/*!	Converts from the following types:
 					- B_ATOM_TYPE: Returned as a weak pointer.
@@ -896,26 +896,26 @@ public:
 				to the current error/status code or B_BAD_TYPE.
 			*/
 			wptr<SAtom>		AsWeakAtom(status_t* result = NULL) const;
-	
+
 			//!	Convert value to a wrapped PalmOS KeyID, SKeyID.
 			/*!	We don't actually do any conversions here.  If the SValue doesn't
 				contain a valid SKeyID, we set result = B_BAD_TYPE and return NULL.
 			*/
 			sptr<SKeyID>	AsKeyID(status_t* result = NULL) const;
-			
+
 			//!	Synonym for AsInt64().
 	inline	off_t			AsOffset(status_t* result = NULL) const { return (off_t)AsInt64(result); }
-			
+
 			/*! \deprecated Use AsInt32() instead. */
 	inline	int32_t			AsInteger(status_t* result = NULL) const { return AsInt32(result); }
-			
+
 	//@}
 
 	/*!	@name Typed Data Access
 		Retrieve data in value as a specific type, not performing conversion.
 		(These functions fail if the value is not exactly the requested type.) */
 	//@{
-	
+
 			status_t		GetBinder(sptr<IBinder> *obj) const;
 			status_t		GetWeakBinder(wptr<IBinder> *obj) const;
 			status_t		GetString(const char** a_string) const;
@@ -940,7 +940,7 @@ public:
 	//@{
 			//!	Print the value's contents in a pretty format.
 			status_t		PrintToStream(const sptr<ITextOutput>& io, uint32_t flags = 0) const;
-			
+
 			//!	SValue pretty printer function.
 			/*!	\param	io		The stream to print in.
 				\param	val		The value to print.
@@ -949,7 +949,7 @@ public:
 	typedef	status_t			(*print_func)(	const sptr<ITextOutput>& io,
 												const SValue& val,
 												uint32_t flags);
-	
+
 			//!	Add a new printer function for a type code.
 			/*!	When PrintToStream() is called, values of the given \a type
 			 * will be printed by \a func.
@@ -964,9 +964,9 @@ public:
 	static	const SValue&	LookupConstantValue(int32_t index);
 
 private:
-	
+
 	friend	class			BValueMap;
-	
+
 			// These are technically public because some inline methods call them.
 			void			InitAsCopy(const SValue& o);
 			void			InitAsMap(const SValue& key, const SValue& value);
@@ -1002,7 +1002,7 @@ private:
 			status_t		set_error(ssize_t code);
 			status_t		type_conversion_error() const;
 			bool			check_integrity() const;
-			
+
 			// --- THE STATE ---
 			// It is no coincidence that the following structure is exactly
 			// the same as a small_flat_data...  and in fact we count on that.
@@ -1035,7 +1035,7 @@ _IMPEXP_SUPPORT const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io,
 // -----------------------------------------------------------------
 /*!	@name Type-specific Optimizations and Sequence Marshalling
 	Some higher level TypeFuncs that need to know about SValue
-	BArrayAsValue & BArrayConstruct 
+	BArrayAsValue & BArrayConstruct
 
 	These are some implementations of the generic type functions
 	to optimize the performance of SVector, SSortedVector,
@@ -1215,7 +1215,7 @@ B_IMPLEMENT_SIMPLE_TYPE_FLATTEN_FUNCS(uint16_t, B_UINT16_TYPE)
 B_IMPLEMENT_SIMPLE_TYPE_FLATTEN_FUNCS(int32_t, B_INT32_TYPE)
 B_IMPLEMENT_SIMPLE_TYPE_FLATTEN_FUNCS(uint32_t, B_UINT32_TYPE)
 B_IMPLEMENT_SIMPLE_TYPE_FLATTEN_FUNCS(int64_t, B_INT64_TYPE)
-// nsecs_t specialization not needed...  it is handled by int64_t 
+// nsecs_t specialization not needed...  it is handled by int64_t
 B_IMPLEMENT_SIMPLE_TYPE_FLATTEN_FUNCS(uint64_t, B_UINT64_TYPE)
 B_IMPLEMENT_SIMPLE_TYPE_FLATTEN_FUNCS(float, B_FLOAT_TYPE)
 B_IMPLEMENT_SIMPLE_TYPE_FLATTEN_FUNCS(double, B_DOUBLE_TYPE)
@@ -1327,6 +1327,6 @@ inline bool SValue::IsSpecified() const
 	return IsDefined() && !IsWild();
 }
 
-BNS(} })	// namespace palmos::support
+BNS(} })	// namespace os::support
 
 #endif	/* _SUPPORT_VALUE_H_ */

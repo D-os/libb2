@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,7 +18,7 @@
 
 import <support/IIterator.idl>
 
-namespace palmos {
+namespace os {
 namespace support {
 
 //!	Extended IIterator interface that supports random access.
@@ -46,12 +46,12 @@ properties:
 		the Next() operation returns the data at the current
 		location, and then increments the iterator to the next
 		location.
-		
+
 		To retrieve an item at a specific location, first set
 		position to the index of the desired item (range from 0
 		to count-1) and then call IIterator with count=1 to retrieve
 		only that item.
-		
+
 		Setting position to 0 will make the iterator restart back
 		at the beginning of its data. */
 	size_t				position;
@@ -65,7 +65,7 @@ methods:
 		you had just retrieved.
 	*/
 	status_t			Remove();
-	
+
 events:
 	//!	Pushed when the contents of an item in the iterator changes.
 	/*!	An iterator that supports COLLAPSE_NODE should push this when
@@ -75,4 +75,4 @@ events:
 	void				IteratorDataChanged(IIterator it, size_t position, SValue key, SValue value);
 }
 
-} }	// namespace palmos::support
+} }	// namespace os::support

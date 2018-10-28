@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,7 +18,7 @@
 #include <app/BCommand.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::app;
+using namespace os::app;
 #endif
 
 class BinderCommand : public BCommand, public SPackageSptr
@@ -315,7 +315,7 @@ class BCat : public BinderCommand
 {
 public:
 	BCat(const SContext& context);
-	
+
 	SValue Run(const ArgList& args);
 	SString Documentation() const;
 };
@@ -333,9 +333,9 @@ private:
 	{
 	public:
 		Record();
-		
+
 	};
-	
+
 	status_t walk_namespace_data(const SString& name, const sptr<ICatalog>& dir);
 	status_t walk_namespace_datum(const SString& name, const sptr<ICatalog>& dir);
 

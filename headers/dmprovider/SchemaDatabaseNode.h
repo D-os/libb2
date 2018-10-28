@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,9 +22,9 @@
 #include <dmprovider/SchemaTableNode.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace dmprovider {
-using namespace palmos::storage;
+using namespace os::storage;
 #endif
 
 /*!	@addtogroup CoreDataManagerProvider
@@ -34,7 +34,7 @@ using namespace palmos::storage;
 	This is a collection of classes for implementing the @ref BinderDataModel interfaces
 	on top of Data Manager schema databases.  This make use of various lower-level
 	convenience classes in the @ref CoreSupportDataModel APIs.
-	
+
 	@note These classes are not a part of the OpenBinder build, but included
 	as an example for other similar implementations.
 	@{
@@ -54,7 +54,7 @@ using namespace palmos::storage;
 
 	- "os:refPath": The absolute path to this object in the namespace,
 	  to be returned by IReferable::Reference().
-	
+
 	@note These classes are not a part of the OpenBinder build, but included
 	as an example for other similar implementations.
 
@@ -76,7 +76,7 @@ public:
 														DmOpenModeType mode = dmModeReadOnly,
 														DbShareModeType share = dbShareReadWrite,
 														database_missing_func missing = NULL,
-														const SValue& args = B_UNDEFINED_VALUE); 
+														const SValue& args = B_UNDEFINED_VALUE);
 									BSchemaDatabaseNode(const SContext& context,
 														const SDatabase &database,
 														const SValue& args = B_UNDEFINED_VALUE);
@@ -162,7 +162,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::dmprovider
+} } // namespace os::dmprovider
 #endif
 
 #endif // _DMPROVIDER_SCHEMADATABASENODE_H

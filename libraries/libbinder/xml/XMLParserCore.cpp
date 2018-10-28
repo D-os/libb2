@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -41,7 +41,7 @@ and either PARAMETER or GENERAL.
 - UNPARSED Entities do not have their text parsed by the processor.
   There data is not included in the document.  The data may or may
   not be XML (there is an errata in the XML Spec about this).  It
-  may be presented along with the document (the sort of common 
+  may be presented along with the document (the sort of common
   example of this is an image), but it is not actually part of the
   XML.
 
@@ -63,8 +63,8 @@ and either PARAMETER or GENERAL.
 #endif // _DESKTOP
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
-namespace xml {	
+namespace os {
+namespace xml {
 #endif
 
 // Forward References
@@ -142,7 +142,7 @@ XMLParserCore::ProcessBegin(void)
 
 	// Start the line numbers at 1.  Column numbers are handled later.
 	m_context->line = 1;
-	
+
 	// Yeah dude!
 	m_context->OnDocumentBegin(m_flags);
 	return B_OK;
@@ -160,7 +160,7 @@ XMLParserCore::ProcessEnd(bool isComplete)
 		if (err != B_OK)
 		{
 			err = m_context->OnError(err, false, __LINE__);
-		}							
+		}
 	}
 	else
 	{
@@ -169,18 +169,18 @@ XMLParserCore::ProcessEnd(bool isComplete)
 		if (err != B_OK)
 		{
 			err = m_context->OnError(err, false, __LINE__);
-		}							
+		}
 	}
 
 	finalizeState();
 	return err;
 }
 
-void 
+void
 XMLParserCore::initializeState()
 {
 
-	
+
 	// Characters remaining from the last iteration
 	if(m_remainingChars)
 	{
@@ -188,32 +188,32 @@ XMLParserCore::initializeState()
 		m_remainingChars = NULL;
 	}
 	m_remainingCharsSize = 0;
-	
+
 	if(m_parseText)
 	{
 		free(m_parseText);
 		m_parseText = NULL;
 	}
 	m_parseTextLength = 0;
-	
+
 	m_characterSize = 0;
-	
-	
+
+
 	m_state = PARSER_IN_UNKNOWN;
 	m_upcomming = PARSER_NORMAL;
 	m_subState = PARSER_SUB_IN_UNKNOWN;
-	
+
 	// The current token, until it has been completed, and we're ready to
 	// move on to the next one.
 	m_currentToken = "";
-	
+
 	// Current Name meaning element, target, notation, or any of those other thigns
 	m_currentName = "";
 	m_savedName = "";
 	m_currentSubName = "";
 	m_entityValue = "";
 	m_delimiter = '\0';
-	
+
 	// Mapping of name/values.  Use for attributes, everything.
 	m_stringMap.Undefine();
 
@@ -225,14 +225,14 @@ XMLParserCore::initializeState()
 	m_someChars[0] = '\0';
 	m_someChars[1] = '\0';
 	m_someChars[2] = '\0';
-	
+
 	m_inDTD = false;
 	m_declType = PARSER_GE_DECL;
-	
+
 	m_emptyString = "";
 }
 
-void 
+void
 XMLParserCore::finalizeState()
 {
 }
@@ -244,37 +244,37 @@ XMLParserCore::handle_element_start(SString & name, SValue & attributes, uint32_
 	status_t err;
 	void * cookie;
 	SValue key, value;
-	
+
 	if (flags & B_XML_HANDLE_ATTRIBUTE_ENTITIES)
 	{
 		// Go through each of the attributes, looking for entities.
 		// If you find an entity, go ask for the replacement text,
 		// and fill it in.
-		
+
 		cookie = NULL;
 		while (B_OK == attributes.GetNextItem(&cookie, &key, &value))
 		{
 			SString v = value.AsString();
-			
+
 			err = expand_entities(v, '&');
 			if (err != B_OK)
 			{
 				if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 					return err;
-			}							
-			
+			}
+
 			if (flags & B_XML_COALESCE_WHITESPACE)
 				v.Mush();
-			
+
 			attributes.JoinItem(key, SValue::String(v));
 		}
-		
+
 		err = m_context->OnStartTag(name, attributes);
 		if (err != B_OK)
 		{
 			if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 				return err;
-		}							
+		}
 		return B_OK;
 	}
 	else if (flags & B_XML_COALESCE_WHITESPACE)
@@ -288,13 +288,13 @@ XMLParserCore::handle_element_start(SString & name, SValue & attributes, uint32_
 			attributes.JoinItem(key, SValue::String(v));
 		}
 
-		
+
 		err = m_context->OnStartTag(name, attributes);
 		if (err != B_OK)
 		{
 			if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 				return err;
-		}							
+		}
 		return B_OK;
 	}
 	else
@@ -304,7 +304,7 @@ XMLParserCore::handle_element_start(SString & name, SValue & attributes, uint32_
 		{
 			if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 				return err;
-		}							
+		}
 		return B_OK;
 	}
 }
@@ -317,10 +317,10 @@ XMLParserCore::handle_entity_decl(bool parameter, SString & name,
 					SString & value, uint32_t flags, bool doctypeBeginOnly)
 {
 	status_t err;
-	
+
 	// This second pass is required because it's just easier to expand
 	// the entities while reading, and then process the results of that.
-	
+
 	// Determine what type of declaration it is.  The report
 	// it with the correct event.
 	const char * p = value.String();
@@ -353,8 +353,8 @@ XMLParserCore::handle_entity_decl(bool parameter, SString & name,
 				}
 			}
 			break;
-			
-			
+
+
 			// ====== Internal Parsed ==========================
 			case PARSER_SUB_IN_INTERNAL_PARSED_VALUE:
 			{
@@ -380,8 +380,8 @@ XMLParserCore::handle_entity_decl(bool parameter, SString & name,
 				}
 			}
 			break;
-			
-			
+
+
 			// ====== Choose ID Type ===========================
 			case PARSER_SUB_IN_SPEC:
 			{
@@ -402,11 +402,11 @@ XMLParserCore::handle_entity_decl(bool parameter, SString & name,
 				else
 				{
 					spec += *p;
-				} 
+				}
 			}
 			break;
-			
-			
+
+
 			// ====== Public ID ================================
 			case PARSER_SUB_IN_WHITESPACE_5:
 			{
@@ -431,8 +431,8 @@ XMLParserCore::handle_entity_decl(bool parameter, SString & name,
 					publicID += *p;
 			}
 			break;
-			
-			
+
+
 			// ====== System ID ================================
 			case PARSER_SUB_IN_WHITESPACE_7:
 			{
@@ -457,8 +457,8 @@ XMLParserCore::handle_entity_decl(bool parameter, SString & name,
 					systemID += *p;
 			}
 			break;
-			
-			
+
+
 			// ====== End or NDATA =============================
 			case PARSER_SUB_IN_WHITESPACE_8:
 			{
@@ -518,14 +518,14 @@ XMLParserCore::handle_entity_decl(bool parameter, SString & name,
 				}
 			}
 			break;
-			
+
 			default:
 				; // error?
 		}
-		
+
 		++p;
 	}
-	
+
 	if (subState == PARSER_SUB_IN_WHITESPACE_1
 			|| subState == PARSER_SUB_IN_SPEC
 			|| subState == PARSER_SUB_IN_WHITESPACE_5
@@ -556,7 +556,7 @@ XMLParserCore::handle_entity_decl(bool parameter, SString & name,
 		{
 			if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 				return err;
-		}							
+		}
 		return B_OK;
 	}
 	else
@@ -568,7 +568,7 @@ XMLParserCore::handle_entity_decl(bool parameter, SString & name,
 			{
 				if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 					return err;
-			}							
+			}
 			return B_OK;
 		}
 		// Technically, there can't be an empty systemID, but we're going to allow it because
@@ -705,13 +705,13 @@ MODE_FIRST_1:
 				if (*p == '\"')
 				{
 DONE_WITH_DECL:
-					// Temporary copy for API consistency, things expect to be able 
+					// Temporary copy for API consistency, things expect to be able
 					// to adopt the storage of the BStrings to avoid a copy.
 					elementTemp = element;
-					
+
 					// Can only affect enum types. Make it easier to parse later.
 					type.StripWhitespace();
-					
+
 					// FINISHED Attribute Decl
 					err = m_context->OnAttributeDecl(elementTemp, name, type, mode, def);
 					if (err != B_OK)
@@ -719,7 +719,7 @@ DONE_WITH_DECL:
 						if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 							return err;
 					}
-					
+
 					// Clean everything up for the next trip around
 					state = BEGIN;
 					name.Truncate(0);
@@ -744,7 +744,7 @@ DONE_WITH_DECL:
 		}
 		p++;
 	}
-	
+
 	return B_OK;
 }
 
@@ -785,7 +785,7 @@ XMLParserCore::expand_char_ref(const SString & entity, SString & entityVal)
 		// Decimal
 		character = atoi(entity.String()+1);
 	}
-	
+
 	entityVal.AppendChar(character);
 	return B_NO_ERROR;
 }
@@ -797,14 +797,14 @@ XMLParserCore::expand_char_refs(SString & str)
 {
 	char delimiter = '&';
 	status_t err;
-	
+
 	SString entity;
 	SString entityVal;
 	SString newValue("");
-	
+
 	int32_t offset = 0, oldOffset = 0;
 	int32_t end = -1;
-	
+
 	while (true)
 	{
 		oldOffset = end + 1;
@@ -814,20 +814,20 @@ XMLParserCore::expand_char_refs(SString & str)
 		end = str.FindFirst(';', offset);
 		if (end < 0)
 			break;
-		
+
 		newValue.Append(str.String() + oldOffset, offset-oldOffset);
 		str.CopyInto(entity, offset+1, end-offset-1);
-		
+
 		if (entity.ByteAt(0) == '#')
 		{
 			err = expand_char_ref(entity, entityVal);
 			if (err != B_OK)
 				return err;
 		}
-		
+
 		newValue.Append(entityVal);
 	}
-	
+
 	newValue.Append(str.String() + oldOffset, str.Length()-oldOffset);
 	str = newValue;
 	return B_OK;
@@ -839,14 +839,14 @@ status_t
 XMLParserCore::expand_entities(SString & str, char delimiter)
 {
 	status_t err;
-	
+
 	SString entity;
 	SString entityVal;
 	SString newValue("");
-	
+
 	int32_t offset = 0, oldOffset = 0;
 	int32_t end = -1;
-	
+
 	while (true)
 	{
 		oldOffset = end + 1;
@@ -856,10 +856,10 @@ XMLParserCore::expand_entities(SString & str, char delimiter)
 		end = str.FindFirst(';', offset);
 		if (end < 0)
 			break;
-		
+
 		newValue.Append(str.String() + oldOffset, offset-oldOffset);
 		str.CopyInto(entity, offset+1, end-offset-1);
-		
+
 		if (entity.ByteAt(0) == '#' && delimiter == '&')
 		{
 			err = expand_char_ref(entity, entityVal);
@@ -881,10 +881,10 @@ XMLParserCore::expand_entities(SString & str, char delimiter)
 					return err;
 			}
 		}
-		
+
 		newValue.Append(entityVal);
 	}
-	
+
 	newValue.Append(str.String() + oldOffset, str.Length()-oldOffset);
 	str = newValue;
 	return B_OK;
@@ -893,7 +893,7 @@ XMLParserCore::expand_entities(SString & str, char delimiter)
 
 
 
-status_t 
+status_t
 XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, bool& errorExit)
 {
 	status_t err = B_OK;
@@ -918,7 +918,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 		errorExit = false;
 		return err;
 	}
-	
+
 	m_parseText = (uint8_t *) malloc(m_remainingCharsSize + dataSize + 1);
 	if (m_remainingCharsSize > 0)
 	{
@@ -930,17 +930,17 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 	m_parseTextLength = m_remainingCharsSize + dataSize;
 	m_parseText[m_parseTextLength] = '\0';
 	m_remainingCharsSize = 0;
-	
+
 	// m_longStringData, at this point might be dangling pointer, because we sent
 	// the data to the m_context and then deleted it, however, we haven't found
 	// the end of the section that it's in.  So set it to the next text.
-	if (m_longStringData) 
+	if (m_longStringData)
 	{
 		m_longStringData = m_parseText;
 	}
-	
+
 	// printf("--[%s]-- ", m_parseText);
-	
+
 	m_characterSize = 0;
 	uint8_t	* pParseChar = m_parseText;
 	while (pParseChar < (m_parseText + m_parseTextLength) && *pParseChar)
@@ -955,9 +955,9 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 		{
 			++m_context->column;
 		}
-		
+
 		m_characterSize = UTF8CharLen(*pParseChar);
-		
+
 		// If we don't have the entire character here in the buffer,
 		// defer it to the next loop (UTF-8)
 		// This is because it might be passed into a m_longStringData section
@@ -965,7 +965,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 		{
 			;
 		}
-		
+
 		// Else, handle this character
 		else
 		{
@@ -983,10 +983,10 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 							{
 								if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 									goto ERROR_2;
-							}							
+							}
 							m_longStringData = NULL;
 						}
-						
+
 						m_state = PARSER_IN_UNKNOWN_MARKUP;
 					}
 					else if (!m_dtdOnly && m_inDTD && *pParseChar == ']')
@@ -997,7 +997,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						{
 							if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 								goto ERROR_2;
-						}							
+						}
 					}
 					else if (m_inDTD && *pParseChar == '>')
 					{
@@ -1007,8 +1007,8 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						{
 							if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 								goto ERROR_2;
-						}							
-						
+						}
+
 						m_inDTD = false;
 					}
 					else if (m_inDTD && *pParseChar == '%')
@@ -1026,8 +1026,8 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 							{
 								if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 									goto ERROR_2;
-							}							
-							
+							}
+
 							m_longStringData = NULL;
 						}
 						m_currentName.Truncate(0);
@@ -1059,14 +1059,14 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 					else
 					{
 						m_state = PARSER_IN_ELEMENT_START_NAME;
-						
+
 						err = CheckForValidFirstNameChar(*pParseChar);
 						if (err != B_OK)
 						{
 							if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 								goto ERROR_2;
-						}							
-						
+						}
+
 						m_currentName.Truncate(0);
 						m_currentName += *pParseChar;
 						m_stringMap.Undefine();
@@ -1086,7 +1086,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						m_someChars[1] = '\0';
 						m_someChars[2] = '\0';
 					}
-					
+
 					// Begin CDATA Section
 					else if (m_currentToken == "[CDATA[")
 					{
@@ -1097,19 +1097,19 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						m_someChars[1] = '\0';
 						m_someChars[2] = '\0';
 					}
-					
+
 					// Begin INCLUDE Section
 					// else if (m_currentToken == "[INCLUDE[")
 					// {
-					// 	
+					//
 					// }
-					// 
+					//
 					// Begin IGNORE Section
 					// else if (m_currentToken == "[IGNORE[")
 					// {
-					// 	
+					//
 					// }
-					
+
 					// Begin DOCTYPE Declaration
 					else if (m_currentToken == "DOCTYPE")
 					{
@@ -1119,39 +1119,39 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 							if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 								goto ERROR_2;
 						}
-						
+
 						m_state = PARSER_IN_DOCTYPE;
 						m_subState = PARSER_SUB_IN_WHITESPACE_1;
 					}
-					
+
 					// Begin ELEMENT Declaration
 					else if (m_currentToken == "ELEMENT")
 					{
 						m_state = PARSER_IN_ELEMENT_DECL;
 						m_subState = PARSER_SUB_IN_WHITESPACE_1;
 					}
-					
+
 					// Begin ATTLIST Declaration
 					else if (m_currentToken == "ATTLIST")
 					{
 						m_state = PARSER_IN_ATTLIST_DECL;
 						m_subState = PARSER_SUB_IN_WHITESPACE_1;
 					}
-					
+
 					// Begin ENTITY Declaration
 					else if (m_currentToken == "ENTITY")
 					{
 						m_state = PARSER_IN_ENTITY_DECL;
 						m_subState = PARSER_SUB_IN_WHITESPACE_1;
 					}
-					
+
 					// Begin NOTATION Section
 					else if (m_currentToken == "NOTATION")
 					{
 						m_state = PARSER_IN_NOTATION_DECL;
 						m_subState = PARSER_SUB_IN_WHITESPACE_1;
 					}
-					
+
 					// No tokens that can be here are longer than 9 chars.
 					// Signal an error.
 					else if (m_currentToken.Length() > 9)
@@ -1194,12 +1194,12 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						err = expand_char_refs(m_currentToken);
 						if (err != B_OK)
 							goto ERROR_2;
-						
+
 						// FINISHED Processing Instruction
 						err = m_context->OnProcessingInstruction(m_currentName, m_currentToken);
 						if (err != B_OK)
 							goto ERROR_2;
-						
+
 						m_currentName.Truncate(0);
 						m_currentToken.Truncate(0);
 						m_state = PARSER_IN_UNKNOWN;
@@ -1226,7 +1226,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						err = handle_element_start(m_currentName, m_stringMap, m_flags);
 						if (err != B_OK)
 							goto ERROR_2;
-						
+
 						m_state = PARSER_IN_UNKNOWN;
 					}
 					// End of the Element Name
@@ -1255,7 +1255,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						err = handle_element_start(m_currentName, m_stringMap, m_flags);
 						if (err != B_OK)
 							goto ERROR_2;
-						
+
 						if (m_upcomming == PARSER_NEARING_END_1)
 						{
 							// FINISHED Implicit Element End Tag
@@ -1263,7 +1263,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 							if (err != B_OK)
 								goto ERROR_2;
 						}
-						
+
 						m_currentName.Truncate(0);
 						m_currentToken.Truncate(0);
 						m_state = PARSER_IN_UNKNOWN;
@@ -1276,7 +1276,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 							m_upcomming = PARSER_NORMAL;
 							m_currentToken += '/';
 						}
-						
+
 						// Do Attributes
 						switch (m_subState)
 						{
@@ -1354,7 +1354,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 							default:
 								;
 						}
-						
+
 					}
 				}
 				break;
@@ -1370,7 +1370,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 							if (B_OK != m_context->OnError(err, false, __LINE__))
 								goto ERROR_2;
 						}
-						
+
 						m_currentName.Truncate(0);
 						m_state = PARSER_IN_UNKNOWN;
 						m_upcomming = PARSER_NORMAL;
@@ -1391,38 +1391,38 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 					m_someChars[0] = m_someChars[1];
 					m_someChars[1] = m_someChars[2];
 					m_someChars[2] = *pParseChar;
-					
+
 					// See comment in PARSER_IN_CDATA
 					if (m_carryoverLongData[0])
 					{
 						// See the comment for this in the CData section handler
-						
+
 						// FINISHED Comment Section
 						err = m_context->OnComment((char *) m_carryoverLongData, 3);
 						if (err != B_OK)
 						{
 							if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 								goto ERROR_2;
-						}							
-						
+						}
+
 						m_carryoverLongData[0] = '\0';
 					}
-					
+
 					if (m_someChars[0] == '-' && m_someChars[1] == '-' && m_someChars[2] == '>')
 					{
 						// need to strip off the trailing "--"
 						// this is okay because we have a minimum of 3 chars in the buffer
 						// this line is why we have that restriction.
 						*(pParseChar-2) = '\0';
-						
+
 						// FINISHED Comment Section
 						err = m_context->OnComment((char *) m_longStringData, pParseChar-m_longStringData);
 						if (err != B_OK)
 						{
 							if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 								goto ERROR_2;
-						}							
-						
+						}
+
 						m_state = PARSER_IN_UNKNOWN;
 						m_longStringData = NULL;
 					}
@@ -1430,11 +1430,11 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 				break;
 				case PARSER_IN_CDATA:
 				{
-					
+
 					m_someChars[0] = m_someChars[1];
 					m_someChars[1] = m_someChars[2];
 					m_someChars[2] = *pParseChar;
-					
+
 					// These three lonely characters get outputted whenever
 					// they crossed the buffer boundary.  The idea is that
 					// it's faster to just send them out as three lonely
@@ -1448,24 +1448,24 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						{
 							if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 								goto ERROR_2;
-						}							
-						
+						}
+
 						m_carryoverLongData[0] = '\0';
 					}
-					
+
 					if (m_someChars[0] == ']' && m_someChars[1] == ']' && m_someChars[2] == '>')
 					{
 						// See comment for this same thing in the comment handler
 						*(pParseChar-2) = '\0';
-						
+
 						// FINISHED CData Section
 						err = m_context->OnCData((char *) m_longStringData, pParseChar-m_longStringData);
 						if (err != B_OK)
 						{
 							if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 								goto ERROR_2;
-						}							
-						
+						}
+
 						m_state = PARSER_IN_UNKNOWN;
 						m_longStringData = NULL;
 					}
@@ -1497,16 +1497,16 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 								m_emptyString = "";
-								
+
 								// FINISHED Begin Internal Subset
 								err = m_context->OnInternalSubsetBegin();
 								if (err != B_OK)
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 
 								m_state = PARSER_IN_UNKNOWN;
 								m_subState = PARSER_SUB_IN_UNKNOWN;
@@ -1522,17 +1522,17 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 								m_emptyString = "";
-								
+
 								// FINISHED End Doctype Declaration
 								err = m_context->OnDocumentTypeEnd();
 								if (err != B_OK)
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								m_state = PARSER_IN_UNKNOWN;
 								m_inDTD = false;
 							}
@@ -1553,16 +1553,16 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 								m_emptyString = "";
-								
+
 								// FINISHED Begin Internal Subset
 								err = m_context->OnInternalSubsetBegin();
 								if (err != B_OK)
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 
 								m_state = PARSER_IN_UNKNOWN;
 								m_subState = PARSER_SUB_IN_UNKNOWN;
@@ -1578,17 +1578,17 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 								m_emptyString = "";
-								
+
 								// FINISHED End Doctype Declaration
 								err = m_context->OnDocumentTypeEnd();
 								if (err != B_OK)
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								m_state = PARSER_IN_UNKNOWN;
 								m_inDTD = false;
 							}
@@ -1611,23 +1611,23 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								// Do the External Subset
 								err = handle_entity_decl(false, m_emptyString, m_currentToken, m_flags, true);
 								if (err != B_OK)
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								// FINISHED Begin Internal Subset
 								err = m_context->OnInternalSubsetBegin();
 								if (err != B_OK)
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 
 								m_state = PARSER_IN_UNKNOWN;
 								m_subState = PARSER_SUB_IN_UNKNOWN;
@@ -1643,24 +1643,24 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-									
+								}
+
 								// Do the External Subset
 								err = handle_entity_decl(false, m_emptyString, m_currentToken, m_flags, true);
 								if (err != B_OK)
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								// FINISHED End Doctype Declaration
 								err = m_context->OnDocumentTypeEnd();
 								if (err != B_OK)
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								m_state = PARSER_IN_UNKNOWN;
 								m_inDTD = false;
 							}
@@ -1671,7 +1671,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						default:
 							; // maybe should signal some type of error.
 					}
-					
+
 				}
 				break;
 				case PARSER_IN_ELEMENT_DECL:
@@ -1727,8 +1727,8 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								m_state = PARSER_IN_UNKNOWN;
 								m_subState = PARSER_SUB_IN_UNKNOWN;
 							}
@@ -1745,7 +1745,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 								m_currentToken += m_entityValue;
 								m_subState = PARSER_SUB_IN_SPEC;
 							}
@@ -1759,7 +1759,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 					}
 				}
 				break;
-				
+
 				case PARSER_IN_ATTLIST_DECL:
 				{
 					switch (m_subState)
@@ -1813,8 +1813,8 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								m_state = PARSER_IN_UNKNOWN;
 								m_subState = PARSER_SUB_IN_UNKNOWN;
 							}
@@ -1831,7 +1831,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 								m_currentToken += m_entityValue;
 								m_subState = PARSER_SUB_IN_SPEC;
 							}
@@ -1844,7 +1844,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 					}
 				}
 				break;
-				
+
 				case PARSER_IN_ENTITY_DECL:
 				{
 					switch (m_subState)
@@ -1853,7 +1853,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						{
 							if (!IS_WHITESPACE(*pParseChar))
 							{
-								
+
 								if (*pParseChar == '%')
 								{
 									m_declType = PARSER_PE_DECL;
@@ -1912,8 +1912,8 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								m_state = PARSER_IN_UNKNOWN;
 								m_subState = PARSER_SUB_IN_UNKNOWN;
 							}
@@ -1937,7 +1937,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 								m_currentToken += m_entityValue;
 								m_subState = PARSER_SUB_IN_SPEC;
 							}
@@ -1950,7 +1950,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 					}
 				}
 				break;
-				
+
 				case PARSER_IN_NOTATION_DECL:
 				{
 					switch (m_subState)
@@ -1993,8 +1993,8 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
-								
+								}
+
 								m_state = PARSER_IN_UNKNOWN;
 								m_subState = PARSER_SUB_IN_UNKNOWN;
 							}
@@ -2007,7 +2007,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 					}
 				}
 				break;
-				
+
 				case PARSER_IN_GE_REF:
 				{
 					if (*pParseChar == ';')
@@ -2028,7 +2028,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 							}
 							if (entityVal.Length() > 0)
 							{
@@ -2037,7 +2037,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 								{
 									if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 										goto ERROR_2;
-								}							
+								}
 							}
 						}
 						else
@@ -2047,7 +2047,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 							{
 								if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 									goto ERROR_2;
-							}							
+							}
 						}
 						m_state = PARSER_IN_UNKNOWN;
 					}
@@ -2055,7 +2055,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						m_currentName += *pParseChar;
 				}
 				break;
-				
+
  				case PARSER_IN_PE_REF:
 				{
 					if (*pParseChar == ';')
@@ -2065,22 +2065,22 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 						{
 							if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 								goto ERROR_2;
-						}							
+						}
 						m_state = PARSER_IN_UNKNOWN;
 					}
 					else
 						m_currentName += *pParseChar;
 				}
 				break;
-				
+
 				default:
 					err = B_ERROR;
 					m_context->OnError(err, true, __LINE__);
 					goto ERROR_2;
 			}
-			
+
 		}
-		
+
 		// XXX Should this be pParseChar++????
 		// pParseChar += m_characterSize;
 		// I think it should, because Sebastian is having problems with multibyte characters
@@ -2088,9 +2088,9 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 		// and most other things are stored in temporary BStrings (just not long text or CData
 		// sections).  Therefore, I'm going to change it so it just does pParseChar++.
 		pParseChar++;
-		
+
 	}
-	
+
 	if (pParseChar == (m_parseText + m_parseTextLength))
 	{
 		m_remainingChars = NULL;
@@ -2102,7 +2102,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 		m_remainingCharsSize = strlen((char *) m_remainingChars);
 		// fprintf(stderr, "Using Remaining Characters (length %d): %s\n", (int) m_remainingCharsSize, m_remainingChars);
 	}
-	
+
 	if (m_longStringData)
 	{
 		// if m_state == PARSER_IN_UNKNOWN then we we want to output all the characters
@@ -2116,10 +2116,10 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 			m_carryoverLongData[0] = m_parseText[m_parseTextLength-3];
 			m_carryoverLongData[1] = m_parseText[m_parseTextLength-2];
 			m_carryoverLongData[2] = m_parseText[m_parseTextLength-1];
-			
+
 			m_parseText[m_parseTextLength-3] = '\0';
 		}
-		
+
 		// Long Text Sections -- CData, Comment, Text can be split across
 		// buffer boundaries.  But, it's okay to generate them as separate
 		// events.
@@ -2131,7 +2131,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 				{
 					if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 						goto ERROR_2;
-				}							
+				}
 				break;
 			case PARSER_IN_COMMENT:
 				err = m_context->OnComment((char *) m_longStringData, pParseChar-m_longStringData);
@@ -2139,7 +2139,7 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 				{
 					if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 						goto ERROR_2;
-				}							
+				}
 				break;
 			default:
 				err = m_context->OnTextData((char *)m_longStringData, pParseChar-m_longStringData);
@@ -2147,13 +2147,13 @@ XMLParserCore::ProcessInputBuffer(size_t dataSize, const uint8_t * dataBuffer, b
 				{
 					if (B_OK != (err = m_context->OnError(err, false, __LINE__)))
 						goto ERROR_2;
-				}							
+				}
 				break;
 		}
 	}
-	
+
 	errorExit = false;
-	
+
 ERROR_2:
 
 	if(m_parseText)
@@ -2164,12 +2164,12 @@ ERROR_2:
 
 
 	return err;
-	
+
 }
 
 
 
 #if _SUPPORTS_NAMESPACE
 }; // namespace xml
-}; // namespace palmos
+}; // namespace os
 #endif

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,14 +18,17 @@
 
 #if _SUPPORTS_NAMESPACE
 #if defined(__cplusplus)
-namespace palmos {
+namespace os {
 namespace support {
 #endif /* __cplusplus */
 #endif /* _SUPPORTS_NAMESPACE */
 
 // Perform alignment -- to 8 byte boundaries -- of value data.
 #if defined(__cplusplus)
-static inline uint32_t value_data_align(const uint32_t size) { return ((size+0x7)&~0x7); }
+static inline uint32_t value_data_align(const uint32_t size)
+{
+  return ((size + 0x7) & ~0x7);
+}
 #endif /* defined(_cplusplus) */
 
 // This is the structure of flattened data for small (<= 4 bytes)
@@ -34,13 +37,14 @@ static inline uint32_t value_data_align(const uint32_t size) { return ((size+0x7
 // like the private data inside of an SValue.
 struct small_flat_data
 {
-	uint32_t			type;
-	union {
-		uint8_t			bytes[4];
-		int32_t			integer;
-		uint32_t		uinteger;
-		void*			object;
-	}					data;
+  uint32_t type;
+  union
+  {
+    uint8_t  bytes[4];
+    int32_t  integer;
+    uint32_t uinteger;
+    void*    object;
+  } data;
 };
 
 // This is the structure of flattened data for large (> 4 bytes)
@@ -49,13 +53,13 @@ struct small_flat_data
 // follows.
 struct large_flat_header
 {
-	uint32_t			type;
-	uint32_t			length;
+  uint32_t type;
+  uint32_t length;
 };
 struct large_flat_data
 {
-	large_flat_header	header;
-	uint8_t				data[1];
+  large_flat_header header;
+  uint8_t           data[1];
 };
 
 // Basic values are written as either raw small_flat_data or
@@ -68,13 +72,13 @@ struct large_flat_data
 // information about the map.
 struct value_map_info
 {
-	size_t	count;		// number of key/value pairs that follow.
-	int32_t	order;		// 0 if unordered, 1 for order v1.
+  size_t  count;  // number of key/value pairs that follow.
+  int32_t order;  // 0 if unordered, 1 for order v1.
 };
 struct value_map_header
 {
-	large_flat_header	header;
-	value_map_info		info;
+  large_flat_header header;
+  value_map_info    info;
 };
 
 // ---------------------------------------------------------------------------
@@ -83,7 +87,8 @@ struct value_map_header
 
 #if _SUPPORTS_NAMESPACE
 #if defined(__cplusplus)
-} }	// namespace palmos::support
+}
+}  // namespace os::support
 #endif /* __cplusplus */
 #endif /* _SUPPORTS_NAMESPACE */
 

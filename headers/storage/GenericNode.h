@@ -23,7 +23,7 @@
 #include <support/Locker.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 #endif
 
@@ -218,7 +218,7 @@ class BGenericNode : public support::BnNode
 
 #if _SUPPORTS_NAMESPACE
 }
-}  // namespace palmos::storage
+}  // namespace os::storage
 #endif
 
 #endif  // _STORAGE_GENERICNODE_H

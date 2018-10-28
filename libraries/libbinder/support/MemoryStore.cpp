@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,7 +18,7 @@
 #include <stdio.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -105,7 +105,7 @@ const void * BMemoryStore::Buffer() const
 
 // ----------------------------------------------------------------- //
 
-status_t 
+status_t
 BMemoryStore::AssertSpace(size_t newSize)
 {
 	void *p = MoreCore(m_data,newSize);
@@ -135,7 +135,7 @@ int32_t BMemoryStore::Compare(const BMemoryStore &o) const
 
 // ----------------------------------------------------------------- //
 
-off_t 
+off_t
 BMemoryStore::Size() const
 {
 	return m_length;
@@ -143,7 +143,7 @@ BMemoryStore::Size() const
 
 // ----------------------------------------------------------------- //
 
-ssize_t 
+ssize_t
 BMemoryStore::ReadAtV(off_t pos, const struct iovec *vector, ssize_t count)
 {
 	size_t size,totalSize = 0;
@@ -163,7 +163,7 @@ BMemoryStore::ReadAtV(off_t pos, const struct iovec *vector, ssize_t count)
 
 // ----------------------------------------------------------------- //
 
-ssize_t 
+ssize_t
 BMemoryStore::WriteAtV(off_t pos, const struct iovec *vector, ssize_t count)
 {
 	size_t size,totalSize = 0;
@@ -204,7 +204,7 @@ status_t BMemoryStore::SetSize(off_t size)
 	if (result == B_OK) m_length = static_cast<size_t>(size);
 	return result;
 }
-		
+
 // ----------------------------------------------------------------- //
 
 status_t BMemoryStore::Copy(const BMemoryStore &o)
@@ -227,7 +227,7 @@ void * BMemoryStore::MoreCore(void *oldBuf, size_t newsize)
 	return NULL;
 }
 
-void 
+void
 BMemoryStore::FreeCore(void *)
 {
 }
@@ -270,7 +270,7 @@ void *BMallocStore::MoreCore(void *oldBuf, size_t size)
 	return newdata;
 }
 
-void 
+void
 BMallocStore::FreeCore(void *oldBuf)
 {
 	free(oldBuf);
@@ -331,7 +331,7 @@ void* BValueStorage::MoreCore(void *oldBuf, size_t size)
 
 	type_code type = m_value->Type();
 	if (type == B_UNDEFINED_TYPE) type = B_RAW_TYPE;
-	
+
 	void* ptr = m_value->BeginEditBytes(type, size, B_EDIT_VALUE_DATA);
 	if (ptr == NULL)
 	{
@@ -346,5 +346,5 @@ void BValueStorage::FreeCore(void* buf)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

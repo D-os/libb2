@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -29,8 +29,8 @@
 #define PRINT_PATHS(x) // x
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
-using namespace palmos::storage; // BFile only
+using namespace os::support;
+using namespace os::storage; // BFile only
 #endif
 
 static SVector<SString> IdlFiles;
@@ -58,10 +58,10 @@ static int parseError = 0;
 
 int
 usage()
-{	
-	bout << " usage: pidgen [flags] foo.idl " << endl 
-			<< " if more than 1 file specified, files will be run in sequence" << endl 
-			<< " with the same set of flags" 
+{
+	bout << " usage: pidgen [flags] foo.idl " << endl
+			<< " if more than 1 file specified, files will be run in sequence" << endl
+			<< " with the same set of flags"
 			<< endl << endl << " flags: " << endl << endl;
 	bout << "-- import path | -I path " << endl << " adds path to the list of import directories " << endl;
 	bout << "-- output-dir path | -O path " << endl << " outputdir for generated files; dir for cpp files only when used with -S flag; default is directory of .idl file " << endl;
@@ -119,9 +119,9 @@ readargs(int argc, char ** argv, SString& hd, SString& bd, SString& od, SVector<
 		}
 	}
 
-	if (optind>=argc) { 
-		berr << argv[0] << ": no idl file specified" << endl;	
-		return usage(); 
+	if (optind>=argc) {
+		berr << argv[0] << ": no idl file specified" << endl;
+		return usage();
 	}
 	else {
 		for (int ifile=optind; ifile<argc; ifile++) {
@@ -141,7 +141,7 @@ readargs(int argc, char ** argv, SString& hd, SString& bd, SString& od, SVector<
 	if (id.CountItems() == 0) {
 		id.AddItem(od);
 	}
-	
+
 	return B_OK;
 }
 
@@ -159,7 +159,7 @@ setpath(
 
 	filebase = filebase.PathLeaf();
 	PRINT_PATHS(bout << "Initial filebase: " << filebase << endl);
-	
+
 	// no path is given in association with the idl file
 	if (output == "") {
 		if (pos>=0) {
@@ -172,7 +172,7 @@ setpath(
 	if (filebase.Length()<=0) {
 		return usage();
 	}
-		
+
 	pos=filebase.FindLast('.');
 	if (pos>=0) {
 		if (0==strcmp(filebase.String()+pos, ".idl")) {
@@ -182,13 +182,13 @@ setpath(
 	PRINT_PATHS(bout << "truncated filebase=" << filebase << endl);
 
 	status_t err;
-	
+
 	// if no header dir specified, default is output dir for .h
 	if (header != "") {
 		iheader.PathSetTo(header);
 	}
 	else {
-		iheader.PathSetTo(output); 
+		iheader.PathSetTo(output);
 	}
 
 	iheader.PathAppend(filebase);
@@ -226,8 +226,8 @@ setpath(
 
 InterfaceRec*
 FindInterface(const SString &name)
-{	
-	if (name=="IBinder" || name=="palmos::support::IBinder") {
+{
+	if (name=="IBinder" || name=="os::support::IBinder") {
 		return &gIBinderInterface;
 	}
 	else {
@@ -235,11 +235,11 @@ FindInterface(const SString &name)
 		IDLSymbol iface(name);
 		ifnamevector.ValueFor(name, &present);
 
-		if (present) {	
+		if (present) {
 			return(ifnamevector.EditValueFor(name, &present));
 		}
 		else {
-			berr << "pidgen: <---- FindInterface ----> invalid interface - check to see if foward declaration needed for " << name << endl; 
+			berr << "pidgen: <---- FindInterface ----> invalid interface - check to see if foward declaration needed for " << name << endl;
 			parseError = 10;
 			_exit(10);
 			return NULL;
@@ -247,18 +247,18 @@ FindInterface(const SString &name)
 	}
 }
 
-sptr<IDLType> 
+sptr<IDLType>
 FindType(const sptr<IDLType>& typeptr)
-{	
+{
 	bool present=false;
 	SString code=typeptr->GetName();
 	TypeBank.ValueFor(code, &present);
 
-	if (present) { 
-		return TypeBank.EditValueFor(code, &present); 
+	if (present) {
+		return TypeBank.EditValueFor(code, &present);
 	}
 	else {
-		berr << "pidgen: <---- FindType ----> " << code << " could not be found in TypeBank" << endl; 
+		berr << "pidgen: <---- FindType ----> " << code << " could not be found in TypeBank" << endl;
 		parseError = 10;
 		return NULL;
 	}
@@ -266,7 +266,7 @@ FindType(const sptr<IDLType>& typeptr)
 
 int
 yyerror(void *voidref, const char *errmsg)
-{	
+{
 	fprintf(stderr, "we got an err %s\n", errmsg);
 	parseError = 10;
 	return 1;
@@ -278,7 +278,7 @@ int generate_from_idl(
 {
 	if (verbose)
 		bout << "IDL File: " << _idlFileBase << endl;
-	// open interface 
+	// open interface
 	const char* nfn= _idlFileBase.String();
 	FILE *input = fopen(nfn, "r");
 
@@ -303,9 +303,9 @@ int generate_from_idl(
 
 		initTypeBank(TypeBank);
 		IDLStruct result;
-		
+
 		// pass importdir to flex if it is used
-		if (importdir.CountItems()!=0) { 
+		if (importdir.CountItems()!=0) {
 			for (size_t a=0; a<importdir.CountItems(); a++)
 			{	result.AddImportDir(importdir.ItemAt(a)); }
 		}
@@ -347,14 +347,14 @@ int generate_from_idl(
 			SString userKey = UTypes.KeyAt(i);
 			sptr<IDLType> userType = UTypes.ValueAt(i);
 			const SString& syn = userType->GetPrimitiveName();
-			if (syn.Length() > 0) {	
+			if (syn.Length() > 0) {
 				bool exists=false;
 				sptr<IDLType> baseType = TypeBank.ValueFor(syn, &exists);
 				if (exists) {
 					// Now add a clone of the existing type with the new name
 					// That way, when that name is used, we will still know
 					// how to deal with the type.
-					sptr<IDLType> newType = new IDLType(baseType); 
+					sptr<IDLType> newType = new IDLType(baseType);
 					// If the parse put in some code modifier, we need to
 					// bring that along also
 					if (userType->GetCode() != B_UNDEFINED_TYPE) {
@@ -390,13 +390,13 @@ int generate_from_idl(
 					if (ifvector[t]->FullInterfaceName() == _interface->FullInterfaceName()) skip = true;
 				}
 				if (skip) continue;
-			} 
+			}
 			else {
 				// bout << "IMP/DCL: " << _interface->FullInterfaceName() << endl;
 				for (size_t t=0; t<ifvector.CountItems(); t++) {
 					if (ifvector[t]->FullInterfaceName() == _interface->FullInterfaceName()
 							&& ifvector[t]->Declaration()==FWD) {
-						// we currently have this interface as a forward declaration, 
+						// we currently have this interface as a forward declaration,
 						// remove that version so we can add implementation version
 						ifvector.RemoveItemsAt(t);
 						ifnamevector.RemoveItemFor(_interface->ID());
@@ -409,10 +409,10 @@ int generate_from_idl(
 			// bout << "we just added interface = " << _interface->ID() << " as... " << ((_interface->Declaration()==FWD)?"Forward":"Implementation") << endl;
 		}
 
-		// scan through the includes to attach namespaces & check their validity  	
+		// scan through the includes to attach namespaces & check their validity
 		SVector<IncludeRec> headers;
-		
-		for (size_t t=0; t<(result.Includes()).CountItems(); t++) {	
+
+		for (size_t t=0; t<(result.Includes()).CountItems(); t++) {
 			IncludeRec includerec = (result.Includes()).ItemAt(t);
 			SString includefile = includerec.File();
 
@@ -423,8 +423,8 @@ int generate_from_idl(
 
 			includefile.ReplaceLast("/", ":");
 			int s=includefile.FindLast("/");
-			if (s>=0) { 
-				includefile=includefile.String()+s+1; 
+			if (s>=0) {
+				includefile=includefile.String()+s+1;
 			}
 
 			int32_t pos=includefile.FindLast('.');
@@ -448,7 +448,7 @@ int generate_from_idl(
 			bout << "Trying to open file '" << iheader << "'" << endl;
 		file=new BFile(iheader.String(), flags);
 		if (!file->IsWritable()) {
-			berr << "pidgen Overwrite failed - could not open " << iheader << " for writing" << endl; 
+			berr << "pidgen Overwrite failed - could not open " << iheader << " for writing" << endl;
 			return 10;
 		}
 		byteStream=new BByteStream(sptr<IStorage>(file.ptr()));
@@ -470,11 +470,11 @@ int generate_from_idl(
 		byteStream=NULL;
 		file=NULL;
 		unlink(cppfile.String());
-		
+
 		// create cppfile
 		file=new BFile(cppfile.String(), flags);
 		if (!file->IsWritable()) {
-			berr << "pidgen: Overwrite failed - could not open " << cppfile << " for writing" << endl; 
+			berr << "pidgen: Overwrite failed - could not open " << cppfile << " for writing" << endl;
 			return 10;
 		}
 		byteStream=new BByteStream(sptr<IStorage>(file.ptr()));
@@ -487,7 +487,7 @@ int generate_from_idl(
 		file=NULL;
 
 		// clean up before we start on the next file
-		ParseTree.MakeEmpty();	
+		ParseTree.MakeEmpty();
 		cleanTypeBank(TypeBank);
 		SymbolTable.MakeEmpty();
 		headers.MakeEmpty();
@@ -532,7 +532,7 @@ int generate_from_wsdl(
 	} while (howmany == READ_BUFFER_SIZE);
 
 	free(buf);
-	
+
 	sptr<BWsdl> wsdl = new BWsdl();
 	sptr<BWsdlCreator> creator = new BWsdlCreator();
 
@@ -543,13 +543,13 @@ int generate_from_wsdl(
 	// create the WsdlClass.
 	sptr<WsdlClass> obj = NULL;
 	create_wsdl_class(wsdl, obj);
-	
+
 	SString output;
-	
+
 	SString typesInterface;
 	typesInterface.Append(wsdl->Name());
 	typesInterface.Append("Types.idl");
-	
+
 	output.PathSetTo(outputdir);
 	output.PathAppend(typesInterface);
 //	bout << "Creating " << output << endl;
@@ -559,10 +559,10 @@ int generate_from_wsdl(
 #endif
 	file = new BFile(output.String(), flags);
 	if (!file->IsWritable()) {
-		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl; 
+		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl;
 		return 10;
 	}
-	
+
 	// generate the interface
 	byteStream = new BByteStream(sptr<IStorage>(file.ptr()));
 	stream = new BTextOutput(byteStream);
@@ -576,15 +576,15 @@ int generate_from_wsdl(
 //	bout << "Creating " << output << endl;
 	file = new BFile(output.String(), flags);
 	if (!file->IsWritable()) {
-		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl; 
+		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl;
 		return 10;
 	}
-	
+
 	// generate the interface
 	byteStream = new BByteStream(sptr<IStorage>(file.ptr()));
 	stream = new BTextOutput(byteStream);
 	wsdl_create_interface(obj, stream, typesInterface);
-	
+
 	// create the output file
 	SString headername = wsdl->Name();
 	headername.Append(".h");
@@ -593,10 +593,10 @@ int generate_from_wsdl(
 //	bout << "Creating " << output << endl;
 	file = new BFile(output.String(), flags);
 	if (!file->IsWritable()) {
-		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl; 
+		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl;
 		return 10;
 	}
-	
+
 	// generate the header
 	byteStream = new BByteStream(sptr<IStorage>(file.ptr()));
 	stream = new BTextOutput(byteStream);
@@ -609,15 +609,15 @@ int generate_from_wsdl(
 //	bout << "Creating " << output << endl;
 	file = new BFile(output.String(), flags);
 	if (!file->IsWritable()) {
-		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl; 
+		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl;
 		return 10;
-	}	
+	}
 
 	// generate the types header
 	byteStream = new BByteStream(sptr<IStorage>(file.ptr()));
 	stream = new BTextOutput(byteStream);
 	wsdl_create_types_header(obj, stream, typesname);
-	
+
 	SString cppname = wsdl->Name();
 	cppname.Append(".cpp");
 	output.PathSetTo(outputdir);
@@ -625,10 +625,10 @@ int generate_from_wsdl(
 //	bout << "Creating " << output << endl;
 	file = new BFile(output.String(), flags);
 	if (!file->IsWritable()) {
-		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl; 
+		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl;
 		return 10;
 	}
-	
+
 	// generate the cpp
 	byteStream = new BByteStream(sptr<IStorage>(file.ptr()));
 	stream = new BTextOutput(byteStream);
@@ -642,10 +642,10 @@ int generate_from_wsdl(
 //	bout << "Creating " << output << endl;
 	file = new BFile(output.String(), flags);
 	if (!file->IsWritable()) {
-		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl; 
+		berr << "pidgen: Overwrite failed - could not open " << output << " for writing" << endl;
 		return 10;
 	}
-	
+
 	// generate the cpp
 	byteStream = new BByteStream(sptr<IStorage>(file.ptr()));
 	stream = new BTextOutput(byteStream);
@@ -659,7 +659,7 @@ int generate_from_wsdl(
 	return generate_from_idl(output, headerdir, basehdir, outputdir, importdir);
 }
 
-int 
+int
 main(int argc, char ** argv)
 {
 	// headerdir stores the header directory specified when we want to separate the .h and .cpp output
@@ -667,8 +667,8 @@ main(int argc, char ** argv)
 	SString basehdir;
 	SString headerdir;
 	SVector<SString> importdir;
-	
-	gIBinderInterface.AddCppNamespace(SString("palmos::support"));
+
+	gIBinderInterface.AddCppNamespace(SString("os::support"));
 	readargs(argc, argv, headerdir, basehdir, outputdir, importdir);
 	outputdir.PathNormalize();
 	basehdir.PathNormalize();
@@ -689,6 +689,6 @@ main(int argc, char ** argv)
 		int result = generate_from_wsdl(wsdl, headerdir, basehdir, outputdir, importdir);
 		if (result != 0) return result;
 	}
-	
+
 	return 0;
 }

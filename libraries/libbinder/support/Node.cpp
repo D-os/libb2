@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -15,7 +15,7 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -174,7 +174,7 @@ status_t SNode::AddEntry(const SString& name, const SValue& entry) const
 		sptr<ICatalog> catalog = ICatalog::AsInterface(m_node->AsBinder());
 		return (catalog != NULL) ? catalog->AddEntry(path, entry) : B_UNSUPPORTED;
 	}
-	
+
 	return B_UNSUPPORTED; // We don't yet support updating values in an SValue...
 }
 
@@ -196,7 +196,7 @@ status_t SNode::RemoveEntry(const SString& name) const
 		sptr<ICatalog> catalog = ICatalog::AsInterface(m_node->AsBinder());
 		return (catalog != NULL) ? catalog->RemoveEntry(path) : B_UNSUPPORTED;
 	}
-	
+
 	return B_UNSUPPORTED; // We don't yet support removing values in an SValue...
 }
 
@@ -207,14 +207,14 @@ status_t SNode::RenameEntry(const SString& name, const SString& rename) const
 		get_catalog();
 		return (m_catalog != NULL) ? m_catalog->RenameEntry(name, rename) : B_UNSUPPORTED;
 	}
- 
+
 	SString parentName,parentRename;
 	name.PathGetParent(&parentName);
 	rename.PathGetParent(&parentRename);
 	if (parentName != parentRename) {
 		/*	We don't "yet" support renaming (really moving) entries
 			across different nodes. */
-		return B_UNSUPPORTED;		
+		return B_UNSUPPORTED;
 	}
 
 	sptr<INode> node = m_node;
@@ -227,7 +227,7 @@ status_t SNode::RenameEntry(const SString& name, const SString& rename) const
 		sptr<ICatalog> catalog = ICatalog::AsInterface(m_node->AsBinder());
 		return (catalog != NULL) ? catalog->RenameEntry(path, SString(rename.PathLeaf())) : B_UNSUPPORTED;
 	}
-	
+
 	return B_UNSUPPORTED; // We don't yet support renaming values in an SValue...
 }
 
@@ -312,10 +312,10 @@ walk_path:
 		*outErr = B_NO_INIT;
 	}
 
-	// we do not want to return an SValue that 
+	// we do not want to return an SValue that
 	// has garbage in it if we had an error
 	if (*outErr != B_OK) return SValue::Undefined();
-	
+
 	return entry;
 }
 
@@ -360,5 +360,5 @@ void BNodeObserver::EntryRenamed(const sptr<INode>& node, const SString& old_nam
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

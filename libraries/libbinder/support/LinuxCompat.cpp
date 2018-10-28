@@ -37,7 +37,7 @@
 #include <TextMgr.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 #if TARGET_HOST == TARGET_HOST_LINUX
@@ -645,13 +645,13 @@ palmsource_dec_package_ref()
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
 #if _SUPPORTS_NAMESPACE
 }
-}  // namespace palmos::support
+}  // namespace os::support
 #endif
 
 #endif  //

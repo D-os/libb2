@@ -31,7 +31,7 @@
 #include <support/Value.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -177,7 +177,7 @@ class BCatalog : public BMetaDataCatalog, public storage::SDatumGeneratorInt
 
 #if _SUPPORTS_NAMESPACE
 }
-}  // namespace palmos::support
+}  // namespace os::support
 #endif
 
 #endif  // _SUPPORT_CATALOG_H

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -36,7 +36,7 @@
 #define REPORT_TOP_COUNT	5
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif // _SUPPORTS_NAMESPACE
 
@@ -44,7 +44,7 @@ namespace support {
 namespace Priv {
 #endif // _SUPPORTS_NAMESPACE
 
-struct symbol 
+struct symbol
 {
 	uint32_t	addr;
 	uint32_t	name;
@@ -146,9 +146,9 @@ intptr_t SCallStack::GetCallerAddress(int32_t level) const
 #if defined(__POWERPC__) && defined (__MWERKS__)
 	unsigned long *cf = get_caller_frame();
 	unsigned long ret = 0;
-	
+
 	level += 1;
-	
+
 	while (cf && --level > 0) {
 		ret = cf[2];
 		if (ret < 0x80000000) break;
@@ -160,7 +160,7 @@ intptr_t SCallStack::GetCallerAddress(int32_t level) const
 	uint32_t fp = 0, nfp, ret=0;
 
 	level += 2;
-	
+
 	fp = (uint32_t)get_stack_frame();
 	if (bogus_stack_addr(fp))
 		return 0;
@@ -181,7 +181,7 @@ intptr_t SCallStack::GetCallerAddress(int32_t level) const
 #elif TARGET_HOST == TARGET_HOST_WIN32
 
 	level += 2;
-	
+
 	CONTEXT context;
 	memset( &context, 0, sizeof(context));
 	context.ContextFlags = CONTEXT_FULL;
@@ -199,15 +199,15 @@ intptr_t SCallStack::GetCallerAddress(int32_t level) const
 	bool success;
 	do
 	{
-		success = StackWalk(IMAGE_FILE_MACHINE_I386, 
-							GetCurrentProcess(), 
-							GetCurrentThread(), 
-							&stackframe, 
-							&context, 
-							NULL, 
-							SymFunctionTableAccess, 
+		success = StackWalk(IMAGE_FILE_MACHINE_I386,
+							GetCurrentProcess(),
+							GetCurrentThread(),
+							&stackframe,
+							&context,
+							NULL,
+							SymFunctionTableAccess,
 							SymGetModuleBase, NULL);
-	
+
 		if (!success || stackframe.AddrReturn.Offset == 0)
 			break;
 
@@ -293,10 +293,10 @@ void SCallStack::LongPrint(const sptr<ITextOutput>& io, b_demangle_func demangle
 		if (demangler && (*demangler)(name, tmp, 256) != 0) {
 			name = tmp;
 		}
-				
+
 		sprintf(tmp1, "0x%08zx: <", m_caller[i]);
 		sprintf(tmp2, ">+0x%08zx", offs);
-		
+
 		io << tmp1 << name << tmp2 << endl;
 	}
 }
@@ -341,15 +341,15 @@ void SCallTreeNode::PruneNode()
 void SCallTreeNode::ShortReport(const sptr<ITextOutput>& io)
 {
 	char tmp[32];
-	
+
 	if (!parent) return;
 	parent->ShortReport(io);
-	
+
 	if (parent->parent)
 		sprintf(tmp, ", %08zx", addr);
 	else
 		sprintf(tmp, "%08zx", addr);
-		
+
 	io << tmp;
 };
 
@@ -360,7 +360,7 @@ void SCallTreeNode::LongReport(const sptr<ITextOutput>& io, b_demangle_func dema
 	char tmp1[32];
 	char tmp2[32];
 	const char* name;
-	
+
 	off_t offs;
 	if (!parent) return;
 
@@ -374,10 +374,10 @@ void SCallTreeNode::LongReport(const sptr<ITextOutput>& io, b_demangle_func dema
 	if (demangler && buffer && (*demangler)(name, buffer, bufferSize) != 0) {
 		name = buffer;
 	}
-	
+
 	sprintf(tmp1, "  0x%08zx: <", addr);
 	sprintf(tmp2, ">+0x%08zx", offs);
-	
+
 	io << tmp1 << name << tmp2 << endl;
 };
 
@@ -463,7 +463,7 @@ void SCallTree::AddToTree(SCallStack *stack, const sptr<ITextOutput>& io)
 		else n->higher->lower = n;
 		replace->higher = n;
 	};
-	
+
 	if (!(count % LOG_OUTPUT_QUANTUM)) {
 		Report(io,REPORT_TOP_COUNT,true);
 	};
@@ -484,9 +484,9 @@ void SStackCounter::Update(int32_t ignoreDepth, int32_t maxDepth)
 {
 	SCallStack stack;
 	stack.Update(ignoreDepth+1, maxDepth);
-	
+
 	SAutolock _l(m_lock.Lock());
-	
+
 	bool found;
 	stack_info &info = m_data.EditValueFor(stack, &found);
 	if (found) {
@@ -502,7 +502,7 @@ void SStackCounter::Update(int32_t ignoreDepth, int32_t maxDepth)
 void SStackCounter::Reset()
 {
 	SAutolock _l(m_lock.Lock());
-	
+
 	m_data.MakeEmpty();
 	m_totalCount = 0;
 }
@@ -642,7 +642,7 @@ static void free_symbol_memory()
 class SymbolTableCleanup
 {
 public:
-	~SymbolTableCleanup() 
+	~SymbolTableCleanup()
 	{
 		free_symbol_memory();
 	#if TARGET_HOST == TARGET_HOST_WIN32
@@ -673,7 +673,7 @@ bool load_symbols()
 
 	image_info info;
 	int32_t cookie = 0;
-	
+
 	while (get_next_image_info(0, &cookie, &info) == B_OK) {
 		const image_id id = info.id;
 		int32_t n = 0;
@@ -682,7 +682,7 @@ bool load_symbols()
 		int32_t nameLen = sizeof(name);
 		void *location;
 		while (get_nth_image_symbol(id,n,name,&nameLen,&symType,&location) == B_OK) {
-	
+
 			// resize string block, if needed.
 			while ((symbolNamesPtr + nameLen) > symbolNamesSize) {
 				if (symbolNamesSize > 0) symbolNamesSize *= 2;
@@ -709,7 +709,7 @@ bool load_symbols()
 			symbol& sym = symbolTable[symbolTableCount++];
 			sym.addr = (uint32_t)location;
 			sym.name = symbolNamesPtr;
-			
+
 			// set up name.
 			strcpy(symbolNames + symbolNamesPtr, name);
 			symbolNamesPtr += nameLen;
@@ -741,7 +741,7 @@ bool load_symbols()
 		symSearchPath += buf;
 		symSearchPath += ";";
 	}
-	
+
 	if (GetModuleFileName(0, buf, BUFSIZE))
 	{
 		char* ptr;
@@ -763,7 +763,7 @@ bool load_symbols()
 			symSearchPath += ";";
 		}
 	}
-	
+
 	delete buf;
 
 	const char* env;
@@ -774,7 +774,7 @@ bool load_symbols()
 		symSearchPath += getenv("_NT_SYMBOL_PATH");
 		symSearchPath += ";";
 	}
-	
+
 	env = getenv("_NT_ALTERNATE_SYMBOL_PATH");
 	if (env)
 	{
@@ -790,33 +790,33 @@ bool load_symbols()
 	}
 
 	// if we added anything, we have a trailing semicolon
-	if (symSearchPath.Length() > 0) 
+	if (symSearchPath.Length() > 0)
 		symSearchPath.RemoveLast(";");
 
 	//printf( "symbols path: %s\n", symSearchPath.String());
-	
+
 	SymInitialize(GetCurrentProcess(), (char*)symSearchPath.String(), false);
 
 	int32_t symOptions = SymGetOptions();
 	symOptions |= SYMOPT_LOAD_LINES;
 	symOptions &= ~SYMOPT_UNDNAME;
-	SymSetOptions(symOptions); 
+	SymSetOptions(symOptions);
 
-	
+
 	MODULEENTRY32 me;
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
 
 	bool moreModules = true;
-	
+
 	moreModules = Module32First(snapshot, &me);
 
-	do 
+	do
 	{
 		SymLoadModule(GetCurrentProcess(), 0, me.szExePath, me.szModule, (DWORD)me.modBaseAddr, me.modBaseSize);
-		
+
 		moreModules = Module32Next(snapshot, &me);
 	} while (moreModules);
-	
+
 	return true;
 
 #else
@@ -840,13 +840,13 @@ const char* lookup_symbol(uint32_t addr, uint32_t *offset, char* name, size_t bu
 	return symbolNames + symbolTable[i].name;
 
 #elif TARGET_HOST == TARGET_HOST_WIN32
-	
+
 	if (!name)
 		return "";
 
 	const int32_t NAMELEN = bufSize;
 	const int32_t SYMBLEN = sizeof(IMAGEHLP_SYMBOL) + NAMELEN;
-	
+
 	IMAGEHLP_SYMBOL *sym = (IMAGEHLP_SYMBOL*)malloc(SYMBLEN);
 
 	memset(sym, 0, SYMBLEN);
@@ -857,7 +857,7 @@ const char* lookup_symbol(uint32_t addr, uint32_t *offset, char* name, size_t bu
 	{
 		UnDecorateSymbolName(sym->Name, name, NAMELEN, UNDNAME_COMPLETE);
 	}
-	
+
 	free(sym);
 
 	return name;
@@ -873,7 +873,7 @@ const char* lookup_symbol(uint32_t addr, uint32_t *offset, char* name, size_t bu
 #endif
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif // SUPPORTS_CALLSTACK

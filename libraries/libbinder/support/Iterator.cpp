@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -20,7 +20,7 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -104,12 +104,12 @@ status_t SIterator::ErrorCheck() const
 status_t SIterator::Next(SValue* key, SValue* value, uint32_t flags, size_t count)
 {
 	if (m_iterator == NULL) return (status_t)m_index;
-	
+
 	SLocker::Autolock lock(m_lock);
 
 	if (m_index >= m_values.CountItems())
 	{
-		
+
 		status_t err = m_iterator->Next(&m_keys, &m_values, flags, count);
 		if (err != B_OK) return err;
 		DbgOnlyFatalErrorIf(m_values.CountItems() == 0, "Iterator returned B_OK but no results!");
@@ -119,10 +119,10 @@ status_t SIterator::Next(SValue* key, SValue* value, uint32_t flags, size_t coun
 		// Continue itererator with new data.
 		m_index = 0;
 	}
-	
+
 	*key = m_keys.CountItems() > 0 ? m_keys.ItemAt(m_index) : B_WILD_VALUE;
 	*value = m_values.ItemAt(m_index);
-	
+
 	m_index++;
 
 	return B_OK;
@@ -134,7 +134,7 @@ SValue SIterator::ApplyFlags(const sptr<IIterable> &iterable, uint32_t flags)
 		SValue result;
 		SValue k, v;
 		SIterator iterator(iterable->NewIterator());
-		
+
 		while (B_OK == iterator.Next(&k, &v, flags)) {
 			if ((flags & INode::REQUEST_DATA) == 0) {
 				result.JoinItem(k,v);
@@ -146,7 +146,7 @@ SValue SIterator::ApplyFlags(const sptr<IIterable> &iterable, uint32_t flags)
 				result.JoinItem(k, v);
 			}
 		}
-		
+
 		return result;
 	} else {
 		return SValue::Binder(iterable->AsBinder());
@@ -175,7 +175,7 @@ SValue BValueIterator::Options() const
 status_t BValueIterator::Next(IIterator::ValueList* keys, IIterator::ValueList* values, uint32_t flags, size_t count)
 {
 	SLocker::Autolock lock(m_lock);
-	
+
 	keys->MakeEmpty();
 	values->MakeEmpty();
 
@@ -203,7 +203,7 @@ status_t BValueIterator::Remove()
 // ==================================================================================
 
 BRandomIterator::BRandomIterator(const sptr<IIterator>& iter)
-	: BnRandomIterator(), 
+	: BnRandomIterator(),
 	BObserver(SContext(NULL)),
 	m_iterator(iter),
 	m_position(0),
@@ -220,7 +220,7 @@ void
 BRandomIterator::InitAtom()
 {
 	// Link to IteratorChanged for contained iterator
-	// so that we can also push it along to anyone linked to me 
+	// so that we can also push it along to anyone linked to me
 	// (and so we can update our state also)
 	m_iterator->LinkIterator(this->AsBinder(), SValue(BV_ITERATOR_CHANGED, BV_ITERATOR_CHANGED), B_WEAK_BINDER_LINK);
 }
@@ -334,5 +334,5 @@ BRandomIterator::SetPosition(size_t value)
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

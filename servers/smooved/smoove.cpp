@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -42,10 +42,10 @@
 #include <sys/wait.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::package;
-using namespace palmos::support;
-using namespace palmos::storage;
-using namespace palmos::app;
+using namespace os::package;
+using namespace os::support;
+using namespace os::storage;
+using namespace os::app;
 #endif
 
 static SContext g_rootContext;
@@ -91,12 +91,12 @@ start_package_manager(const SContext& context)
 	pkgMgr->AddQuery(BV_VERBS, BV_INTENT_VERB);
 	pkgMgr->Start(verbose);
 	context.Publish(BV_PACKAGES_PATH, SValue::Binder((BnCatalog*)pkgMgr.ptr()));
-	
+
 	// Print it out
 #if DUMP_PACKAGE_CATALOG
 	if (verbose) {
 		bout << "Components: " << endl << "-------------------------" << endl;
-		
+
 		SValue key, value;
 		SIterator it(context, SString("/packages/components"));
 		while (it.Next(&key, &value, INode::REQUEST_DATA) == B_OK) {
@@ -122,14 +122,14 @@ public:
 		, m_lock("ProcessManager:m_lock")
 	{
 	}
-	
+
 	virtual SValue Inspect(const sptr<IBinder>& caller, const SValue& which, uint32_t flags)
 	{
 		SValue result(BCatalog::Inspect(caller, which, flags));
 		result.Join(BnProcessManager::Inspect(caller, which, flags));
 		return result;
 	}
-	
+
 	virtual sptr<IBinder> NewIfRemote(const sptr<INode>& context, const SString& component,
 		const SValue& args, uint32_t flags, const sptr<IProcess>& caller,
 		SValue* componentInfo, status_t* status = NULL)
@@ -138,16 +138,16 @@ public:
 		// context that was passed in.
 		SContext ctx(context);
 		sptr<IBinder> object;
-		
+
 		SValue procReq;
 		SString procName;
 		bool requireProc = false;
-		
+
 		status_t err = ctx.LookupComponent(component, componentInfo);
 		if (err < B_OK) goto finished;
-		
+
 		//bout << "NewIfRemote " << component << ": info=" << *componentInfo << endl;
-		
+
 		procReq = (*componentInfo)[BV_PROCESS];
 		if (procReq.IsDefined()) {
 			// This component has some specific request about its process.
@@ -159,9 +159,9 @@ public:
 			}
 			if (procName == BV_PACKAGE) procName = (*componentInfo)[BV_PACKAGEDIR].AsString();
 		}
-		
+
 		//bout << "procName=" << procName << endl;
-		
+
 		if (procName == "") {
 			// If no process was requested, don't do anything remote.
 			goto finished;
@@ -173,13 +173,13 @@ public:
 			err = requireProc ? B_PERMISSION_DENIED : B_OK;
 			goto finished;
 		}
-		
+
 		// Okay, we need to instantiate the component in the process it
 		// requested.
 		// XXX We shouldn't be doing the instantiate here if the process the
 		// component requested is the same as the caller!
 		object = remote_instantiate(context, component, args, *componentInfo, procName, &err);
-		
+
 	finished:
 		if (status) *status = err;
 		return object;
@@ -191,14 +191,14 @@ private:
 	{
 		SValue procValue;
 		sptr<IProcess> proc;
-		
+
 		{
 			SLocker::Autolock _l(m_lock);
-			
+
 			LookupEntry(procName, 0, &procValue);
 			proc = interface_cast<IProcess>(procValue);
 			//bout << "Found proc " << procName << ": " << proc << endl;
-		
+
 			if (proc == NULL) {
 				// Process doesn't exist...  create and publish it.
 				proc = BCatalog::Context().NewProcess(procName, SContext::PREFER_REMOTE, B_UNDEFINED_VALUE, err);
@@ -209,15 +209,15 @@ private:
 				}
 			}
 		}
-		
+
 		if (proc != NULL) {
 			return proc->InstantiateComponent(context.Root(), componentInfo, component, args, err);
 		}
-		
+
 		if (*err == B_OK) *err = B_ERROR;
 		return NULL;
 	}
-	
+
 	SLocker	m_lock;
 };
 
@@ -239,12 +239,12 @@ static void
 start_shell(void* /*unused*/)
 {
 	sptr<ICommand> shell = ICommand::AsInterface(g_rootContext.New(SValue::String("org.openbinder.tools.BinderShell")));
-	
+
 	if (shell != NULL) {
 		shell->SetByteInput(StandardByteInput());
 		shell->SetByteOutput(StandardByteOutput());
 		shell->SetByteError(StandardByteOutput());
-		
+
 		ICommand::ArgList args;
 		args.AddItem(SValue::String("sh"));
 		args.AddItem(SValue::String("--login"));
@@ -263,7 +263,7 @@ print_entries_recursively(const sptr<IBinder>& b)
 	if (datum != NULL) {
 		bout << datum->Value();
 	}
-	
+
 	sptr<IIterable> iterable = interface_cast<IIterable>(b);
 	if (iterable != NULL) {
 		bout << "{" << indent << endl;
@@ -289,10 +289,10 @@ print_entries_recursively(const sptr<IBinder>& b)
 static bool validate_context(const SString& name, const sptr<IBinder>& caller, void* /*userData*/)
 {
 	//bout << "Validate context: name=" << name << ", caller=" << caller << endl;
-	
+
 	char* nosecurity = getenv("BINDER_NO_CONTEXT_SECURITY");
 	if (name == "user") return true;
-	
+
 	return (nosecurity && atoi(nosecurity) != 0) ? true : false;
 }
 
@@ -315,7 +315,7 @@ int main(int argc, char* argv[])
 
 	setbuf(stdout, NULL ) ; // unbuffered I/O on stdout so we can debug before the inivitible crash
 	openlog("smooved", LOG_PERROR | LOG_NDELAY, LOG_USER);
-	
+
 	if (!SLooper::BecomeContextManager(validate_context, NULL)) {
 		fprintf(stderr, "smooved FAILED to become the context manager, exiting...\n");
 		return B_ERROR;
@@ -333,11 +333,11 @@ int main(int argc, char* argv[])
 		print_entries_recursively(test.AsBinder());
 	}
 #endif
-	
+
 	sptr<IBinder> context = g_rootContext.Root()->AsBinder();
 	SLooper::SetContextObject(context, SString("user"));
 	SLooper::SetContextObject(context, SString("system"));
-	
+
 	SString script = get_system_directory();
 	script.PathAppend("scripts");
 
@@ -371,7 +371,7 @@ int main(int argc, char* argv[])
 		}
 		optind++;
 	}
-	
+
 	if (!no_bootscript) {
 		if (!scriptSet) {
 			script.PathAppend("boot_script.bsh");
@@ -379,16 +379,16 @@ int main(int argc, char* argv[])
 
 		status_t err = g_rootContext.RunScript(script);
 		if (err != B_OK) {
-			berr << "[smooved]: failed to load script '" << script << "'" << endl;	
+			berr << "[smooved]: failed to load script '" << script << "'" << endl;
 		}
 
 		// now that we have booted run the OnInstall's
 		SValue entry = g_rootContext.Lookup(BV_INSTALL_HANDLERS_PATH);
-	
+
 		if (entry != B_UNDEFINED_VALUE)
-		{	
+		{
 			sptr<IProcess> process = g_rootContext.NewProcess(BV_INSTALL_HANDLERS);
-		
+
 			void* cookie = NULL;
 			SValue key, value;
 			while (entry.GetNextItem(&cookie, &key, &value) == B_OK)
@@ -418,7 +418,7 @@ int main(int argc, char* argv[])
 		// exit when it's time for the process to exit.
 		SLooper::Loop(true);
 	}
-	
+
 	return B_OK;
 }
 

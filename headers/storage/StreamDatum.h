@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -26,7 +26,7 @@
 #include <support/SortedVector.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 #endif
 
@@ -173,7 +173,7 @@ public:
 				changed; for all other changes, ValueLocked(), ValueTypeLocked(),
 				and SizeLocked() are called as needed to retrieve the
 				current values.
-				
+
 				You can override this method in your own subclass to easily
 				discover when changes happen.  If you do so, be sure to also
 				call through to this implementation. */
@@ -189,13 +189,13 @@ public:
 		implementation translates these into the memory-style operations
 		StartReadingLocked(), FinishReadingLocked(), StartWritingLocked(),
 		and FinishWritingLocked().
-		
+
 		One case where you may need to override these instead is to implement
 		datums that can block when reading or writing.  In that case you
 		can temporarily unlock the datum while inside these functions (need
 		to check if the implementation here will actually be happy with
 		that).
-		
+
 		@note These functions will be called with stream set to NULL when
 		being used by the default implementation of ValueLocked() and
 		StoreValueLocked(). */
@@ -209,7 +209,7 @@ public:
 												const struct iovec *vector, ssize_t count, uint32_t flags);
 			//!	Block until all data has been written to storage.
 	virtual	status_t				SyncLocked();
-	
+
 	//@}
 
 	//  ------------------------------------------------------------------
@@ -223,7 +223,7 @@ public:
 
 		You are guaranteed that the datum will not be unlocked between the
 		start and end calls.
-		
+
 		@note These functions will be called with stream set to NULL when
 		being used by the default implementation of ValueLocked() and
 		StoreValueLocked(). */
@@ -274,10 +274,10 @@ public:
 	//@{
 								Stream(	const SContext& context, const sptr<BStreamDatum>& datum,
 										uint32_t mode, uint32_t type, const sptr<IBinder>& editor);
-	
+
 			//!	Return the available stream interfaces based on the open mode.
 	virtual	SValue				Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
-	
+
 protected:
 	virtual						~Stream();
 			//!	Attach to the BStreamDatum and set type code / erase as requested.
@@ -344,7 +344,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::storage
+} } // namespace os::storage
 #endif
 
 #endif // _STORAGE_STREAMDATUM_H

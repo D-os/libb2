@@ -3,7 +3,7 @@
 # normally export them.
 set methodfilter=[^a-z].*
 
-set namespace=palmos::dmprovider
+set namespace=os::dmprovider
 
 set class=BSchemaDatabaseNode
 	export all
@@ -17,7 +17,7 @@ set class=BSchemaRowIDJoin::RowNode
 	hide function Context
 set class=BSchemaRowIDJoin::JoinIterator
 	export all
-	
+
 set class=BSchemaTableNode
 	export all
 	hide function Context
@@ -32,4 +32,4 @@ set class=BSchemaTableNode::RowNode
 	hide function Context
 set class=BSchemaTableNode::QueryIterator
 	export all
-	
+

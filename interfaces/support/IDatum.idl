@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -20,7 +20,7 @@
 	@ingroup CoreSupport
 	@brief These Binder interfaces and classes provide a rich, standard
 	data model for the rest of the system to use.
-	
+
 	The core data model
 	API is expressed in four interfaces: IDatum, INode, IIterable,
 	and ICatalog.  In additional, helper classes are provided to with
@@ -29,7 +29,7 @@
 	classes.
 */
 
-namespace palmos {
+namespace os {
 namespace support {
 
 //!	Interface to a single piece of data, such as a file.
@@ -45,7 +45,7 @@ namespace support {
 	IByteOutput, IByteSeekable) that read and/or write a raw stream of bytes.
 	You can also view it as a container for a single piece of data, in which
 	case you retrieve and write it as a single SValue object type.
-	
+
 	In general you will always be able to Open() the contents of a datum, but
 	there will be many times when you can't retrieve it directly as an SValue.
 	For example, if the datum is more than 4KB, it will exceed the current IPC
@@ -56,7 +56,7 @@ namespace support {
 	directly without wrapping it in a datum.  The role of the datum is really
 	to provide a Binder object for data that otherwise is not itself an object.
 
-	The CopyTo() and CopyFrom() methods allow the datum to implement optimized 
+	The CopyTo() and CopyFrom() methods allow the datum to implement optimized
 	opying paths.  The BGenericDatum base class implements both of these by either
 	manually copying the data (reading from the source and writing to the
 	destination) if NO_COPY_REDIRECTION is set, or calling the matching version
@@ -86,7 +86,7 @@ interface IDatum
 	};
 
 	enum
-	{   
+	{
 		//!	Used with CopyTo() and CopyFrom() to prevent one from calling the other.
 		/*!	You will not normally use this flag yourself.  Instead,
 			implementations of IDatum will use it when redirecting
@@ -113,7 +113,7 @@ properties:
 		DatumChanged event.
 	*/
 	SValue value;
-	
+
 methods:
 	//! Access data as stream/storage.
 	/*!	@param[in] mode The desired open mode: READ_ONLY,
@@ -166,4 +166,4 @@ events:
 	void DatumChanged(IDatum who, IBinder editor, off_t start, off_t length);
 }
 
-} }	// namespace palmos::support
+} }	// namespace os::support

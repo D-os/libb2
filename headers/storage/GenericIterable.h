@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -25,7 +25,7 @@
 #include <support/SortedVector.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 using namespace support;
 #endif
@@ -77,7 +77,7 @@ B_CONST_STRING_VALUE_SMALL(BV_ITERABLE_WHERE_OP,	"op", );
 
 //!	Specify row ordering for IIterable::NewIterator().
 /*!	This is constructed as a set of <code>{index->column_name->order}</code> mappings,
-	where @a order can be a combination of B_ORDER_BY_ASCENDING, 
+	where @a order can be a combination of B_ORDER_BY_ASCENDING,
 	B_ORDER_BY_DESCENDING, B_ORDER_BY_CASELESS, and B_ORDER_BY_CASED.  The
 	@a index is used to control the order of multiple columns being sorted.
 	If you are only sorting by one column, you can drop that part and simply
@@ -154,7 +154,7 @@ public:
 				To map the input columns to multiple columns in the SQL query, change
 				@a inoutColumnName to a complex mapping of the same form as BV_ITERABLE_ORDER_BY.
 				In that case, @a inoutOrder will be ignored.
-				
+
 				Like MapSQLColumn(), you can set @a inoutColumnName to B_NULL_VALUE or an error
 				code to skip the column or return an error, respectively. */
 	virtual	void				MapSQLOrderColumn(SValue* inoutColumnName, SValue* inoutOrder) const;
@@ -384,7 +384,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::storage
+} } // namespace os::storage
 #endif
 
 #endif // _STORAGE_GENERICITERABLE_H

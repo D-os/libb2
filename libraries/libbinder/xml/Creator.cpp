@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -16,9 +16,9 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace xml {
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 class BCreatorParseContext : public BXMLParseContext
@@ -26,25 +26,25 @@ class BCreatorParseContext : public BXMLParseContext
 public:
 						BCreatorParseContext(sptr<BCreator> creator);
 	virtual				~BCreatorParseContext();
-	
+
 	virtual status_t	OnStartTag(				SString		& name,
 												SValue		& attributes		);
-									
+
 	virtual status_t	OnEndTag(				SString		& name				);
-	
+
 	virtual status_t	OnTextData(				const char	* data,
 												int32_t		size				);
-	
+
 	virtual status_t	OnCData(				const char	* data,
 												int32_t		size				);
-	
+
 	virtual status_t	OnComment(				const char	* data,
 												int32_t		size				);
-	
+
 	virtual status_t	OnProcessingInstruction(SString		& target,
 												SString		& data				);
-	
-				
+
+
 #if BUILD_TYPE == BUILD_TYPE_DEBUG
 	virtual status_t	OnError(status_t error, bool fatal, int32_t debugLineNo,
 									uint32_t code = 0, void * data = NULL);
@@ -52,7 +52,7 @@ public:
 
 private:
 	status_t	do_text(const sptr<BCreator>& top);
-	
+
 	SVector<sptr<BCreator> >	m_creators;
 	SString					m_textData;
 	enum {TEXT, COMMENT, BLAH_PADDING=0xffffffff}	m_textType;
@@ -89,7 +89,7 @@ BCreatorParseContext::OnStartTag(	SString		& name,
 	return B_OK;
 }
 
-									
+
 status_t
 BCreatorParseContext::OnEndTag(		SString		& name				)
 {
@@ -103,7 +103,7 @@ BCreatorParseContext::OnEndTag(		SString		& name				)
 	if (err != B_OK) return err;
 	return B_OK;
 }
-	
+
 status_t
 BCreatorParseContext::OnTextData(	const char	* data,
 									int32_t		size				)
@@ -117,7 +117,7 @@ BCreatorParseContext::OnTextData(	const char	* data,
 	m_textType = TEXT;
 	return B_OK;
 }
-	
+
 status_t
 BCreatorParseContext::OnCData(		const char	* data,
 									int32_t		size				)
@@ -212,28 +212,28 @@ BCreator::OnStartTag(			SString			& /*name*/,
 	return B_OK;
 }
 
-									
+
 status_t
 BCreator::OnEndTag(				SString		& /*name*/				)
 {
 	return B_OK;
 }
 
-	
+
 status_t
 BCreator::OnText(				SString		& /*data*/				)
 {
 	return B_OK;
 }
 
-	
+
 status_t
 BCreator::OnComment(			SString		& /*data*/				)
 {
 	return B_OK;
 }
 
-	
+
 status_t
 BCreator::OnProcessingInstruction(	SString		& /*target*/,
 									SString		& /*data*/			)
@@ -250,5 +250,5 @@ BCreator::Done()
 
 #if _SUPPORTS_NAMESPACE
 }; // namespace xml
-}; // namespace palmos
+}; // namespace os
 #endif

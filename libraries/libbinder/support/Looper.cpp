@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -20,7 +20,7 @@
 #if SUPPORTS_BINDER_IPC_PROFILING
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -84,7 +84,7 @@ void PrintBinderIPCProfile()
 
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif
@@ -94,7 +94,7 @@ void PrintBinderIPCProfile()
 // ----------------------------------------------------------------
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -115,7 +115,7 @@ static inline sptr<BProcess> default_team()
 				SysThreadDelay(B_MILLISECONDS(2), B_RELATIVE_TIMEOUT);
 		}
 	}
-	
+
 	sptr<BProcess> team;
 	if (g_defaultProcess->AttemptAcquire(g_defaultProcess)) {
 		team = g_defaultProcess;
@@ -194,7 +194,7 @@ SLooper* SLooper::This()
 
 	sptr<BProcess> team(default_team());
 	if(team == NULL) return NULL;
-	
+
 	return new SLooper(team);
 }
 
@@ -239,12 +239,12 @@ bool
 SLooper::PrefersProcesses()
 {
 	if (!SupportsProcesses()) return false;
-	
+
 	char* singleproc = getenv("BINDER_SINGLE_PROCESS");
 	return !(singleproc && atoi(singleproc) != 0);
 }
-		
-int32_t 
+
+int32_t
 SLooper::Thread()
 {
 	return This()->m_thid;
@@ -256,13 +256,13 @@ SLooper::Process()
 	return This()->m_team;
 }
 
-int32_t 
+int32_t
 SLooper::ProcessID()
 {
 	return This()->m_teamID;
 }
 
-status_t 
+status_t
 SLooper::InitMain(const sptr<BProcess>& team)
 {
 	static bool initMainCalled=false;
@@ -287,7 +287,7 @@ SLooper::InitMain(const sptr<BProcess>& team)
 	return err;
 }
 
-status_t 
+status_t
 SLooper::InitOther(const sptr<BProcess>& team)
 {
 	#if BINDER_DEBUG_LIB
@@ -311,7 +311,7 @@ struct spawn_thread_info
 SysHandle SLooper::SpawnThread(thread_func function_name, const char *thread_name, int32_t priority, void *arg)
 {
 	SysHandle thid;
-	
+
 //	bout << "SLooper: " << This() << " (" << find_thread(NULL) << ") SpwanThread: entering" << endl;
 #if BINDER_DEBUG_LIB
 	spawn_thread_info* info = (spawn_thread_info*)malloc(sizeof(spawn_thread_info));
@@ -319,7 +319,7 @@ SysHandle SLooper::SpawnThread(thread_func function_name, const char *thread_nam
 		info->parent = This();
 		info->func = function_name;
 		info->arg = arg;
-		SysThreadCreate(NULL, thread_name, priority, sysThreadStackUI, 
+		SysThreadCreate(NULL, thread_name, priority, sysThreadStackUI,
 		   (SysThreadEnterFunc *) _ThreadEntry, info, &thid);
 	} else {
 		thid = B_NO_MEMORY;
@@ -329,7 +329,7 @@ SysHandle SLooper::SpawnThread(thread_func function_name, const char *thread_nam
 	if (SysThreadCreate(NULL, thread_name, priority, sysThreadStackUI, (SysThreadEnterFunc*) function_name, arg, &thid))
 		return 0;
 #endif
-	
+
 //	bout << "SLooper: " << This() << " (" << find_thread(NULL) << ") SpwanThread: exiting" << endl;
 	return thid;
 }
@@ -356,7 +356,7 @@ SLooper::GetWeakProxyForHandle(int32_t handle)
 	return Process()->GetWeakProxyForHandle(handle);
 }
 
-status_t 
+status_t
 SLooper::ExpungeHandle(int32_t handle, IBinder* binder)
 {
 	Process()->ExpungeHandle(handle, binder);
@@ -369,7 +369,7 @@ SLooper::CatchRootObjects(catch_root_func func)
 	This()->_CatchRootObjects(func);
 }
 
-bool 
+bool
 SLooper::_ResumingScheduling()
 {
 	SLooper* loop = This();
@@ -378,7 +378,7 @@ SLooper::_ResumingScheduling()
 	return resuming;
 }
 
-void 
+void
 SLooper::_ClearSchedulingResumed()
 {
 	This()->m_flags &= ~kSchedulingResumed;
@@ -461,7 +461,7 @@ void SLooper::_ShutdownLoopers()
 		// Get this looper's team to start shutting
 		// down.
 		cur->m_team->Shutdown();
-		
+
 		// Make sure the looper wakes up right away,
 		// to expedite the shutdown process.
 		cur->_Signal();
@@ -494,5 +494,5 @@ void SLooper::_Cleanup()
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

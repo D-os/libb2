@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -40,7 +40,7 @@
 #define m_maxAvail _reserved[1]
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -59,7 +59,7 @@ struct vector_hist
 {
 	size_t		count;
 	hist_item*	items;
-	
+
 	vector_hist()
 		:	count(0), items(NULL)
 	{
@@ -73,12 +73,12 @@ struct vector_hist
 	{
 		if (items) free(items);
 	}
-	
+
 	vector_hist& operator=(const vector_hist& o)
 	{
 		if (items) free(items);
 		count = o.count;
-		
+
 		if (o.items) {
 			items = (hist_item*)malloc(sizeof(hist_item)*count);
 			if (items) memcpy(items, o.items, sizeof(hist_item)*count);
@@ -86,10 +86,10 @@ struct vector_hist
 		} else {
 			items = NULL;
 		}
-		
+
 		return *this;
 	}
-	
+
 	void accum(size_t size)
 	{
 	#if 1
@@ -117,7 +117,7 @@ struct vector_hist
 			}
 		}
 	#endif
-	
+
 		items = (hist_item*)realloc(items, sizeof(hist_item)*(count+1));
 		if (items) {
 			if (low < count)
@@ -129,7 +129,7 @@ struct vector_hist
 			count = 0;
 		}
 	}
-	
+
 	void print()
 	{
 		for (size_t i=0; i<count; i++) {
@@ -142,7 +142,7 @@ struct vector_stats
 {
 	mutable atomic_int	lockCount;
 	mutable sem_id		lockSem;
-	
+
 	size_t				hits;
 	size_t				stackToHeap;
 	size_t				heapToStack;
@@ -155,7 +155,7 @@ struct vector_stats
 	vector_hist			shrinkToCount;
 	vector_hist			growToBytes;
 	vector_hist			shrinkToBytes;
-	
+
 	vector_stats()
 	{
 		lockCount = 0;
@@ -186,21 +186,21 @@ struct vector_stats
 	{
 		SysSemaphoreDestroy(lockSem);
 	}
-	
+
 	void lock() const
 	{
 		if (atomic_fetch_inc(&lockCount) >= 1) {
 			SysSemaphoreWait(lockSem, B_WAIT_FOREVER, 0);
 		}
 	}
-	
+
 	void unlock() const
 	{
 		if (atomic_fetch_dec(&lockCount) > 1){
 			SysSemaphoreSignal(lockSem);
 		}
 	}
-	
+
 	bool accumDestroy(size_t used, size_t avail, size_t elem)
 	{
 		lock();
@@ -238,14 +238,14 @@ struct vector_stats
 		stackToHeap++;
 		unlock();
 	}
-	
+
 	void accumHeapToStack()
 	{
 		lock();
 		heapToStack++;
 		unlock();
 	}
-	
+
 	// NOTE: Can't use bout here because it uses SAtom and SLocker, which
 	// in turn use SVector for their debugging implementations.
 	void print()
@@ -322,14 +322,14 @@ static void AccumVectorHeapToStack()
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif
 
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -420,11 +420,11 @@ SAbstractVector&	SAbstractVector::operator=(const SAbstractVector& o)
 		} else {
 			MakeEmpty();
 		}
-	
+
 	} else {
 		ErrFatalError("SAbstractVector element sizes do not match");
 	}
-	
+
 #if SUPPORTS_VECTOR_PROFILING
 	if (g_profileLevel.Get() > 0) {
 		if (m_maxSize < (int32_t)m_size) m_maxSize = m_size;
@@ -451,7 +451,7 @@ status_t SAbstractVector::SetSize(size_t total_count, const void *protoElement)
 			else
 				PerformConstruct(d+(m_size*m_elementSize), total_count - m_size);
 			m_size = total_count;
-		
+
 		} else {
 			return B_NO_MEMORY;
 		}
@@ -459,7 +459,7 @@ status_t SAbstractVector::SetSize(size_t total_count, const void *protoElement)
 	else {
 		RemoveItemsAt(total_count, m_size - total_count);
 	}
-	
+
 	return B_OK;
 }
 
@@ -518,7 +518,7 @@ ssize_t SAbstractVector::AddVectorAt(const SAbstractVector& o, size_t index)
 		}
 		return m_size;
 	}
-	
+
 	ErrFatalError("SAbstractVector element sizes do not match");
 	return B_BAD_TYPE;
 }
@@ -683,7 +683,7 @@ void SAbstractVector::Swap(SAbstractVector& o)
 uint8_t* SAbstractVector::grow(size_t amount, size_t factor, size_t pos)
 {
 	const size_t total_needed = m_size+amount;
-	
+
 	uint8_t* d = edit_data();
 
 	if (total_needed > m_avail) {
@@ -728,7 +728,7 @@ uint8_t* SAbstractVector::grow(size_t amount, size_t factor, size_t pos)
 				}
 				m_data.heap = alloc;
 				m_avail = can_use;
-			
+
 #if SUPPORTS_VECTOR_PROFILING
 				AccumVectorGrow(m_avail,m_elementSize);
 				if (g_profileLevel.Get() > 0) {
@@ -748,7 +748,7 @@ uint8_t* SAbstractVector::grow(size_t amount, size_t factor, size_t pos)
 			ErrFatalError("SAbstractVector::grow -- total_needed < m_localSpace, but total_needed > m_avail!");
 		}
 	}
-	
+
 	if (pos < m_size) {
 		// If no memory changes have occurred, but we are growing inside
 		// the vector, then just move those elements in-place.
@@ -758,7 +758,7 @@ uint8_t* SAbstractVector::grow(size_t amount, size_t factor, size_t pos)
 							d+(pos*m_elementSize),
 							(m_size-pos));
 	}
-	
+
 #if SUPPORTS_VECTOR_PROFILING
 	if (g_profileLevel.Get() > 0) {
 		if (m_maxSize < (int32_t)m_size) m_maxSize = m_size;
@@ -775,7 +775,7 @@ uint8_t* SAbstractVector::shrink(size_t amount, size_t factor, size_t pos)
 	const size_t total_needed = m_size - amount;
 
 	uint8_t* d = edit_data();
-	
+
 	if (total_needed <= m_localSpace) {
 		// Needed size now fits in local data area...
 		if (m_avail > m_localSpace) {
@@ -892,12 +892,12 @@ status_t SAbstractVector::SetFromValue(const SValue& value)
 
 	size_t count = 0;
 	if (value.IsSimple()) {
-		// If we have a simple value, then the user treated the vector 
+		// If we have a simple value, then the user treated the vector
 		// elements as a blob of bits, we can calculate
 		// the size based on the length and element size.
 		// The byteLength was calculated as:
 		// byteLength = sizeof(fixed_array_header) + (elementSize*count);
-		// So the count is... 
+		// So the count is...
 		// (byteLength - sizeof(fixed_array_header))/elementSize = count;
 		// (Notice that checking element size for match with header comes
 		// in BArrayConstructHelper method.)
@@ -911,7 +911,7 @@ status_t SAbstractVector::SetFromValue(const SValue& value)
 		// each element, deduce the count from number of mappings
 		count = value.CountItems();
 	}
-	
+
 	this->MakeEmpty();
 	// check if we have a zero length vector
 	// if so, MakeEmpty is all we need to do...
@@ -974,5 +974,5 @@ status_t SAbstractVector::_ReservedUntypedVector9() { return B_UNSUPPORTED; }
 status_t SAbstractVector::_ReservedUntypedVector10() { return B_UNSUPPORTED; }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

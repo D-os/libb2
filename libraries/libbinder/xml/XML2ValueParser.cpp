@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,9 +18,9 @@
 #include <support/StdIO.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace xml {
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 static int32_t gID = 0;
@@ -55,28 +55,28 @@ BXML2ValueCreator::BXML2ValueCreator(SValue &targetValue, const SValue &attribut
 		m_value = references[ref];
 		m_isReference = true;
 	}
-	
+
 	SValue key=attributes[kIDAttribute];
 	status_t err;
-	
+
 	if (key.IsDefined())
 	{
 		SString key_type;
-		
+
 		key_type = attributes[kIDTypeAttribute].AsString(&err);
 		if (err != B_OK)
 			key_type = "string";
-		
+
 		if (key_type == "string")
 			m_key = SValue::String(key.AsString());
 		else if (key_type == "int32_t")
 		{
 			int64_t val;
 			status_t result=ParseSignedInteger(key.AsString(),0x7fffffff,&val);
-			
+
 			if (result<B_OK)
 				return ;
-			
+
 			m_key = SValue::Int32(static_cast<int32_t>(val));
 		}
 		else
@@ -84,20 +84,20 @@ BXML2ValueCreator::BXML2ValueCreator(SValue &targetValue, const SValue &attribut
 			return ;
 		}
 	}
-	else	
+	else
 		m_key = B_WILD_VALUE;
 
 	SValue dataType = attributes[kTypeAttribute];
 	if (!dataType.IsDefined())
 		m_dataType = "wild";
 	m_dataType = dataType.AsString();
-	
+
 	SValue rawTypeCode = attributes[kTypeCodeAttribute];
 	if (rawTypeCode.IsDefined())
 		m_rawTypeCode = B_TYPE_CODE(rawTypeCode.AsInt32());
 	else
 		m_rawTypeCode = 0;
-	
+
 	SValue rawSize = attributes[kSizeAttribute];
 	if (rawSize.IsDefined())
 		m_rawSize = rawSize.AsInt32();
@@ -111,7 +111,7 @@ BXML2ValueCreator::BXML2ValueCreator(SValue &targetValue, const SValue &attribut
 	}
 
 	m_data.Truncate(0);
-	
+
 }
 
 status_t
@@ -140,7 +140,7 @@ BXML2ValueCreator::OnText(		SString			& data			)
 	if (m_status != B_OK) return m_status;
 	if (m_isReference && !data.IsOnlyWhitespace()) return B_BAD_VALUE;
 	m_data.Append(data);
-	
+
 	return B_OK;
 }
 
@@ -183,7 +183,7 @@ BXML2ValueCreator::Done()
 		unsigned char *data = d;
 		const unsigned char *p = (const unsigned char *)m_data.String();
 		size_t length = 0;
-		
+
 		while (*p)
 		{
 			if (*p == '&')
@@ -221,7 +221,7 @@ BXML2ValueCreator::Done()
 				length++;
 			}
 		}
-#if 0		
+#if 0
 		bout << "*****************************" << endl;
 		bout << "m_key = " << m_key << endl;
 		bout << "m_rawSize is: " << m_rawSize << endl;
@@ -229,7 +229,7 @@ BXML2ValueCreator::Done()
 		bout << SHexDump(data, m_rawSize) << endl;
 #endif
 		m_value.Assign(m_rawTypeCode, data, m_rawSize);
-		
+
 		free(data);
 #if 0
 		bout << "BXML2ValueCreator::Done with m_dataType == raw m_data: " << m_data << endl;
@@ -240,10 +240,10 @@ BXML2ValueCreator::Done()
 	else if (!m_data.IsOnlyWhitespace())
 	{
 		m_data.Trim();
-		
+
 		status_t result;
 		int64_t val;
-		
+
 		if (m_dataType == "string")
 		{
 			m_value = SValue::String(m_data);
@@ -251,46 +251,46 @@ BXML2ValueCreator::Done()
 		else if (m_dataType == "int8_t")
 		{
 			result = ParseSignedInteger(m_data,0x7f,&val);
-			
+
 			if (result<B_OK)
 				return B_BAD_DATA;
-				
+
 			m_value = SValue::Int8(static_cast<int8_t>(val));
 		}
 		else if (m_dataType == "int16_t")
 		{
 			result = ParseSignedInteger(m_data,0x7fff,&val);
-			
+
 			if (result<B_OK)
 				return B_BAD_DATA;
-				
+
 			m_value = SValue::Int16(static_cast<int16_t>(val));
 		}
 		else if (m_dataType == "int32_t")
 		{
 			result = ParseSignedInteger(m_data,0x7fffffff,&val);
-			
+
 			if (result<B_OK)
 				return B_BAD_DATA;
-				
+
 			m_value = SValue::Int32(static_cast<int32_t>(val));
 		}
 		else if (m_dataType == "int64_t")
 		{
 			result = ParseSignedInteger(m_data,0x7fffffffffffffffLL,&val);
-			
+
 			if (result<B_OK)
 				return B_BAD_DATA;
-				
+
 			m_value = SValue::Int64(val);
 		}
 		else if (m_dataType == "time")
 		{
 			result = ParseSignedInteger(m_data,0x7fffffffffffffffLL,&val);
-			
+
 			if (result<B_OK)
 				return B_BAD_DATA;
-				
+
 			m_value = SValue::Time(val);
 		}
 		else if (m_dataType == "bool")
@@ -306,22 +306,22 @@ BXML2ValueCreator::Done()
 		{
 			const char* ex = m_data.String();
 			float float_val = static_cast<float>(strtod(ex, const_cast<char**>(&ex)));
-			
+
 			m_value = SValue::Float(float_val);
 		}
 		else if (m_dataType == "double")
 		{
 			const char* ex = m_data.String();
 			double double_val = strtod(ex, const_cast<char**>(&ex));
-			
+
 			m_value = SValue::Double(double_val);
 		}
 		else
 			return B_BAD_DATA;
 	}
-	
+
 	m_data.Truncate(0);
-	
+
 	m_targetValue.JoinItem(m_key, m_value);
 	return B_OK;
 }
@@ -331,17 +331,17 @@ BXML2ValueCreator::ParseSignedInteger(const SString &from, int64_t maximum, int6
 {
 	status_t err;
 	*val = SValue(from).AsInt64(&err);
-	
+
 	if (err != B_OK)
 		return err;
-	
+
 	if ((*val)<(-maximum-1) || (*val)>maximum)
 		return B_ERROR;
-		
+
 	return B_OK;
 }
-								
+
 
 #if _SUPPORTS_NAMESPACE
-} } // palmos::xml
+} } // os::xml
 #endif

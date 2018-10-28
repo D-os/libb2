@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -20,7 +20,7 @@
 
 #ifdef __cplusplus
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 #endif
@@ -76,7 +76,7 @@ enum {
 enum {
 	// Special code to match any type code in comparisons.
 	B_ANY_TYPE 					= B_TYPE_CODE('any'),
-	
+
 	// Built-in value types.
 	B_UNDEFINED_TYPE			= B_TYPE_CODE(0),
 	B_WILD_TYPE					= B_TYPE_CODE('wld'),
@@ -86,7 +86,7 @@ enum {
 	B_FIXED_ARRAY_TYPE			= B_TYPE_CODE('arf'),
 	B_VARIABLE_ARRAY_TYPE		= B_TYPE_CODE('arv'),
 	B_ERROR_TYPE				= B_TYPE_CODE('err'),
-	
+
 	// Object types.
 	B_BINDER_TYPE				= B_TYPE_CODE('sb*'),
 	B_BINDER_WEAK_TYPE			= B_TYPE_CODE('wb*'),
@@ -97,7 +97,7 @@ enum {
 	B_ATOM_TYPE 				= B_TYPE_CODE('sa*'),
 	B_ATOM_WEAK_TYPE 			= B_TYPE_CODE('wa*'),
 	B_KEY_ID_TYPE				= B_TYPE_CODE('ky*'),
-	
+
 	// General types.
 	B_BOOL_TYPE 				= B_TYPE_CODE('bol'),	// Support Kit
 	B_INT8_TYPE 				= B_TYPE_CODE('i08'),
@@ -167,7 +167,7 @@ enum {
 
 #ifdef __cplusplus
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif

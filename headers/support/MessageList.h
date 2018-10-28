@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 #include <support/SupportDefs.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -39,7 +39,7 @@ enum {
 /*----------------------------------------------------------------------*/
 
 //!	List of SMessage objects, used to implement message queues.
-class SMessageList 
+class SMessageList
 {
 public:
 		/*! @name Creation and Destruction */
@@ -55,7 +55,7 @@ public:
 
 		//@}
 
-	
+
 		/*!	@name Queue Operations
 			These manage the message list as a queue, keeping the messages
 			sorted by their timestamp order. */
@@ -97,7 +97,7 @@ public:
 			@param[out] outRemoved Filled in with any message objects that were removed
 				from the queue.
 			@return Address of the message that was placed in the queue.
-			
+
 			@note If there are messages in the list with the same code
 			but @e before this one in time, the contents of @a msg will replace the
 			first of them and take that timestamp instead, removing all others.  In
@@ -152,7 +152,7 @@ public:
 		void			InsertAfter(SMessage* message, const SMessage* position);
 
 		//@}
-		
+
 		/*!	@name Removing
 			Low-level APIs for removing messages from the list. */
 		//@{
@@ -180,7 +180,7 @@ public:
 		void			MakeEmpty();
 
 		//@}
-		
+
 /*----- Private or reserved -----------------------------------------*/
 
 private:
@@ -201,7 +201,7 @@ _IMPEXP_SUPPORT const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io,
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_MESSAGELIST_H */

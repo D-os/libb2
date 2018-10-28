@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -15,7 +15,7 @@
 #include <xml/Parser.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace xml {
 #endif
 
@@ -40,14 +40,14 @@ status_t write_xml_data(const sptr<IByteOutput>& stream, const char *data, int32
 			while (*p) { if (c == *p) goto gotSegment; p++; };
 			end++;
 		}
-		
+
 		gotSegment:
 
 		if (end-start) stream->Write(start,end-start);
 		if (*p) { stream->Write(entities[p-markup],entityLengths[p-markup]); end++; }
 		start=end;
 	}
-	
+
 	return B_OK;
 }
 
@@ -66,7 +66,7 @@ BOutputStream::~BOutputStream()
 	m_stream->Write("\n",1);
 }
 
-void 
+void
 BOutputStream::Indent()
 {
 	if (m_lastPrettyDepth == m_depth) {
@@ -85,11 +85,11 @@ BOutputStream::Indent()
 
 const char *xmlHeader = "<?xml version=\"1.0\"?>";
 
-status_t 
+status_t
 BOutputStream::StartTag(SString &name, SValue &attr)
 {
 	SValue key, value;
-	
+
 	if (m_openStartTag) {
 		m_stream->Write(">",1);
 		m_openStartTag = false;
@@ -99,12 +99,12 @@ BOutputStream::StartTag(SString &name, SValue &attr)
 		m_stream->Write(xmlHeader,strlen(xmlHeader));
 		m_depth = 0;
 	};
-	
+
 	Indent();
-	
+
 	m_stream->Write("<",1);
 	m_stream->Write(name.String(),name.Length());
-	
+
 	void * cookie;
 	while (B_OK == attr.GetNextItem(&cookie,&key,&value)) {
 		SString k = key.AsString();
@@ -115,7 +115,7 @@ BOutputStream::StartTag(SString &name, SValue &attr)
 		write_xml_data(m_stream,v.String(),v.Length());
 		m_stream->Write("\"",1);
 	}
-	
+
 	m_openStartTag = true;
 //	m_stream.Write(">",1);
 //	m_isLeaf = (formattingHints & stfLeaf);
@@ -127,7 +127,7 @@ BOutputStream::StartTag(SString &name, SValue &attr)
 	return B_OK;
 }
 
-status_t 
+status_t
 BOutputStream::EndTag(SString &name)
 {
 	m_depth--;
@@ -151,7 +151,7 @@ BOutputStream::EndTag(SString &name)
 	return B_OK;
 }
 
-status_t 
+status_t
 BOutputStream::TextData(const char *data, int32_t size)
 {
 	if (m_openStartTag) {
@@ -162,7 +162,7 @@ BOutputStream::TextData(const char *data, int32_t size)
 	return write_xml_data(m_stream,data,size);
 }
 
-status_t 
+status_t
 BOutputStream::Comment(const char *data, int32_t size)
 {
 	(void) data;
@@ -173,5 +173,5 @@ BOutputStream::Comment(const char *data, int32_t size)
 
 #if _SUPPORTS_NAMESPACE
 }; // namespace xml
-}; // namespace palmos
+}; // namespace os
 #endif

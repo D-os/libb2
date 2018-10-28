@@ -1,24 +1,24 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
  */
 
 // Palm OS headers
-#include <SysThread.h>		
+#include <SysThread.h>
 #include <CmnErrors.h>
 #include <ErrorMgr.h>
 #include <libpalmroot.h>
 #include <support/Errors.h>
 
 // POSIX headers
-#include <pthread.h>	
+#include <pthread.h>
 #include <semaphore.h>
 #include <assert.h>
 #include <errno.h>
@@ -103,7 +103,7 @@ extern "C" status_t SysSemaphoreCreate(uint32_t initialCount, uint32_t maxCount,
 		DbgOnlyFatalError("Out-of-range maxCount supplied to SysSemaphoreCreate");
 		return sysErrOutOfRange;
 	}
-	
+
 	if (initialCount > maxCount)
 	{
 		DbgOnlyFatalError("initialCount greater than maxCount supplied to SysSemaphoreCreate");
@@ -113,11 +113,11 @@ extern "C" status_t SysSemaphoreCreate(uint32_t initialCount, uint32_t maxCount,
 	// ?? note: maxCount is ignored currently!
 
 	DbgOnlyFatalErrorIf(flags != 0, "Non-zero flags supplied to SysSemaphoreCreate");
-	
+
 	sem_t* sem = (sem_t*) malloc(sizeof(sem_t));
 	if (sem == NULL)
 		return sysErrNoFreeResource;
-		
+
 	int result = sem_init(sem, 0, initialCount);
 	int err = errno;
 
@@ -133,11 +133,11 @@ extern "C" status_t SysSemaphoreCreate(uint32_t initialCount, uint32_t maxCount,
 
 		if (err == EPERM)
 			return sysErrPermissionDenied;
-		
+
 		// ?
 		return sysErrPermissionDenied; //B_ERROR
 	}
-	
+
 	if (outSemaphore)
 		* (sem_t**) outSemaphore = sem;
 
@@ -161,7 +161,7 @@ extern "C" status_t SysSemaphoreDestroy(SysHandle semaphore)
 
 		if (err == EBUSY)
 			return sysErrBusy; //sysErrPermissionDenied
-		
+
 		// ?
 		return sysErrPermissionDenied; //B_ERROR
 	}
@@ -188,7 +188,7 @@ extern "C" status_t SysSemaphoreSignal(SysHandle semaphore)
 		// ?
 		return sysErrPermissionDenied; //B_ERROR
 	}
-	
+
 	return errNone;
 }
 
@@ -211,17 +211,17 @@ extern "C" status_t SysSemaphoreWait(SysHandle semaphore, timeoutFlags_t iTimeou
 	sem_t* sem = (sem_t*) semaphore;
 	if (sem == NULL)
 		return sysErrParamErr;
-    
+
     int result = 0;
     int err = 0;
-      
-	if (iTimeoutFlags == B_WAIT_FOREVER) 
+
+	if (iTimeoutFlags == B_WAIT_FOREVER)
 	{
 		for (;;)
 		{
 			result = sem_wait(sem);
 			err = errno;
-			
+
 			// If debugging with gdb, we'll get EINTR when single-stepping on
 			// another thread. Presumably a signal is causing this thread to
 			// wake early
@@ -230,7 +230,7 @@ extern "C" status_t SysSemaphoreWait(SysHandle semaphore, timeoutFlags_t iTimeou
 
 			break;
 		}
-		
+
 		if (result == -1)
 		{
 			if (err == EINVAL)
@@ -242,28 +242,28 @@ extern "C" status_t SysSemaphoreWait(SysHandle semaphore, timeoutFlags_t iTimeou
 			// ?
 			return sysErrPermissionDenied; //B_ERROR
 		}
-		
+
 		return errNone;
 	}
 	else if ((iTimeoutFlags == B_RELATIVE_TIMEOUT) || (iTimeoutFlags == B_ABSOLUTE_TIMEOUT))
 	{
 		struct timespec absTimeOut;
-		
+
 		if (iTimeoutFlags == B_RELATIVE_TIMEOUT)
 		{
 			clock_gettime(CLOCK_REALTIME, &absTimeOut);
-			palmos::clock_timespec_add_nano(&absTimeOut, iTimeout);
+			os::clock_timespec_add_nano(&absTimeOut, iTimeout);
 		}
 		else /* (iTimeoutFlags == B_ABSOLUTE_TIMEOUT) */
 		{
-			palmos::clock_timespec_from_nano(&absTimeOut, iTimeout);
+			os::clock_timespec_from_nano(&absTimeOut, iTimeout);
 		}
 
 		for (;;)
 		{
 			result = sem_timedwait(sem, &absTimeOut);
 			err = errno;
-			
+
 			// If debugging with gdb, we'll get EINTR when single-stepping on
 			// another thread. Presumably a signal is causing this thread to
 			// wake early
@@ -272,7 +272,7 @@ extern "C" status_t SysSemaphoreWait(SysHandle semaphore, timeoutFlags_t iTimeou
 
 			break;
 		}
-		
+
 		if (result == -1)
 		{
 			if (err == EINVAL)
@@ -284,9 +284,9 @@ extern "C" status_t SysSemaphoreWait(SysHandle semaphore, timeoutFlags_t iTimeou
 			// ETIMEDOUT
 			return sysErrTimeout;
 		}
-		
+
 		return errNone;
-	} 
+	}
 	else if (iTimeoutFlags == B_POLL)
 	{
 		result = sem_trywait(sem);
@@ -302,10 +302,10 @@ extern "C" status_t SysSemaphoreWait(SysHandle semaphore, timeoutFlags_t iTimeou
 			// ETIMEDOUT
 			return sysErrTimeout;
 		}
-		
+
 		return errNone;
-	} 
-	
+	}
+
 	DbgOnlyFatalError("Invalid TimeoutFlags supplied to SysSemaphoreWait");
 	return sysErrParamErr;
 }

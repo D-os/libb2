@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -39,9 +39,9 @@
 
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::package;
-using namespace palmos::storage;
-using namespace palmos::support;
+using namespace os::package;
+using namespace os::storage;
+using namespace os::support;
 #endif
 
 B_STATIC_STRING_VALUE_SMALL(value_get,	"get",);
@@ -146,12 +146,12 @@ SValue BHelp::Run(const ArgList& args)
 			return (const SValue&)SSimpleStatusValue(B_NAME_NOT_FOUND);
 		}
 
-		
+
 		// First sort the commands.  We don't want them printed
 		// in SValue's normal bag order.
 
 		SKeyedVector<SString, SString> commands;
-		
+
 		SIterator it(bin.ptr());
 		SValue key, value;
 		while (it.Next(&key, &value, INode::REQUEST_DATA) == B_OK)
@@ -159,7 +159,7 @@ SValue BHelp::Run(const ArgList& args)
 			SString str = key.AsString();
 			if (str != "") commands.AddItem(key.AsString(), value.AsString());
 		}
-		
+
 		// This is a built-in command.
 		commands.AddItem(kExit, SString::EmptyString());
 
@@ -433,7 +433,7 @@ SValue BComponents::Run(const ArgList& args)
 		SString path = filterVal.AsString();
 		SValue componentsValue;
 		status_t err = filterDir->Walk(&path, INode::REQUEST_DATA, &componentsValue);
-		
+
 		SValue key, value;
 		void* cookie = NULL;
 		while (componentsValue.GetNextItem(&cookie, &key, &value) == B_OK)
@@ -455,13 +455,13 @@ SValue BComponents::Run(const ArgList& args)
 		{
 			components.AddItem(key.AsString(), value);
 		}
-		
+
 		if (components.CountItems() == 0) {
 			TextError() << "components: failure returning full component list" << endl
 						<< "components: (due to IPC size limitations)" << endl;
 		}
 	}
-	
+
 	// Now print components to stdout.
 
 	const size_t NC = components.CountItems();
@@ -603,7 +603,7 @@ SValue BStopProcess::Run(const ArgList& args)
 		TextError() << "stop_process: no process specified" << endl;
 		return SValue::Status(B_BAD_VALUE);
 	}
-	
+
 	const sptr<IBinder> object(ArgToBinder(args[i]));
 	if (object == NULL) {
 		TextError() << "new_process: target process must be an object" << endl;
@@ -671,7 +671,7 @@ SValue BContextCommand::Run(const ArgList& args)
 				// do set the root object if it is not an ICatalog
 				set = NULL;
 			}
-		} 
+		}
 		else {
 			TextError() << "context: unknown option " << opt << endl;
 		}
@@ -751,7 +751,7 @@ SValue BSU::Run(const ArgList& args)
 			if (team == NULL) {
 				TextError() << "su: process argument '" << v << "' invalid" << endl;
 			}
-		} 
+		}
 		else {
 			TextError() << "su: unknown option " << opt << endl;
 		}
@@ -867,7 +867,7 @@ SValue BNew::Run(const ArgList& args)
 			if (team == NULL) {
 				TextError() << "new: process argument '" << val << "' invalid" << endl;
 			}
-		} 
+		}
 		else if (opt == "-c" || opt == "--context") {
 			i++;
 			SValue val = i < N ? args[i] : B_UNDEFINED_VALUE;
@@ -902,7 +902,7 @@ SValue BNew::Run(const ArgList& args)
 	}
 
 	const SValue serviceArgs = i < N ? args[i++] : B_UNDEFINED_VALUE;
-	
+
 	sptr<IBinder> binder = ( team == NULL
 		? context.New(service, serviceArgs)
 		: context.RemoteNew(service, team, serviceArgs) );
@@ -980,7 +980,7 @@ SValue BInvoke::Run(const ArgList& args)
 
 	const size_t N = args.CountItems();
 	size_t idx = 1;
-	
+
 	object = idx < N ? args[idx] : B_UNDEFINED_VALUE;
 	while (1) {
 		if (object == kDashi) {
@@ -1059,7 +1059,7 @@ SValue BPut::Run(const ArgList& args)
 
 	const size_t N = args.CountItems();
 	size_t idx = 1;
-	
+
 	object = idx < N ? args[idx] : B_UNDEFINED_VALUE;
 	while (1) {
 		if (object == kDashi) {
@@ -1126,7 +1126,7 @@ SValue BGet::Run(const ArgList& args)
 
 	const size_t N = args.CountItems();
 	size_t idx = 1;
-	
+
 	object = idx < N ? args[idx] : B_UNDEFINED_VALUE;
 	while (1) {
 		if (object == kDashi) {
@@ -1205,7 +1205,7 @@ SValue BLs::Run(const ArgList& args)
 	} else {
 		rootObj = Context().Root()->AsBinder();
 	}
-	
+
 	sptr<IIterable> dir;
 	SValue pathVal = optind < N ? args[optind] : B_UNDEFINED_VALUE;
 	if (!pathVal.IsDefined() || pathVal.Type() == B_STRING_TYPE) {
@@ -1222,7 +1222,7 @@ SValue BLs::Run(const ArgList& args)
 			}
 			catValue = SNode(rootDir).Walk(catPath);
 		}
-		
+
 		if (catValue.ErrorCheck() != B_OK) {
 			TextError() << "ls: error " << (void*)(intptr_t)catValue.ErrorCheck() << " retrieving path" << endl;
 			return (const SValue&)SSimpleStatusValue(catValue.ErrorCheck());
@@ -1231,9 +1231,9 @@ SValue BLs::Run(const ArgList& args)
 			TextError() << "ls: path not found: " << pathVal.AsString() << endl;
 			return (const SValue&)SSimpleStatusValue(B_ENTRY_NOT_FOUND);
 		}
-		
+
 		dir = interface_cast<IIterable>(catValue);
-		
+
 		if (dir == NULL) {
 			TextError() << "ls: not iterable: " << catValue << endl;
 			return (const SValue&)SSimpleStatusValue(B_BINDER_BAD_INTERFACE);
@@ -1246,7 +1246,7 @@ SValue BLs::Run(const ArgList& args)
 	// Retrieve items in this directory.
 	SIterator it(dir.ptr());
 	if (it.ErrorCheck() != B_OK) return (const SValue&)SSimpleStatusValue(it.ErrorCheck());
-	
+
 	//bout << "i got here!" << endl;
 	// Sort catalog items.
 	SValue key, value;
@@ -1450,7 +1450,7 @@ SValue BLookup::Run(const ArgList& args)
 	} else {
 		rootDir = Context().Root();
 	}
-	
+
 	const SString path = i < N ? ArgToPath(args[i]) : SString();
 	if (path == "") {
 		TextError() << "lookup: no path supplied" << endl;
@@ -1508,7 +1508,7 @@ SValue BMkdir::Run(const ArgList& args)
 	} else {
 		rootDir = Context().Root();
 	}
-	
+
 	SString fullpath = i < N ? ArgToPath(args[i]) : SString();
 
 	while(fullpath.PathLeaf()[0] == '\0') {
@@ -1517,12 +1517,12 @@ SValue BMkdir::Run(const ArgList& args)
 		fullpath = shorter;
 		if (fullpath == "") break;
 	}
-	
+
 	if (fullpath == "") {
 		TextError() << "mkdir: no path supplied" << endl;
 		return (const SValue&)SSimpleStatusValue(B_BAD_VALUE);
 	}
-	
+
 	SString leaf = SString(fullpath.PathLeaf());
 	SString path;
 	if (fullpath.PathGetParent(&path) == B_ENTRY_NOT_FOUND) {
@@ -1979,7 +1979,7 @@ SValue BCat::Run(const ArgList& args)
 	{
 		file = datum->Open(IDatum::READ_ONLY);
 	}
-	
+
 	sptr<IByteInput> byteInput = IByteInput::AsInterface(file);
 	if (byteInput == NULL)
 	{
@@ -1989,17 +1989,17 @@ SValue BCat::Run(const ArgList& args)
 		}
 		byteInput = ByteInput();
 	}
-	
+
 	SVector<uint8_t> buffer;
 	buffer.SetSize(16*1024);
-	
+
 	ssize_t amount;
 	do
 	{
 		amount = byteInput->Read(buffer.EditArray(), buffer.CountItems());
 		if (amount > 0) ByteOutput()->Write(buffer.Array(), amount);
 	} while (amount > 0);
-	
+
 	return (const SValue&)SSimpleStatusValue(amount >= 0 ? B_OK : amount);
 }
 
@@ -2022,11 +2022,11 @@ class Record
 {
 public:
 	Record(const sptr<ICatalog>& dir);
-	
+
 	void AddCreateDatum(const SString& name);
 	void AddCreateEntry(const SString& name);
 	void AddRemoveEntry(const SString& name);
-	
+
 	void ConfirmCreateEvent(const SString& name);
 	void ConfirmRemoveEvent(const SString& name);
 
@@ -2106,8 +2106,8 @@ void Record::ConfirmRemoveEvent(const SString& name)
 status_t BCheckNamespace::check_create_datum(const SString& path, const sptr<ICatalog>& dir)
 {
 	SString name = SValue::Int64(system_real_time()).AsString();
-	m_createRecords.AddItem(dir, name); 
-	
+	m_createRecords.AddItem(dir, name);
+
 	// first check to see if the directory supports creating datums
 	status_t err;
 	sptr<IDatum> datum = dir->CreateDatum(name, 0, &err);
@@ -2116,7 +2116,7 @@ status_t BCheckNamespace::check_create_datum(const SString& path, const sptr<ICa
 	// this record from the create event.
 	if (err == B_UNSUPPORTED)
 		m_createRecords.RemoveValueFor(dir);
-	
+
 }
 
 status_t BCheckNamespace::walk_namespace_data(const SString& name, const sptr<ICatalog>& dir)
@@ -2152,7 +2152,7 @@ status_t BCheckNamespace::walk_namespace_datum(const SString& name, const sptr<I
 			out << "key == NULL: '" << name << "'" << endl;
 			continue;
 		}
-		
+
 		if (binder == NULL)
 		{
 			bout << "datum == NULL: '" << name << "'" << indent << endl << "for key '" << key.AsString() << "'" << dedent << endl;
@@ -2161,7 +2161,7 @@ status_t BCheckNamespace::walk_namespace_datum(const SString& name, const sptr<I
 			continue;
 		}
 
-		
+
 		sptr<ICatalog> child = ICatalog::AsInterface(binder);
 
 		if (child != NULL)

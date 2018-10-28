@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -32,9 +32,9 @@
 #include "SettingsCatalog.h"
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::storage;
-using namespace palmos::support;
-using namespace palmos::xml;
+using namespace os::storage;
+using namespace os::support;
+using namespace os::xml;
 #endif
 
 #define DEBUG_SETTINGS_CATALOG	0
@@ -51,7 +51,7 @@ B_CONST_STRING_VALUE_LARGE	(key_timezone, 				"timezone",);
 SLocker BSettingsCatalog::m_rootLock("settings_directory_root_lock");
 sptr<INode> BSettingsCatalog::m_root = NULL;
 sptr<BSettingsTable> BSettingsCatalog::m_table = NULL;
- 
+
 // ##### Table #####################################################################
 
 BSettingsTable::BSettingsTable(const SContext& context, const sptr<INode>& root)
@@ -79,7 +79,7 @@ void BSettingsTable::InitAtom()
 
 	SString dir = get_system_directory();
 	dir.PathAppend("data");
-	
+
 	SString filename = dir;
 	filename.PathAppend("settings.xml");
 
@@ -107,13 +107,13 @@ void BSettingsTable::InitAtom()
 		power->Link((BObserver*)this, SValue(SValue::String("softReset"), SValue::String("softReset")), B_WEAK_BINDER_LINK);
 		m_powerLinked = true;
 	}
-	
+
 	if (sync != NULL)
 	{
 		sync->Link((BObserver*)this, SValue(SValue::String("syncing"), SValue::String("syncing")), B_WEAK_BINDER_LINK);
 		m_syncLinked = true;
 	}
-	
+
 	if (!m_powerLinked || !m_syncLinked)
 	{
 		// link the services directory if the services were not found
@@ -137,7 +137,7 @@ status_t BSettingsTable::add_entry_l(const sptr<IBinder>& binder, const SString&
 	status_t err = B_OK;
 	// if we are sync'ing create and the valuse to the cache.
 	sptr<CatalogEntry> record;
-	
+
 	if (m_syncing)
 	{
 		record = m_cache.ValueFor(binder.ptr());
@@ -156,7 +156,7 @@ status_t BSettingsTable::add_entry_l(const sptr<IBinder>& binder, const SString&
 			m_data.AddItem(binder.ptr(), record);
 		}
 	}
-	
+
 	sptr<IBinder> entry = record->data.ValueFor(name, modified);
 	if (entry == NULL)
 	{
@@ -175,8 +175,8 @@ status_t BSettingsTable::add_entry_l(const sptr<IBinder>& binder, const SString&
 		if (!isdir)
 		{
 			// if we are syncing and there is already a binder here
-			// we don't want to place the value in that binder. 
-			// if we do then when the xml is parsed it will overwrite 
+			// we don't want to place the value in that binder.
+			// if we do then when the xml is parsed it will overwrite
 			// the value in the datum by what was in the xml file.
 			// in write_out_cache we call the SetValue.
 			if (m_syncing)
@@ -196,7 +196,7 @@ status_t BSettingsTable::add_entry_l(const sptr<IBinder>& binder, const SString&
 	if (out_entry != NULL)
 		*out_entry = record->data.ValueFor(name);
 
-	// save only if we are not sync'ing		
+	// save only if we are not sync'ing
 	if (!m_syncing) Save();
 
 	return (err >= 0) ? B_OK : B_ERROR;
@@ -208,14 +208,14 @@ status_t BSettingsTable::RemoveEntry(const sptr<IBinder>& binder, const SString&
 
 	status_t err = B_NAME_NOT_FOUND;
 	bool found = false;
-	
+
 	sptr<CatalogEntry> record = m_data.ValueFor(binder.ptr(), &found);
 	if (record != NULL)
 	{
 		ssize_t index = record->data.RemoveItemFor(name);
 		err = (index >= 0) ? B_OK : B_NAME_NOT_FOUND;
 	}
-	
+
 	if (m_syncing)
 	{
 		record = m_cache.ValueFor(binder.ptr(), &found);
@@ -229,7 +229,7 @@ status_t BSettingsTable::RemoveEntry(const sptr<IBinder>& binder, const SString&
 	{
 		Save();
 	}
-	
+
 	return err;
 }
 
@@ -239,7 +239,7 @@ status_t BSettingsTable::RenameEntry(const sptr<IBinder>& binder, const SString&
 
 	status_t err = B_NAME_NOT_FOUND;
 	bool found = false;
-	
+
 	sptr<CatalogEntry> record;
 
 	record = m_data.ValueFor(binder.ptr());
@@ -258,7 +258,7 @@ status_t BSettingsTable::RenameEntry(const sptr<IBinder>& binder, const SString&
 			err = B_NAME_NOT_FOUND;
 		}
 	}
-	
+
 	if (m_syncing)
 	{
 		record = m_cache.ValueFor(binder.ptr());
@@ -276,7 +276,7 @@ status_t BSettingsTable::RenameEntry(const sptr<IBinder>& binder, const SString&
 	{
 		Save();
 	}
-	
+
 	return err;
 }
 
@@ -287,14 +287,14 @@ status_t BSettingsTable::Walk(const sptr<INode>& directory, SString* path, uint3
 	// XXX add path checking here!!!!
 	sptr<INode> currentDir = directory;
 	status_t err;
-	
+
 	do
 	{
 		SString name;
-		path->PathRemoveRoot(&name);		
-		
+		path->PathRemoveRoot(&name);
+
 		sptr<IBinder> binder = entry_for_l(currentDir->AsBinder(), name);
-		
+
 		if (binder != NULL)
 		{
 			if (path->Length() > 0)
@@ -352,21 +352,21 @@ sptr<INode> BSettingsTable::create_directory_l(const sptr<INode>& directory, con
 		*err = B_ENTRY_EXISTS;
 		return NULL;
 	}
-	
+
 	sptr<INode> dir = new BSettingsCatalog();
 	if (dir == NULL)
 	{
 		*err = B_NO_MEMORY;
 		return NULL;
 	}
-	
+
 	*err = add_entry_l(directory->AsBinder(), name, SValue::Binder(dir->AsBinder()), true);
 	if (*err != B_OK)
 	{
 		*err = B_NO_MEMORY;
 		return NULL;
 	}
-	
+
 	return dir;
 }
 
@@ -398,7 +398,7 @@ status_t BSettingsTable::EntryAtLocked(const sptr<IBinder>& binder, size_t index
 	{
 		*key = SValue::String(record->data.KeyAt(index));
 		*entry = record->data.ValueAt(index);
-		
+
 		if ((flags & INode::REQUEST_DATA))
 		{
 			sptr<IDatum> datum = IDatum::AsInterface(*entry);
@@ -444,13 +444,13 @@ sptr<IBinder> BSettingsTable::entry_for_l(const sptr<IBinder>& binder, const SSt
 	if (m_syncing)
 	{
 		sptr<CatalogEntry> record = m_cache.ValueFor(binder.ptr(), &found);
-		
+
 		if (found && (record != NULL))
 		{
 			entry = record->data.ValueFor(name, &found);
 		}
 	}
-	
+
 	// we are not sync'ing or it was not found in the cache
 	if (!found)
 	{
@@ -504,7 +504,7 @@ void BSettingsTable::parse_xml_file()
 			m_parsing = true;
 			ParseXML(this, new BXMLBufferSource(buffer, size), B_XML_DONT_EXPAND_CHARREFS);
 			m_parsing = false;
-			
+
 			free(buffer);
 		}
 	}
@@ -526,7 +526,7 @@ void BSettingsTable::write_xml_file()
 		SLocker::Autolock lock(m_lock);
 
 		sptr<ITextOutput> xml = (BTextOutput*)string.ptr();
-		
+
 		xml << "<settings>" << endl;
 		catalog_to_xml(m_root->AsBinder(), string);
 		xml << "</settings>" << endl;
@@ -550,7 +550,7 @@ void BSettingsTable::catalog_to_xml(const sptr<IBinder>& binder, const sptr<BStr
 
 	const sptr<CatalogEntry>& record = m_data.ValueFor(binder.ptr());
 	if (record == NULL) return;
-	
+
 	size_t size = record->data.CountItems();
 	for (size_t i = 0 ; i < size ; i++)
 	{
@@ -591,11 +591,11 @@ status_t BSettingsTable::OnStartTag(SString& tag, SValue& attributes, sptr<BCrea
 	else if (tag == "catalog")
 	{
 		SString name = attributes[key_name].AsString();
-		
+
 		SString path = name;
 		SValue value;
 		status_t err = this->Walk(m_currentCatalog, &path, INode::CREATE_CATALOG, &value);
-	
+
 		sptr<INode> dir = interface_cast<INode>(value);
 		m_stack.Push(m_currentCatalog);
 		m_currentCatalog = dir;
@@ -629,10 +629,10 @@ status_t BSettingsTable::OnEndTag(SString& tag)
 		{
 			add_entry_l(m_currentCatalog->AsBinder(), key.AsString(), value, false);
 		}
-		
+
 		m_value = SValue::Undefined();
 	}
-	
+
 	return B_OK;
 }
 
@@ -655,7 +655,7 @@ void BSettingsTable::EntryCreated(const sptr<INode>& node, const SString& name, 
 		binder->Link((BObserver*)this, SValue(SValue::String("syncing"), SValue::String("syncing")), B_WEAK_BINDER_LINK);
 		m_syncLinked = true;
 	}
-	
+
 	if (m_powerLinked && m_syncLinked)
 	{
 		// now unlink the services directory
@@ -682,7 +682,7 @@ void BSettingsTable::Observed(const SValue& key, const SValue& value)
 		m_lock.Lock();
 		m_syncing = value.AsBool();
 		m_lock.Unlock();
-		
+
 		if (m_syncing)
 		{
 			// starting a sync write out the current settings.
@@ -695,15 +695,15 @@ void BSettingsTable::Observed(const SValue& key, const SValue& value)
 			// does not get overwritten by restore. In the future I
 			// would like to have an attribute set on the directory
 			// saying not to restore it.
-	
+
 			SValue calibrate;
 			SValue pressure;
 			SString path;
-			
+
 			path = "system/calibrate";
 			status_t err = m_root->Walk(&path, 0, &calibrate);
 			if (err != B_OK) return;
-			
+
 			path = "system/calibrate/pressure";
 			err = m_root->Walk(&path, 0, &pressure);
 			if (err != B_OK) return;
@@ -721,12 +721,12 @@ void BSettingsTable::Observed(const SValue& key, const SValue& value)
 					nucali->data.AddItem(caliRecord->data.KeyAt(i), nudatum->AsBinder());
 				}
 			}
-			
+
 			if (size > 0)
 			{
 				m_cache.AddItem(calibrate.AsBinder().ptr(), nucali);
 			}
-			
+
 			sptr<CatalogEntry> presRecord = m_data.ValueFor(pressure.AsBinder().ptr());
 			sptr<CatalogEntry> nupres = new CatalogEntry();
 			size = presRecord->data.CountItems();
@@ -739,7 +739,7 @@ void BSettingsTable::Observed(const SValue& key, const SValue& value)
 					nupres->data.AddItem(presRecord->data.KeyAt(i), nudatum->AsBinder());
 				}
 			}
-			
+
 			if (size > 0)
 			{
 				m_cache.AddItem(pressure.AsBinder().ptr(), nupres);
@@ -782,7 +782,7 @@ void BSettingsTable::write_out_cache()
 				{
 					sptr<IDatum> to = IDatum::AsInterface(entry);
 					sptr<IDatum> from = IDatum::AsInterface(cacheRecord->data.ValueAt(j));
-					if (to != NULL && from != NULL) to->SetValue(from->Value());	
+					if (to != NULL && from != NULL) to->SetValue(from->Value());
 				}
 			}
 		}
@@ -814,7 +814,7 @@ status_t BSettingsTable::HandleMessage(const SMessage& msg)
 		{
 			write_xml_file();
 			break;
-		}		
+		}
 	}
 
 	return B_OK;
@@ -823,11 +823,11 @@ status_t BSettingsTable::HandleMessage(const SMessage& msg)
 // ##### SettingsCatalog #########################################################
 
 BSettingsCatalog::BSettingsCatalog()
-{	
+{
 }
 
 BSettingsCatalog::~BSettingsCatalog()
-{	
+{
 }
 
 sptr<INode> BSettingsCatalog::CreateRoot()
@@ -836,7 +836,7 @@ sptr<INode> BSettingsCatalog::CreateRoot()
 	if (m_root == NULL)
 	{
 		m_root = new BSettingsCatalog();
-		m_table = new BSettingsTable(get_default_context(), m_root); 
+		m_table = new BSettingsTable(get_default_context(), m_root);
 	}
 
 	return m_root;
@@ -858,7 +858,7 @@ status_t BSettingsCatalog::AddEntry(const SString& name, const SValue& value)
 		PushEntryModified(this, name, entry);
 	else
 		PushEntryCreated(this, name, entry);
-	
+
 	return err;
 }
 
@@ -881,7 +881,7 @@ status_t BSettingsCatalog::RenameEntry(const SString& entry, const SString& name
 
 sptr<INode> BSettingsCatalog::CreateNode(SString* name, status_t* err)
 {
-	sptr<INode> dir = BSettingsCatalog::Table()->CreateNode(this, *name, err);	
+	sptr<INode> dir = BSettingsCatalog::Table()->CreateNode(this, *name, err);
 	if (dir != NULL) {
 		PushEntryCreated(this, *name, dir->AsBinder());
 	}

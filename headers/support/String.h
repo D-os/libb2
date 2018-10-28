@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -27,7 +27,7 @@
 #include <PalmTypes.h>				// wchar32_t
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -89,7 +89,7 @@ public:
 						SString(const SString &);
 						SString(const char *, int32_t maxLength);
 						SString(const SSharedBuffer *buf);
-					
+
 						~SString();
 
 			//!	Run internal QC tests.  Only available on debug builds.
@@ -116,7 +116,7 @@ public:
 	void				MakeEmpty();
 
 			//!	Retrieve empty SString constant.
-			/*!	Normally you would want to use the default 
+			/*!	Normally you would want to use the default
 				SString constructor, but this is handy for
 				things like default parameters, or when a
 				const SString& is desired, and you don't
@@ -141,14 +141,14 @@ public:
 
 	SString 			&operator=(const SString &);
 	SString 			&operator=(const char *);
-	
+
 	SString				&SetTo(const char *);
 	SString 			&SetTo(const char *, int32_t length);
 
 	SString				&SetTo(const SString &from);
-						
+
 	SString 			&SetTo(const SString &, int32_t length);
-		
+
 	SString 			&SetTo(char, int32_t count);
 
 			//!	Set string using a printf-style format.
@@ -182,7 +182,7 @@ public:
 	SString 			&operator+=(const SString &);
 	SString 			&operator+=(const char *);
 	SString 			&operator+=(char);
-	
+
 	SString 			&Append(const SString &);
 	SString 			&Append(const char *);
 	SString 			&Append(const SString &, int32_t length);
@@ -228,7 +228,7 @@ public:
 	//@{
 
 	SString 			&Truncate(int32_t newLength);
-						
+
 	SString 			&Remove(int32_t from, int32_t length);
 
 	SString 			&RemoveFirst(const SString &);
@@ -238,13 +238,13 @@ public:
 	SString 			&RemoveFirst(const char *);
 	SString 			&RemoveLast(const char *);
 	SString 			&RemoveAll(const char *);
-	
+
 	SString 			&RemoveSet(const char *setOfCharsToRemove);
-	
+
 	SString				&Compact(const char *setOfCharsToCompact);
 	SString				&Compact(const char *setOfCharsToCompact,
 								 char* replacementChar);
-	
+
 	SString 			&MoveInto(SString &into, int32_t from, int32_t length);
 			//! Caller must guarantee that @a into is large enough.
 	void				MoveInto(char *into, int32_t from, int32_t length);
@@ -262,7 +262,7 @@ public:
 	bool 				operator>=(const SString &) const;
 	bool 				operator>(const SString &) const;
 	bool 				operator!=(const SString &) const;
-	
+
 	bool 				operator<(const char *) const;
 	bool 				operator<=(const char *) const;
 	bool 				operator==(const char *) const;
@@ -359,7 +359,7 @@ public:
 							const char *withThis, int32_t fromOffset = 0);
 	SString 			&IReplace(const char *replaceThis, const char *withThis,
 							int32_t maxReplaceCount, int32_t fromOffset = 0);
-	
+
 	SString				&ReplaceSet(const char *setOfChars, char with);
 	SString				&ReplaceSet(const char *setOfChars, const char *with);
 
@@ -386,12 +386,12 @@ public:
 				supply a new length, it should not include the trailing zero --
 				this function will make room for it, and ensure it is zero. */
 	SString 			&UnlockBuffer(int32_t length = -1);
-	
-	
+
+
 			//!	Get the SSharedBuffer that the SString is using.
 			/*!	Returns NULL if the string is empty. */
 	const	SSharedBuffer*	SharedBuffer() const;
-		
+
 			//! Make sure string is in the SSharedBuffer pool.
 	void				Pool();
 
@@ -431,7 +431,7 @@ public:
 				up to Length() (when called on the last character
 				in the string) and then become negative. */
 	int32_t				NextCharFor(int32_t index) const;
-		
+
 			//!	Returns the index of the first byte of the utf-8 character after the one that starts at the index given.
 			/*!	This is faster than NextCharAfter, but
 				index must be the index of the first byte of the character. */
@@ -443,7 +443,7 @@ public:
 				function returns -1.  If index is not the first
 				byte of a character, this function returns 0. */
 	int32_t				CharLength(int32_t index) const;
-	
+
 			//!	Returns the unicode value for the character that starts at index.
 			/*!	Returns the invalid unicode
 				character 0xffff if there isn't a whole character
@@ -497,7 +497,7 @@ public:
 			/*!	Copy @a original into the string removing the escaping
 				characters @a escapeChar */
 	SString				&CharacterDeescape(const char *original, char escapeChar);
-			/*!	Remove the escaping characters @a escapeChar from 
+			/*!	Remove the escaping characters @a escapeChar from
 				the string */
 	SString				&CharacterDeescape(char escapeChar);
 
@@ -510,13 +510,13 @@ public:
 
 			//!	Remove all leading and trailing whitespace.
 	SString				&Trim();
-	
+
 			//!	Get rid of redundant whitespace.
 			/*!	Removes all leading and trailing whitespace, and
 				converts all other whitepace to exactly one
 				space character  */
 	SString				&Mush();
-	
+
 			//!	Removes all whitespace.
 	SString				&StripWhitespace();
 
@@ -525,7 +525,7 @@ public:
 				non-whitespace characters, or the length is
 				zero.  Returns false otherwise. */
 	bool				IsOnlyWhitespace() const;
-	
+
 	//@}
 
 	// --------------------------------------------------------------
@@ -612,7 +612,7 @@ private:
 	int32_t 			_ShortFindAfter(const char *, int32_t) const;
 	int32_t 			_FindBefore(const char *, int32_t, int32_t) const;
 	int32_t 			_IFindBefore(const char *, int32_t, int32_t) const;
-	
+
 	void				_SetUsingAsCString(bool);
 	void 				_AssertNotUsingAsCString() const;
 
@@ -653,7 +653,7 @@ _IMPEXP_SUPPORT const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io,
 /*-------------------------------------------------------------------------*/
 /*---- No user serviceable parts after this -------------------------------*/
 
-inline int32_t 
+inline int32_t
 SString::Length() const
 {
 	return SSharedBuffer::BufferFromData(_privateData)->Length() - 1;
@@ -671,13 +671,13 @@ SString::SetTo(const char *str)
 	return operator=(str);
 }
 
-inline char 
+inline char
 SString::operator[](size_t index) const
 {
 	return _privateData[index];
 }
 
-inline char 
+inline char
 SString::ByteAt(int32_t index) const
 {
 	if (index < 0 || index > Length())
@@ -705,43 +705,43 @@ SString::Append(const char *str)
 	return operator+=(str);
 }
 
-inline bool 
+inline bool
 SString::operator==(const SString &string) const
 {
 	return strcmp(String(), string.String()) == 0;
 }
 
-inline bool 
+inline bool
 SString::operator<(const SString &string) const
 {
 	return strcmp(String(), string.String()) < 0;
 }
 
-inline bool 
+inline bool
 SString::operator<=(const SString &string) const
 {
 	return strcmp(String(), string.String()) <= 0;
 }
 
-inline bool 
+inline bool
 SString::operator>=(const SString &string) const
 {
 	return strcmp(String(), string.String()) >= 0;
 }
 
-inline bool 
+inline bool
 SString::operator>(const SString &string) const
 {
 	return strcmp(String(), string.String()) > 0;
 }
 
-inline bool 
+inline bool
 SString::operator!=(const SString &string) const
 {
 	return strcmp(String(), string.String()) != 0;
 }
 
-inline bool 
+inline bool
 SString::operator!=(const char *str) const
 {
 	return !operator==(str);
@@ -765,37 +765,37 @@ swap(SString& x, SString& y)
 	x.Swap(y);
 }
 
-inline bool 
+inline bool
 operator<(const char *str, const SString &string)
 {
 	return string > str;
 }
 
-inline bool 
+inline bool
 operator<=(const char *str, const SString &string)
 {
 	return string >= str;
 }
 
-inline bool 
+inline bool
 operator==(const char *str, const SString &string)
 {
 	return string == str;
 }
 
-inline bool 
+inline bool
 operator>(const char *str, const SString &string)
 {
 	return string < str;
 }
 
-inline bool 
+inline bool
 operator>=(const char *str, const SString &string)
 {
 	return string <= str;
 }
 
-inline bool 
+inline bool
 operator!=(const char *str, const SString &string)
 {
 	return string != str;
@@ -805,7 +805,7 @@ SValue BArrayAsValue(const SString* from, size_t count);
 status_t BArrayConstruct(SString* to, const SValue& value, size_t count);
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif /* _SUPPORT_STRING_H */

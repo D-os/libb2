@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -40,7 +40,7 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif /* _SUPPORTS_NAMESPACE */
 
@@ -62,54 +62,54 @@ SString get_system_directory();
 //!	The Binder's per-thread state and thread pool utilities.
 class SLooper
 {
-	
+
 	public:
 
 		static	SLooper *				This();
 		static	SLooper *				This(const sptr<BProcess>& team);
-		
+
 		static	void					SetThreadPriority(int32_t priority);
 		static	int32_t					ThreadPriority();
-		
+
 		static	status_t				LastError();
 		static	void					SetLastError(status_t error);
-		
+
 		static	status_t				Loop(bool isMain);
-		
+
 		//!	spawn_thread for binder debugging.
 		/*!	This is just like spawn_thread(), except it takes care of propagating
 			simulated team information when debugging the binder driver.
 		*/
-		static	SysHandle				SpawnThread(	thread_func		function_name, 
-														const char 		*thread_name, 
-														int32_t			priority, 
+		static	SysHandle				SpawnThread(	thread_func		function_name,
+														const char 		*thread_name,
+														int32_t			priority,
 														void			*arg);
-		
+
 		static	status_t				SpawnLooper();
-		
+
 		static	int32_t					Thread();
 		static	sptr<BProcess>			Process();
 		static	int32_t					ProcessID();
 
 		//!	Returns true if the current environment supports multiple processes.
 		static	bool					SupportsProcesses();
-		
+
 		//!	Returns true if the user would like us to use multiple processes.
 		/*!	Currently, true is returned if SupportsProcess() is true and the
 			environment variable BINDER_SINGLE_PROCESS is not set. */
 		static	bool					PrefersProcesses();
-		
+
 		//!	Cause the process associated with the give root object to stop.
 		/*!	If 'now' is false (the default), the process will stop when all
 			remote strong references on its root object are released.  If
 			'now' is true, it will stop immediately.
-			
+
 			To stop the local process, pass in your own IProcess object (or
 			root object if you have a different root).  If your process had
 			published a root object, then the behavior is as described above.
 			Otherwise, it will only be stopped if you set 'now' to true. */
 		static	void					StopProcess(const sptr<IBinder>& rootObject, bool now=false);
-	
+
 		typedef status_t (*catch_root_func)(const sptr<IBinder>& node);
 		static	void					CatchRootObjects(catch_root_func func);
 #if TARGET_HOST == TARGET_HOST_LINUX
@@ -128,7 +128,7 @@ class SLooper
 				status_t				Transact(	int32_t handle,
 													uint32_t code, const SParcel& data,
 													SParcel* reply, uint32_t flags);
-		
+
 		// Only called by the main thread during static initialization
 		static	status_t				InitMain(const sptr<BProcess>& team = NULL);
 		static	status_t				InitOther(const sptr<BProcess>& team = NULL);
@@ -149,7 +149,7 @@ class SLooper
 
 #if TARGET_HOST == TARGET_HOST_LINUX
 		static	bool					ProcessManagesContexts(void);
-		
+
 		typedef bool (*ContextPermissionCheckFunc)(const SString& name, const sptr<IBinder>& caller, void* userData);
 		static	bool					BecomeContextManager(ContextPermissionCheckFunc checkFunc, void* userData);
 #endif
@@ -160,7 +160,7 @@ class SLooper
 #endif
 
 	private:
-	
+
 		friend	class BProcess;
 		friend	class BProcess::ComponentImage;
 
@@ -229,7 +229,7 @@ class SLooper
 #endif /* !BINDER_DEBUG_LIB */
 		static	status_t				_BufferReply(const SParcel& buffer, void* context);
 		static	void					_BufferFree(const void* data, ssize_t len, void* context);
-		
+
 				status_t				_HandleCommand(int32_t cmd);
 				status_t				_WaitForCompletion(	SParcel *reply = NULL,
 															status_t *acquireResult = NULL);
@@ -280,7 +280,7 @@ class SLooper
 		static	status_t				_BufferReply(const SParcel& buffer, void* context);
 		static	void					_BufferFree(const void* data, ssize_t len, void* context);
 		static	sptr<IBinder>			_RetrieveContext(const SString& name, const sptr<IBinder>& caller);
-		
+
 				status_t				_HandleCommand(int32_t cmd);
 				status_t				_WaitForCompletion(	SParcel *reply = NULL,
 															status_t *acquireResult = NULL);
@@ -312,7 +312,7 @@ class SLooper
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif /* _SUPPORTS_NAMESPACE */
 
 #endif /* _SUPPORT_LOOPER_H */

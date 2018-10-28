@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -32,14 +32,14 @@ struct _InformantData
 // return true if should remove this one.
 static bool do_callback(const sptr<BInformant> &This, const CallbackInfo &info, const SValue &key, const SValue &information);
 static bool do_creation(const sptr<BInformant> &This, const CreationInfo &info, const SValue &key, const SValue &information);
-	
+
 
 
 BInformant::BInformant(const SContext& context)
 	:BnInformant(context)
 {
 	DB(bout << "BInformant constructed" << endl);
-	
+
 	m_data = new _InformantData;
 }
 
@@ -65,7 +65,7 @@ BInformant::FinishAtom(const void *id)
 
 status_t
 BInformant::RegisterForCallback(	const SValue &key,
-								const BNS(::palmos::support::)sptr<BNS(palmos::support)::IBinder>& target,
+								const BNS(os::support::)sptr<BNS(os::support)::IBinder>& target,
 								const SValue &method,
 								uint32_t flags,
 								const SValue &cookie)
@@ -100,7 +100,7 @@ BInformant::RegisterForCreation(	const SValue &key,
 
 status_t
 BInformant::UnregisterForCallback(	const SValue &key,
-									const BNS(::palmos::support::)sptr<BNS(palmos::support)::IBinder>& target,
+									const BNS(os::support::)sptr<BNS(os::support)::IBinder>& target,
 									const SValue &method,
 									uint32_t flags)
 {
@@ -139,7 +139,7 @@ BInformant::Inform(const SValue &key, const SValue &information)
 	SSortedVector<CallbackInfo> callbacks;
 	SSortedVector<CreationInfo> creations;
 	size_t i, count;
-	
+
 	status_t callbacksFound, creationsFound;
 	{
 		SAutolock _l(m_data->lock.Lock());
@@ -150,7 +150,7 @@ BInformant::Inform(const SValue &key, const SValue &information)
 		callbacksFound = m_data->callbacks.Find(key, &callbacks);
 		creationsFound = m_data->creations.Find(key, &creations);
 	}
-	
+
 	if (callbacksFound == B_OK) {
 		count = callbacks.CountItems();
 		for (i=0; i<count; i++) {
@@ -172,7 +172,7 @@ BInformant::Inform(const SValue &key, const SValue &information)
 			}
 		}
 	}
-	
+
 	return B_OK;
 }
 
@@ -184,8 +184,8 @@ do_callback(const sptr<BInformant> &This, const CallbackInfo &info, const SValue
 	DB(bout << "BInformant::Performing callback: " << info << endl);
 
 	sptr<IBinder> obj = info.Target();
-	
-	// if we couldn't promote the reference, remove 
+
+	// if we couldn't promote the reference, remove
 	if (obj == NULL) return true;
 
 	SValue args(B_0_INT32, information);
@@ -220,7 +220,7 @@ create(const SValue &key, const SValue &information, const SContext& context, co
 
 	// if process is NULL, create a new process
 	sptr<IProcess> createProcess = (process != NULL) ? process.ptr() : context.NewProcess(BV_INFORMANT);
-	
+
 	// Create the object
 	sptr<IBinder> obj = context.RemoteNew(SValue::String(component), createProcess);
 	if (obj == NULL) return ;
@@ -235,7 +235,7 @@ create(const SValue &key, const SValue &information, const SContext& context, co
 	SValue args(B_0_INT32, information);
 	args.JoinItem(B_1_INT32, cookie);
 	args.JoinItem(B_2_INT32, key);
-	
+
 	// Invoke!
 	obj->Invoke(method, args);
 }
@@ -244,12 +244,12 @@ static bool
 do_creation(const sptr<BInformant> &This, const CreationInfo &info, const SValue &key, const SValue &information)
 {
 	DB(bout << "BInformant Performing creation: " << info << endl;)
-	
+
 	sptr<IProcess> process = info.Process();
 
-	// if we couldn't promote the reference, remove 
+	// if we couldn't promote the reference, remove
 	if (process == NULL && info.Flags() & B_WEAK_BINDER_LINK) return true;
-	
+
 	if (info.Flags() & B_SYNC_BINDER_LINK) {
 		create(key, information, info.Context(), info.Process(), info.Component(), info.Interface(), info.Method(), info.Cookie());
 	} else {
@@ -265,8 +265,8 @@ do_creation(const sptr<BInformant> &This, const CreationInfo &info, const SValue
 		This->HandleMessage(msg);
 		//This->PostMessage(msg);
 	}
-	
-		
+
+
 	return false;
 }
 

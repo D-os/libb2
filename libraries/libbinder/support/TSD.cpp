@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -25,7 +25,7 @@ struct {
   SysTSDDestructorFunc * destructor;
 } named_pthread_keys[MAX_NAMED_PTHREAD_KEYS] = {};
 
-namespace palmos {
+namespace os {
 void cleanupNamedTSDKeys(void) // invoked by thread cleanup machinery
 {
     for (int i=0; i<sizeof(named_pthread_keys)/sizeof(named_pthread_keys[0]); i++) {
@@ -36,7 +36,7 @@ void cleanupNamedTSDKeys(void) // invoked by thread cleanup machinery
       }
     }
 }
-} // namespace palmos
+} // namespace os
 
 status_t SysTSDAllocate(SysTSDSlotID * oTSDSlot,
                         SysTSDDestructorFunc *iDestructor,
@@ -54,11 +54,11 @@ status_t SysTSDAllocate(SysTSDSlotID * oTSDSlot,
         return errNone; // Success
       } else if (named_pthread_keys[i].name == 0)
         freeNameSlot=i;
-    
+
     if (freeNameSlot == -1)
       return sysErrParamErr; // Error, too many named keys
   }
-  
+
   pthread_key_t key;
   int err = pthread_key_create(&key, (freeNameSlot == -1) ? iDestructor : NULL);
 
@@ -89,14 +89,14 @@ status_t SysTSDFree(SysTSDSlotID tsdslot)
   }
 
   int err = pthread_key_delete(key); // pthread_key_delete does not invoke destructors
-  
+
   if (err == EINVAL)
     return sysErrParamErr;
-  
+
   return errNone; // Success
 }
 
-void SysTSDSet(SysTSDSlotID tsdslot, void * iValue) 
+void SysTSDSet(SysTSDSlotID tsdslot, void * iValue)
 {
   pthread_setspecific((pthread_key_t)tsdslot, iValue);
 }

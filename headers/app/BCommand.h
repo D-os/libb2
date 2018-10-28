@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -27,9 +27,9 @@
 #include <app/ICommand.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace app {
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 class BCommand : public BnCommand
@@ -37,7 +37,7 @@ class BCommand : public BnCommand
 public:
 							BCommand();
 							BCommand(const SContext& context);
-	
+
 	virtual	SValue			Run(const ArgList& args) = 0;
 	virtual	sptr<ICommand>	Clone() const;
 	virtual	sptr<ICommand>	Spawn(const SString & command) const;
@@ -46,12 +46,12 @@ public:
 	virtual sptr<ICommand>	GetCommand(const SString& name) const;
 	virtual void			RemoveCommand(const SString& name);
 
-	virtual	SValue			GetProperty(const SValue& key) const;	
+	virtual	SValue			GetProperty(const SValue& key) const;
 	virtual	void			SetProperty(const SValue& key, const SValue& value);
 	virtual	void			RemoveProperty(const SValue& key);
 
 	virtual	SValue			Environment() const;
-	
+
 	virtual	void			SetEnvironment(const SValue& env);
 	virtual	void			SetFileDescriptors(const SValue& fds);
 
@@ -81,7 +81,7 @@ public:
 				directly.  Otherwise, if it is a string, this is taken
 				as a path and looked up in the context. */
 			sptr<IBinder>	ArgToBinder(const SValue& arg) const;
-			
+
 			// Returns a sequence number that is incremented each time
 			// the command's environment properties change.
 			int32_t			CurrentPropertySequence() const;
@@ -92,7 +92,7 @@ public:
 			bool			GetColorFlag() const;		// BSH_COLOR
 
 			SString			CurDir() const;				// PWD
-			
+
 			FILE *			__sF(int which) const;
 			const char*		getenv(const char* key) const;
 			int				putenv(const char* string);
@@ -171,7 +171,7 @@ private:
 };
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::app
+} }	// namespace os::app
 #endif
 
 #endif // APP_BCOMMAND_H

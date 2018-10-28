@@ -67,7 +67,7 @@ of definitions that are abstract representations of the underlying
 system. Developers can use these definitions to safely send objects
 declared in the interface across processes, without having to know
 how the underlying system is implemented. It is the abstract
-representation of the parts of your system’s underlying
+representation of the parts of your systemï¿½s underlying
 implementation that is open to modification by third-party
 developers.
 
@@ -90,7 +90,7 @@ help pidgen map its C++ code output to the correct locations. For
 example, an interface that lives in the app kit is declared like this:
 
 @code
-namespace palmos {
+namespace os {
 namespace widget {
 	interface IWidget {
 		...
@@ -111,7 +111,7 @@ Two kinds of interface declarations are possible in IDL:
   interface, you declare an interface without functions and
   properties. For example:
 @code
-namespace palmos {
+namespace os {
 namespace support {
 	interface IByteOutput
 	interface IByteInput
@@ -145,13 +145,13 @@ specified, and pidgen will search all of them until it finds a match
 or exhausts all the directory options.
 
 Any interfaces declared in, or imported by, imported interfaces are
-then available for use by the interface you’re declaring.
+then available for use by the interface youï¿½re declaring.
 
 So far, you have the following code in Widget.idl:
 
 @code
 import <render/Font.idl>
-namespace palmos {
+namespace os {
 namespace widget{
 	interface IWidget {
 		...
@@ -268,7 +268,7 @@ to be @e in.
 @subsubsection local
 
 The @a local attribute can be used if you want to create an interface
-that uses the Binder object model, but doesn’t care about crossprocess
+that uses the Binder object model, but doesnï¿½t care about crossprocess
 or multi-language support.
 
 You can specify the local attribute on either the entire interface or
@@ -354,7 +354,7 @@ The @e reserved attribute can be applied to either functions or
 properties. It provides the ability to create reserved slots in the
 implementation so that future versions of the interface can add new
 methods or properties without forcing clients to be recompiled.
-Using the reserved attribute requires some planning—you need
+Using the reserved attribute requires some planningï¿½you need
 to estimate how much future growth to expect. If the interface has a
 limited number of properties and methods, and little potential for
 growth, then you may only need a handful of reserved properties
@@ -387,12 +387,12 @@ When you decide to add a new method or property to your
 interface, you do so by replacing one of the reserved items with
 your new property or method.
 
-An important thing to note: if the new property you’re creating is a
-readonly property, there’s an extra step to take. That’s because
+An important thing to note: if the new property youï¿½re creating is a
+readonly property, thereï¿½s an extra step to take. Thatï¿½s because
 reserved properties get slots automatically reserved for their getter
-and setter methods, and read-only properties don’t need a setter
+and setter methods, and read-only properties donï¿½t need a setter
 method. So, to maintain binary compatibility, you need to do
-something like what’s shown here.
+something like whatï¿½s shown here.
 
 @code
 [readonly] IFoo myFooProperty;
@@ -421,7 +421,7 @@ smart pointers, as described in the @ref weak attribute.
 If you want to marshal types other the ones listed, the available
 options are:
 
-- @b typedefs – Typedefs can be declared the way they are declared
+- @b typedefs ï¿½ Typedefs can be declared the way they are declared
   in C++, but only in the interface where they are needed.
 @code
 interface ISurface
@@ -433,7 +433,7 @@ properties:
 }
 @endcode
 
-- @b type – Pidgen doesn’t have to understand a custom type in
+- @b type ï¿½ Pidgen doesnï¿½t have to understand a custom type in
 order to marshal it, because SValues are used to send things
 cross-process. If the type you need has translators to SValue
 (specifically, type.ASValue() converts a type it into an
@@ -504,7 +504,7 @@ licensee use.
 @section LinkConvenienceMethods Link Convenience Methods
 
 Pidgen generates convenience methods to make linking easier.
-Much of the time, when you create a link, it’s necessary to perform
+Much of the time, when you create a link, itï¿½s necessary to perform
 casting to get to the right Binder object. The link convenience
 methods do this for you. For example, you can replace the following
 two lines:
@@ -529,7 +529,7 @@ Other PIDGen features include:
 @code
 interface ISurface
 {
-	using namespace palmos::render;
+	using namespace os::render;
 	...
 }
 @endcode
@@ -604,7 +604,7 @@ To see more IDL files, look in PDK/interfaces.
 @subsection IDatumIDL support/IDatum.idl
 
 @code
-namespace palmos {
+namespace os {
 namespace support {
 
 interface IDatum
@@ -621,7 +621,7 @@ interface IDatum
 	};
 
 	enum
-	{   
+	{
 		NO_COPY_REDIRECTION     = 0x0001
 	};
 
@@ -629,7 +629,7 @@ properties:
 	uint32_t valueType;
 	off_t size;
 	SValue value;
-	
+
 methods:
 	IBinder Open(uint32_t mode, [optional]IBinder editor, [optional]uint32_t newType);
 	status_t CopyTo(IDatum dest, [optional]uint32_t flags);
@@ -639,13 +639,13 @@ events:
 	void DatumChanged(IDatum who, IBinder editor, off_t start, off_t length);
 }
 
-} }	// namespace palmos::support
+} }	// namespace os::support
 @endcode
 
 @subsection INodeIDL support/INode.idl
 
 @code
-namespace palmos {
+namespace os {
 namespace support {
 
 interface INode
@@ -691,7 +691,7 @@ events:
 @subsection IIteratorIDL support/IIterator.idl
 
 @code
-namespace palmos {
+namespace os {
 namespace support {
 
 interface IIterator

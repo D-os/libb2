@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,9 +22,9 @@
 
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
-using namespace palmos::support;
+using namespace os::support;
 #endif // _SUPPORTS_NAMESPACE
 
 class BFile;
@@ -56,24 +56,24 @@ public:
 
 				bool		IsReadable() const;
 				bool		IsWritable() const;
-		
+
 		virtual	off_t		Size() const;
 		virtual	status_t	SetSize(off_t size);
 
 		virtual	ssize_t		ReadAtV(off_t position, const struct iovec* vector, ssize_t count);
 		virtual	ssize_t		WriteAtV(off_t position, const struct iovec* vector, ssize_t count);
 		virtual	status_t	Sync();
-	
+
 protected:
 		virtual				~BFile();
-		
-private:				
+
+private:
 		int32_t				m_fd;
 		uint32_t				m_mode;
 };
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::storage
+} } // namespace os::storage
 #endif // _SUPPORTS_NAMESPACE
 
 #endif	// _STORAGE2_FILE_H

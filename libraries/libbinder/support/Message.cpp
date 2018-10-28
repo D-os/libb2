@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -17,7 +17,7 @@
 #include <ErrorMgr.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -55,7 +55,7 @@ SMessage::SMessage(const SMessage &o)
 
 SMessage::SMessage(const SValue &o)
 	:	m_data(o[g_keyData]),
-		m_next(NULL), 
+		m_next(NULL),
 		m_prev(NULL)
 {
 	status_t err;
@@ -69,7 +69,7 @@ SMessage::SMessage(const SValue &o)
 SMessage::~SMessage()
 {
 }
-	
+
 SMessage& SMessage::operator=(const SMessage &o)
 {
 	m_what = o.m_what;
@@ -93,7 +93,7 @@ status_t SMessage::PrintToStream(const sptr<ITextOutput>& io, uint32_t flags) co
 {
 #if SUPPORTS_TEXT_STREAM
 	if (flags&B_PRINT_STREAM_HEADER) io << "SMessage ";
-	
+
 	io << "{" << endl << indent
 		<< "what = " << STypeCode(m_what) << " (" << (void*)(uintptr_t)m_what << ")" << endl
 		<< "when = " << m_when << endl
@@ -120,5 +120,5 @@ const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const SMessage&
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

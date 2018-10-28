@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -23,7 +23,7 @@
 #include <support/KeyedVector.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace storage {
 #endif
 
@@ -46,7 +46,7 @@ namespace storage {
 	cached datum will loose its associated data.  In this case the datum
 	silently becomes B_UNDEFINED_VALUE and modifications to it are no longer
 	allowed.
-	
+
 	@todo May want to revisit deletion, the value that gets set and if any
 	events get pushed when it happens.
 
@@ -229,7 +229,7 @@ public:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::storage
+} } // namespace os::storage
 #endif
 
 #endif // _STORAGE_DATUMGENERATORINT_H

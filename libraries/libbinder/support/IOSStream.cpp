@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -17,7 +17,7 @@
 #include <IOS.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -46,7 +46,7 @@ SValue BIOSStream::Inspect(const sptr<IBinder>& caller, const SValue &which, uin
 	return result;
 }
 
-ssize_t 
+ssize_t
 BIOSStream::WriteV(const struct iovec *vector, ssize_t count, uint32_t flags)
 {
 	if (m_descriptor >= 0) {
@@ -83,7 +83,7 @@ BIOSStream::WriteV(const struct iovec *vector, ssize_t count, uint32_t flags)
 		return m_descriptor;
 }
 
-status_t 
+status_t
 BIOSStream::Sync()
 {
 	// Doesn't seem to be an IOS API for this?
@@ -93,7 +93,7 @@ BIOSStream::Sync()
 		return m_descriptor;
 }
 
-ssize_t 
+ssize_t
 BIOSStream::ReadV(const struct iovec *vector, ssize_t count, uint32_t /*flags*/)
 {
 	if (m_descriptor >= 0) {
@@ -117,7 +117,7 @@ BIOSStream::FileDescriptor() const
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif // TARGET_HOST != TARGET_HOST_LINUX

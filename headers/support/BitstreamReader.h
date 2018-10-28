@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -19,7 +19,7 @@
 #include <assert.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -90,7 +90,7 @@ class SBitstreamReader
 			size_t				size;
 			size_t				offset;
 		};
-		
+
 				uint32_t		m_cache[2];
 				size_t			m_cacheOffset;			// bits
 				const uint8_t *	m_fragmentPointer;
@@ -112,7 +112,7 @@ class SBitstreamReader
 			size_t toCache = 4;
 
 			assert (m_fragmentPointer >= m_fragments[m_fragmentIndex].data);
-			
+
 			// handle source(s) with fewer than 4 bytes of data
 			while (true)
 			{
@@ -132,14 +132,14 @@ class SBitstreamReader
 				}
 
 				if (m_fragmentRemaining >= toCache) break;
-			
+
 				*cacheByte = *m_fragmentPointer;
 				m_fragmentPointer++;
 				cacheByte++;
 				toCache--;
 				m_fragmentRemaining--;
 			}
-			
+
 			size_t shift = 0;
 			while (toCache > 0)
 			{
@@ -150,7 +150,7 @@ class SBitstreamReader
 				// boundaries after this point, so pad accordingly if
 				// there's room.
 				size_t align = 4 - (uint32_t(m_fragmentPointer) & 0x3);
-					
+
 				if (align == 4 && toCache == 4)
 				{
 					// easy case: aligned word
@@ -166,7 +166,7 @@ class SBitstreamReader
 					if (align != 4 && align < toCache)
 					{
 						toRead = align;
-						
+
 						// we have room to pad.  shift current data so that the following
 						// read can be a whole word.  this is rather hairy because, depending
 						// on where we started filling the cache, the first word may or
@@ -175,7 +175,7 @@ class SBitstreamReader
 						if (shift > 4) shift -= 4;
 
 						toCache -= shift;
-						
+
 						shift <<= 3;
 
 						m_cacheOffset += shift;
@@ -184,7 +184,7 @@ class SBitstreamReader
 					{
 						toRead = toCache;
 					}
-						
+
 					for (n = 0; n < toRead; n++)
 					{
 						*cacheByte = *m_fragmentPointer;
@@ -246,7 +246,7 @@ class SBitstreamReader
 					break;
 				}
 			}
-			
+
 			// read
 			while (toRead > 0)
 			{
@@ -264,7 +264,7 @@ class SBitstreamReader
 					dataLeft = m_fragments[findex].size - 1;
 					fptr = m_fragments[findex].data + dataLeft;
 				}
-				
+
 				*cacheByte = *fptr;
 				cacheByte--;
 				toRead--;
@@ -308,12 +308,12 @@ class SBitstreamReader
 			m_fragmentIndex = findex;
 			m_fragmentRemaining = fremaining;
 		}
-		
+
 		inline	void			next_word()
 		{
 //berr << ">> next_word : frag remaining " << m_fragmentRemaining << " ptr align " << ((uint32_t)m_fragmentPointer & 0x3) << " << \n";
 			assert (m_cacheOffset >= 32);
-			
+
 			// cache[0] is empty
 			m_cache[0] = m_cache[1];
 			m_cacheOffset -= 32;
@@ -351,7 +351,7 @@ class SBitstreamReader
 
 // ------------------------------------------------------------------------- //
 
-inline 
+inline
 SBitstreamReader::SBitstreamReader()
 	: m_cacheOffset(0),
 	  m_fragmentRemaining(0),
@@ -362,14 +362,14 @@ SBitstreamReader::SBitstreamReader()
 {
 }
 
-inline 
+inline
 SBitstreamReader::SBitstreamReader(const SBuffer& sourceBuffer)
 	: m_fragments(0)
 {
 	SetSource(sourceBuffer);
 }
 
-inline 
+inline
 SBitstreamReader::SBitstreamReader(const void * data, size_t size)
 	: m_fragments(0)
 {
@@ -415,7 +415,7 @@ SBitstreamReader::SetSource(const SBuffer& sourceBuffer)
 		m_fragments[n].offset = offset;
 		offset += m_fragments[n].size;
 	}
-	
+
 	m_cacheOffset = 0;
 	m_fragmentIndex = 0;
 	m_fragmentPointer = m_fragments[0].data;
@@ -425,7 +425,7 @@ SBitstreamReader::SetSource(const SBuffer& sourceBuffer)
 	m_cacheSize += fill_forward(4);
 
 	return B_OK;
-}	
+}
 
 inline status_t
 SBitstreamReader::SetSource(const void * data, size_t size)
@@ -444,7 +444,7 @@ SBitstreamReader::SetSource(const void * data, size_t size)
 	m_fragments[0].data = (const uint8_t*)data;
 	m_fragments[0].size = size;
 	m_fragments[0].offset = 0;
-	
+
 	m_cacheOffset = 0;
 	m_fragmentIndex = 0;
 	m_fragmentPointer = (const uint8_t*)data;
@@ -480,7 +480,7 @@ inline uint32_t
 SBitstreamReader::GetBits(size_t bits)
 {
 	assert (m_cacheOffset + bits <= m_cacheSize);
-	
+
 	uint32_t result = m_cache[0] << m_cacheOffset;
 	if (bits > (32-m_cacheOffset))
 	{
@@ -541,7 +541,7 @@ SBitstreamReader::RewindBits(size_t bits)
 	assert (bits > 0);
 	assert (bits <= 32);
 //berr << SPrintf("RewindBits in (%ld): cache 0x%08lx 0x%08lx offset %ld\n", bits, m_cache[0], m_cache[1], m_cacheOffset );
-	
+
 	if (m_cacheOffset >= bits)
 	{
 		m_cacheOffset -= bits;
@@ -713,7 +713,7 @@ SBitstreamReader::ByteLength() const
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // palmos::support
+} } // os::support
 #endif
 
 #endif // _SUPPORT_BITSTREAM_READER_H_

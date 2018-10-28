@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 
 #ifdef __cplusplus
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 #endif
@@ -54,7 +54,7 @@ typedef struct flat_binder_object
 	// 8 bytes for large_flat_header.
 	unsigned long		type;
 	unsigned long		length;
-	
+
 	// 8 bytes of data.
 	union {
 		void*				binder;		// local object
@@ -129,13 +129,13 @@ typedef struct binder_transaction_data
 		void			*ptr;		// target descriptor of return transaction
 	} target;
 	unsigned int	code;			// transaction command
-	
+
 	// General information about the transaction.
 	unsigned int	flags;
 	int	priority;					// requested/current thread priority
 	size_t	data_size;				// number of bytes of data
 	size_t	offsets_size;			// number of bytes of flat_binder_object offsets
-	
+
 	// If this transaction is inline, the data immediately
 	// follows here; otherwise, it ends with a pointer to
 	// the data buffer.
@@ -159,37 +159,37 @@ enum BinderDriverReturnProtocol {
 	/*
 		int: error code
 	*/
-	
+
 	brOK = 0,
 	brTIMEOUT,
 	brWAKEUP,
 	/*	No parameters! */
-	
+
 	brTRANSACTION,
 	brREPLY,
 	/*
 		binder_transaction_data: the received command.
 	*/
-	
+
 	brACQUIRE_RESULT,
 	/*
 		int: 0 if the last bcATTEMPT_ACQUIRE was not successful.
 		Else the remote object has acquired a primary reference.
 	*/
-	
+
 	brDEAD_REPLY,
 	/*
 		The target of the last transaction (either a bcTRANSACTION or
 		a bcATTEMPT_ACQUIRE) is no longer with us.  No parameters.
 	*/
-	
+
 	brTRANSACTION_COMPLETE,
 	/*
 		No parameters... always refers to the last transaction requested
 		(including replies).  Note that this will be sent even for asynchronous
 		transactions.
 	*/
-	
+
 	brINCREFS,
 	brACQUIRE,
 	brRELEASE,
@@ -198,14 +198,14 @@ enum BinderDriverReturnProtocol {
 		void *:	ptr to binder
 		void *: cookie for binder
 	*/
-	
+
 	brATTEMPT_ACQUIRE,
 	/*
 		int:	priority
 		void *: ptr to binder
 		void *: cookie for binder
 	*/
-	
+
 	brEVENT_OCCURRED,
 	/*
 		This is returned when the bcSET_NEXT_EVENT_TIME has elapsed.
@@ -240,23 +240,23 @@ enum BinderDriverCommandProtocol {
 	/*
 		binder_transaction_data: the sent command.
 	*/
-	
+
 	bcACQUIRE_RESULT,
 	/*
 		int:  0 if the last brATTEMPT_ACQUIRE was not successful.
 		Else you have acquired a primary reference on the object.
 	*/
-	
+
 	bcFREE_BUFFER,
 	/*
 		void *: ptr to transaction data received on a read
 	*/
-	
+
 	bcTRANSACTION_COMPLETE,
 	/*
 		No parameters... send when finishing an asynchronous transaction.
 	*/
-	
+
 	bcINCREFS,
 	bcACQUIRE,
 	bcRELEASE,
@@ -264,31 +264,31 @@ enum BinderDriverCommandProtocol {
 	/*
 		int:	descriptor
 	*/
-	
+
 	bcINCREFS_DONE,
 	bcACQUIRE_DONE,
 	/*
 		void *:	ptr to binder
 		void *: cookie for binder
 	*/
-	
+
 	bcATTEMPT_ACQUIRE,
 	/*
 		int:	priority
 		int:	descriptor
 	*/
-	
+
 	bcRETRIEVE_ROOT_OBJECT,
 	/*
 		int:	process ID
 	*/
-	
+
 	bcSET_THREAD_ENTRY,
 	/*
 		void *:	thread entry function for new threads created to handle tasks
 		void *: argument passed to those threads
 	*/
-	
+
 	bcREGISTER_LOOPER,
 	/*
 		No parameters.
@@ -296,7 +296,7 @@ enum BinderDriverCommandProtocol {
 		called by the function that is supplied in bcSET_THREAD_ENTRY as
 		part of its initialization with the binder.
 	*/
-	
+
 	bcENTER_LOOPER,
 	bcEXIT_LOOPER,
 	/*
@@ -306,14 +306,14 @@ enum BinderDriverCommandProtocol {
 		used so the binder can have an accurate count of the number
 		of looping threads it has available.
 	*/
-	
+
 	bcSYNC,
 	/*
 		No parameters.
 		Upon receiving this command, the driver waits until all
 		pending asynchronous transactions have completed.
 	*/
-	
+
 #if 0
 	bcCATCH_ROOT_OBJECTS,
 	/*
@@ -325,7 +325,7 @@ enum BinderDriverCommandProtocol {
 		normal root objects, which are a brREPLY.)
 	*/
 #endif
-	
+
 	bcSTOP_PROCESS,
 	/*
 		int: descriptor of process's root object
@@ -374,7 +374,7 @@ inline ssize_t		write_binder(int desc, void *data, size_t numBytes) { return wri
 
 #ifdef __cplusplus
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 #endif
 

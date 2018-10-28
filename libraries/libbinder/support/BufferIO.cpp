@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -17,7 +17,7 @@
 #include <support/Debug.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -49,7 +49,7 @@ BBufferIO::~BBufferIO()
 }
 
 
-ssize_t 
+ssize_t
 BBufferIO::ReadAt(off_t pos, void *buffer, size_t size)
 {
 	ssize_t err = B_OK;
@@ -73,7 +73,7 @@ BBufferIO::ReadAt(off_t pos, void *buffer, size_t size)
 #endif
 		return err;
 	}
-	if ((pos+size <= m_buffer_start) || (pos >= m_buffer_start+m_buffer_used) || 
+	if ((pos+size <= m_buffer_start) || (pos >= m_buffer_start+m_buffer_used) ||
 		((pos <= m_buffer_start) && (pos+size >= m_buffer_start+m_buffer_used))) {
 		/* totally outside buffer, or surrounding buffer */
 		if (m_buffer_dirty) {
@@ -144,13 +144,13 @@ BBufferIO::ReadAt(off_t pos, void *buffer, size_t size)
 	return rd + (err < (ssize_t)(size-rd) ? err : (size-rd));
 }
 
-ssize_t 
+ssize_t
 BBufferIO::WriteAt(off_t pos, const void *buffer, size_t size)
 {
 	if (pos+size > m_len) {
 		m_len = pos+size;
 	}
-	
+
 	ssize_t err;
 	if (size >= m_buffer_phys) {	/* large-block uncached write */
 		if ((pos+size > m_buffer_start) && (pos < m_buffer_start+m_buffer_used)) {
@@ -177,7 +177,7 @@ BBufferIO::WriteAt(off_t pos, const void *buffer, size_t size)
 			off_t len = m_stream->Seek(0, SEEK_END);	/* find end -- could be cached */
 			if (len > m_buffer_start+m_buffer_used) {
 				/* Read data if the hole appears somewhere within the file size */
-				ssize_t err = m_stream->ReadAt(m_buffer_start+m_buffer_used, m_buffer+m_buffer_used, 
+				ssize_t err = m_stream->ReadAt(m_buffer_start+m_buffer_used, m_buffer+m_buffer_used,
 					m_buffer_phys-m_buffer_used);
 				if (err < 0) {
 					return err;
@@ -205,7 +205,7 @@ BBufferIO::WriteAt(off_t pos, const void *buffer, size_t size)
 }
 
 
-off_t 
+off_t
 BBufferIO::Seek(off_t position, uint32_t seek_mode)
 {
 	switch (seek_mode) {
@@ -222,14 +222,14 @@ BBufferIO::Seek(off_t position, uint32_t seek_mode)
 	return m_seek_pos;
 }
 
-off_t 
+off_t
 BBufferIO::Position() const
 {
 	return m_seek_pos;
 }
 
 
-status_t 
+status_t
 BBufferIO::SetSize(off_t size)
 {
 	status_t err = m_stream->SetSize(size);
@@ -267,7 +267,7 @@ BBufferIO::Flush()
 	if (!m_buffer_dirty) {
 		return B_OK;
 	}
-	
+
 	/* extend size of file, if needed */
 	off_t len = m_stream->Seek(0, SEEK_END);	/* find end -- could be cached */
 	if (len < m_buffer_start+m_buffer_used) {
@@ -277,24 +277,24 @@ BBufferIO::Flush()
 			return err;
 		}
 	}
-	
+
 	/* write data into file and reset buffer */
 	ssize_t err = m_stream->WriteAt(m_buffer_start, m_buffer, m_buffer_used);
 	if (err != (ssize_t)m_buffer_used) {
 		return (err < 0) ? err : B_IO_ERROR;
 	}
 	m_buffer_dirty = false;
-	
+
 	return B_OK;
 }
 
-BPositionIO * 
+BPositionIO *
 BBufferIO::Stream() const
 {
 	return m_stream;
 }
 
-size_t 
+size_t
 BBufferIO::BufferSize() const
 {
 	return m_buffer_phys;
@@ -338,5 +338,5 @@ status_t BBufferIO::_Reserved_BufferIO_4(void *)
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

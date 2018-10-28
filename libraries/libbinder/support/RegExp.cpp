@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -47,7 +47,7 @@
 #include <support/String.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -91,23 +91,23 @@ const uint8_t kRegExpMagic = 0234;
 // to the thing following the set of kRegExpBranches.)  The opcodes are:
 //
 
-// definition	number	opnd?	meaning 
+// definition	number	opnd?	meaning
 enum {
-	kRegExpEnd = 0,		// no	End of program. 
-	kRegExpBol = 1,		// no	Match "" at beginning of line. 
-	kRegExpEol = 2,		// no	Match "" at end of line. 
-	kRegExpAny = 3,		// no	Match any one character. 
-	kRegExpAnyOf = 4,	// str	Match any character in this string. 
-	kRegExpAnyBut =	5,	// str	Match any character not in this string. 
-	kRegExpBranch =	6,	// node	Match this alternative, or the next... 
-	kRegExpBack = 7,	// no	Match "", "next" ptr points backward. 
-	kRegExpExactly = 8,	// str	Match this string. 
-	kRegExpNothing = 9,	// no	Match empty string. 
-	kRegExpStar = 10,	// node	Match this (simple) thing 0 or more times. 
-	kRegExpPlus = 11,	// node	Match this (simple) thing 1 or more times. 
-	kRegExpOpen	= 20,	// no	Mark this point in input as start of #n. 
-							//	kRegExpOpen + 1 is number 1, etc. 
-	kRegExpClose = 30	// no	Analogous to kRegExpOpen. 
+	kRegExpEnd = 0,		// no	End of program.
+	kRegExpBol = 1,		// no	Match "" at beginning of line.
+	kRegExpEol = 2,		// no	Match "" at end of line.
+	kRegExpAny = 3,		// no	Match any one character.
+	kRegExpAnyOf = 4,	// str	Match any character in this string.
+	kRegExpAnyBut =	5,	// str	Match any character not in this string.
+	kRegExpBranch =	6,	// node	Match this alternative, or the next...
+	kRegExpBack = 7,	// no	Match "", "next" ptr points backward.
+	kRegExpExactly = 8,	// str	Match this string.
+	kRegExpNothing = 9,	// no	Match empty string.
+	kRegExpStar = 10,	// node	Match this (simple) thing 0 or more times.
+	kRegExpPlus = 11,	// node	Match this (simple) thing 1 or more times.
+	kRegExpOpen	= 20,	// no	Mark this point in input as start of #n.
+							//	kRegExpOpen + 1 is number 1, etc.
+	kRegExpClose = 30	// no	Analogous to kRegExpOpen.
 };
 
 //
@@ -130,7 +130,7 @@ enum {
 //		and to minimize recursive plunges.
 //
 // kRegExpOpen,kRegExpClose	...are numbered at compile time.
-// 
+//
 //
 //
 // A node is one char of opcode followed by two chars of "next" pointer.
@@ -148,10 +148,10 @@ const int32_t kMaxSize = 32767L;		// Probably could be 65535L.
 
 // Flags to be passed up and down:
 enum {
-	kHasWidth =	01,	// Known never to match null string. 
-	kSimple = 02,	// Simple enough to be kRegExpStar/kRegExpPlus operand. 
-	kSPStart = 04,	// Starts with * or +. 
-	kWorst = 0	// Worst case. 
+	kHasWidth =	01,	// Known never to match null string.
+	kSimple = 02,	// Simple enough to be kRegExpStar/kRegExpPlus operand.
+	kSPStart = 04,	// Starts with * or +.
+	kWorst = 0	// Worst case.
 };
 
 #if DEBUG
@@ -212,7 +212,7 @@ SRegExp::Matches(const char *string) const
 {
 	if (!fRegExp || !string)
 		return false;
-		
+
 	return RunMatcher(fRegExp, string) == 1;
 }
 
@@ -225,18 +225,18 @@ SRegExp::Matches(const SString &string) const
 	return RunMatcher(fRegExp, string.String()) == 1;
 }
 
-bool 
+bool
 SRegExp::Search(const char *text, int32_t searchStart, int32_t *matchStart, int32_t *matchEnd)
 {
 	bool found = false;
-			
+
 	if (Matches(text + searchStart)) {
 		*matchStart = (int32_t)(fRegExp->startp[0] - text);
 		*matchEnd = (int32_t)(fRegExp->endp[0] - text);
 
 		found = true;
-	} 
-		
+	}
+
 	return found;
 }
 
@@ -278,7 +278,7 @@ SRegExp::Compile(const char *exp)
 	if (Reg(0, &flags) == NULL)
 		return NULL;
 
-	// Small enough for pointer-storage convention? 
+	// Small enough for pointer-storage convention?
 	if (fCodeSize >= kMaxSize) {
 		SetError(B_REGEXP_TOO_BIG);
 		return NULL;
@@ -301,13 +301,13 @@ SRegExp::Compile(const char *exp)
 		free(r);
 		return NULL;
 	}
-	
+
 	// Dig out information for optimizations.
 	r->regstart = '\0';	// Worst-case defaults.
 	r->reganch = 0;
 	r->regmust = NULL;
 	r->regmlen = 0;
-	scan = r->program + 1;			// First kRegExpBranch. 
+	scan = r->program + 1;			// First kRegExpBranch.
 	if (*Next((char *)scan) == kRegExpEnd) {		// Only one top-level choice.
 		scan = Operand(scan);
 
@@ -416,7 +416,7 @@ SRegExp::Reg(int32_t paren, int32_t *flagp)
 	}
 
 	// Make a closing node, and hook it on the end.
-	ender = Node(paren ? (char)(kRegExpClose + parno) : (char)kRegExpEnd);	
+	ender = Node(paren ? (char)(kRegExpClose + parno) : (char)kRegExpEnd);
 	Tail(ret, ender);
 
 	// Hook the tails of the branches to the closing node.
@@ -514,7 +514,7 @@ SRegExp::Piece(int32_t *flagp)
 		Insert(kRegExpStar, ret);
 	else if (op == '*') {
 		// Emit x* as (x&|), where & means "self".
-		Insert(kRegExpBranch, ret);				// Either x 
+		Insert(kRegExpBranch, ret);				// Either x
 		OpTail(ret, Node(kRegExpBack));		// and loop
 		OpTail(ret, ret);				// back
 		Tail(ret, Node(kRegExpBranch));		// or
@@ -531,14 +531,14 @@ SRegExp::Piece(int32_t *flagp)
 	} else if (op == '?') {
 		// Emit x? as (x|)
 		Insert(kRegExpBranch, ret);			// Either x
-		Tail(ret, Node(kRegExpBranch));	// or 
+		Tail(ret, Node(kRegExpBranch));	// or
 		next = Node(kRegExpNothing);		// null.
 		Tail(ret, next);
 		OpTail(ret, next);
 	}
 	fInputScanPointer++;
 	if (IsMult(*fInputScanPointer)) {
-		SetError(B_REGEXP_NESTED_STAR_QUESTION_PLUS);	
+		SetError(B_REGEXP_NESTED_STAR_QUESTION_PLUS);
 		return NULL;
 	}
 	return ret;
@@ -575,7 +575,7 @@ SRegExp::Atom(int32_t *flagp)
 			{
 				int32_t cclass;
 				int32_t classend;
-	
+
 				if (*fInputScanPointer == '^') {	// Complement of range.
 					ret = Node(kRegExpAnyBut);
 					fInputScanPointer++;
@@ -641,7 +641,7 @@ SRegExp::Atom(int32_t *flagp)
 			{
 				int32_t len;
 				char ender;
-	
+
 				fInputScanPointer--;
 				len = (int32_t)strcspn(fInputScanPointer, kMeta);
 				if (len <= 0) {
@@ -705,9 +705,9 @@ SRegExp::EmitChar(char b)
 
 //
 // - Insert - insert an operator in front of already-emitted operand
-// 
+//
 // Means relocating the operand.
-// 
+//
 void
 SRegExp::Insert(char op, char *opnd)
 {
@@ -787,15 +787,15 @@ SRegExp::RunMatcher(regexp *prog, const char *string) const
 {
 	const char *s;
 
-	// Be paranoid... 
+	// Be paranoid...
 	if (prog == NULL || string == NULL) {
-		SetError(B_BAD_VALUE); 
+		SetError(B_BAD_VALUE);
 		return 0;
 	}
 
 	// Check validity of program.
 	if (UCharAt(prog->program) != kRegExpMagic) {
-		SetError(B_REGEXP_CORRUPTED_PROGRAM); 
+		SetError(B_REGEXP_CORRUPTED_PROGRAM);
 		return 0;
 	}
 
@@ -841,7 +841,7 @@ SRegExp::RunMatcher(regexp *prog, const char *string) const
 //
 // - Try - try match at specific point
 //
-int32_t			// 0 failure, 1 success 
+int32_t			// 0 failure, 1 success
 SRegExp::Try(regexp *prog, const char *string) const
 {
 	int32_t i;
@@ -950,10 +950,10 @@ SRegExp::Match(const char *prog) const
 				{
 					int32_t no;
 					const char *save;
-	
+
 					no = *scan - kRegExpOpen;
 					save = fStringInputPointer;
-	
+
 					if (Match(next)) {
 						//
 						// Don't set startp if some later
@@ -979,10 +979,10 @@ SRegExp::Match(const char *prog) const
 				{
 					int32_t no;
 					const char *save;
-	
+
 					no = *scan - kRegExpClose;
 					save = fStringInputPointer;
-	
+
 					if (Match(next)) {
 						//
 						// Don't set endp if some later
@@ -999,7 +999,7 @@ SRegExp::Match(const char *prog) const
 			case kRegExpBranch:
 				{
 					const char *save;
-	
+
 					if (*next != kRegExpBranch)		// No choice.
 						next = Operand(scan);	// Avoid recursion.
 					else {
@@ -1022,7 +1022,7 @@ SRegExp::Match(const char *prog) const
 					int32_t no;
 					const char *save;
 					int32_t min;
-	
+
 					//
 					//Lookahead to avoid useless match attempts
 					// when we know what character comes next.
@@ -1196,7 +1196,7 @@ SRegExp::Dump()
 		next = Next(s);
 		if (next == NULL)		// Next ptr.
 			printf("(0)");
-		else 
+		else
 			printf("(%ld)", (s - fRegExp->program) + (next - s));
 		s += 3;
 		if (op == kRegExpAnyOf || op == kRegExpAnyBut || op == kRegExpExactly) {
@@ -1312,5 +1312,5 @@ SRegExp::RegExpError(const char *) const
 #endif // DEBUG
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

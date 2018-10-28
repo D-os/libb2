@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -20,12 +20,12 @@
 #include <support/Memory.h>
 
 #if _SUPPORTS_NAMESPACE
-using palmos::support::sptr;
-using palmos::support::BMemoryHeap;
-using palmos::support::SAtom;
-using palmos::support::SLocker;
-using palmos::support::SReadWriteLocker;
-using palmos::support::SVector;
+using os::support::sptr;
+using os::support::BMemoryHeap;
+using os::support::SAtom;
+using os::support::SLocker;
+using os::support::SReadWriteLocker;
+using os::support::SVector;
 #endif
 
 // ---------------------------------------------------------
@@ -49,7 +49,7 @@ struct Chunk {
 
 // ---------------------------------------------------------
 
-#if 1 
+#if 1
 
 typedef SReadWriteLocker RWLock;
 
@@ -57,7 +57,7 @@ typedef SReadWriteLocker RWLock;
 
 /*!	RWLock
 	This class implements a one writer/many readers lock which is
-	very fast for readers (a single atomic_add() when contested by 
+	very fast for readers (a single atomic_add() when contested by
 	nobody or only other readers) and somewhat slower for writers
 	(two atomic_adds when uncontested by other writers).  Starvation
 	should never occur for either readers or writers.
@@ -69,7 +69,7 @@ class RWLock {
 	public:
 					RWLock(const char *name = "some RWLock");
 					~RWLock();
-	
+
 		void		WriteLock();
 		void		WriteUnlock();
 		void		ReadLock();
@@ -77,7 +77,7 @@ class RWLock {
 		void		DowngradeWriteToRead();
 
 	private:
-	
+
 		int32_t		m_count;
 		sem_id		m_readerSem;
 		sem_id		m_writerSem;
@@ -88,7 +88,7 @@ inline void RWLock::WriteLock()
 {
 	m_writeLock.Lock();
 	int32_t readers = atomic_fetch_add(&m_count,-MAX_READERS);
-	if (readers > 0) 
+	if (readers > 0)
 	   SysSemaphoreWaitCount(m_writerSem, B_WAIT_FOREVER, 0, readers);
 };
 
@@ -135,7 +135,7 @@ class Stash {
 								for (int32_t n = m_freedom.CountItems()-1;n>=0;n--)
 									free(m_freedom[n]);
 							}
-							
+
 		t * 				Alloc()
 		{
 			t *n = m_theStash;
@@ -143,7 +143,7 @@ class Stash {
 				m_theStash = n->next;
 				return n;
 			};
-			
+
 			int32_t count = 1 << ((m_freedom.CountItems()+2)<<1);
 			n = (t*)malloc(sizeof(t) * count);
 			m_freedom.AddItem(n);
@@ -152,7 +152,7 @@ class Stash {
 				m_theStash = n;
 				n++;
 			};
-		
+
 			n = m_theStash;
 			m_theStash = n->next;
 			return n;
@@ -176,7 +176,7 @@ class Chunker {
 		uintptr_t			Alloc(size_t &size, bool takeBest=false, uint32_t atLeast=1);
 		bool				Alloc(uint32_t start, uint32_t size);
 		Chunk const * const	Free(uintptr_t start, size_t size);
-		
+
 		uintptr_t			PreAbuttance(uintptr_t addr);
 		uintptr_t			PostAbuttance(uintptr_t addr);
 		size_t				TotalChunkSpace();
@@ -205,11 +205,11 @@ class HashTable {
 	public:
 							HashTable(int32_t buckets=64);
 							~HashTable();
-							
+
 		void				Insert(uint32_t key, void *ptr);
 		void *				Retrieve(uint32_t key);
 		void				Remove(uint32_t key);
-	
+
 	private:
 
 		uintptr_t			Hash(uintptr_t address);
@@ -223,12 +223,12 @@ class Hasher {
 	public:
 							Hasher(Stash<Chunk> *stash);
 							~Hasher();
-							
+
 		void				Insert(uint32_t address, uint32_t size);
 		void				Retrieve(uintptr_t key, size_t **ptrToSize=NULL);
 		uint32_t			Remove(uint32_t key);
 		void				RemoveAll();
-	
+
 	private:
 
 		uint32_t				Hash(uint32_t address);
@@ -259,7 +259,7 @@ class Area : virtual public SAtom {
 
 				void			BasePtrLock();
 				void			BasePtrUnlock();
-		
+
 		inline	sptr<BMemoryHeap>	MemoryHeap() { return m_memoryHeap; }
 
 	private:
@@ -317,7 +317,7 @@ class HeapArea : public Area, public Heap {
 				size_t		LargestFree();
 				void		CheckSanity();
 				void		DumpFreeList();
-	
+
 	private:
 
 				status_t	MapRequired(uintptr_t ptr, size_t size);

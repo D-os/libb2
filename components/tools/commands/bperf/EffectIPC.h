@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -24,7 +24,7 @@
 extern void ALocalFunction(void);
 extern void ALocalFunctionWithParam(void* param);
 
-using namespace palmos::support;
+using namespace os::support;
 
 class ALocalClass
 {
@@ -36,7 +36,7 @@ class RemoteObjectProcess : public BnProcess, public SPackageSptr
 {
 	virtual	sptr<IBinder>			InstantiateComponent(const sptr<INode>& ctx, const SValue& componentInfo,
 									const SString& component, const SValue& args, status_t* outError = NULL);
-	
+
 	virtual	int32_t					AtomMarkLeakReport();
 	virtual	void					AtomLeakReport(int32_t mark, int32_t last, uint32_t flags);
 	virtual	void					PrintBinderReferences();

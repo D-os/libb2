@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -29,9 +29,9 @@
 #include <unistd.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::app;
+using namespace os::app;
 
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -97,7 +97,7 @@ sptr<IBinder> SContext::LookupService(const SString& name) const
 	path.PathAppend(name);
 
 	SValue value = SNode(m_root).Walk(&path, (uint32_t)0);
-	
+
 //	bout << "*** Lookup() name = " << name << endl;
 //	bout << "             value = " << value << endl;
 	return value.AsBinder();
@@ -110,11 +110,11 @@ status_t SContext::PublishService(const SString& name, const sptr<IBinder>& obje
 	path.PathAppend(name);
 	SString leaf(path.PathLeaf());
 	path.PathGetParent(&path);
-	
+
 //	bout << "--- PublishService() path = " << path << " leaf = " << leaf << endl;
 
 	SValue value = SNode(m_root).Walk(&path, INode::CREATE_CATALOG);
-	
+
 	status_t err;
 	sptr<ICatalog> catalog = ICatalog::AsInterface(value, &err);
 	if (catalog != NULL) return catalog->AddEntry(leaf, SValue::Binder(object));
@@ -139,7 +139,7 @@ sptr<IBinder> SContext::RemoteNew(const SValue &component, const sptr<IProcess>&
 	// here, so we don't have to do all this work for every component instantiation.
 	SString id;
 	SValue allArgs, componentInfo;
-	
+
 	parse_component(component, args, &id, &allArgs);
 
 	sptr<IProcessManager> pmgr = interface_cast<IProcessManager>(
@@ -158,9 +158,9 @@ sptr<IBinder> SContext::RemoteNew(const SValue &component, const sptr<IProcess>&
 			return NULL;
 		}
 	}
-	
+
 	sptr<IProcess> realProcess(process);
-	
+
 	// XXX I don't know if this is exactly what we want to do...  it means
 	// that the new component for the process is a child of ours, which is
 	// both good and bad...  Maybe there should be some other flag that you
@@ -172,7 +172,7 @@ sptr<IBinder> SContext::RemoteNew(const SValue &component, const sptr<IProcess>&
 		realProcess = NewProcess(id, flags, B_UNDEFINED_VALUE, outError);
 		if (realProcess == NULL) return NULL;
 	}
-	
+
 	return realProcess->InstantiateComponent(m_root, componentInfo, id, allArgs, outError);
 }
 
@@ -195,7 +195,7 @@ static SString find_executable(const SString& executable)
 		}
 		path = sep ? sep+1 : NULL;
 	}
-	
+
 	// If we didn't find it in the path, try some other
 	// standard places.
 	fullPath = get_system_directory();
@@ -206,18 +206,18 @@ static SString find_executable(const SString& executable)
 		close(fd);
 		return fullPath;
 	}
-	
+
 	return SString();
 }
 
 sptr<IProcess> SContext::NewProcess(const SString& name, uint32_t flags, const SValue& env, status_t* outError) const
 {
 	if (outError) *outError = B_OK;
-	
+
 	if ((flags&PROCESS_MASK) == PREFER_LOCAL || (flags&PROCESS_MASK) == REQUIRE_LOCAL) {
 		return SLooper::Process();
 	}
-	
+
 	if (!SLooper::PrefersProcesses() && (flags&PROCESS_MASK) != REQUIRE_REMOTE) {
 		return SLooper::Process();
 	}
@@ -227,18 +227,18 @@ sptr<IProcess> SContext::NewProcess(const SString& name, uint32_t flags, const S
 		if (outError) *outError = B_UNSUPPORTED;
 		return NULL;
 	}
-	
+
 	// XXX BINDER_PROCESS_WRAPPER doesn't currently work, because we need to get
 	// the pid of the real "binderproc" being run, not the wrapper command.
 	SString wrapper(getenv("BINDER_PROCESS_WRAPPER"));
 	SString executable("binderproc");
-	
+
 	executable = find_executable(executable);
 	if (executable == "") {
 		if (outError) *outError = B_ENTRY_NOT_FOUND;
 		return NULL;
 	}
-	
+
 	SVector<SString> args;
 	if (wrapper == "") {
 		wrapper = executable;
@@ -246,7 +246,7 @@ sptr<IProcess> SContext::NewProcess(const SString& name, uint32_t flags, const S
 		args.AddItem(executable);
 	}
 	args.AddItem(name);
-	
+
 	return interface_cast<IProcess>(NewCustomProcess(wrapper, args, flags, env, outError));
 }
 
@@ -278,21 +278,21 @@ inline bool BLessThan(const env_entry& v1, const env_entry& v2)
 sptr<IBinder> SContext::NewCustomProcess(const SString& executable, const SVector<SString>& inArgs, uint32_t flags, const SValue& env, status_t* outError) const
 {
 	if (outError) *outError = B_OK;
-	
+
 	// XXX How can we handle BINDER_SINGLE_PROCESS here?
 	size_t i;
-	
+
 	SString fullPath(find_executable(executable));
 	if (fullPath == "") {
 		if (outError) *outError = B_ENTRY_NOT_FOUND;
 		return NULL;
 	}
-	
+
 	SVector<const char*> argv;
 	argv.AddItem(executable.String());
 	for (i=0; i<inArgs.CountItems(); i++) argv.AddItem(inArgs[i].String());
 	argv.AddItem(NULL);
-	
+
 	const char** newEnv = const_cast<const char**>(environ);
 	SSortedVector<env_entry> entries;
 	const char** allocEnv = NULL;
@@ -361,7 +361,7 @@ sptr<IBinder> SContext::NewCustomProcess(const SString& executable, const SVecto
 		if (outError) *outError = errno;
 		return NULL;
 	}
-	
+
 	return SLooper::This()->ReceiveRootObject(pid);
 }
 
@@ -395,8 +395,8 @@ status_t SContext::Publish(const SString& location, const SValue& item) const
 
 status_t SContext::Unpublish(const SString& location) const
 {
-//	bout << "*** Unpublishing: '" << location << "'" << endl; 
-	
+//	bout << "*** Unpublishing: '" << location << "'" << endl;
+
 	SString path;
 	location.PathGetParent(&path);
 
@@ -418,7 +418,7 @@ status_t SContext::LookupComponent(const SString& id, SValue* out_info) const
 {
 	SString path("/packages/components");
 	path.PathAppend(id);
-	
+
 	if (id.Length() == 0) return B_BAD_VALUE;
 
 	status_t err;
@@ -434,10 +434,10 @@ SValue SContext::LookupComponentProperty(const SString &component, const SString
 {
 	status_t err;
 	SValue value;
-	
+
 	err = LookupComponent(component, &value);
 	if (err != B_OK) return SValue::Int32(err);
-	
+
 	return value[SValue::String(property)];
 }
 
@@ -449,17 +449,17 @@ B_CONST_STRING_VALUE_SMALL(key__s, "-s", );
 status_t SContext::RunScript(const SString &filename) const
 {
 	sptr<ICommand> shell = ICommand::AsInterface(New(BSH_COMPONENT));
-	
+
 	shell->SetByteInput(NullByteInput());
 	shell->SetByteOutput(StandardByteOutput());
 	shell->SetByteError(StandardByteError());
-	
+
 	ICommand::ArgList args;
 	args.AddItem(key_sh);
 	args.AddItem(key___login);
 	args.AddItem(key__s);
 	args.AddItem(SValue::String(filename));
-	
+
 	status_t err = shell->Run(args).AsInt32(); // this returns 10 if there was an error
 	return err == B_OK ? B_OK : B_ERROR;
 }
@@ -471,7 +471,7 @@ SContext SContext::UserContext()
 {
 	return GetContext(key_user);
 }
-	
+
 SContext SContext::SystemContext()
 {
 	return GetContext(key_system);
@@ -481,14 +481,14 @@ SContext SContext::GetContext(const SString& name)
 {
 	return GetContext(name, SLooper::This()->Process());
 }
-	
+
 SContext SContext::GetContext(const SString& name, const sptr<IProcess>& caller)
 {
 	return SLooper::GetContext(name, caller->AsBinder());
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif	// LIBBE_BOOTSTRAP

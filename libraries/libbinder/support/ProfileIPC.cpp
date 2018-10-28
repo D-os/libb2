@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -25,7 +25,7 @@
 #include <DebugMgr.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -43,7 +43,7 @@ static void stat_print_thread(void*)
 
 	while (!g_readyDone) {
 		SysConditionVariableWait(&g_readyCondition, NULL);
-		
+
 		SysCriticalSectionEnter(&g_readyLock);
 		//printf("IPC statistics being printed...\n");
 		SysConditionVariableClose(&g_readyCondition);
@@ -106,17 +106,17 @@ struct calls_by_count
 {
 	size_t count;
 	size_t index;
-	
+
 	calls_by_count()
 		:	count(0), index(0)
 	{
 	}
-	
+
 	calls_by_count(const calls_by_count& o)
 		:	count(o.count), index(o.index)
 	{
 	}
-	
+
 	bool operator<(const calls_by_count& o) const
 	{
 		if (count != o.count) return count < o.count ? true : false;
@@ -126,7 +126,7 @@ struct calls_by_count
 };
 
 ipc_stats::ipc_stats(int32_t _dumpPeriod, int32_t _maxItems, int32_t _printSymbols, const char* _printLabel)
-	:	
+	:
 		dumpPeriod(_dumpPeriod), maxItems(_maxItems),
 		printSymbols(_printSymbols), printLabel(_printLabel),
 		hits(0), startTime(SysGetRunTime()), totalCalls(0),
@@ -171,7 +171,7 @@ void ipc_stats::beginCall(ipc_call_state& state)
 		calls.AddItem(state.stack, item);
 	}
 	unlock();
-	
+
 	state.startTime = SysGetRunTime();
 }
 
@@ -187,7 +187,7 @@ void ipc_stats::finishCall(ipc_call_state& state)
 		print_it = (dumpPeriod > 0) && ((hits%dumpPeriod) == 0);
 	}
 	unlock();
-	
+
 	if (print_it) stats_ready(this);
 	//if (print_it) print();
 }
@@ -196,12 +196,12 @@ void ipc_stats::print()
 {
 	lock();
 	SSortedVector<calls_by_count> byCount;
-	
+
 	const nsecs_t totalTime = SysGetRunTime()-startTime;
 	const size_t N = calls.CountItems();
 	size_t i;
 	int32_t count;
-	
+
 	for (i=0; i<N; i++) {
 		const ipc_item& item = calls.ValueAt(i);
 		calls_by_count countItem;
@@ -209,7 +209,7 @@ void ipc_stats::print()
 		countItem.index = i;
 		byCount.AddItem(countItem);
 	}
-	
+
 	// Can't do this because we may get to this point during the
 	// construction of a SAtom object, which fails due to the
 	// trickery in SAtom for allocating memory. :(
@@ -237,7 +237,7 @@ void ipc_stats::print()
 				<< " / time=" << item.time << endl;
 		}
 	}
-	
+
 	bout << dedent;
 
 	unlock();
@@ -257,7 +257,7 @@ ipc_stats::reset()
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #endif

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -18,7 +18,7 @@
 #include <support/INode.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
+using namespace os::support;
 #endif
 
 class CallbackInfo
@@ -52,7 +52,7 @@ public:
 					const SValue &method, uint32_t flags);
 	CreationInfo(const CreationInfo &);
 	~CreationInfo();
-	
+
 	sptr<INode>		Context() const;
 	sptr<IProcess>	Process() const;
 	SString			Component() const;
@@ -81,7 +81,7 @@ public:
 	status_t	Add(const SValue &key, const T &info);
 	status_t	Remove(const SValue &key, const T &info);
 	status_t	Find(const SValue &key, SSortedVector<T> *info);
-	
+
 	SKeyedVector<SValue, SSortedVector<T>* > m_list;
 };
 
@@ -437,7 +437,7 @@ InformList<T>::Add(const SValue &key, const T &info)
 	bool foundKey;
 	bool foundInfo;
 	bool added;
-	
+
 	foundKey = m_list.GetIndexOf(key, &keyIndex);
 	if (foundKey) {
 		SSortedVector<T> *registered = m_list.EditValueAt(keyIndex);
@@ -465,7 +465,7 @@ InformList<T>::Remove(const SValue &key, const T &info)
 {
 	ssize_t keyIndex;
 	ssize_t infoIndex;
-	
+
 	keyIndex = m_list.IndexOf(key);
 	if (keyIndex < 0) return B_NAME_NOT_FOUND;
 	SSortedVector<T> * infoList = m_list.EditValueAt(keyIndex);

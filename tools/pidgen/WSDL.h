@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -23,9 +23,9 @@
 #include <xml/Parser.h>
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::storage;
-using namespace palmos::support;
-using namespace palmos::xml;
+using namespace os::storage;
+using namespace os::support;
+using namespace os::xml;
 #endif
 
 class SXMLTag
@@ -107,7 +107,7 @@ public:
 	size_t CountElements() const;
 	size_t CountComplexContents() const;
 	size_t CountSimpleContents() const;
-	
+
 	ssize_t AddElement(const sptr<BXSDElement>& type);
 	ssize_t AddComplexContent(const sptr<BXSDComplexContent>& content);
 	ssize_t AddSimpleContent(const sptr<BXSDSimpleContent>& content);
@@ -145,7 +145,7 @@ class BXMLSchema : public SAtom
 {
 public:
 	BXMLSchema();
-	
+
 	ssize_t AddElement(const sptr<BXSDElement>& type);
 	ssize_t AddComplexType(const sptr<BXSDComplexType>& type);
 	ssize_t AddSimpleType(const sptr<BXSDSimpleType>& type);
@@ -157,7 +157,7 @@ public:
 	sptr<BXSDElement> ElementAt(size_t index) const;
 	sptr<BXSDComplexType> ComplexTypeAt(size_t index) const;
 	sptr<BXSDSimpleType> SimpleTypeAt(size_t index) const;
-	
+
 	const SValue& Attributes() const;
 	void SetAttributes(const SValue& attrs);
 
@@ -197,9 +197,9 @@ public:
 			SString name;
 			SString urn;
 		};
-		
+
 		Binding(const SValue& attrs);
-		
+
 		SString Name() const;
 		SString Type() const;
 		SString Style() const;
@@ -211,7 +211,7 @@ public:
 		ssize_t AddOperation(const Operation& operation);
 		size_t CountOperations() const;
 		BWsdl::Binding::Operation OperationAt(size_t index) const;
-		
+
 	private:
 		SString m_name;
 		SString m_type;
@@ -224,12 +224,12 @@ public:
 	{
 	public:
 		Message(const SValue& attrs);
-	
+
 		SString Name() const;
 		ssize_t AddPart(const SValue& part);
 		size_t CountParts() const;
 		const SValue& PartAt(size_t index) const;
-		
+
 	private:
 		SValue m_attributes;
 		SVector<SValue> m_parts;
@@ -245,7 +245,7 @@ public:
 			SString input;
 			SString output;
 		};
-		
+
 		PortType(const SString& name);
 
 		SString Name() const;
@@ -273,7 +273,7 @@ public:
 		SValue m_attributes;
 		SVector<SValue> m_ports;
 	};
-	
+
 	BWsdl();
 
 	SString Name() const;
@@ -304,13 +304,13 @@ public:
 
 private:
 	mutable SLocker m_lock;
-	
+
 	SVector< sptr<BWsdl::Service> > m_services;
 	SKeyedVector<SString, sptr<BWsdl::PortType> > m_portTypes;
 
 	SKeyedVector<SString, sptr<BWsdl::Binding> > m_bindings;
 	SKeyedVector<SString, sptr<BWsdl::Message> > m_messages;
-	
+
 	sptr<BXMLSchema> m_schema;
 	SValue m_definitions;
 };
@@ -321,7 +321,7 @@ public:
 	BWsdlCreator();
 
 	virtual status_t Parse(const SString& file, const sptr<BWsdl>& wsdl);
-   
+
 	virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
 	virtual status_t OnEndTag(SString& name);
 	virtual status_t OnText(SString& data);

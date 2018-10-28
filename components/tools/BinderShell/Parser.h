@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -24,8 +24,8 @@
 #include "SyntaxTree.h"
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::support;
-using namespace palmos::app;
+using namespace os::support;
+using namespace os::app;
 #endif
 
 bool find_some_input(const SValue& val, const sptr<BCommand>& shell, sptr<ITextInput>* input, SString* path);
@@ -45,13 +45,13 @@ public:
 
 	Lexer(const sptr<ICommand>& shell, const sptr<ITextInput>& input, const sptr<ITextOutput>& output, bool interactive);
 	virtual ~Lexer();
-		
+
 	size_t Size() const;
 
 	int NextToken();
 	SString CurrentToken();
 	bool HasMoreTokens();
-	
+
 	// Remove all tokens before current.  Can not
 	// rewind before this point.
 	void FlushTokens();
@@ -65,7 +65,7 @@ public:
 
 	void SetPrompt(const sptr<ICommand>& shell);
 	SString GetPrompt() const;
-	
+
 	inline bool IsInteractive() const { return m_interactive; }
 
 	enum
@@ -116,7 +116,7 @@ public:
 		UNTIL					= KEY_WORD | 15,
 		WHILE					= KEY_WORD | 16,
 		OVER					= KEY_WORD | 17,
-		
+
 		SCAN_NORMAL				= 0x0000,
 		DOUBLE_QUOTED			= 0x0001,
 		SINGLE_QUOTED			= 0x0002,
@@ -133,7 +133,7 @@ private:
 
 	/*! m_buffer used to be a static size.  However, large tokens
 		could overflow the buffer.  Normally m_buffer is line oriented,
-		but an entire token is buffered at once.  Imagine a script 
+		but an entire token is buffered at once.  Imagine a script
 			exit @{...}
 		where the entire script is in the SValue.
 		Lots of code cached pointers into the buffer.  Since the code
@@ -142,7 +142,7 @@ private:
 		m_buffer moves, so does the Iterator. */
 	class Iterator {
 	public:
-		Iterator(char*& buffer) : m_ptr(buffer)	
+		Iterator(char*& buffer) : m_ptr(buffer)
 		{
 			m_offset = 0;
 		}
@@ -159,9 +159,9 @@ private:
 			return *this;
 		}
 
-		char& operator[](size_t pos)								
-		{ 
-			return m_ptr[pos+m_offset];	
+		char& operator[](size_t pos)
+		{
+			return m_ptr[pos+m_offset];
 		}
 
 		char& operator*()
@@ -208,7 +208,7 @@ private:
 	bool ConsumeDelimeter();
 	bool ConsumeKeyword();
 	void ConsumeToken();
-	
+
 	int IsDelimeter();
 
 	bool IsValidName(const SString& token);
@@ -219,7 +219,7 @@ private:
 	const sptr<ITextInput> m_textInput;
 	const sptr<ITextOutput> m_textOutput;
 	const bool m_interactive;
-	
+
 	int m_state;
 	int m_depth;
 	ssize_t m_index;

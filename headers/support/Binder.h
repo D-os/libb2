@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -26,7 +26,7 @@
 #include <support/Context.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -48,13 +48,13 @@ struct effect_action_def {
 	typedef SValue		(*get_func)		(const sptr<IInterface>& target);
 	typedef SValue		(*invoke_func)	(const sptr<IInterface>& target,
 										 const SValue& value);
-	
+
 	size_t				struct_size;	//!< always sizeof(effect_action_def)
 
 	const void*			raw_key;		//!< the binder key this action is for
 	const SValue&		key() const;	//!< convenience for retrieving key
 	BAutobinderDef*		parameters;		//!< parameters for function
-	
+
 	put_func			put;			//!< function for put action, or NULL
 	get_func			get;			//!< function for get action, or NULL
 	invoke_func			invoke;			//!< function for invoke action, or NULL
@@ -87,7 +87,7 @@ class BBinder : public IBinder
 {
 	public:
 		inline	const SContext&			Context() const;
-		
+
 		virtual	SValue					Inspect(const sptr<IBinder>& caller,
 												const SValue &which,
 												uint32_t flags = 0);
@@ -103,7 +103,7 @@ class BBinder : public IBinder
 												const SValue &inBindings,
 												const SValue &outBindings,
 												SValue *out);
-		
+
 		virtual	status_t				Transact(	uint32_t code,
   													SParcel& data,
   													SParcel* reply = NULL,
@@ -116,7 +116,7 @@ class BBinder : public IBinder
 		virtual status_t 				AutobinderInvoke(	const BAutobinderDef* def,
 															void** params,
 															void* result);
-		
+
 		virtual	status_t				LinkToDeath(	const sptr<BBinder>& target,
 														const SValue &method,
 														uint32_t flags = 0);
@@ -125,10 +125,10 @@ class BBinder : public IBinder
 														uint32_t flags = 0);
 		virtual	bool					IsBinderAlive() const;
 		virtual	status_t				PingBinder();
-		
+
 		virtual	BBinder*				LocalBinder();
 #if _SUPPORTS_NAMESPACE
-		virtual	palmos::osp::BpBinder*	RemoteBinder();
+		virtual	os::osp::BpBinder*	RemoteBinder();
 #else
 		virtual	BpBinder*				RemoteBinder();
 #endif
@@ -148,7 +148,7 @@ class BBinder : public IBinder
 														const SValue &inBindings,
 														const SValue &outBindings,
 														SValue *out);
-		
+
 		// These functions are called by the default implementation of
 		// HandleEffect(), interpreting an Effect() calls as Put(), Get(),
 		// and Invoke(), respectively.  These are for use by scripting
@@ -179,13 +179,13 @@ class BBinder : public IBinder
 				void					BeginEffectContext(const struct EffectCache &cache);
 				void					EndEffectContext();
 
-				
+
 				BBinder&				operator=(const BBinder& o);	// No implementation
 
 		static	int32_t					gBinderTLS;
-		
+
 		struct extensions;
-		
+
 		const SContext					m_context;
 		atomic<extensions *>			m_extensions;
 };
@@ -204,7 +204,7 @@ public:
     { (void)flags; return which * SValue(INTERFACE::Descriptor(),SValue::Binder(this)); };
 		virtual	sptr<IInterface>	InterfaceFor(const SValue &desc, uint32_t flags = 0)
                 { return (desc == INTERFACE::Descriptor()) ? sptr<IInterface>(this) : BBinder::InterfaceFor(desc, flags); }
-	
+
 protected:
 
 #if defined(_MSC_VER) && _MSC_VER
@@ -219,8 +219,8 @@ protected:
 		virtual							~BnInterface();
 #endif
 
-		
-		
+
+
 		virtual	sptr<IBinder>			AsBinderImpl()			{ return this; }
 		virtual	sptr<const IBinder>		AsBinderImpl() const	{ return this; }
 };
@@ -241,11 +241,11 @@ class BpAtom : public virtual SAtom
 		virtual	status_t				FinishAtom(const void* id);
 		virtual	status_t				IncStrongAttempted(uint32_t flags, const void* id);
 		virtual	status_t				DeleteAtom(const void* id);
-		
+
 		inline	IBinder*				Remote()				{ return m_remote; }
 		// NOTE: This removes constness from the remote binder.
 		inline	IBinder*				Remote() const			{ return m_remote; }
-				
+
 	private:
 										BpAtom(const BpAtom& o);	// no implementation
 		BpAtom&							operator=(const BpAtom& o);	// no implementation
@@ -267,7 +267,7 @@ class BpInterface : public INTERFACE, public BpAtom
 	protected:
 		inline							BpInterface(const sptr<IBinder>& o)	: BpAtom(o) { }
 		inline virtual					~BpInterface() { }
-		
+
 		virtual	sptr<IBinder>			AsBinderImpl()
 											{ return sptr<IBinder>(Remote()); }
 		virtual	sptr<const IBinder>		AsBinderImpl() const
@@ -290,7 +290,7 @@ class BpInterface : public INTERFACE, public BpAtom
 /*!	You will not normally use this, instead letting pidgen generate
 	similar code from an IDL file.
 
-	Note that you must have defined your remote proxy class 
+	Note that you must have defined your remote proxy class
 	(with an "Bp" prefix) before using the macro.
 	B_IMPLEMENT_META_INTERFACE_NO_INSTANTIATE implements the
 	internals of B_IMPLEMENT_META_INTERFACE, which is what
@@ -299,19 +299,19 @@ class BpInterface : public INTERFACE, public BpAtom
 	without the cross-process or multi-language support.
 	(See documentation for the [local] attribute in PIDgen.)
 	The leftmostbase casts are needed when the interface has multiple bases.
-	Rather than have 2 macro versions, we just always insert the extra cast.  
+	Rather than have 2 macro versions, we just always insert the extra cast.
 	In the case of single (or no) inheritance, the leftmostbase will be the same
 	as I ## iname, which results in code like this:
 	static_cast<IFoo*>(static_cast<IFoo*> blah))
 */
 #define B_IMPLEMENT_META_INTERFACE_NO_INSTANTIATE(iname, descriptor, leftmostbase)			\
 		B_STATIC_STRING_VALUE_LARGE(descriptor_ ## iname, descriptor,)						\
-		const BNS(::palmos::support::) SValue& I ## iname :: Descriptor()					\
+		const BNS(os::support::) SValue& I ## iname :: Descriptor()					\
 		{																					\
 			return descriptor_ ## iname;													\
 		}																					\
-		BNS(::palmos::support::) sptr<I ## iname> I ## iname :: AsInterface(				\
-			const BNS(::palmos::support::) sptr< BNS(::palmos::support::) IBinder> &o,		\
+		BNS(os::support::) sptr<I ## iname> I ## iname :: AsInterface(				\
+			const BNS(os::support::) sptr< BNS(os::support::) IBinder> &o,		\
 			status_t* out_error)															\
 		{																					\
 			return static_cast<I ## iname*>(												\
@@ -323,8 +323,8 @@ class BpInterface : public INTERFACE, public BpAtom
 						out_error)															\
 					.ptr() ));																\
 		}																					\
-		BNS(::palmos::support::) sptr<I ## iname> I ## iname :: AsInterface(				\
-			const BNS(::palmos::support::) SValue &v,										\
+		BNS(os::support::) sptr<I ## iname> I ## iname :: AsInterface(				\
+			const BNS(os::support::) SValue &v,										\
 			status_t* out_error)															\
 		{																					\
 			sptr<IBinder> obj = v.AsBinder(out_error);										\
@@ -338,8 +338,8 @@ class BpInterface : public INTERFACE, public BpAtom
 						out_error)															\
 					.ptr() ));																\
 		}																					\
-		BNS(::palmos::support::) sptr<I ## iname> I ## iname :: AsInterfaceNoInspect(		\
-			const BNS(::palmos::support::) sptr< BNS(::palmos::support::) IBinder> &o,		\
+		BNS(os::support::) sptr<I ## iname> I ## iname :: AsInterfaceNoInspect(		\
+			const BNS(os::support::) sptr< BNS(os::support::) IBinder> &o,		\
 			status_t* out_error)															\
 		{																					\
 			return static_cast<I ## iname*>(												\
@@ -351,8 +351,8 @@ class BpInterface : public INTERFACE, public BpAtom
 						out_error)															\
 					.ptr() ));																\
 		}																					\
-		BNS(::palmos::support::) sptr<I ## iname> I ## iname :: AsInterfaceNoInspect(		\
-			const BNS(::palmos::support::) SValue &v,										\
+		BNS(os::support::) sptr<I ## iname> I ## iname :: AsInterfaceNoInspect(		\
+			const BNS(os::support::) SValue &v,										\
 			status_t* out_error)															\
 		{																					\
 			sptr<IBinder> obj = v.AsBinder(out_error);										\
@@ -369,8 +369,8 @@ class BpInterface : public INTERFACE, public BpAtom
 
 //!	B_IMPLEMENT_META_INTERFACE should be used in almost all cases.
 #define B_IMPLEMENT_META_INTERFACE(iname, descriptor, leftmostbase)							\
-		static BNS(::palmos::support::) sptr<BNS(::palmos::support::) IInterface>			\
-		instantiate_proxy_ ## iname (const BNS(::palmos::support::)sptr<BNS(::palmos::support::) IBinder>& b) {		\
+		static BNS(os::support::) sptr<BNS(os::support::) IInterface>			\
+		instantiate_proxy_ ## iname (const BNS(os::support::)sptr<BNS(os::support::) IBinder>& b) {		\
 			return static_cast<leftmostbase*>(new Bp ## iname(b));							\
 		}																					\
 		B_IMPLEMENT_META_INTERFACE_NO_INSTANTIATE(iname, descriptor, leftmostbase)			\
@@ -378,8 +378,8 @@ class BpInterface : public INTERFACE, public BpAtom
 //!	B_IMPLEMENT_META_INTERFACE_LOCAL is used for [local] interfaces.
 /*! (Local to one process and not callable by other languages.) */
 #define B_IMPLEMENT_META_INTERFACE_LOCAL(iname, descriptor, leftmostbase)					\
-		static BNS(::palmos::support::) sptr<BNS(::palmos::support::) IInterface>			\
-		instantiate_proxy_ ## iname (const BNS(::palmos::support::)sptr<BNS(::palmos::support::) IBinder>& b) {		\
+		static BNS(os::support::) sptr<BNS(os::support::) IInterface>			\
+		instantiate_proxy_ ## iname (const BNS(os::support::)sptr<BNS(os::support::) IBinder>& b) {		\
 			return NULL;																	\
 		}																					\
 		B_IMPLEMENT_META_INTERFACE_NO_INSTANTIATE(iname, descriptor, leftmostbase)			\
@@ -423,7 +423,7 @@ inline const SValue& effect_action_def::key() const
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif	/* _SUPPORT_BINDER_H_ */

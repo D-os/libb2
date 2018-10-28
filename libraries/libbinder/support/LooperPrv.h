@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -70,7 +70,7 @@
 #endif
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -103,7 +103,7 @@ extern char g_ipcProfileSymbols[];
 extern BDebugInteger<g_ipcProfileSymbols, 1, 0, 1> g_profileSymbols;
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif
 
 #else
@@ -125,7 +125,7 @@ enum {
 };
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -163,14 +163,14 @@ struct context_entry
 {
 	SContext context;
 	sptr<IBinder> contextObject;
-	
+
 };
 extern SKeyedVector<SString, context_entry>* g_binderContext;
 extern SLocker* g_systemDirectoryLock;
 extern SString* g_systemDirectory;
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif

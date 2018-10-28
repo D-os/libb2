@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -26,10 +26,10 @@
 #include <new>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 
-using namespace palmos::osp;
+using namespace os::osp;
 #endif
 
 /**************************************************************************************/
@@ -130,7 +130,7 @@ status_t SHandler::EnqueueMessage(const SMessage &message, nsecs_t time, uint32_
 	flags &= (B_POST_REMOVE_DUPLICATES|B_POST_KEEP_UNIQUE);
 	if (flags == 0) {
 //		bout << "SHandler::Enqueue: @" << SysGetRunTime() << endl;
-	
+
 		SMessage* msg = new B_NO_THROW SMessage(message);
 		if (msg != NULL) {
 			bool doSchedule = false;
@@ -146,7 +146,7 @@ status_t SHandler::EnqueueMessage(const SMessage &message, nsecs_t time, uint32_
 			m_lock.Unlock();
 
 //			bout << "Message: " << *msg << endl << endl;
-	
+
 			if (doSchedule) m_team->ScheduleHandler(this);
 			return B_OK;
 		}
@@ -160,7 +160,7 @@ status_t SHandler::EnqueueMessage(const SMessage &message, nsecs_t time, uint32_
 status_t SHandler::enqueue_unique_message(const SMessage &message, nsecs_t time, uint32_t flags)
 {
 //	bout << "SHandler::enqueue_unique_message: @" << SysGetRunTime() << endl;
-	
+
 	SValue prevData;
 	SMessageList removed;
 
@@ -178,11 +178,11 @@ status_t SHandler::enqueue_unique_message(const SMessage &message, nsecs_t time,
 	m_lock.Unlock();
 
 //	bout << "Message: " << *msg << endl << endl;
-	
+
 	removed.MakeEmpty();
 
 	if (doSchedule) m_team->ScheduleHandler(this);
-	
+
 	return msg != NULL ? B_OK : B_NO_MEMORY;
 }
 
@@ -248,28 +248,28 @@ void SHandler::FilterMessages(	const filter_functor_base& functor,
 {
 	SMessageList localRemoved;
 	if (!removed) removed = &localRemoved;
-	
+
 	bool doSchedule = false;
 	uint32_t state = 0;
 
 	m_lock.LockQuick();
-	
+
 	const nsecs_t now = (flags&FILTER_FUTURE_FLAG) ? 0 : exact_SysGetRunTime();
 	const SMessage* oldHead = m_msgQueue.Head();
 	const SMessage* msg = (flags&FILTER_REVERSE_FLAG)
 						? m_msgQueue.Tail() : m_msgQueue.Head();
 	while (msg) {
 		filter_action action = FILTER_KEEP;
-		
+
 		// If we are including future messages in the filter, or
 		// the message time is less than now...
 		if ((flags&FILTER_FUTURE_FLAG) || msg->When() <= now) {
 			action = functor(msg, data);
 		}
-		
+
 		if (action == FILTER_STOP)
 			break;
-		
+
 		const SMessage* next = (flags&FILTER_REVERSE_FLAG)
 							 ? m_msgQueue.Previous(msg) : m_msgQueue.Next(msg);
 		if (action == FILTER_REMOVE) {
@@ -277,10 +277,10 @@ void SHandler::FilterMessages(	const filter_functor_base& functor,
 			if (flags&FILTER_REVERSE_FLAG) removed->AddTail(m);
 			else removed->AddHead(m);
 		}
-		
+
 		msg = next;
 	}
-	
+
 	if (m_msgQueue.Head() != oldHead) {
 		if (!m_msgQueue.IsEmpty()) {
 			doSchedule =
@@ -291,9 +291,9 @@ void SHandler::FilterMessages(	const filter_functor_base& functor,
 			m_state &= ~ghScheduled;
 		}
 	}
-	
+
 	m_lock.Unlock();
-	
+
 	if (doSchedule) m_team->ScheduleHandler(this);
 	else if (state & ghScheduled) m_team->UnscheduleHandler(this);
 }
@@ -337,7 +337,7 @@ void SHandler::RemoveAllMessages(SMessageList* outRemoved)
 	m_lock.Unlock();
 
 	tmp.MakeEmpty();
-	
+
 	if (state & ghScheduled) m_team->UnscheduleHandler(this);
 };
 
@@ -390,7 +390,7 @@ void SHandler::unschedule()
 SHandler::scheduling SHandler::start_schedule()
 {
 	SHandler::scheduling result;
-	
+
 	m_lock.LockQuick();
 	m_state &= ~ghCalledSchedule;
 	if ((m_state & (ghCanSchedule|ghNeedSchedule|ghDying))
@@ -403,7 +403,7 @@ SHandler::scheduling SHandler::start_schedule()
 		result = CANCEL_SCHEDULE;
 	}
 	m_lock.Unlock();
-	
+
 	return result;
 }
 
@@ -415,5 +415,5 @@ void SHandler::done_schedule()
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

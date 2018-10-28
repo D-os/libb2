@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -22,7 +22,7 @@
 #include <support/Locker.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -66,7 +66,7 @@ protected:
 	virtual						~SThread();
 
 	//!	Main entry of thread.
-	
+
 	/*!	Two models of execution are supported.
 
 		Looping: If you return true from this function, it will be
@@ -103,7 +103,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // end namespace palmos::support
+} } // end namespace os::support
 #endif
 
 #endif	/* _SUPPORT_THREAD_H_ */

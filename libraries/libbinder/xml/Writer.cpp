@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -13,7 +13,7 @@
 #include <xml/Writer.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace xml {
 #endif
 
@@ -62,16 +62,16 @@ print_children_list(SString & str, BElementDecl::List * list)
 		sep = ',';
 	else
 		sep = '|';
-	
+
 	str += '(';
 	int32_t count = list->CountItems();
 	for (int32_t i=0; i<count; ++i)
 	{
 		if (i != 0)
 			str += sep;
-		
+
 		BElementDecl::ListNode * node = list->NodeAt(i);
-		
+
 		if (node->type == BElementDecl::ListNode::LIST)
 			print_children_list(str, node->list);
 		else
@@ -101,7 +101,7 @@ BWriter::BWriter(const sptr<IByteOutput>& data, uint32_t formattingStyle)
 // =====================================================================
 BWriter::~BWriter()
 {
-	
+
 }
 
 
@@ -111,10 +111,10 @@ status_t
 BWriter::BeginDoctype(const SString & elementName, const SString & systemID, const SString & publicID)
 {
 	status_t err;
-	
+
 	WriteString("<!DOCTYPE ");
 	WriteStringLength(elementName.String(), elementName.Length());
-	
+
 	if (publicID != "") {
 		WriteString(" PUBLIC \"");
 		WriteStringLength(publicID.String(), publicID.Length());
@@ -126,10 +126,10 @@ BWriter::BeginDoctype(const SString & elementName, const SString & systemID, con
 		WriteStringLength(systemID.String(), systemID.Length());
 		WriteString("\"");
 	}
-	
+
 	m_doneDOCTYPE = true;
 	m_startedInternalDTD = false;
-	
+
 	return B_OK;
 }
 
@@ -139,16 +139,16 @@ status_t
 BWriter::EndDoctype()
 {
 	status_t err;
-	
+
 	if (m_startedInternalDTD) {
 		WriteString("\n]>\n\n");
 	} else {
 		WriteString(">\n\n");
 	}
-	
+
 	m_startedInternalDTD = false;
 	m_doneDOCTYPE = false;
-	
+
 	return B_OK;
 }
 
@@ -158,18 +158,18 @@ status_t
 BWriter::OnElementDecl(const BElementDecl * decl)
 {
 	(void) decl;
-	
+
 	status_t err;
 	int32_t count, i;
 	SString str;
-	
+
 	err = open_doctype();
 	if (err != B_OK)
 		return err;
-	
+
 	WriteString("\n\t<!ELEMENT ");
 	WriteString(decl->Name());
-	
+
 	switch(decl->Mode())
 	{
 		case BElementDecl::EMPTY:
@@ -195,21 +195,21 @@ BWriter::OnElementDecl(const BElementDecl * decl)
 	}
 	str += '>';
 	WriteStringLength(str.String(), str.Length());
-	
+
 	count = decl->CountAttributeDecls();
 	if (count > 0) {
 		WriteString("\n\t<!ATTLIST ");
 		WriteString(decl->Name());
-	}	
+	}
 	for (i=0; i<count; i++) {
 		const BAttributeDecl * attr = decl->GetAttributeDecl(i);
-		
+
 		WriteString("\n\t\t");
 		WriteString(attr->Name());
 		WriteString("\t");
-		
+
 		SString str;
-		
+
 		switch (attr->GetType())
 		{
 			case B_STRING_TYPE:
@@ -252,7 +252,7 @@ BWriter::OnElementDecl(const BElementDecl * decl)
 				str += "**UNKNOWN**\t";
 		}
 		WriteStringLength(str.String(), str.Length());
-		
+
 		switch (attr->GetBehavior())
 		{
 			case B_XML_ATTRIBUTE_REQUIRED:
@@ -274,7 +274,7 @@ BWriter::OnElementDecl(const BElementDecl * decl)
 				break;
 		}
 		WriteStringLength(str.String(), str.Length());
-		
+
 	}
 	if (count > 0) {
 		WriteString("\n\t\t>");
@@ -288,14 +288,14 @@ status_t
 BWriter::OnEntityDecl(const BEntityDecl * decl)
 {
 	(void) decl;
-	
+
 	status_t err;
-	
+
 	err = open_doctype();
 	if (err != B_OK)
 		return err;
-	
-	
+
+
 	return B_OK;
 }
 #endif
@@ -307,19 +307,19 @@ BWriter::StartTag(const SString &name, const SValue &attributes, uint32_t format
 	status_t err;
 	void * cookie;
 	SValue key, value;
-	
+
 	if (m_openStartTag) {
 		WriteString(">");
 		m_openStartTag = false;
 	}
-	
+
 	err = indent();
 	if (err != B_OK)
 		return err;
-	
+
 	WriteString("<");
 	WriteStringLength(name.String(), name.Length());
-	
+
 	cookie = NULL;
 	while (B_OK == attributes.GetNextItem(&cookie, &key, &value))
 	{
@@ -331,15 +331,15 @@ BWriter::StartTag(const SString &name, const SValue &attributes, uint32_t format
 		WriteData(v.String(), v.Length());
 		WriteString("\"");
 	}
-	
+
 	// If we are currently adding whitespace, and we're going to be inside this one,
 	// then increment perty depth
 	if ((m_lastPrettyDepth == m_depth) && !(formattingHints & NO_EXTRA_WHITESPACE))
 		m_lastPrettyDepth = m_depth+1;
-		
+
 	// m_depth tells us how far in we really are.
 	m_depth++;
-	
+
 	m_openStartTag = true;
 	m_elementStack.AddItem(name);
 	return B_OK;
@@ -351,35 +351,35 @@ status_t
 BWriter::EndTag()
 {
 	status_t err;
-	
+
 	if (m_elementStack.CountItems() <= 0)
 		return B_BAD_INDEX;
-	
+
 	// This checks one level deeper than indent() will print, which is right
 	bool noExtraWhitespace = !(m_lastPrettyDepth == m_depth);
 	m_depth--;
 	if (m_lastPrettyDepth > m_depth) m_lastPrettyDepth = m_depth;
-	
+
 	if (m_openStartTag) {
 		WriteString(" />");
 		m_openStartTag = false;
 		m_elementStack.RemoveItemsAt(m_elementStack.CountItems()-1);
 		return B_OK;
 	}
-	
+
 	if (!noExtraWhitespace) {
 		err = indent();
 		if (err != B_OK)
 			return err;
 	}
-	
+
 	const SString & name = m_elementStack[m_elementStack.CountItems()-1];
 	WriteString("</");
 	WriteStringLength(name.String(), name.Length());
 	WriteString(">");
-	
+
 	m_elementStack.RemoveItemsAt(m_elementStack.CountItems()-1);
-	
+
 	return B_OK;
 }
 
@@ -389,18 +389,18 @@ status_t
 BWriter::TextData(const char	* data, int32_t size)
 {
 	status_t err;
-	
+
 	if (m_openStartTag) {
 		WriteString(">");
 		m_openStartTag = false;
 	}
-	
+
 	err = indent();
 	if (err != B_OK)
 		return err;
-	
+
 	WriteData(data, size);
-	
+
 	return B_OK;
 }
 
@@ -416,7 +416,7 @@ BWriter::WriteEscaped(const char *data, int32_t size)
 		WriteString(">");
 		m_openStartTag = false;
 	}
-	
+
 	char escaped[7];
 	escaped[0] = '&';
 	escaped[1] = '#';
@@ -425,7 +425,7 @@ BWriter::WriteEscaped(const char *data, int32_t size)
 	escaped[6] = '\0';
 
 	s.BeginBuffering();
-	
+
 	for (int32_t i=0; i<size; i++) {
 		unsigned char c = data[i];
 		escaped[3] = tohex(c >> 4);
@@ -445,20 +445,20 @@ status_t
 BWriter::CData(const char	* data, int32_t size)
 {
 	status_t err;
-	
+
 	if (m_openStartTag) {
 		WriteString(">");
 		m_openStartTag = false;
 	}
-	
+
 	err = indent();
 	if (err != B_OK)
 		return err;
-	
+
 	WriteString("<![CDATA[");
 	WriteData(data, size);
 	WriteString("]]>");
-	
+
 	return B_OK;
 }
 
@@ -468,20 +468,20 @@ status_t
 BWriter::Comment(const char *data, int32_t size)
 {
 	status_t err;
-	
+
 	if (m_openStartTag) {
 		WriteString(">");
 		m_openStartTag = false;
 	}
-	
+
 	err = indent();
 	if (err != B_OK)
 		return err;
-	
+
 	WriteString("<!--");
 	WriteStringLength(data, size);
 	WriteString("-->");
-	
+
 	return B_OK;
 }
 
@@ -491,22 +491,22 @@ status_t
 BWriter::ProcessingInstruction(const SString & target, const SString & data)
 {
 	status_t err;
-	
+
 	if (m_openStartTag) {
 		WriteString(">");
 		m_openStartTag = false;
 	}
-	
+
 	err = indent();
 	if (err != B_OK)
 		return err;
-	
+
 	WriteString("<?");
 	WriteStringLength(target.String(), target.Length());
 	WriteString(" ");
 	WriteStringLength(data.String(), data.Length());
 	WriteString("?>");
-	
+
 	return B_OK;
 }
 
@@ -525,7 +525,7 @@ BWriter::open_doctype()
 			WriteString(" [");
 			m_startedInternalDTD = true;
 		}
-	}	
+	}
 	return B_OK;
 }
 
@@ -537,7 +537,7 @@ status_t
 BWriter::indent()
 {
 	status_t err;
-	
+
 	// if they're different, then we're in a NO_EXTRA_WHITESPACE section
 	if (m_formattingStyle & BALANCE_WHITESPACE
 			&& m_lastPrettyDepth == m_depth) {
@@ -552,7 +552,7 @@ BWriter::indent()
 			newlineOnce = 0;
 		} while (depth);
 	}
-	
+
 	return B_OK;
 }
 
@@ -564,13 +564,13 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 	status_t err;
 	int32_t count, i;
 	SString nm, name, value;
-	
+
 	const BElement * e = dynamic_cast<const BElement *>(object);
 	if (e)
 	{
 		{
 			SValue stringMap;
-			
+
 			// Namespace Attributes
 			count = e->CountNamespaces();
 			for (i=0; i<count; i++)
@@ -587,7 +587,7 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 				value = ns->Value();
 				stringMap.JoinItem(name, value);
 			}
-			
+
 			// Real Attributes
 			count = e->CountAttributes();
 			for (int i=0; i<count; ++i)
@@ -603,8 +603,8 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 				attr->GetValue(&value);
 				stringMap.JoinItem(name, value);
 			}
-			
-			
+
+
 			if (e->Namespace() && strcmp(e->Namespace()->Name(), "")) {
 				name = e->Namespace()->Name();
 				name += ":";
@@ -612,22 +612,22 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 			} else {
 				name = e->Name();
 			}
-			
+
 			writer->StartTag(name, stringMap, 0);
 		}
-		
+
 		const BContent * childContent = e->FirstChild();
 		while (childContent)
 		{
 			write_xml_recursive(childContent, writer);
 			childContent = childContent->NextSibling();
 		}
-		
+
 		writer->EndTag();
-		
+
 		return B_OK;
 	}
-	
+
 	// It's a Text
 	const BText * t = dynamic_cast<const BText *>(object);
 	if (t)
@@ -635,7 +635,7 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 		t->GetValueRaw(value);
 		return writer->TextData(value.String(), value.Length());
 	}
-	
+
 	// It's a CData
 	const BCData * d = dynamic_cast<const BCData *>(object);
 	if (d)
@@ -643,7 +643,7 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 		d->GetValue(&value);
 		return writer->CData(value.String(), value.Length());
 	}
-	
+
 	// If it's a document
 	const BDocument * doc = dynamic_cast<const BDocument *>(object);
 	if (doc)
@@ -657,7 +657,7 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 		}
 		return B_OK;
 	}
-	
+
 	// It's a Comment
 	const BComment * c = dynamic_cast<const BComment *>(object);
 	if (c)
@@ -665,7 +665,7 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 		c->GetValueRaw(value);
 		return writer->Comment(value.String(), value.Length());
 	}
-	
+
 	// It's a Processing Instruction
 	const BProcessingInstruction	* pi = dynamic_cast<const BProcessingInstruction *>(object);
 	if (pi)
@@ -674,12 +674,12 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 		pi->GetValueRaw(value);
 		return writer->ProcessingInstruction(name, value);
 	}
-	
+
 	const BDocumentType * dt = dynamic_cast<const BDocumentType *>(object);
 	if (dt)
 	{
 		const BDocumentTypeDefinition * dtd;
-		
+
 		// Doctype Begin
 		const BDocument * doc = dt->Document();
 		const BElement * e;
@@ -688,7 +688,7 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 		} else {
 			name = "XXX";
 		}
-		
+
 		SString systemID, publicID;
 		dtd = dt->ExternalSubset();
 		if (dtd)
@@ -702,26 +702,26 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 				systemID = s;
 			}
 		}
-		
+
 		err = writer->BeginDoctype(name, systemID, publicID);
 		if (err != B_OK)
 			return err;
-		
+
 		dtd = dt->InternalSubset();
 		if (dtd) {
 			err = write_xml_recursive(dtd, writer);
 			if (err != B_OK)
 				return err;
 		}
-		
+
 		return writer->EndDoctype();
 	}
-	
+
 	const BDocumentTypeDefinition * dtd = dynamic_cast<const BDocumentTypeDefinition *>(object);
 	if (dtd)
 	{
 		int32_t count;
-		
+
 		// Element Decls
 		count = dtd->CountElementDecls();
 		for (i=0; i<count; ++i) {
@@ -730,7 +730,7 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 			if (err != B_OK)
 				return err;
 		}
-		
+
 		// Entity Decls
 		count = dtd->CountEntityDecls();
 		for (i=0; i<count; ++i) {
@@ -739,7 +739,7 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 			if (err != B_OK)
 				return err;
 		}
-		
+
 		return B_OK;
 	}
 
@@ -748,13 +748,13 @@ write_xml_recursive(const BXMLObject * object, BWriter * writer)
 	{
 		return writer->OnElementDecl(eld);
 	}
-	
+
 	const BEntityDecl * etd = dynamic_cast<const BEntityDecl *>(object);
 	if (etd)
 	{
 		return writer->OnEntityDecl(etd);
 	}
-	
+
 	return B_OK;
 }
 
@@ -764,12 +764,12 @@ status_t
 WriteXML(const BXMLObject * object, const sptr<IByteOutput>& stream, bool noWhitespace)
 {
 	BWriter writer(stream, noWhitespace ? 0 : BWriter::BALANCE_WHITESPACE);
-	
+
 	return write_xml_recursive(object, &writer);
 }
 #endif
 
 #if _SUPPORTS_NAMESPACE
 }; // namespace xml
-}; // namespace palmos
+}; // namespace os
 #endif

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -49,7 +49,7 @@
 
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -291,7 +291,7 @@ void* SParcel::ReAlloc(ssize_t len)
 {
 	if (m_length < 0) {
 		return NULL;
-		
+
 	} else if (len > m_avail) {
 		if (len <= static_cast<ssize_t>(sizeof(m_inline))) {
 			m_avail = len;
@@ -315,12 +315,12 @@ void* SParcel::ReAlloc(ssize_t len)
 		if (len < m_pos) m_pos = len;
 		m_length = len;
 		return m_data;
-	
+
 	} else if (len < m_avail) {
 		m_length = len;
 		if (len < m_pos) m_pos = len;
 	}
-	
+
 	return m_data;
 }
 
@@ -357,7 +357,7 @@ void SParcel::Transfer(SParcel* src)
 	m_pos = src->m_pos;
 	m_ownsBinders = src->m_ownsBinders;
 	m_binders = src->m_binders;
-	
+
 	src->m_data = NULL;
 	src->m_length = src->m_avail = 0;
 	src->m_free = NULL;
@@ -372,14 +372,14 @@ status_t SParcel::SetValues(const SValue* value1, ...)
 {
 	SetBinderOffsets(NULL, 0);
 	Reset();
-	
+
 	static const int32_t MAX_COUNT = 10;
 	const SValue* values[MAX_COUNT];
 	int32_t count = 0, i;
 	ssize_t size = 0;
-	
+
 	//berr << "SParcel::SetValues {" << endl << indent;
-	
+
 	va_list vl;
 	va_start(vl,value1);
 	while (value1 && count < MAX_COUNT) {
@@ -396,9 +396,9 @@ status_t SParcel::SetValues(const SValue* value1, ...)
 	Reserve(sizeof(int32_t)+size);
 	if (m_length < B_OK) return m_length;
 	SetPosition(0);
-	
+
 	WriteInt32(B_HOST_TO_LENDIAN_INT32(count));
-	
+
 #if BINDER_DEBUG_MSGS
 	berr << "SParcel::SetValues {" << endl << indent;
 #endif
@@ -444,7 +444,7 @@ int32_t SParcel::GetValues(int32_t maxCount, SValue* outValues) const
 	} else {
 		int32_t numValues = B_LENDIAN_TO_HOST_INT32(const_cast<SParcel*>(this)->ReadInt32());
 		ssize_t tmp = B_OK;
-		
+
 		if (numValues > maxCount) numValues = maxCount;
 		while (i < numValues && tmp >= B_OK) {
 			tmp = outValues[i].Unarchive(*(const_cast<SParcel*>(this)));
@@ -459,7 +459,7 @@ int32_t SParcel::GetValues(int32_t maxCount, SValue* outValues) const
 			i++;
 		}
 	}
-	
+
 	return i;
 }
 
@@ -521,7 +521,7 @@ ssize_t SParcel::Write(const void* buffer, size_t amount)
 		memcpy(m_data+m_pos, buffer, amount);
 		return finish_write(amount);
 	}
-	
+
 	size_t total;
 	if (m_pos < m_length) {
 		// Copy any data that will fit in to the buffer.
@@ -537,13 +537,13 @@ ssize_t SParcel::Write(const void* buffer, size_t amount)
 	} else {
 		total = 0;
 	}
-	
+
 	// Now write out any pending data.
 	const ssize_t written = Flush();
 	if (written < B_OK) {
 		return total > 0 ? total : written;
 	}
-	
+
 	// If size being written is larger than our own buffer, then
 	// write it directly.
 	if (m_out != NULL && m_pos == 0 && (ssize_t)amount >= m_avail) {
@@ -552,7 +552,7 @@ ssize_t SParcel::Write(const void* buffer, size_t amount)
 		else if (total > 0) return total;
 		return written;
 	}
-	
+
 	// Place remaining data into buffer.
 	const ssize_t need = amount+m_pos;
 	if (need > m_avail) {
@@ -574,7 +574,7 @@ ssize_t SParcel::Write(const void* buffer, size_t amount)
 	total += amount;
 	if (m_length < m_pos) m_length = m_pos;
 	m_dirty = true;
-	
+
 	// Return result.
 	if (total > 0) return total;
 	else if (written < 0) return written;
@@ -808,7 +808,7 @@ ssize_t SParcel::WriteLargeData(uint32_t packedType, size_t length, const void* 
 ssize_t SParcel::WriteBinder(const flat_binder_object& val)
 {
 	ssize_t err;
-	
+
 	// Allocate enough for the binder in this parcel
 	const ssize_t need = m_pos+sizeof(val);
 	if (need > m_avail) {
@@ -820,9 +820,9 @@ ssize_t SParcel::WriteBinder(const flat_binder_object& val)
 			return err;
 		}
 	}
-	
+
 	*reinterpret_cast<flat_binder_object*>(m_data+m_pos) = val;
-	
+
 	if (val.binder == NULL) {
 		// There is no need to write meta data for NULL binders.
 		return finish_write(sizeof(val));
@@ -832,7 +832,7 @@ ssize_t SParcel::WriteBinder(const flat_binder_object& val)
 		acquire_binders();
 	}
 	m_ownsBinders = true;
-	
+
 	err = m_binders.AddItem(m_pos);
 	if (err < B_OK) return err;
 
@@ -867,12 +867,12 @@ ssize_t SParcel::WriteTypedData(type_code type, const void *value)
 		{
 			return WriteSmallData(B_PACK_SMALL_TYPE(B_FLOAT_TYPE, sizeof(float)), *reinterpret_cast<const uint32_t*>(value));
 		}
-		
+
 		case B_DOUBLE_TYPE:
 		{
 			return WriteTypeHeaderAndData(B_DOUBLE_TYPE, value, sizeof(double));
 		}
-		
+
 		case B_CHAR_TYPE:
 		case B_INT8_TYPE:
 		{
@@ -927,17 +927,17 @@ ssize_t SParcel::WriteTypedData(type_code type, const void *value)
 		{
 			return WriteTypeHeaderAndData(B_INT64_TYPE, value, sizeof(int64_t));
 		}
-		
+
 		case B_BINDER_TYPE:
 		{
 			return WriteBinder(*const_cast<sptr<IBinder>*>(reinterpret_cast<const sptr<IBinder>*>(value)));
 		}
-		
+
 		case B_BINDER_WEAK_TYPE:
 		{
 			return WriteWeakBinder(*const_cast<wptr<IBinder>*>(reinterpret_cast<const wptr<IBinder>*>(value)));
 		}
-		
+
 		case B_VALUE_TYPE:
 			return reinterpret_cast<const SValue*>(value)->Archive(*this);
 #if 0
@@ -970,12 +970,12 @@ ssize_t SParcel::WriteTypedData(type_code type, const void *value)
 		{
 			return WriteTypeHeaderAndData(B_POINT_TYPE, value, sizeof(float)*2);
 		}
-		
+
 		case B_RECT_TYPE:
 		{
 			return WriteTypeHeaderAndData(B_RECT_TYPE, value, sizeof(float)*4);
 		}
-		
+
 		case B_UNDEFINED_TYPE:
 		{
 			return WriteSmallData(B_PACK_SMALL_TYPE(B_UNDEFINED_TYPE, 0), 0);
@@ -989,7 +989,7 @@ ssize_t SParcel::WriteTypedData(type_code type, const void *value)
 		default:
 			DbgOnlyFatalError("Attempt to write unknown typed data to a parcel.");
 			return B_BAD_TYPE;
-	}	
+	}
 }
 
 ssize_t SParcel::ReadSmallData(small_flat_data* out)
@@ -997,7 +997,7 @@ ssize_t SParcel::ReadSmallData(small_flat_data* out)
 	if (ssize_t(m_pos+sizeof(small_flat_data)) <= m_length) {
 		*out = *reinterpret_cast<small_flat_data*>(m_data+m_pos);
 		m_pos += sizeof(*out);
-		return sizeof(*out);		
+		return sizeof(*out);
 	}
 	return Read(out, sizeof(*out));
 }
@@ -1007,12 +1007,12 @@ ssize_t SParcel::ReadSmallDataOrObject(small_flat_data* out, const void* who)
 	if (ssize_t(m_pos+sizeof(small_flat_data)) <= m_length) {
 		*out = *reinterpret_cast<small_flat_data*>(m_data+m_pos);
 		m_pos += sizeof(*out);
-		if (!CHECK_IS_LARGE_OBJECT(out->type)) return sizeof(*out);		
+		if (!CHECK_IS_LARGE_OBJECT(out->type)) return sizeof(*out);
 	} else {
 		ssize_t amt = Read(out, sizeof(*out));
 		if (amt != sizeof(*out) || !CHECK_IS_LARGE_OBJECT(out->type)) return amt;
 	}
-	
+
 	// Objects are always stored as flat_binder_object structures,
 	// and at this point we have read the header for that structure.
 	// Now we read the rest, and convert it to the public
@@ -1036,11 +1036,11 @@ ssize_t SParcel::ReadSmallDataOrObject(small_flat_data* out, const void* who)
 		acquire_object(*out, who);
 		return sizeof(small_flat_data) + dataSize;
 	}
-	
+
 	flat_binder_object obj;
 	ssize_t amt = Read(&obj.binder, sizeof(flat_binder_object)-sizeof(small_flat_data));
 	if (amt != sizeof(flat_binder_object)-sizeof(small_flat_data)) return amt < 0 ? amt : B_DATA_TRUNCATED;
-	
+
 	const size_t dataSize = out->data.uinteger;
 	if ((out->data.object=obj.binder) != NULL && out->type == kPackedLargeBinderWeakType) {
 		// Weak binders are special -- we need to re-construct a weak_atom_ptr
@@ -1063,7 +1063,7 @@ ssize_t SParcel::ReadFlatBinderObject(flat_binder_object* out)
 		m_pos += sizeof(*out);
 		return sizeof(*out);
 	}
-	
+
 	return Read(out, sizeof(*out));
 }
 
@@ -1122,17 +1122,17 @@ status_t SParcel::ReadTypedData(type_code param_type, void* result)
 				CHECK_RETURNED_TYPE(flat.type, B_PACK_SMALL_TYPE(B_INT32_TYPE, sizeof(int32_t)));
 				*reinterpret_cast<bool*>(result) = flat.data.integer ? true : false;
 				return B_OK;
-			
+
 			case B_FLOAT_TYPE:
 				CHECK_RETURNED_TYPE(flat.type, B_PACK_SMALL_TYPE(B_FLOAT_TYPE, sizeof(float)));
 				*reinterpret_cast<float*>(result) = *reinterpret_cast<float*>(flat.data.bytes);
 				return B_OK;
-			
+
 			case B_DOUBLE_TYPE:
 				CHECK_RETURNED_TYPE(flat.type, B_PACK_LARGE_TYPE(B_FLOAT_TYPE));
 				*reinterpret_cast<double*>(result) = ReadDouble();
 				return B_OK;
-			
+
 			case B_CHAR_TYPE:
 			case B_INT8_TYPE:
 			case B_UINT8_TYPE:
@@ -1154,7 +1154,7 @@ status_t SParcel::ReadTypedData(type_code param_type, void* result)
 				CHECK_RETURNED_TYPE(flat.type, B_PACK_SMALL_TYPE(B_INT32_TYPE, sizeof(int32_t)));
 				*reinterpret_cast<int32_t*>(result) = flat.data.integer;
 				return B_OK;
-			
+
 			case B_INT64_TYPE:
 			case B_UINT64_TYPE:
 			case B_NSECS_TYPE:
@@ -1224,7 +1224,7 @@ status_t SParcel::ReadTypedData(type_code param_type, void* result)
 
 			case B_UNDEFINED_TYPE:
 				return B_OK;
-			
+
 			default:
 				DbgOnlyFatalError("Attempt to read unknown typed data from a parcel.");
 				return B_BAD_TYPE;
@@ -1260,10 +1260,10 @@ ssize_t SParcel::TypedDataSize(type_code type, const void *value)
 		case B_SSIZE_T_TYPE:
 		case B_WCHAR_TYPE:
 			return sizeof(small_flat_data);
-		
+
 		case B_DOUBLE_TYPE:
 			return sizeof(large_flat_header) + sizeof(double);
-		
+
 		case B_INT64_TYPE:
 		case B_UINT64_TYPE:
 		case B_NSECS_TYPE:
@@ -1274,7 +1274,7 @@ ssize_t SParcel::TypedDataSize(type_code type, const void *value)
 		case B_BINDER_TYPE:
 		case B_BINDER_WEAK_TYPE:
 			return sizeof(flat_binder_object);
-		
+
 		case B_VALUE_TYPE:
 			return reinterpret_cast<const SValue*>(value)->ArchivedSize();
 #if 0
@@ -1296,10 +1296,10 @@ ssize_t SParcel::TypedDataSize(type_code type, const void *value)
 		case B_UNDEFINED_TYPE:
 		case B_NULL_TYPE:
 			return sizeof(small_flat_data);
-		
+
 		default:
 			return B_BAD_TYPE;
-	}	
+	}
 }
 
 ssize_t SParcel::WriteValue(const SValue& value)
@@ -1325,7 +1325,7 @@ status_t SParcel::SkipValue()
 
 		return Drain((flat->data.uinteger+7) & ~7);
 	}
-	
+
 	small_flat_data flat;
 	ssize_t amt = Read(&flat, sizeof(flat));
 	if (amt == sizeof(flat)) {
@@ -1465,7 +1465,7 @@ ssize_t SParcel::Read(void* buffer, size_t amount)
 		m_pos += amount;
 		return amount;
 	}
-	
+
 	ssize_t total;
 	if (m_pos < m_length) {
 		// Drain any remaining data from buffer.
@@ -1480,7 +1480,7 @@ ssize_t SParcel::Read(void* buffer, size_t amount)
 	} else {
 		total = 0;
 	}
-	
+
 	// If size being read is larger than our own buffer, then
 	// read it directly.
 	if ((ssize_t)amount >= m_avail) {
@@ -1491,7 +1491,7 @@ ssize_t SParcel::Read(void* buffer, size_t amount)
 		} else if (total > 0) return total;
 		return read;
 	}
-	
+
 	// Now refresh our buffer.
 	m_length = ReadBuffer(m_data, m_avail);
 	if (m_length >= B_OK) {
@@ -1501,7 +1501,7 @@ ssize_t SParcel::Read(void* buffer, size_t amount)
 		m_pos = amount;
 		return total + amount;
 	}
-	
+
 	m_pos = 0;
 	return total > 0 ? total : m_length;
 }
@@ -1547,9 +1547,9 @@ ssize_t SParcel::Drain(size_t amount)
 		m_pos += amount;
 		return amount;
 	}
-	
+
 	if (ErrorCheck() != B_OK) return ErrorCheck();
-	
+
 	#if 0
 	// ATTEMPT SEEK HERE
 	// Skip over remaining number of bytes.
@@ -1567,7 +1567,7 @@ ssize_t SParcel::Drain(size_t amount)
 		}
 		sofar += m_length;
 	}
-	
+
 	if (sofar >= (ssize_t)amount) {
 		m_pos = sofar-amount;
 		return amount;
@@ -1594,7 +1594,7 @@ bool SParcel::ReadBool()
 		m_pos += sizeof(int8_t);
 		return (*it) ? true : false;
 	}
-	
+
 	bool val;
 	Read(&val, sizeof(val));
 	return val;
@@ -1607,7 +1607,7 @@ int8_t SParcel::ReadInt8()
 		m_pos += sizeof(*it);
 		return *it;
 	}
-	
+
 	int8_t val;
 	Read(&val, sizeof(val));
 	return val;
@@ -1620,7 +1620,7 @@ int16_t SParcel::ReadInt16()
 		m_pos += sizeof(*it);
 		return *it;
 	}
-	
+
 	int16_t val;
 	Read(&val, sizeof(val));
 	return val;
@@ -1633,7 +1633,7 @@ int32_t SParcel::ReadInt32()
 		m_pos += sizeof(*it);
 		return *it;
 	}
-	
+
 	int32_t val;
 	Read(&val, sizeof(val));
 	return val;
@@ -1646,7 +1646,7 @@ int64_t SParcel::ReadInt64()
 		m_pos += sizeof(*it);
 		return *it;
 	}
-	
+
 	int64_t val;
 	Read(&val, sizeof(val));
 	return val;
@@ -1659,7 +1659,7 @@ float SParcel::ReadFloat()
 		m_pos += sizeof(*it);
 		return *it;
 	}
-	
+
 	float val;
 	Read(&val, sizeof(val));
 	return val;
@@ -1672,7 +1672,7 @@ double SParcel::ReadDouble()
 		m_pos += sizeof(*it);
 		return *it;
 	}
-	
+
 	double val;
 	Read(&val, sizeof(val));
 	return val;
@@ -1747,11 +1747,11 @@ status_t SParcel::SetBinderOffsets(binder_ipc_info const * const offsets, size_t
 {
 	entry e;
 	ssize_t s;
-	
+
 	if (m_ownsBinders) release_binders();
 	m_binders.MakeEmpty();
 	m_binders.SetCapacity(count);
-	
+
 	for (size_t i = 0; i < count; i++)
 	{
 		e.type = offsets[i].type_offset;
@@ -1762,7 +1762,7 @@ status_t SParcel::SetBinderOffsets(binder_ipc_info const * const offsets, size_t
 			return s;
 		}
 	}
-	
+
 	// Passing in a false 'takeRefs' means that the caller has
 	// already acquired references on these objects, but we will
 	// still own them.  This is different than the BeOS situation
@@ -1771,7 +1771,7 @@ status_t SParcel::SetBinderOffsets(binder_ipc_info const * const offsets, size_t
 	if (takeRefs) {
 		acquire_binders();
 	}
-	
+
 	return B_OK;
 }
 
@@ -1780,7 +1780,7 @@ status_t SParcel::SetBinderOffsets(binder_ipc_info const * const offsets, size_t
 status_t SParcel::SetBinderOffsets(const void* offsets, size_t length, bool takeRefs)
 {
 	ssize_t s;
-	
+
 	if (m_ownsBinders) release_binders();
 	m_binders.MakeEmpty();
 	if (m_binders.AddArray((const size_t*)offsets, length/sizeof(size_t)) < B_OK) {
@@ -1788,11 +1788,11 @@ status_t SParcel::SetBinderOffsets(const void* offsets, size_t length, bool take
 		m_ownsBinders = false;
 		return s;
 	}
-	
+
 	if ((m_ownsBinders=takeRefs) != false) {
 		acquire_binders();
 	}
-	
+
 	return B_OK;
 }
 
@@ -1801,7 +1801,7 @@ status_t SParcel::SetBinderOffsets(const void* offsets, size_t length, bool take
 void SParcel::PrintToStream(const sptr<ITextOutput>& io, uint32_t flags) const
 {
 	if (flags&B_PRINT_STREAM_HEADER) io << "SParcel(";
-	
+
 	if (Data() && Length() > 0) {
 		io << indent << SHexDump(Data(), Length());
 		const int32_t N = m_binders.CountItems();
@@ -1819,7 +1819,7 @@ void SParcel::PrintToStream(const sptr<ITextOutput>& io, uint32_t flags) const
 	} else {
 		io << "NULL";
 	}
-	
+
 	if (flags&B_PRINT_STREAM_HEADER) io << ")";
 }
 
@@ -1877,5 +1877,5 @@ void SParcel::release_binders()
 }
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif

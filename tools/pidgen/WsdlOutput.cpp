@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -23,9 +23,9 @@
 #include "InterfaceRec.h"
 
 #if _SUPPORTS_NAMESPACE
-using namespace palmos::storage;
-using namespace palmos::support;
-using namespace palmos::xml;
+using namespace os::storage;
+using namespace os::support;
+using namespace os::xml;
 #endif
 
 const char* g_http_transport = "http://schemas.xmlsoap.org/soap/http";
@@ -54,7 +54,7 @@ SString NamedType::Type() const
 void NamedType::set_type(const SString& type)
 {
 	SXMLTag tag(type);
-	
+
 	if (tag.Accessor() == "boolean")
 	{
 		m_type = "bool";
@@ -111,7 +111,7 @@ Method::Method(const SString& id, const SString& returnType, const SString& url,
 	char* temp = m_id.LockBuffer(m_id.Length());
 	temp[0] = toupper(temp[0]);
 	m_id.UnlockBuffer(m_id.Length());
-	
+
 	set_return_type(returnType);
 }
 
@@ -163,28 +163,28 @@ void Method::Print() const
 void Method::PrintHeader(sptr<ITextOutput> stream) const
 {
 	stream << ReturnType() << " " << m_id << "(";
-	
+
 	size_t params = m_params.CountItems();
 	for (size_t i = 0 ; i < params ; i++)
 	{
 		if (i > 0) stream << ", ";
 		m_params.ItemAt(i)->PrintArg(stream);
 	}
-	
+
 	stream << ")";
 }
 
 void Method::PrintInterface(sptr<ITextOutput> stream) const
 {
 	stream << ReturnType() << " " << m_id << "(";
-	
+
 	size_t params = m_params.CountItems();
 	for (size_t i = 0 ; i < params ; i++)
 	{
 		if (i > 0) stream << ", ";
 		m_params.ItemAt(i)->Print(stream);
 	}
-	
+
 	stream << ")";
 }
 
@@ -299,7 +299,7 @@ ssize_t WsdlClass::AddType(const sptr<WsdlType>& type)
 
 sptr<WsdlType> WsdlClass::TypeAt(size_t index) const
 {
-	return m_types.ValueAt(index);	
+	return m_types.ValueAt(index);
 }
 
 sptr<WsdlType> WsdlClass::TypeFor(const SString& id, bool* found) const
@@ -346,7 +346,7 @@ void WsdlClass::Print() const
 	{
 		m_methods.ItemAt(i)->Print();
 	}
-	
+
 	size = m_members.CountItems();
 	for (size_t i = 0 ; i < size ; i++)
 	{
@@ -372,7 +372,7 @@ void WsdlClass::PrintHeader(sptr<ITextOutput> stream) const
 	stream << Id() << "();" << endl;
 	stream << Id() << "(const SContext& context);" << endl;
 	stream << endl;
-	
+
 	size_t methods = CountMethods();
 	for (size_t j = 0 ; j < methods ; j++)
 	{
@@ -386,7 +386,7 @@ void WsdlClass::PrintHeader(sptr<ITextOutput> stream) const
 	for (size_t j = 0 ; j < members ; j++)
 	{
 		sptr<NamedType> type = MemberAt(j);
-	
+
 		int32_t index = type->Id().FindFirst("m_");
 		if (index == 0 && inPublic)
 		{
@@ -410,7 +410,7 @@ void WsdlClass::PrintHeader(sptr<ITextOutput> stream) const
 	stream << "protected:" << endl;
 	stream << indent;
 	stream << "virtual ~" << Id() << "();" << endl;
-	
+
 	stream << dedent << "};" << endl << endl;
 }
 
@@ -421,26 +421,26 @@ SString type_to_value_string(const sptr<NamedType>& type)
 
 	if (type->Type() == "bool")
 	{
-		result = "SValue::Bool("; 
+		result = "SValue::Bool(";
 	}
 	else if (type->Type() == "SString")
 	{
-		result = "SValue::String("; 
+		result = "SValue::String(";
 	}
 	else if (type->Type() == "int32_t")
 	{
-		result = "SValue::Int32("; 
+		result = "SValue::Int32(";
 	}
 	else if (type->Type() == "double")
 	{
-		result = "SValue::Double("; 
+		result = "SValue::Double(";
 	}
 	else
 	{
 		builtin = false;
 		result << type->Id() << ".AsValue()";
 	}
-	
+
 	if (builtin) result << type->Id() << ")";
 
 	return result;
@@ -467,7 +467,7 @@ void WsdlClass::PrintCPP(sptr<ITextOutput> stream) const
 {
 	SValue port = m_wsdl->ServiceAt(0)->PortAt(0);
 	SValue nspace = m_wsdl->Definitions();
-	
+
 	stream << Id() << "::" << Id() << "()" << endl;
 	stream << "{" << endl;
 	// set the url
@@ -485,7 +485,7 @@ void WsdlClass::PrintCPP(sptr<ITextOutput> stream) const
 	while (i < parents)
 	{
 		if (i == 0) stream << indent << ":" ;
-		
+
 		stream << "\t" << ParentAt(i) << "()";
 		i++;
 		if (i < parents) stream << ",";
@@ -505,14 +505,14 @@ void WsdlClass::PrintCPP(sptr<ITextOutput> stream) const
 	stream << "{" << endl;
 	stream << "}" << endl;
 	stream << endl;
-	
+
 	size_t methods = CountMethods();
 	for (size_t j = 0 ; j < methods ; j++)
 	{
 		sptr<Method> method = MethodAt(j);
 
 		stream << method->ReturnType() << " " << Id() << "::" << method->Id() << "(";
-	
+
 		size_t params = method->CountParams();
 		for (size_t i = 0 ; i < params ; i++)
 		{
@@ -520,7 +520,7 @@ void WsdlClass::PrintCPP(sptr<ITextOutput> stream) const
 			if (i > 0) stream << ", ";
 			type->PrintArg(stream);
 		}
-		
+
 		stream << ")" << endl;
 		stream << "{" << endl;
 		stream << indent;
@@ -537,7 +537,7 @@ void WsdlClass::PrintCPP(sptr<ITextOutput> stream) const
 		stream << "SString urn(\"" << method->Urn() << "\");" << endl;
 		stream << "SValue result = Process(SString(\"" << method->MessageId() << "\"), urn, args);" << endl;
 		stream << "return ";
-	
+
 		SString rtype = method->ReturnType();
 
 		if (rtype == "SValue")
@@ -552,7 +552,7 @@ void WsdlClass::PrintCPP(sptr<ITextOutput> stream) const
 		{
 			stream << rtype << "(result[\"return\"]);" << endl;
 		}
-		
+
 		stream << dedent;
 		stream << "}" << endl;
 		stream << endl;
@@ -580,7 +580,7 @@ sptr<Method> create_wsdl_method(const sptr<BWsdl>& wsdl, BWsdl::PortType::Operat
 	{
 		bout << "message name = " << wsdl->MessageAt(i)->Name() << endl;
 	}
-	
+
 	bout << "input = " << itag.Accessor() << endl;
 	bout << "output = " << otag.Accessor() << endl;
 
@@ -595,10 +595,10 @@ sptr<Method> create_wsdl_method(const sptr<BWsdl>& wsdl, BWsdl::PortType::Operat
 	}
 
 	SValue value = output->PartAt(0);
-	
+
 	SString returnType;
 	SString name = value["name"].AsString();
-	
+
 	// always check the type first, if it is null the check for element
 	returnType = value["type"].AsString();
 	if (returnType == "")
@@ -610,9 +610,9 @@ sptr<Method> create_wsdl_method(const sptr<BWsdl>& wsdl, BWsdl::PortType::Operat
 			return NULL;
 		}
 	}
-	
+
 	sptr<Method> method = new Method(operation.name, returnType, url, urn);
-	
+
 	size_t parts = input->CountParts();
 	for (size_t i = 0 ; i < parts ; i++)
 	{
@@ -648,7 +648,7 @@ status_t create_wsdl_class(const sptr<BWsdl>& wsdl, sptr<WsdlClass>& obj)
 	obj = new WsdlClass(wsdl->Name(), wsdl);
 
 	SKeyedVector<SString, SValue> metadata;
-	
+
 	size_t services = wsdl->CountServices();
 	for (size_t i = 0 ; i < services ; i++)
 	{
@@ -673,7 +673,7 @@ status_t create_wsdl_class(const sptr<BWsdl>& wsdl, sptr<WsdlClass>& obj)
 				{
 					BWsdl::Binding::Operation attrs = binding->OperationAt(k);
 					BWsdl::PortType::Operation op = type->OperationFor(attrs.name);
-				
+
 					sptr<Method> method = create_wsdl_method(wsdl, op, port[SValue::Int32(0)]["address"].AsString(), attrs.urn);
 					if (method != NULL) obj->AddMethod(method);
 				}
@@ -684,7 +684,7 @@ status_t create_wsdl_class(const sptr<BWsdl>& wsdl, sptr<WsdlClass>& obj)
 			}
 		}
 	}
-	
+
 #if 0
 	size_t size = wsdl->CountPortTypes();
 	for (size_t i = 0 ; i < size ; i++)
@@ -700,7 +700,7 @@ status_t create_wsdl_class(const sptr<BWsdl>& wsdl, sptr<WsdlClass>& obj)
 #endif
 
 	// now go through the complex types
-	
+
 	sptr<BXMLSchema> schema = wsdl->Schema();
 	size_t size = schema->CountComplexTypes();
 	for (size_t i = 0 ; i < size ; i++)
@@ -708,14 +708,14 @@ status_t create_wsdl_class(const sptr<BWsdl>& wsdl, sptr<WsdlClass>& obj)
 		sptr<BXSDComplexType> complexType = schema->ComplexTypeAt(i);
 		size_t elements = complexType->CountElements();
 		size_t contents = complexType->CountComplexContents();
-	
+
 		sptr<WsdlType> type = new WsdlType(complexType->Name());
 		for (size_t j = 0 ; j < elements ; j++)
 		{
 			sptr<BXSDElement> element = complexType->ElementAt(j);
 			type->AddMemeber(new NamedType(element->Name(), element->Type()));
 		}
-	
+
 		for (size_t j = 0 ; j < contents ; j++)
 		{
 			sptr<BXSDComplexContent> content = complexType->ComplexContentAt(j);
@@ -730,7 +730,7 @@ status_t create_wsdl_class(const sptr<BWsdl>& wsdl, sptr<WsdlClass>& obj)
 				{
 					SXMLTag arrayTag(value["wsdl:arrayType"].AsString());
 					SString arrayType(arrayTag.Accessor(), arrayTag.Accessor().Length() - 2);
-				
+
 					SString parent;
 					parent << "SVector<" << arrayType << ">";
 					type->AddParent(parent);
@@ -743,7 +743,7 @@ status_t create_wsdl_class(const sptr<BWsdl>& wsdl, sptr<WsdlClass>& obj)
 	}
 
 	//sort_classes(classes);
-	
+
 	return B_OK;
 }
 
@@ -775,21 +775,21 @@ status_t print_type(const sptr<WsdlClass>& obj, const sptr<WsdlType>& type, sptr
 				print_type(obj, nutype, stream, printed);
 			}
 		}
-		
+
 	}
-	
+
 	size_t members = type->CountMembers();
 	for (size_t i = 0 ; i < members ; i++)
 	{
 		sptr<NamedType> member = type->MemberAt(i);
-	
+
 		// now check to see if this is a type on the WsdlClass
 		bool found = false;
 		sptr<WsdlType> nutype = obj->TypeFor(member->Type(), &found);
 		ssize_t index = printed.IndexOf(member->Type());
-		
+
 		// see if we already printed out this type
-		
+
 		if (found && index < 0)
 		{
 			// we found a type that hasn't been printed out yet. do so.
@@ -809,11 +809,11 @@ status_t wsdl_create_types_header(const sptr<WsdlClass>& obj, sptr<ITextOutput> 
 	stream << "/*=============================================================================== */" << endl;
 	stream << "// " << filename << " is automatically generated by PIDGEN - DO NOT MODIFY" << endl;
 	stream << "/*=============================================================================== */" << endl << endl;
-	
+
 	SString headerGuard;
 	status_t err = HeaderGuard(filename, headerGuard, false);
 	if (err != B_OK) return err;
-	
+
 	stream << "#ifndef " << headerGuard << endl;
 	stream << "#define " << headerGuard << endl;
 	stream << endl;
@@ -823,22 +823,22 @@ status_t wsdl_create_types_header(const sptr<WsdlClass>& obj, sptr<ITextOutput> 
 	stream << "#include <support/Vector.h>" << endl;
 	stream << endl;
 	stream << "#if _SUPPORTS_NAMESPACE" << endl;
-	stream << "using namespace palmos::soap;" << endl;
-	stream << "using namespace palmos::support;" << endl;
+	stream << "using namespace os::soap;" << endl;
+	stream << "using namespace os::support;" << endl;
 	stream << "#endif" << endl;
 	stream << endl;
 
 	SSortedVector<SString> printed;
-	
+
 	size_t count = obj->CountTypes();
 	for (size_t i = 0 ; i < count ; i++)
 	{
 		sptr<WsdlType> type = obj->TypeAt(i);
 		print_type(obj, type, stream, printed);
 	}
-	
+
 	stream << "#endif // " << headerGuard << endl;
-	
+
 	stream << endl;
 	return B_OK;
 }
@@ -852,7 +852,7 @@ status_t wsdl_create_header(const sptr<WsdlClass>& obj, sptr<ITextOutput> stream
 	SString headerGuard;
 	status_t err = HeaderGuard(filename, headerGuard, false);
 	if (err != B_OK) return err;
-	
+
 	stream << "#ifndef " << headerGuard << endl;
 	stream << "#define " << headerGuard << endl;
 	stream << endl;
@@ -864,15 +864,15 @@ status_t wsdl_create_header(const sptr<WsdlClass>& obj, sptr<ITextOutput> stream
 	stream << "#include \"" << obj->InterfaceName() << ".h\"" << endl;
 	stream << endl;
 	stream << "#if _SUPPORTS_NAMESPACE" << endl;
-	stream << "using namespace palmos::soap;" << endl;
-	stream << "using namespace palmos::support;" << endl;
+	stream << "using namespace os::soap;" << endl;
+	stream << "using namespace os::support;" << endl;
 	stream << "#endif" << endl;
 	stream << endl;
 
 	obj->PrintHeader(stream);
-	
+
 	stream << "#endif // " << headerGuard << endl;
-	
+
 	stream << endl;
 	return B_OK;
 }
@@ -886,7 +886,7 @@ status_t wsdl_create_cpp(const sptr<WsdlClass>& obj, sptr<ITextOutput> stream, c
 	stream << "#include \"" << header << "\"" << endl << endl;
 
 	obj->PrintCPP(stream);
-	
+
 	return B_OK;
 }
 
@@ -903,7 +903,7 @@ status_t wsdl_create_types_cpp(const sptr<WsdlClass>& obj, sptr<ITextOutput> str
 	{
 		obj->TypeAt(i)->PrintCPP(stream);
 	}
-	
+
 	return B_OK;
 }
 
@@ -947,7 +947,7 @@ void WsdlType::PrintHeader(sptr<ITextOutput> stream) const
 	}
 
 	stream << dedent;
-	
+
 	stream << "};" << endl << endl;
 }
 
@@ -989,24 +989,24 @@ void WsdlType::PrintCPP(sptr<ITextOutput> stream) const
 			stream << "}" << endl;
 		}
 	}
-	
+
 	size_t members = CountMembers();
 	for (size_t i = 0 ; i < members ; i++)
 	{
 		sptr<NamedType> named = MemberAt(i);
-		
+
 		SString name = named->Id();
 		SString type = named->Type();
-	
+
 		SString as;
-		
+
 		if (type == "bool")			as = ".AsBool()";
 		else if (type == "float")	as = ".AsFloat()";
 		else if (type == "double")	as = ".AsDouble()";
 		else if (type == "int32_t")	as = ".AsInt32()";
 		else if (type == "int64_t")	as = ".AsInt64()";
 		else if (type == "SString")	as = ".AsString()";
-	
+
 		if (as != "" || type == "SValue")
 		{
 			stream << name << " = value[\"" << name << "\"]" << as << ";" << endl;
@@ -1019,7 +1019,7 @@ void WsdlType::PrintCPP(sptr<ITextOutput> stream) const
 
 	stream << endl;
 	stream << "if (result) *result = B_OK;" << endl;
-	
+
 	stream << dedent;
 	stream << "}" << endl;
 	stream << endl;
@@ -1053,29 +1053,29 @@ void WsdlType::PrintCPP(sptr<ITextOutput> stream) const
 	for (size_t i = 0 ; i < members ; i++)
 	{
 		sptr<NamedType> named = MemberAt(i);
-		
+
 		SString name = named->Id();
 		SString type = named->Type();
-	
+
 		SString as;
-		
+
 		if (type == "bool")			as = "SValue::Bool(";
 		else if (type == "float")	as = "SValue::Float(";
 		else if (type == "double")	as = "SValue::Double(";
 		else if (type == "int32_t")	as = "SValue::Int32(";
 		else if (type == "int64_t")	as = "SValue::Int64(";
 		else if (type == "SString")	as = "SValue::String(";
-	
+
 		if (as != "")
 		{
-			stream << "result.JoinItem(SValue::Int32(" << i << "), SValue(\"" << name << "\", " << as << name << ")));" << endl;   
+			stream << "result.JoinItem(SValue::Int32(" << i << "), SValue(\"" << name << "\", " << as << name << ")));" << endl;
 		}
 		else
 		{
-			stream << "result.JoinItem(SValue::Int32(" << i << "), SValue(\"" << name << "\", " << name << ".AsValue()));" << endl;   
+			stream << "result.JoinItem(SValue::Int32(" << i << "), SValue(\"" << name << "\", " << name << ".AsValue()));" << endl;
 		}
 	}
-	
+
 	stream << "return result;" << endl;
 	stream << dedent;
 	stream << "}" << endl;
@@ -1090,7 +1090,7 @@ void WsdlType::PrintInterface(sptr<ITextOutput> stream) const
 	stream << indent;
 	stream << "SValue AsValue();" << endl;
 	stream << Id() << " " << Id() << "(SValue o);" << endl;
-	stream << dedent << "};" << endl << endl;	
+	stream << dedent << "};" << endl << endl;
 }
 
 status_t wsdl_create_types_interface(const sptr<WsdlClass>& obj, sptr<ITextOutput> stream)
@@ -1098,14 +1098,14 @@ status_t wsdl_create_types_interface(const sptr<WsdlClass>& obj, sptr<ITextOutpu
 	stream << "/*========================================================== */ " << endl;
 	stream << "// idl file automatically generated by PIDGEN - DO NOT MODIFY" << endl;
 	stream << "/*========================================================== */ " << endl << endl;
-	
+
 	size_t types = obj->CountTypes();
 	for (size_t i = 0 ; i < types ; i++)
 	{
 		sptr<WsdlType> type = obj->TypeAt(i);
 		type->PrintInterface(stream);
 	}
-	
+
 	return B_OK;
 }
 

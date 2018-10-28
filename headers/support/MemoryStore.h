@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -30,7 +30,7 @@
 #include <support/Value.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -55,16 +55,16 @@ public:
 						BMemoryStore(const BMemoryStore &);
 						BMemoryStore(void *data, size_t size);
 						BMemoryStore(const void *data, size_t size);
-	
+
 			BMemoryStore&operator=(const BMemoryStore &);
-			
+
 			bool		operator<(const BMemoryStore &) const;
 			bool		operator<=(const BMemoryStore &) const;
 			bool		operator==(const BMemoryStore &) const;
 			bool		operator!=(const BMemoryStore &) const;
 			bool		operator>=(const BMemoryStore &) const;
 			bool		operator>(const BMemoryStore &) const;
-			
+
 			//!	Direct access to buffer size.
 			/*!	The same as Size(), but it can be convenient when you know
 				you are dealing with a BMemoryStore (and thus don't need
@@ -76,7 +76,7 @@ public:
 			status_t	AssertSpace(size_t newSize);
 			status_t	Copy(const BMemoryStore &);
 			int32_t		Compare(const BMemoryStore &) const;
-	
+
 	virtual	SValue		Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
 
 	virtual	off_t		Size() const;
@@ -87,16 +87,16 @@ public:
 	virtual	status_t	Sync();
 
 			void		SetBlockSize(size_t blocksize);
-		
+
 protected:
 	virtual				~BMemoryStore();
 			void		Reset();
-			
+
 
 private:
 	virtual	void *		MoreCore(void *oldBuf, size_t newSize);
 	virtual	void		FreeCore(void *oldBuf);
-			
+
 			size_t		m_length;
 			char*		m_data;
 			bool		m_readOnly;
@@ -110,7 +110,7 @@ private:
 class BMallocStore : public BMemoryStore
 {
 public:
-	
+
 						BMallocStore();
 						BMallocStore(const BMemoryStore &);
 
@@ -118,13 +118,13 @@ public:
 
 protected:
 	virtual				~BMallocStore();
-		
+
 private:
 						BMallocStore(const BMallocStore& o);
 
 	virtual	void *		MoreCore(void *oldBuf, size_t newSize);
 	virtual	void		FreeCore(void *oldBuf);
-	
+
 			size_t		m_blockSize;
 			size_t		m_mallocSize;
 };
@@ -141,7 +141,7 @@ public:
 	BValueStorage(SValue* value, SLocker* lock, const sptr<SAtom>& object);
 
 	SValue Value() const;
-	
+
 	virtual	status_t	SetSize(off_t position);
 
 	virtual	ssize_t		ReadAtV(off_t position, const struct iovec *vector, ssize_t count);
@@ -150,7 +150,7 @@ public:
 
 protected:
 	virtual ~BValueStorage();
-	
+
 private:
 	virtual	void* MoreCore(void *oldBuf, size_t newSize);
 	virtual	void FreeCore(void *oldBuf);
@@ -200,7 +200,7 @@ inline bool BMemoryStore::operator>(const BMemoryStore &o) const
 /*-------------------------------------------------------------*/
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_MEMORYSTORE_H */

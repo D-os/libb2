@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -24,7 +24,7 @@
 #include <support/VectorIO.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -65,7 +65,7 @@ class BTextOutput : public ITextOutput
 		virtual	status_t				Print(	const char *debugText,
 												ssize_t len = -1);
 		virtual void					MoveIndent(	int32_t delta);
-		
+
 		virtual	status_t				LogV(	const log_info& info,
 												const iovec *vector,
 												ssize_t count,
@@ -81,12 +81,12 @@ class BTextOutput : public ITextOutput
 					atomic_int	indent;
 					int32_t	startIndent;
 					int32_t	front;
-					
+
 					int32_t	buffering;
 					char*	buffer;
 					ssize_t	bufferLen;
 					ssize_t	bufferAvail;
-					
+
 #if TEXTOUTPUT_SMALL_STACK
 					// Formatting state to avoid using a lot of stack
 					// space.  This is really problematic, because it
@@ -104,14 +104,14 @@ class BTextOutput : public ITextOutput
 	protected:
 
 										BTextOutput(IByteOutput *This, uint32_t flags = 0);
-	
+
 		// TO DO: Implement LTextOutput and RTextOutput.
 		virtual	sptr<IBinder>		AsBinderImpl();
 		virtual	sptr<const IBinder>	AsBinderImpl() const;
-		
+
 	private:
 				struct thread_styles;
-				
+
 				void					InitStyles();
 				const char*				MakeIndent(style_state *style, int32_t* out_indent);
 				const char*				MakeIndent(int32_t* inout_indent);
@@ -120,11 +120,11 @@ class BTextOutput : public ITextOutput
 
 				IByteOutput *			m_stream;
 				uint32_t				m_flags;
-				
+
 				style_state				m_globalStyle;
 				thread_styles*			m_threadStyles;
 				atomic_int				m_nextTag;
-				
+
 				enum {
 					MAX_COLORS = 16
 				};
@@ -154,15 +154,15 @@ class BTextInput : public ITextInput
 	protected:
 
 										BTextInput(IByteInput *This, uint32_t flags = 0);
-	
+
 		// TO DO: Implement LTextOutput and RTextOutput.
 		virtual	sptr<IBinder>		AsBinderImpl();
 		virtual	sptr<const IBinder>	AsBinderImpl() const;
-		
+
 	private:
 				IByteInput *			m_stream;
 				uint32_t				m_flags;
-				
+
 				SLocker					m_lock;
 				char					m_buffer[128];
 				ssize_t					m_pos;
@@ -175,7 +175,7 @@ class BTextInput : public ITextInput
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif /* _SUPPORT_TEXTSTREAM_H */

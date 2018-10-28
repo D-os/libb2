@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -16,7 +16,7 @@
 
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace xml {
 #endif
 
@@ -25,14 +25,14 @@ BXMLParseContext::BXMLParseContext()
 	:line(0),
 	 column(0)
 {
-	
+
 }
 
 
 // =====================================================================
 BXMLParseContext::~BXMLParseContext()
 {
-	
+
 }
 
 
@@ -135,7 +135,7 @@ BXMLParseContext::OnExternalSubset(		SString		& publicID,
 }
 
 
-	
+
 // =====================================================================
 status_t
 BXMLParseContext::OnInternalSubsetBegin()
@@ -306,7 +306,7 @@ status_t
 BXMLParseContext::OnParameterEntityRef(		SString	& name				)
 {
 	(void) name;
-	
+
 	// Don't mimic the behavior of other entity refs because there can't
 	// be Text nodes in any place where a Parameter Entity Reference can happen
 	return B_NO_ERROR;
@@ -319,7 +319,7 @@ BXMLParseContext::OnParameterEntityRef(		SString	& name,
 											SString & replacement		)
 {
 	(void) replacement;
-	
+
 	replacement = "%";
 	replacement += name;
 	replacement += ';';
@@ -336,7 +336,7 @@ BXMLParseContext::OnError(status_t err, bool fatal, int32_t debugLineNo,
 	(void) debugLineNo;
 	(void) code;
 	(void) data;
-	
+
 	return err;
 }
 
@@ -344,5 +344,5 @@ BXMLParseContext::OnError(status_t err, bool fatal, int32_t debugLineNo,
 
 #if _SUPPORTS_NAMESPACE
 }; // namespace xml
-}; // namespace palmos
+}; // namespace os
 #endif

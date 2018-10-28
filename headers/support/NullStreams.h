@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -23,7 +23,7 @@
 #include <support/ITextStream.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -35,7 +35,7 @@ class BNullStream : public BnByteOutput, public BnByteInput
 {
 public:
 	BNullStream();
-	
+
 	virtual SValue Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
 	virtual	ssize_t WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
 	virtual	status_t Sync();
@@ -53,13 +53,13 @@ class BNullTextOutput : public ITextOutput
 {
 public:
 	BNullTextOutput();
-	
+
 	virtual	status_t				Print(	const char *debugText,
 											ssize_t len = -1);
-	
+
 	//!	Adjust the current indentation level by \a delta amount.
 	virtual void					MoveIndent(	int32_t delta);
-	
+
 	//!	Write a log line.
 	/*!	Metadata about the text is supplied in \a info.  The text itself
 		is supplied in the iovec, which is handled as one atomic unit.
@@ -84,7 +84,7 @@ private:
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif // _SUPPORT_NULLSTREAMS_H

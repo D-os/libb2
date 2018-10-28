@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -16,7 +16,7 @@
 	@brief Interface to an operating system process.
 */
 
-namespace palmos {
+namespace os {
 namespace support {
 
 interface INode
@@ -26,13 +26,13 @@ interface INode
 	instead using it with other APIs such as
 	SContext::NewProcess() and SContext::RemoteNew().  See
 	@ref BinderProcessModel for more information.
-	
+
 	@ingroup CoreSupportBinder
 */
 interface IProcess
 {
 
-//using namespace palmos::support;
+//using namespace os::support;
 
 methods:
 
@@ -82,4 +82,4 @@ methods:
 	void				PrintBinderIPCProfiling();
 }
 
-} }	// namespace palmos::support
+} }	// namespace os::support

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -30,7 +30,7 @@
 #define PRINT_POOL_METRICS 0
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -69,7 +69,7 @@ bool find_in_pool(const SSharedBuffer* buffer, size_t* pos)
 			return true;
 		}
 	}
-	
+
 	*pos = low;
 	return false;
 }
@@ -84,7 +84,7 @@ bool add_to_pool(const SSharedBuffer* buffer, size_t pos)
 		g_pool = (const SSharedBuffer**)newPool;
 		g_poolAvail = newAvail;
 	}
-	
+
 	if (pos < g_poolSize) {
 		memmove(g_pool+pos+1, g_pool+pos, (g_poolSize-pos)*sizeof(SSharedBuffer*));
 	}
@@ -267,7 +267,7 @@ SSharedBuffer* SSharedBuffer::Edit(size_t newLength) const
 	extended_info* ex = get_extended_info();
 
 	SSharedBuffer* result;
-	
+
 	if (m_users == (1<<B_BUFFER_USERS_SHIFT)) {
 		if (ex == NULL || !ex->Buffering()) {
 			if (ALIGN_SIZE(Length()) == ALIGN_SIZE(newLength)) {
@@ -434,7 +434,7 @@ SSharedBuffer* SSharedBuffer::BeginBuffering()
 			result->SetBufferSize(ALIGN_SIZE(newLen));
 		}
 	}
-	
+
 	return result;
 }
 
@@ -450,5 +450,5 @@ SSharedBuffer* SSharedBuffer::EndBuffering()
 }
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace palmos::support
+} }	// namespace os::support
 #endif

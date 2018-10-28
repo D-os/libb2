@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2005 Palmsource, Inc.
- * 
+ *
  * This software is licensed as described in the file LICENSE, which
  * you should have received as part of this distribution. The terms
  * are also available at http://www.openbinder.org/license.html.
- * 
+ *
  * This software consists of voluntary contributions made by many
  * individuals. For the exact contribution history, see the revision
  * history and logs, available at http://www.openbinder.org
@@ -21,7 +21,7 @@
 #include <support/SupportDefs.h>
 
 #if _SUPPORTS_NAMESPACE
-namespace palmos {
+namespace os {
 namespace support {
 #endif
 
@@ -53,7 +53,7 @@ public:
 			status_t	Resize(size_t bits);					//!< Change the size of the bitfield
 	inline	size_t		CountBits() const;						//!< Return current # bits in bitfield
 			status_t	InitCheck() const;						//!< B_NO_MEMORY if the bitfield couldn't be allocated
-	
+
 	//! Test a bit in the bitfield
 	inline	bool		Test(size_t bit) const;					//!< This call doesn't make sure that \p bit is valid
 
@@ -73,7 +73,7 @@ public:
 
 	//! Search for the first bit cleared in the bitfield
 			ssize_t		FirstClear() const;
-	
+
 	//! Read or write the bitfield as an array
 	inline	bitfield_bit	operator[] (size_t bit)			{ return bitfield_bit(*this, bit); }
 	inline	bool			operator[] (size_t bit) const	{  return Test(bit); }
@@ -131,7 +131,7 @@ inline size_t SBitfield::alloc_size(size_t size)
 	// so we round up to multiple of 32 and then divide by 8
 	// to return number of bytes
 
-	return ((size+31) & ~31) >> 3; 
+	return ((size+31) & ~31) >> 3;
 }
 
 inline void SBitfield::Clear(size_t bit)
@@ -154,7 +154,7 @@ inline SBitfield::bitfield_bit::operator bool()
 /**************************************************************************************/
 
 #if _SUPPORTS_NAMESPACE
-} } // namespace palmos::support
+} } // namespace os::support
 #endif
 
 #endif	/* _SUPPORT_BITFIELD_H_ */
