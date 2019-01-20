@@ -178,7 +178,7 @@ import									BEGIN(imp);
 						SString v = SString(yytext);
 						IDLNameType* ptr=new IDLNameType();
 						#ifdef IDLDEBUG
-							ptr->IncStrong(NULL);					 		
+							ptr->incStrong(NULL);					 		
 						#endif
 						ptr->m_id=v;
 							
@@ -192,7 +192,7 @@ import									BEGIN(imp);
 						SString v = SString(yytext);
 						IDLNameType* ptr=new IDLNameType();
 						#ifdef IDLDEBUG
-							ptr->IncStrong(NULL);					 		
+							ptr->incStrong(NULL);					 		
 						#endif
 						ptr->m_id=v;
 						
@@ -205,7 +205,7 @@ import									BEGIN(imp);
 						SString v = SString(yytext);
 						IDLNameType* ptr=new IDLNameType();
 						#ifdef IDLDEBUG
-							ptr->IncStrong(NULL);					 		
+							ptr->incStrong(NULL);					 		
 						#endif
 						ptr->m_id=v;
 						
@@ -217,7 +217,7 @@ import									BEGIN(imp);
 						SString v = SString(yytext);
 						IDLNameType* ptr=new IDLNameType();
 						#ifdef IDLDEBUG
-							ptr->IncStrong(NULL);					 		
+							ptr->incStrong(NULL);					 		
 						#endif
 						ptr->m_id=v;
 						
@@ -228,7 +228,7 @@ import									BEGIN(imp);
 						SString v = SString(yytext);
 						IDLNameType* ptr=new IDLNameType();
 						#ifdef IDLDEBUG
-							ptr->IncStrong(NULL);					 		
+							ptr->incStrong(NULL);					 		
 						#endif
 						ptr->m_id=v;
 						
@@ -318,7 +318,7 @@ enum					{
 							// for the identifier
 							IDLNameType* ptr=new IDLNameType(SString("enum"), NULL, get_comments());
 							#ifdef IDLDEBUG
-								ptr->IncStrong(NULL);					 		
+								ptr->incStrong(NULL);					 		
 							#endif
 							yylval._symbol=ptr;
 							return J_ENUM;
@@ -367,7 +367,7 @@ using					return J_USING;
 						SString id = SString(yytext);
 						IDLNameType* ptr=new IDLNameType(SString(yytext), NULL, get_comments());
 						#ifdef IDLDEBUG
-							ptr->IncStrong(NULL);					 		
+							ptr->incStrong(NULL);					 		
 						#endif
 						yylval._symbol=ptr;
 						return J_IDENTIFIER;
@@ -391,7 +391,7 @@ void createtype(const char* name)
 {
 		IDLType* obj=new IDLType(SString(name));
 		#ifdef IDLDEBUG
-			obj->IncStrong(NULL);					 		
+			obj->incStrong(NULL);					 		
 		#endif
 		yylval._type=obj;
 }

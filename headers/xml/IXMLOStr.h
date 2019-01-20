@@ -10,37 +10,34 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef	_XML2_IXMLOSTR_H
-#define	_XML2_IXMLOSTR_H
+#ifndef XML2_IXMLOSTR_H
+#define XML2_IXMLOSTR_H
 
 #include <support/IInterface.h>
 #include <support/String.h>
+#include <support/Value.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace xml {
 using namespace support;
-#endif
 
 /**************************************************************************************/
 
 class IXMLOStr : public IInterface
 {
-	public:
+ public:
+  //the following could be DECLARE_META_INTERFACE(), but we've no RXMLOStr
+  DECLARE_META_INTERFACE(XMLOStr)
 
-		//the following could be B_DECLARE_META_INTERFACE(), but we've no RXMLOStr
-		B_DECLARE_META_INTERFACE(XMLOStr)
-
-		virtual status_t	StartTag(SString &name, SValue &attributes) = 0;
-		virtual status_t	EndTag(SString &name) = 0;
-		virtual status_t	Content(const char	*data, int32_t size) = 0;
-		virtual status_t	Comment(const char *data, int32_t size);
+  virtual status_t StartTag(SString &name, SValue &attributes) = 0;
+  virtual status_t EndTag(SString &name)                       = 0;
+  virtual status_t Content(const char *data, int32_t size)     = 0;
+  virtual status_t Comment(const char *data, int32_t size);
 };
 
 /**************************************************************************************/
 
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::xml
-#endif
+}  // namespace xml
+}  // namespace os
 
-#endif /* _XML2_XMLOSTR_H */
+#endif /* XML2_XMLOSTR_H */

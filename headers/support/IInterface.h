@@ -10,113 +10,29 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef	_SUPPORT_INTERFACE_INTERFACE_H
-#define	_SUPPORT_INTERFACE_INTERFACE_H
+#ifndef SUPPORT_INTERFACE_INTERFACE_H
+#define SUPPORT_INTERFACE_INTERFACE_H
 
 /*!	@file support/IInterface.h
 	@ingroup CoreSupportBinder
 	@brief Common base class for abstract binderized interfaces.
 */
 
-#include <support/SupportDefs.h>
-#include <support/StaticValue.h>
-#include <support/Atom.h>
+#include <binder/IInterface.h>
+#include <support/Errors.h>
 
-#include <support/IBinder.h>
-
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
-/*!	@addtogroup CoreSupportBinder
-	@{
-*/
+using IInterface = ::android::IInterface;
 
-// Forward declare the core binder API (defined in IBinder.h).
-class SValue;
-class IBinder;
-
-/**************************************************************************************/
-
-//!	Base class for C++ language Binder interfaces.
-class IInterface : virtual public SAtom
+template <typename INTERFACE>
+inline ::android::sp<INTERFACE> interface_cast(const ::android::sp<::android::IBinder>& obj)
 {
-public:
-
-								IInterface();
-
-			sptr<IBinder>		AsBinder();
-			sptr<const IBinder>	AsBinder() const;
-
-protected:
-	virtual						~IInterface();
-
-	virtual	sptr<IBinder>		AsBinderImpl();
-	virtual	sptr<const IBinder>	AsBinderImpl() const;
-
-	typedef sptr<IInterface>	(*instantiate_proxy_func)(const sptr<IBinder>& binder);
-
-	static	sptr<IInterface>	ExecAsInterface(const sptr<IBinder>& binder,
-												const SValue& descriptor,
-												instantiate_proxy_func proxy_func,
-												status_t* out_error = NULL);
-
-	static	sptr<IInterface>	ExecAsInterfaceNoInspect(const sptr<IBinder>& binder,
-														 const SValue& descriptor,
-														 instantiate_proxy_func proxy_func,
-														 status_t* out_error = NULL);
-
-private:
-								IInterface(const IInterface&);
-};
-
-
-/**************************************************************************************/
-
-//!	Convert a generic IBinder to a concrete interface.
-template<class IFACE>
-sptr<IFACE>
-interface_cast(const sptr<IBinder> &b)
-{
-	return IFACE::AsInterface(b);
+  return ::android::interface_cast<INTERFACE>(obj);
 }
 
-//!	Convert an SValue containing a binder object to a concrete interface.
-template<class IFACE>
-sptr<IFACE>
-interface_cast(const SValue &v)
-{
-	return IFACE::AsInterface(v);
-}
+}  // namespace support
+}  // namespace os
 
-
-/**************************************************************************************/
-
-//!	Use this macro inside of your IInterface subclass to define the standard IInterface meta-API.
-/*!	You will not normally use this, instead letting pidgen generate
-	similar code from an IDL file. */
-#define B_DECLARE_META_INTERFACE(iname)																		\
-																											\
-		static	const BNS(os::support::) SValue&														\
-			Descriptor();																					\
-		static	BNS(os::support::) sptr<I ## iname>													\
-			AsInterface(const BNS(os::support::) sptr< BNS(os::support::) IBinder> &o,			\
-						status_t* out_error = NULL);														\
-		static	BNS(os::support::) sptr<I ## iname>													\
-			AsInterface(const BNS(os::support::) SValue &v,											\
-						status_t* out_error = NULL);														\
-		static	BNS(os::support::) sptr<I ## iname>													\
-			AsInterfaceNoInspect(const BNS(os::support::) sptr< BNS(os::support::) IBinder> &o,	\
-								 status_t* out_error = NULL);												\
-		static	BNS(os::support::) sptr<I ## iname>													\
-			AsInterfaceNoInspect(const BNS(os::support::) SValue &v,									\
-								 status_t* out_error = NULL);												\
-
-/*!	@} */
-
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::support
-#endif
-
-#endif /* _SUPPORT_INTERFACE_INTERFACE_H */
+#endif /* SUPPORT_INTERFACE_INTERFACE_H */

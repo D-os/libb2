@@ -10,8 +10,8 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _SUPPORT_DEBUGLOCK_H
-#define _SUPPORT_DEBUGLOCK_H
+#ifndef SUPPORT_DEBUGLOCK_H
+#define SUPPORT_DEBUGLOCK_H
 
 #include <BuildDefines.h>
 
@@ -39,10 +39,8 @@ static inline void AssertNoLocks() {}
 
 #include <new>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 class SCallStack;
 
@@ -220,11 +218,9 @@ static inline bool LockDebugStackCrawls()
   return gLockDebugStackCrawls;
 }
 
-#if _SUPPORTS_NAMESPACE
-}
-}  // namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
 #endif  // !SUPPORTS_LOCK_DEBUG
 
-#endif  // _SUPPORT_DEBUGLOCK_H
+#endif /* SUPPORT_DEBUGLOCK_H */

@@ -10,41 +10,37 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _SUPPORT_BINDERKEYS_H_
-#define _SUPPORT_BINDERKEYS_H_
+#ifndef SUPPORT_BINDERKEYS_H
+#define SUPPORT_BINDERKEYS_H
 
 #include <support/Value.h>
-#include <support/StaticValue.h>
+//#include <support/StaticValue.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace osp {
-#endif
 
-#if _SUPPORTS_NAMESPACE
 using namespace support;
-#endif
 
 extern const SValue g_keyBranch;
 
 // Standard binder keys.
-extern value_csml g_keyRead;
-extern value_csml g_keyWrite;
-extern value_csml g_keyEnd;
-extern value_csml g_keySync;
-extern value_clrg g_keyPosition;
-extern value_csml g_keySeek;
-extern value_csml g_keyMode;
-extern value_csml g_keyNode;
-extern value_csml g_keyBinding;
-extern value_csml g_keyPost;
-extern value_clrg g_keyRedirectMessagesTo;
-extern value_csml g_keyPrint;
-extern value_clrg g_keyBumpIndentLevel;
-extern value_csml g_keyStatus;
-extern value_csml g_keyValue;
-extern value_csml g_keyWhich;
-extern value_csml g_keyFlags;
+//extern value_csml g_keyRead;
+//extern value_csml g_keyWrite;
+//extern value_csml g_keyEnd;
+//extern value_csml g_keySync;
+//extern value_clrg g_keyPosition;
+//extern value_csml g_keySeek;
+//extern value_csml g_keyMode;
+//extern value_csml g_keyNode;
+//extern value_csml g_keyBinding;
+//extern value_csml g_keyPost;
+//extern value_clrg g_keyRedirectMessagesTo;
+//extern value_csml g_keyPrint;
+//extern value_clrg g_keyBumpIndentLevel;
+//extern value_csml g_keyStatus;
+//extern value_csml g_keyValue;
+//extern value_csml g_keyWhich;
+//extern value_csml g_keyFlags;
 
 // IBinderVector<> keys
 extern const SValue g_keyAddChild;
@@ -74,8 +70,7 @@ extern const SValue g_keyRootSurface;
 
 //**************************************************************************************
 
-#if _SUPPORTS_NAMESPACE
-} }	// namespace os::osp
-#endif
+}  // namespace osp
+}  // namespace os
 
-#endif	/* _SUPPORT_BINDERKEYS_H_ */
+#endif /* SUPPORT_BINDERKEYS_H */

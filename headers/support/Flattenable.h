@@ -10,8 +10,8 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef	_SUPPORT_FLATTENABLE_H
-#define	_SUPPORT_FLATTENABLE_H
+#ifndef SUPPORT_FLATTENABLE_H
+#define SUPPORT_FLATTENABLE_H
 
 /*!	@file support/Flattenable.h
 	@ingroup CoreSupportUtilities
@@ -19,69 +19,19 @@
 	a byte buffer.
 */
 
-#include <support/SupportDefs.h>
-#include <support/Value.h>
+#include <utils/Flattenable.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*!	@addtogroup CoreSupportUtilities
 	@{
 */
 
-enum {
-	// Request a flattened form that may contain references to
-	// active objects.
-	B_FLATTEN_FORM_ACTIVE = 0,
+template <typename T>
+using SFlattenable = ::android::Flattenable<T>;
 
-	// Request a flattened form that can be written to persistent
-	// storage.
-	B_FLATTEN_FORM_PERSISTENT = 1
-};
+}  // namespace support
+}  // namespace os
 
-class SFlattenable
-{
-public:
-	virtual				~SFlattenable() { };
-	virtual	ssize_t		FlattenedSize() const;
-	virtual	status_t	Flatten(void *buffer, ssize_t size) const;
-	virtual	status_t	Unflatten(type_code c, const void *buf, ssize_t size);
-
-			// Convert this object into a SValue.
-	virtual	SValue		AsValue(int32_t form = B_FLATTEN_FORM_ACTIVE) const = 0;
-
-			// Assign this object from a SValue previously created by
-			// the above function.
-	virtual	status_t	SetFromValue(const SValue& value) = 0;
-
-	virtual	ssize_t		ParcelSize(int32_t form = B_FLATTEN_FORM_ACTIVE) const;
-
-			// Flatten the object into a raw parcel.  This will keep
-			// track of the number of bytes written, but NOT the type
-			// code (it is up to the caller to store the type code
-			// separately).
-	virtual	ssize_t		WriteParcel(SParcel& target, int32_t form = B_FLATTEN_FORM_ACTIVE) const;
-
-			// Unflatten the object from a raw parcel.  If it can't
-			// accept the given type code, it must fail without reading
-			// anything from the parcel.
-	virtual	ssize_t		ReadParcel(type_code type, SParcel& source, ssize_t size);
-
-
-	virtual	bool		IsFixedSize() const = 0;
-	virtual	type_code	TypeCode() const = 0;
-	virtual	bool		AllowsTypeCode(type_code code) const;
-};
-
-/*-------------------------------------------------------------*/
-/*-------------------------------------------------------------*/
-
-/*!	@} */
-
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::support
-#endif
-
-#endif /* _SUPPORT_FLATTENABLE_H */
+#endif /* SUPPORT_FLATTENABLE_H */

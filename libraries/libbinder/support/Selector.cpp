@@ -157,7 +157,7 @@ BSelector::send_to_binders(const SVector<Registration> &regs, bool value)
 		if (r.flags & B_NO_TRANSLATE_LINK) {
 			if (value) {
 				SValue dummiResult;
-				r.binder->Effect(r.property, B_WILD_VALUE, B_UNDEFINED_VALUE, &dummiResult);
+				r.binder->Effect(r.property, B_WILD_VALUE, SValue(), &dummiResult);
 				DBG(bout << "send_to_binders did Effect: value=" << r.property)
 				DBG(	<< " binder = " << r.binder << endl;)
 			}

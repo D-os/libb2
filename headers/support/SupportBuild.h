@@ -10,8 +10,8 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _SUPPORT_BUILD_H
-#define _SUPPORT_BUILD_H
+#ifndef SUPPORT_BUILD_H
+#define SUPPORT_BUILD_H
 
 /*!	@file support/SupportBuild.h
 	@ingroup CoreSupportUtilities
@@ -19,16 +19,16 @@
 */
 
 #if (defined(__CC_ARM) || defined(_MSC_VER))
-#define _SUPPORTS_WARNING					0
-#define _SUPPORTS_FEATURE_SHORT_PATH_MAX	0
+#define _SUPPORTS_WARNING 0
+#define _SUPPORTS_FEATURE_SHORT_PATH_MAX 0
 #endif
 
 #include <BuildDefaults.h>
 
 #if TARGET_HOST == TARGET_HOST_WIN32
-#	define _SUPPORTS_WINDOWS_FILE_PATH 1
+#define _SUPPORTS_WINDOWS_FILE_PATH 1
 #else
-#	define _SUPPORTS_UNIX_FILE_PATH 1
+#define _SUPPORTS_UNIX_FILE_PATH 1
 #endif
 
 #ifndef LIBBE_BOOTSTRAP
@@ -44,26 +44,26 @@
 #endif
 
 #if defined(NO_RUNTIME_SHARED_LIBRARIES) && defined(__arm)
-	// prevent r9 (sb) from being used in PalmOS so that changes
-	// we make to it are maintained for applications
-	__global_reg(6)   unsigned long sb;
+// prevent r9 (sb) from being used in PalmOS so that changes
+// we make to it are maintained for applications
+__global_reg(6) unsigned long sb;
 #endif
 
 #if defined(__GNUC__)
 #define _UNUSED(x) x
-#define _PACKED	__attribute__((packed))
+#define _PACKED __attribute__((packed))
 #endif
 
 #ifdef _MSC_VER
 //	This is warning is not particularly useful, and causes lots of spewage when
 //	the StaticValue.h macros are used.
-#pragma warning (disable:4003)
+#pragma warning(disable : 4003)
 //	The following warning actually -is- useful, but in many places we do things
 //	that instigate it where there isn't really a problem.
-#pragma warning (disable:4355)
+#pragma warning(disable : 4355)
 // disable warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)
 #if _MSC_VER <= 1300
-#pragma warning (disable:4800)
+#pragma warning(disable : 4800)
 #endif
 #endif
 
@@ -79,13 +79,13 @@
 #endif
 
 #if _BUILDING_SUPPORT
-#define	_IMPEXP_SUPPORT		_EXPORT
+#define _IMPEXP_SUPPORT _EXPORT
 #else
-#define	_IMPEXP_SUPPORT		_IMPORT
+#define _IMPEXP_SUPPORT _IMPORT
 #endif
 
 #ifdef __cplusplus
-extern "C++" { // the BeOS standard C++ library is indirectly including this file inside an extern "C"
+extern "C++" {  // the BeOS standard C++ library is indirectly including this file inside an extern "C"
 
 #if _SUPPORTS_NAMESPACE
 namespace os {
@@ -100,9 +100,8 @@ class _IMPEXP_SUPPORT BPackageManager;
 #endif
 
 #if _SUPPORTS_NAMESPACE
-} // package
+}  // package
 #endif
-
 
 #if _SUPPORTS_NAMESPACE
 namespace storage {
@@ -111,10 +110,8 @@ namespace storage {
 class _IMPEXP_SUPPORT BFile;
 
 #if _SUPPORTS_NAMESPACE
-} // storage
+}  // storage
 #endif
-
-
 
 #if _SUPPORTS_NAMESPACE
 namespace support {
@@ -124,12 +121,18 @@ namespace support {
 	inline functions.  If we don't export them, we get warnings from any
 	"real" classes using them, which themselves are being exported
 */
-template<class TYPE> class _EXPORT atom_ptr;
-template<class TYPE> class _EXPORT atom_ref;
-template<class TYPE> class _EXPORT SVector;
-template<class TYPE> class _EXPORT SSortedVector;
-template<class KEY, class VALUE> class _EXPORT SKeyedVector;
-template<class INTERFACE> class _EXPORT BnInterface;
+//template <class TYPE>
+//class _EXPORT atom_ptr;
+//template <class TYPE>
+//class _EXPORT atom_ref;
+//template <class TYPE>
+//class _EXPORT SVector;
+//template <class TYPE>
+//class _EXPORT SSortedVector;
+//template <class KEY, class VALUE>
+//class _EXPORT SKeyedVector;
+//template<class INTERFACE>
+//class _EXPORT BnInterface;
 
 /* support kit */
 #if TARGET_HOST == TARGET_HOST_WIN32
@@ -227,7 +230,7 @@ class _IMPEXP_SUPPORT SRegExp;
 #endif
 
 #if _SUPPORTS_NAMESPACE
-} // namespace support
+}  // namespace support
 #endif
 
 // services kit
@@ -245,9 +248,8 @@ class _IMPEXP_SUPPORT IVaultManagerServer;
 #endif
 
 #if _SUPPORTS_NAMESPACE
-} // namespace services
+}  // namespace services
 #endif
-
 
 // xml kit
 
@@ -272,14 +274,14 @@ class _IMPEXP_SUPPORT IXMLOStr;
 #endif
 
 #if _SUPPORTS_NAMESPACE
-} // namespace xml
+}  // namespace xml
 #endif
 
 #if _SUPPORTS_NAMESPACE
-} // namespace os::
+}  // namespace os::
 #endif
 
-} // extern "C++"
-#endif		/* __cplusplus */
+}  // extern "C++"
+#endif /* __cplusplus */
 
-#endif
+#endif /* SUPPORT_BUILD_H */

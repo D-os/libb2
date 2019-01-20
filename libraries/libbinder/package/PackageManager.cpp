@@ -544,7 +544,7 @@ const sptr<BPackageManager::Package> BPackageManager::Component::GetPackage() co
   sptr<BPackageManager::Package> p;
   if (m_package && m_package->AttemptIncStrong(this)) {
     p = static_cast<BPackageManager::Package*>(m_package);
-    m_package->DecStrong(this);
+    m_package->decStrong(this);
   }
   return p;
 }

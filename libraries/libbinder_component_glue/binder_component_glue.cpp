@@ -32,7 +32,7 @@ extern "C" void set_package_image_object(const sptr<BSharedObject>& image)
 	g_sharedObject = image;
 	if (g_pendingBufferRef) {
 		//bout << "Transfering pending buffer ref!" << endl;
-		image->IncStrong((const void*)&g_sharedBufferRefs);
+		image->incStrong((const void*)&g_sharedBufferRefs);
 		g_pendingBufferRef = 0;
 	}
 	g_sharedObjectLock.Unlock();

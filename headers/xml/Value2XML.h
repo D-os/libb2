@@ -10,26 +10,25 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _VALUE_TO_XML_H
+#ifndef VALUE_TO_XML_H
 
-#define _VALUE_TO_XML_H
+#define VALUE_TO_XML_H
 
+#include <support/Atom.h>
+#include <support/Errors.h>
 #include <support/IByteStream.h>
+#include <support/Value.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace xml {
-#endif
 
-status_t ValueToXML(const BNS(os::support::) sptr<BNS(os::support::) IByteOutput>& stream,
-                    const BNS(os::support::) SValue&                               value);
+os::support::status_t ValueToXML(const os::support::sptr<os::support::IByteOutput>& stream,
+                                 const os::support::SValue&                         value);
 
-status_t XMLToValue(const BNS(os::support::) sptr<BNS(os::support::) IByteInput>& stream,
-                    BNS(os::support::) SValue&                                    value);
+os::support::status_t XMLToValue(const os::support::sptr<os::support::IByteInput>& stream,
+                                 os::support::SValue&                              value);
 
-#if _SUPPORTS_NAMESPACE
-}
-}  // os::xml
-#endif
+}  // namespace xml
+}  // namespace os
 
 #endif

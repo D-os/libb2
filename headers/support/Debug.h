@@ -22,24 +22,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <support/String.h>
 #include <support/SupportDefs.h>
 #include <support/atomic.h>
 
 #ifndef DEBUG
 #define DEBUG 0
 #endif
-
-#ifdef __cplusplus
-#if _SUPPORTS_NAMESPACE
-namespace os {
-namespace support {
-#endif
-class SString;
-#if _SUPPORTS_NAMESPACE
-}
-}  // namespace os::support
-#endif
-#endif /* __cplusplus */
 
 /*------------------------------*/
 /*----- Private... -------------*/
@@ -83,12 +72,12 @@ void _exec_debug_action(b_debug_action action, void* data);
 
 #ifdef __cplusplus
 #include <support/Atom.h>
-_IMPEXP_SUPPORT void add_debug_atom(BNS(os::support::) SAtom* atom, const char* name);  // If it's really a pointer you're giving, don't mess with the ref count, so it's safe to call this from inside a constructor
-_IMPEXP_SUPPORT void add_debug_atom(const BNS(os::support::) sptr<BNS(os::support::) SAtom>& atom, const char* name);
+_IMPEXP_SUPPORT void add_debug_atom(os::support::SAtom* atom, const char* name);  // If it's really a pointer you're giving, don't mess with the ref count, so it's safe to call this from inside a constructor
+_IMPEXP_SUPPORT void add_debug_atom(const os::support::sptr<os::support::SAtom>& atom, const char* name);
 _IMPEXP_SUPPORT void add_debug_sized(const void* key, size_t size, const char* name);
 _IMPEXP_SUPPORT void set_debug_fieldwidth(int width);
-_IMPEXP_SUPPORT      BNS(os::support::) SString lookup_debug(const BNS(os::support::) sptr<BNS(os::support::) SAtom>& atom, bool padding = true);
-_IMPEXP_SUPPORT      BNS(os::support::) SString lookup_debug(const void* key, bool padding = true);
+_IMPEXP_SUPPORT os::support::SString lookup_debug(const os::support::sptr<os::support::SAtom>& atom, bool padding = true);
+_IMPEXP_SUPPORT os::support::SString lookup_debug(const void* key, bool padding = true);
 #endif  // __cplusplus
 
 //@}

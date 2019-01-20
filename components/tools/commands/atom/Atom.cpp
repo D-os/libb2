@@ -48,11 +48,11 @@ SValue AtomCommand::Run(const ArgList& args)
 	int32_t flags;
 	status_t error;
 
-	const SValue arg(args.CountItems() > 1 ? args[1] : B_UNDEFINED_VALUE);
-	const SValue arg2(args.CountItems() > 2 ? args[2] : B_UNDEFINED_VALUE);
-	const SValue arg3(args.CountItems() > 3 ? args[3] : B_UNDEFINED_VALUE);
-	const SValue arg4(args.CountItems() > 4 ? args[4] : B_UNDEFINED_VALUE);
-	const SValue arg5(args.CountItems() > 5 ? args[5] : B_UNDEFINED_VALUE);
+	const SValue arg(args.CountItems() > 1 ? args[1] : SValue());
+	const SValue arg2(args.CountItems() > 2 ? args[2] : SValue());
+	const SValue arg3(args.CountItems() > 3 ? args[3] : SValue());
+	const SValue arg4(args.CountItems() > 4 ? args[4] : SValue());
+	const SValue arg5(args.CountItems() > 5 ? args[5] : SValue());
 	one = arg.AsString();
 
 	if (one == "report")
@@ -73,7 +73,7 @@ SValue AtomCommand::Run(const ArgList& args)
 			SLightAtom* raw = (SLightAtom*)(arg2.AsInt64());
 			if (SLightAtom::ExistsAndIncStrong(raw)) {
 				raw->Report(out);
-				raw->DecStrong(raw);
+				raw->decStrong(raw);
 			} else {
 				if (arg2.IsDefined())
 					TextError() << "atom: " << arg2 << " is not an atom" << endl;

@@ -10,47 +10,44 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#include <package/PackageKit.h>
-#include <support/ByteStream.h>
-#include <storage/File.h>
 #include <assert.h>
+#include <package/PackageKit.h>
+#include <storage/File.h>
+#include <support/ByteStream.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace package {
 using namespace os::storage;
 using namespace os::support;
-#endif
 
-B_STATIC_STRING_VALUE_LARGE(key_file,"file",)
+B_STATIC_STRING_VALUE_LARGE(key_file, "file", )
 
 sptr<IByteInput>
 get_script_data_from_value(const SValue &info, status_t *error)
 {
-	status_t err;
-	SString filename;
-	sptr<BFile> file;
+  status_t    err;
+  SString     filename;
+  sptr<BFile> file;
 
-	filename = info[key_file].AsString(&err);
-	if (err != B_OK) goto ERROR;
+  filename = info[key_file].AsString(&err);
+  if (err != B_OK) goto ERROR;
 
-	file = new BFile();
-	err = file->SetTo(filename.String(), O_RDONLY);
-	if (err != B_OK) {
-		file = NULL;
-		goto ERROR;
-	}
+  file = new BFile();
+  err  = file->SetTo(filename.String(), O_RDONLY);
+  if (err != B_OK) {
+    file = NULL;
+    goto ERROR;
+  }
 
-	if (error) *error = B_OK;
-	return new BByteStream(file);
+  if (error) *error = B_OK;
+  return new BByteStream(file);
 
 ERROR:
-	// err now contains the error code, if there was an error,
-	// data might be NULL.
-	if (error) *error = err;
-	return NULL;
+  // err now contains the error code, if there was an error,
+  // data might be NULL.
+  if (error) *error = err;
+  return NULL;
 }
 
-#if _SUPPORTS_NAMESPACE
-} }
-#endif
+}  // namespace package
+}  // namespace os

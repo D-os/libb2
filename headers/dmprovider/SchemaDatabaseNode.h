@@ -76,10 +76,10 @@ public:
 														DmOpenModeType mode = dmModeReadOnly,
 														DbShareModeType share = dbShareReadWrite,
 														database_missing_func missing = NULL,
-														const SValue& args = B_UNDEFINED_VALUE);
+														const SValue& args = SValue());
 									BSchemaDatabaseNode(const SContext& context,
 														const SDatabase &database,
-														const SValue& args = B_UNDEFINED_VALUE);
+														const SValue& args = SValue());
 protected:
 	virtual							~BSchemaDatabaseNode();
 			//!	Open and initialize the database.

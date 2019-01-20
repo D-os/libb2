@@ -10,8 +10,8 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef	_SUPPORT_NULLSTREAMS_H
-#define	_SUPPORT_NULLSTREAMS_H
+#ifndef SUPPORT_NULLSTREAMS_H
+#define SUPPORT_NULLSTREAMS_H
 
 /*!	@file support/NullStreams.h
 	@ingroup CoreSupportDataModel
@@ -19,13 +19,11 @@
 */
 
 #include <support/ByteStream.h>
-#include <support/SupportDefs.h>
 #include <support/ITextStream.h>
+#include <support/SupportDefs.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*!	@addtogroup CoreSupportDataModel
 	@{
@@ -33,58 +31,57 @@ namespace support {
 
 class BNullStream : public BnByteOutput, public BnByteInput
 {
-public:
-	BNullStream();
+ public:
+  BNullStream();
 
-	virtual SValue Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
-	virtual	ssize_t WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
-	virtual	status_t Sync();
-	virtual	ssize_t ReadV(const struct iovec * /*vector*/, ssize_t /*count*/, uint32_t flags = 0);
+  virtual SValue   Inspect(const sptr<IBinder>& caller, const SValue& which, uint32_t flags = 0);
+  virtual ssize_t  WriteV(const struct iovec* vector, ssize_t count, uint32_t flags = 0);
+  virtual status_t Sync();
+  virtual ssize_t  ReadV(const struct iovec* /*vector*/, ssize_t /*count*/, uint32_t flags = 0);
 
-protected:
-	virtual ~BNullStream();
+ protected:
+  virtual ~BNullStream();
 
-private:
-	BNullStream(const BNullStream&);
-	BNullStream& operator=(const BNullStream&);
+ private:
+  BNullStream(const BNullStream&);
+  BNullStream& operator=(const BNullStream&);
 };
 
 class BNullTextOutput : public ITextOutput
 {
-public:
-	BNullTextOutput();
+ public:
+  BNullTextOutput();
 
-	virtual	status_t				Print(	const char *debugText,
-											ssize_t len = -1);
+  virtual status_t Print(const char* debugText,
+                         ssize_t     len = -1);
 
-	//!	Adjust the current indentation level by \a delta amount.
-	virtual void					MoveIndent(	int32_t delta);
+  //!	Adjust the current indentation level by \a delta amount.
+  virtual void MoveIndent(int32_t delta);
 
-	//!	Write a log line.
-	/*!	Metadata about the text is supplied in \a info.  The text itself
+  //!	Write a log line.
+  /*!	Metadata about the text is supplied in \a info.  The text itself
 		is supplied in the iovec, which is handled as one atomic unit.
 		You can supply B_WRITE_END for \a flags to indicate the item
 		being logged has ended. */
-	virtual	status_t				LogV(	const log_info& info,
-											const iovec *vector,
-											ssize_t count,
-											uint32_t flags = 0);
+  virtual status_t LogV(const log_info& info,
+                        const iovec*    vector,
+                        ssize_t         count,
+                        uint32_t        flags = 0);
 
-	virtual	void					Flush();
-	virtual	status_t				Sync();
+  virtual void     Flush();
+  virtual status_t Sync();
 
-protected:
-	virtual ~BNullTextOutput();
+ protected:
+  virtual ~BNullTextOutput();
 
-private:
-	BNullTextOutput(const BNullTextOutput&);
-	BNullTextOutput& operator=(const BNullTextOutput&);
+ private:
+  BNullTextOutput(const BNullTextOutput&);
+  BNullTextOutput& operator=(const BNullTextOutput&);
 };
 
 /*!	@} */
 
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
-#endif // _SUPPORT_NULLSTREAMS_H
+#endif /* SUPPORT_NULLSTREAMS_H */

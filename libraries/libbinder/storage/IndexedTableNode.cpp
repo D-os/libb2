@@ -385,7 +385,7 @@ void BIndexedTableNode::ReportChangeAtLocked(size_t row, size_t col, const sptr<
 
 	if (BnTable::IsLinked()) {
 		if (node == NULL) node = NodeAtLocked(row);
-		PushTableChanged(this, node != NULL ? ITable::CHANGE_DETAILS_SENT : 0, B_UNDEFINED_VALUE);
+		PushTableChanged(this, node != NULL ? ITable::CHANGE_DETAILS_SENT : 0, SValue());
 		if (node != NULL) {
 			PushCellModified(this, EntryNameAtLocked(row), ColumnNameAtLocked(col), (BnNode*)node.ptr());
 		}

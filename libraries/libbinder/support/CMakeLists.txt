@@ -1,26 +1,18 @@
 target_sources(ob_bootstrap PRIVATE
-    support/Atom.cpp
     support/Autobinder.cpp
-    support/Binder.cpp
     support/Bitfield.cpp
     support/ByteStream.cpp
-    support/CallStack.cpp
+    #support/CallStack.cpp
     support/Context.cpp
     support/Debug.cpp
     support/DebugLock.cpp
-    support/Flattenable.cpp
     support/KernelStreams.cpp
-    support/List.cpp
     support/Locker.cpp
     support/MemoryStore.cpp
     support/NullStreams.cpp
-    support/SortedVector.cpp
-    support/Parcel.cpp
-    support/SharedBuffer.cpp
     support/SignalHandler.cpp
     support/Static.cpp
     support/Storage.cpp
-    support/String.cpp
     support/StringIO.cpp
     support/StringUtils.cpp
     support/SupportUtils.cpp
@@ -28,9 +20,6 @@ target_sources(ob_bootstrap PRIVATE
     support/TextStream.cpp
     support/Thread.cpp
     support/Threads.cpp
-    support/Value.cpp
-    support/ValueMap.cpp
-    support/Vector.cpp
     support/VectorIO.cpp
     support/LinuxCompat.cpp
     support/qsort_r.c
@@ -42,69 +31,55 @@ target_sources(ob_bootstrap PRIVATE
 )
 
 target_sources(ob PRIVATE
-    support/Atom.cpp
     support/Autobinder.cpp
-    support/Binder.cpp
     support/Bitfield.cpp
     support/ByteStream.cpp
-    support/CallStack.cpp
+    #support/CallStack.cpp
     support/ConditionVariable.cpp
-    support/Context.cpp
-    support/Datum.cpp
-    support/DatumLord.cpp
+#    support/Context.cpp
+#    support/Datum.cpp
+#    support/DatumLord.cpp
     support/Debug.cpp
     support/DebugLock.cpp
     support/EventFlag.cpp
-    support/Flattenable.cpp
-    support/GenericCache.cpp
-    support/Handler.cpp
+#    support/GenericCache.cpp
+#    support/Handler.cpp
     support/HashTable.cpp
     support/IntrusiveProfiler.cpp
     support/IOSStream.cpp
-    support/Iterator.cpp
+#    support/Iterator.cpp
     support/KeyID.cpp
-    support/List.cpp
     support/Locker.cpp
-    support/Looper.cpp
-    support/LooperLinux.cpp
-    support/Memory.cpp
+#    support/Memory.cpp
     support/MemoryStore.cpp
-    support/Message.cpp
-    support/MessageList.cpp
-    support/Node.cpp
+#    support/Message.cpp
+#    support/MessageList.cpp
+#    support/Node.cpp
     support/NullStreams.cpp
-    support/Observer.cpp
-    support/Package.cpp
-    support/Parcel.cpp
-    support/Pipe.cpp
-    support/Process.cpp
+#    support/Observer.cpp
+#    support/Package.cpp
+#    support/Pipe.cpp
+#    support/Process.cpp
     support/ProfileIPC.cpp
-    support/RBinder.cpp
     support/RegExp.cpp
-    support/Selector.cpp
-    support/SharedBuffer.cpp
+#    support/Selector.cpp
     support/SignalHandler.cpp
-    support/SortedVector.cpp
-    support/Static.cpp
+#    support/Static.cpp
     support/Storage.cpp
     support/StopWatch.cpp
-    support/String.cpp
     support/StringIO.cpp
     support/StringTokenizer.cpp
     support/StringUtils.cpp
     support/SupportUtils.cpp
     support/Swap.cpp
-    support/TextStream.cpp
+#    support/TextStream.cpp
     support/Thread.cpp
     support/Threads.cpp
-    support/TokenSource.cpp
-    support/URL.cpp
-    support/Value.cpp
-    support/ValueMap.cpp
-    support/Vector.cpp
+#    support/TokenSource.cpp
+#    support/URL.cpp
     support/VectorIO.cpp
-    support/CatalogMirror.cpp
-    support/Catalog.cpp
+#    support/CatalogMirror.cpp
+#    support/Catalog.cpp
     support/LinuxCompat.cpp
     support/KernelStreams.cpp
     support/qsort_r.c

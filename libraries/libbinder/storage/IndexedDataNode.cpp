@@ -76,7 +76,7 @@ void BIndexedDataNode::ReportChangeAtLocked(size_t index, const sptr<IBinder>& e
 	TouchLocked();
 
 	if (BnNode::IsLinked()) {
-		PushNodeChanged(this, CHANGE_DETAILS_SENT, B_UNDEFINED_VALUE);
+		PushNodeChanged(this, CHANGE_DETAILS_SENT, SValue());
 		sptr<IBinder> entry;
 		SValue v(ValueAtLocked(index));
 		if (v.IsObject()) entry = v.AsBinder();

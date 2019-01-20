@@ -10,16 +10,15 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _SUPPORT_SUPPORTMISC_H_
-#define _SUPPORT_SUPPORTMISC_H_
+#ifndef SUPPORT_SUPPORTMISC_H
+#define SUPPORT_SUPPORTMISC_H
 
-#include <support/SupportDefs.h>
+#include <support/Atom.h>
 #include <support/IBinder.h>
 #include <support/IMemory.h>
 #include <support/KeyedVector.h>
 #include <support/Locker.h>
-
-#include <support/StaticValue.h>
+#include <support/SupportDefs.h>
 
 // value_small_data and value_large_data are defined here.
 #include <support_p/ValueMapFormat.h>
@@ -33,18 +32,16 @@
 
 #include <SysThreadConcealed.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 enum {
-	kPackedSmallAtomType = B_PACK_SMALL_TYPE(B_ATOM_TYPE, sizeof(void*)),
-	kPackedSmallAtomWeakType = B_PACK_SMALL_TYPE(B_ATOM_WEAK_TYPE, sizeof(void*)),
-	kPackedSmallBinderType = B_PACK_SMALL_TYPE(B_BINDER_TYPE, sizeof(void*)),
-	kPackedSmallBinderWeakType = B_PACK_SMALL_TYPE(B_BINDER_WEAK_TYPE, sizeof(void*)),
-	kPackedSmallBinderHandleType = B_PACK_SMALL_TYPE(B_BINDER_HANDLE_TYPE, sizeof(void*)),
-	kPackedSmallBinderWeakHandleType = B_PACK_SMALL_TYPE(B_BINDER_WEAK_HANDLE_TYPE, sizeof(void*)),
+  kPackedSmallAtomType             = B_PACK_SMALL_TYPE(B_ATOM_TYPE, sizeof(void*)),
+  kPackedSmallAtomWeakType         = B_PACK_SMALL_TYPE(B_ATOM_WEAK_TYPE, sizeof(void*)),
+  kPackedSmallBinderType           = B_PACK_SMALL_TYPE(B_BINDER_TYPE, sizeof(void*)),
+  kPackedSmallBinderWeakType       = B_PACK_SMALL_TYPE(B_BINDER_WEAK_TYPE, sizeof(void*)),
+  kPackedSmallBinderHandleType     = B_PACK_SMALL_TYPE(B_BINDER_HANDLE_TYPE, sizeof(void*)),
+  kPackedSmallBinderWeakHandleType = B_PACK_SMALL_TYPE(B_BINDER_WEAK_HANDLE_TYPE, sizeof(void*)),
 };
 
 // optimization for gcc
@@ -73,8 +70,8 @@ void rem_binder_cleanup_func(binder_cleanup_func func);
 void call_binder_cleanup_funcs();
 
 // Syslog madness.
-void enable_thread_syslog();
-void disable_thread_syslog();
+void           enable_thread_syslog();
+void           disable_thread_syslog();
 extern int32_t g_syslogTLS;
 
 // -------------------------------------------------------------------
@@ -89,11 +86,13 @@ void release_object(const small_flat_data& obj, const void* who);
 #if defined(SUPPORTS_ATOM_DEBUG) && SUPPORTS_ATOM_DEBUG
 void rename_object(const small_flat_data& obj, const void* newWho, const void* oldWho);
 #else
-inline void rename_object(const small_flat_data&, const void*, const void*) { }
+inline void rename_object(const small_flat_data&, const void*, const void*)
+{
+}
 #endif
 
-void flatten_binder(const sptr<IBinder>& binder, small_flat_data* out);
-void flatten_binder(const wptr<IBinder>& binder, small_flat_data* out);
+void     flatten_binder(const sptr<IBinder>& binder, small_flat_data* out);
+void     flatten_binder(const wptr<IBinder>& binder, small_flat_data* out);
 status_t unflatten_binder(const small_flat_data& flat, sptr<IBinder>* out);
 status_t unflatten_binder(const small_flat_data& flat, wptr<IBinder>* out);
 
@@ -102,14 +101,14 @@ status_t unflatten_binder(const small_flat_data& flat, wptr<IBinder>* out);
 // to have 8 bytes of data to store both the IBinder address and
 // SAtom address (cookie) for correct interaction with the driver.
 
-struct flat_binder_object;	// defined in support_p/binder_module.h
+struct flat_binder_object;  // defined in support_p/binder_module.h
 
 // Generic acquire and release of objects.
 void acquire_object(const flat_binder_object& obj, const void* who);
 void release_object(const flat_binder_object& obj, const void* who);
 
-void flatten_binder(const sptr<IBinder>& binder, flat_binder_object* out);
-void flatten_binder(const wptr<IBinder>& binder, flat_binder_object* out);
+void     flatten_binder(const sptr<IBinder>& binder, flat_binder_object* out);
+void     flatten_binder(const wptr<IBinder>& binder, flat_binder_object* out);
 status_t unflatten_binder(const flat_binder_object& flat, sptr<IBinder>* out);
 status_t unflatten_binder(const flat_binder_object& flat, wptr<IBinder>* out);
 
@@ -119,12 +118,13 @@ status_t unflatten_binder(const flat_binder_object& flat, wptr<IBinder>* out);
 
 struct area_translation_info
 {
-	sptr<IMemoryHeap>	heap;
-	int32_t				count;
+  sptr<IMemoryHeap> heap;
+  int32_t           count;
 };
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace os::support
+}
+}  // namespace os::support
 #endif
 
 #if _SUPPORTS_NAMESPACE
@@ -134,12 +134,12 @@ using namespace os::support;
 #endif
 
 extern SKeyedVector<sptr<IBinder>, area_translation_info> gAreaTranslationCache;
-extern SLocker gAreaTranslationLock;
+extern SLocker                                            gAreaTranslationLock;
 
 #if _SUPPORTS_NAMESPACE
-} }	// namespace os::osp
+}
+}  // namespace os::osp
 #endif
-
 
 #if _SUPPORTS_NAMESPACE
 namespace os {
@@ -149,16 +149,16 @@ namespace support {
 void __terminate_shared_buffer(void);
 
 // Static objects for Parcel.cpp.
-extern SLocker	g_parcel_pool_lock;
+extern SLocker g_parcel_pool_lock;
 
-struct parcel_pool_cleanup {
-	parcel_pool_cleanup();
-	~parcel_pool_cleanup();
+struct parcel_pool_cleanup
+{
+  parcel_pool_cleanup();
+  ~parcel_pool_cleanup();
 };
 extern parcel_pool_cleanup g_parcel_pool_cleanup;
 
-#if _SUPPORTS_NAMESPACE
-} }	// namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
-#endif	/* _SUPPORT_SUPPORTMISC_H_ */
+#endif /* SUPPORT_SUPPORTMISC_H */

@@ -10,22 +10,22 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _SUPPORT_IMEMORY_H_
-#define _SUPPORT_IMEMORY_H_
+#ifndef SUPPORT_IMEMORY_H
+#define SUPPORT_IMEMORY_H
 
 /*!	@file support/IMemory.h
 	@ingroup CoreSupportBinder
 	@brief Binder-based shared memory interfaces.
 */
 
+#include <support/Atom.h>
 #include <support/Binder.h>
 #include <support/IInterface.h>
+#include <support/Parcel.h>
 #include <support/Value.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*!	@addtogroup CoreSupportBinder
 	@{
@@ -46,13 +46,13 @@ namespace support {
 */
 class IMemoryHeap : public IInterface
 {
-public:
-	B_DECLARE_META_INTERFACE(MemoryHeap)
+ public:
+  DECLARE_META_INTERFACE(MemoryHeap)
 
-	/*! Returns the area_id (Linux shim) of this heap */
-	virtual	int32_t				HeapID() const = 0;
-	/*! Returns the mapped base address (Linux shim) of this heap */
-	virtual void *					HeapBase() const = 0;
+  /*! Returns the area_id (Linux shim) of this heap */
+  virtual int32_t HeapID() const = 0;
+  /*! Returns the mapped base address (Linux shim) of this heap */
+  virtual void *HeapBase() const = 0;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -74,20 +74,20 @@ public:
 */
 class IMemory : public IInterface
 {
-public:
-	B_DECLARE_META_INTERFACE(Memory)
+ public:
+  DECLARE_META_INTERFACE(Memory)
 
-	//!	Get the IMemoryHeap and offset into it of that block of memory.
-	virtual sptr<IMemoryHeap>	GetMemory(ssize_t *offset = NULL, ssize_t *size = NULL) const = 0;
+  //!	Get the IMemoryHeap and offset into it of that block of memory.
+  virtual sptr<IMemoryHeap> GetMemory(ssize_t *offset = NULL, ssize_t *size = NULL) const = 0;
 
-	//!	A convenience to retrieve the memory pointer from a given IMemory.
-			void *				Pointer() const;
+  //!	A convenience to retrieve the memory pointer from a given IMemory.
+  void *Pointer() const;
 
-	//!	Retrieve memory address when you know the heap it exists in and offset there-in.
-			void *				FastPointer(const sptr<IBinder>& heap, ssize_t offset) const;
+  //!	Retrieve memory address when you know the heap it exists in and offset there-in.
+  void *FastPointer(const sptr<IBinder> &heap, ssize_t offset) const;
 
-	//!	Retrieve the memory size.
-			ssize_t				Size() const;
+  //!	Retrieve the memory size.
+  ssize_t Size() const;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -109,11 +109,11 @@ public:
 */
 class IMemoryDealer : public IInterface
 {
-public:
-	B_DECLARE_META_INTERFACE(MemoryDealer)
+ public:
+  DECLARE_META_INTERFACE(MemoryDealer)
 
-	//!	Allocates shared memory and returns an IMemory.
-	virtual sptr<IMemory> Allocate(size_t size, uint32_t properties) = 0;
+  //!	Allocates shared memory and returns an IMemory.
+  virtual sptr<IMemory> Allocate(size_t size, uint32_t properties) = 0;
 };
 
 /*!	@} */
@@ -122,65 +122,62 @@ public:
 
 class BnMemoryHeap : public BnInterface<IMemoryHeap>
 {
-protected:
-	inline				BnMemoryHeap() : BnInterface<IMemoryHeap>() { }
-	inline				BnMemoryHeap(const SContext& context) : BnInterface<IMemoryHeap>(context) { }
-	inline virtual		~BnMemoryHeap() { }
-	virtual	status_t	HandleEffect(	const SValue &in,
-										const SValue &inBindings,
-										const SValue &outBindings,
-										SValue *out);
-	virtual	status_t	Transact(	uint32_t code,
-									SParcel& data,
-									SParcel* reply = NULL,
-									uint32_t flags = 0);
-private:
-						BnMemoryHeap(const BnMemoryHeap&);
-	BnMemoryHeap&		operator=(const BnMemoryHeap&);
+ protected:
+  inline BnMemoryHeap() : BnInterface<IMemoryHeap>() {}
+  inline virtual ~BnMemoryHeap() {}
+  virtual status_t HandleEffect(const SValue &in,
+                                const SValue &inBindings,
+                                const SValue &outBindings,
+                                SValue *      out);
+  virtual status_t Transact(uint32_t code,
+                            SParcel &data,
+                            SParcel *reply = NULL,
+                            uint32_t flags = 0);
 
+ private:
+  BnMemoryHeap(const BnMemoryHeap &);
+  BnMemoryHeap &operator=(const BnMemoryHeap &);
 };
 
 class BnMemory : public BnInterface<IMemory>
 {
-protected:
-	inline				BnMemory() : BnInterface<IMemory>() { }
-	inline				BnMemory(const SContext& context) : BnInterface<IMemory>(context) { }
-	inline virtual		~BnMemory() { }
-	virtual	status_t	HandleEffect(	const SValue &in,
-										const SValue &inBindings,
-										const SValue &outBindings,
-										SValue *out);
-	virtual	status_t	Transact(	uint32_t code,
-									SParcel& data,
-									SParcel* reply = NULL,
-									uint32_t flags = 0);
-private:
-						BnMemory(const BnMemory&);
-			BnMemory&	operator=(const BnMemory&);
+ protected:
+  inline BnMemory() : BnInterface<IMemory>() {}
+  inline virtual ~BnMemory() {}
+  virtual status_t HandleEffect(const SValue &in,
+                                const SValue &inBindings,
+                                const SValue &outBindings,
+                                SValue *      out);
+  virtual status_t Transact(uint32_t code,
+                            SParcel &data,
+                            SParcel *reply = NULL,
+                            uint32_t flags = 0);
+
+ private:
+  BnMemory(const BnMemory &);
+  BnMemory &operator=(const BnMemory &);
 };
 
 class BnMemoryDealer : public BnInterface<IMemoryDealer>
 {
-protected:
-	inline				BnMemoryDealer() : BnInterface<IMemoryDealer>() { }
-	inline				BnMemoryDealer(const SContext& c) : BnInterface<IMemoryDealer>(c) { }
-	inline virtual		~BnMemoryDealer() { }
-	virtual	status_t	HandleEffect(	const SValue &in,
-										const SValue &inBindings,
-										const SValue &outBindings,
-										SValue *out);
-	virtual	status_t	Transact(	uint32_t code,
-									SParcel& data,
-									SParcel* reply = NULL,
-									uint32_t flags = 0);
-private:
-						BnMemoryDealer(const BnMemoryDealer&);
-	BnMemoryDealer&		operator=(const BnMemoryDealer&);
+ protected:
+  inline BnMemoryDealer() : BnInterface<IMemoryDealer>() {}
+  inline virtual ~BnMemoryDealer() {}
+  virtual status_t HandleEffect(const SValue &in,
+                                const SValue &inBindings,
+                                const SValue &outBindings,
+                                SValue *      out);
+  virtual status_t Transact(uint32_t code,
+                            SParcel &data,
+                            SParcel *reply = NULL,
+                            uint32_t flags = 0);
+
+ private:
+  BnMemoryDealer(const BnMemoryDealer &);
+  BnMemoryDealer &operator=(const BnMemoryDealer &);
 };
 
+}  // namespace support
+}  // namespace os
 
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::support
-#endif
-
-#endif // _SUPPORT_IMEMORY_H_
+#endif /* SUPPORT_IMEMORY_H */

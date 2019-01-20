@@ -10,6 +10,7 @@
  * history and logs, available at http://www.openbinder.org
  */
 
+#include <CmnErrors.h>
 #include <support/ByteOrder.h>
 #include <support/CallStack.h>
 #include <support/Errors.h>
@@ -36,9 +37,7 @@
 #include <SysThreadConcealed.h>
 #include <TextMgr.h>
 
-#if _SUPPORTS_NAMESPACE
 using namespace os::support;
-#endif
 
 #if TARGET_HOST == TARGET_HOST_LINUX
 
@@ -644,14 +643,4 @@ palmsource_dec_package_ref()
 }
 #endif
 
-#if _SUPPORTS_NAMESPACE
-namespace os {
-namespace support {
-#endif
-
-#if _SUPPORTS_NAMESPACE
-}
-}  // namespace os::support
-#endif
-
-#endif  //
+#endif  // TARGET_HOST_LINUX

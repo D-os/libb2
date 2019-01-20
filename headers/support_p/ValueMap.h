@@ -10,9 +10,10 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _SUPPORT_VALUEMAP_H
-#define _SUPPORT_VALUEMAP_H
+#ifndef SUPPORT_VALUEMAP_H
+#define SUPPORT_VALUEMAP_H
 
+#include <ErrorMgr.h>
 #include <support/IByteStream.h>
 #include <support/Locker.h>
 #include <support/Value.h>
@@ -21,20 +22,9 @@
 #include <support_p/SupportMisc.h>
 #include <support_p/ValueMapFormat.h>
 
-#if _SUPPORTS_NAMESPACE || _REQUIRES_NAMESPACE
-namespace std {
-#endif
-struct nothrow_t;
-#if _SUPPORTS_NAMESPACE || _REQUIRES_NAMESPACE
-}
-#endif
-
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
-class SParcel;
 class BValueMap;
 
 class BValueMapPool
@@ -99,7 +89,7 @@ class BValueMap
   ssize_t     ArchivedSize() const;
   ssize_t     Archive(SParcel& into) const;
   ssize_t     IndexFor(const SValue& key,
-                       const SValue& value = B_UNDEFINED_VALUE) const;
+                       const SValue& value = SValue()) const;
   ssize_t     IndexFor(uint32_t type, const void* data, size_t length) const;
   const pair& MapAt(size_t index) const;
 
@@ -110,7 +100,7 @@ class BValueMap
   static ssize_t  AddNewMap(BValueMap** This, const SValue& key, const SValue& value);
   static status_t RemoveMap(BValueMap**   This,
                             const SValue& key,
-                            const SValue& value = B_UNDEFINED_VALUE);
+                            const SValue& value = SValue());
   static void     RemoveMapAt(BValueMap** This, size_t index);
   static status_t RenameMap(BValueMap**   This,
                             const SValue& old_key,
@@ -214,8 +204,6 @@ inline void BValueMap::AssertEditing() const
   ErrFatalErrorIf(IsEditing(), "This operation can not be performed while editing a value");
 }
 
-#if _SUPPORTS_NAMESPACE
-}
-}  // namespace os::support
-#endif
-#endif
+}  // namespace support
+}  // namespace os
+#endif /* SUPPORT_VALUEMAP_H */

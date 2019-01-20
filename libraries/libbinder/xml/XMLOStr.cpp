@@ -10,34 +10,43 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#include <xml/XMLOStr.h>
 #include <support/Debug.h>
+#include <xml/XMLOStr.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace xml {
-#endif
 
 class BpXMLOStr : public BpInterface<IXMLOStr>
 {
-	public:
+ public:
+  BpXMLOStr(const sptr<IBinder> &o)
+      : BpInterface<IXMLOStr>(o)
+  {
+  }
 
-		BpXMLOStr(const sptr<IBinder>& o)
-			:	BpInterface<IXMLOStr>(o)
-		{
-		}
-
-		virtual status_t	StartTag(SString &, SValue &) { ErrFatalError("Shoot me (geh)!"); return B_UNSUPPORTED; }
-		virtual status_t	EndTag(SString &) { ErrFatalError("Shoot me (geh)!"); return B_UNSUPPORTED; }
-		virtual status_t	Content(const char*, int32_t) { ErrFatalError("Shoot me (geh)!"); return B_UNSUPPORTED; }
+  virtual status_t StartTag(SString &, SValue &)
+  {
+    ErrFatalError("Shoot me (geh)!");
+    return B_UNSUPPORTED;
+  }
+  virtual status_t EndTag(SString &)
+  {
+    ErrFatalError("Shoot me (geh)!");
+    return B_UNSUPPORTED;
+  }
+  virtual status_t Content(const char *, int32_t)
+  {
+    ErrFatalError("Shoot me (geh)!");
+    return B_UNSUPPORTED;
+  }
 };
 
-B_IMPLEMENT_META_INTERFACE(XMLOStr, "org.openbinder.xml.IXMLOStr", IXMLOStr)
+IMPLEMENT_META_INTERFACE(XMLOStr, "org.openbinder.xml.IXMLOStr")
 
 status_t
 IXMLOStr::Comment(const char *, int32_t)
 {
-	return B_OK;
+  return B_OK;
 }
 
 CXMLOStr::CXMLOStr()
@@ -51,10 +60,8 @@ CXMLOStr::~CXMLOStr()
 status_t
 CXMLOStr::Told(SValue &)
 {
-	return B_UNSUPPORTED;
+  return B_UNSUPPORTED;
 }
 
-#if _SUPPORTS_NAMESPACE
-}; // namespace xml
-}; // namespace os
-#endif
+};  // namespace xml
+};  // namespace os

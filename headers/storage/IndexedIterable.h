@@ -192,7 +192,7 @@ public:
 	//@{
 
 			//!	Return the select argument in effect for this iterator.
-			/*!	B_UNDEFINED_VALUE means to return all items. */
+			/*!	SValue() means to return all items. */
 	inline	const SValue&		SelectArgsLocked() const { return m_selectArgs; }
 
 			//!	Returns the iterator's current index in the iterable.

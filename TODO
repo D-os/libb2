@@ -1,0 +1,7 @@
+- remove atomics implementation (replace with stdlib)
+- remove TARGET_HOST == ???
+- remove SUPPORTS_NAMESPACE
+- remove PalmTypes.h (move required parts to SupportDefs.h)
+- possibly remove SysThread*.h ?
+- link libbinder as a separate dynamic library for apps to directly use
+

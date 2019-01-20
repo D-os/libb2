@@ -107,7 +107,7 @@ CallbackInfo::CallbackInfo(const sptr<IBinder>& target, const SValue &method, ui
 		if (m_flags & B_WEAK_BINDER_LINK) {
 			m_target->IncWeak(m_target);
 		} else {
-			m_target->IncStrong(m_target);
+			m_target->incStrong(m_target);
 		}
 	}
 }
@@ -123,7 +123,7 @@ CallbackInfo::CallbackInfo(const sptr<IBinder>& target, const SValue &method, ui
 		if (m_flags & B_WEAK_BINDER_LINK) {
 			m_target->IncWeak(m_target);
 		} else {
-			m_target->IncStrong(m_target);
+			m_target->incStrong(m_target);
 		}
 	}
 }
@@ -139,7 +139,7 @@ CallbackInfo::CallbackInfo(const CallbackInfo &o)
 		if (m_flags & B_WEAK_BINDER_LINK) {
 			m_target->IncWeak(m_target);
 		} else {
-			m_target->IncStrong(m_target);
+			m_target->incStrong(m_target);
 		}
 	}
 
@@ -152,7 +152,7 @@ CallbackInfo::~CallbackInfo()
 		if (m_flags & B_WEAK_BINDER_LINK) {
 			m_target->DecWeak(m_target);
 		} else {
-			m_target->DecStrong(m_target);
+			m_target->decStrong(m_target);
 		}
 	}
 
@@ -254,7 +254,7 @@ CreationInfo::CreationInfo(const sptr<INode>& context, const sptr<IProcess>& tea
 		if (m_flags & B_WEAK_BINDER_LINK) {
 			m_team->IncWeak(m_team);
 		} else {
-			m_team->IncStrong(m_team);
+			m_team->incStrong(m_team);
 		}
 	}
 }
@@ -274,7 +274,7 @@ CreationInfo::CreationInfo(const sptr<INode>& context, const sptr<IProcess>& tea
 		if (m_flags & B_WEAK_BINDER_LINK) {
 			m_team->IncWeak(m_team);
 		} else {
-			m_team->IncStrong(m_team);
+			m_team->incStrong(m_team);
 		}
 	}
 }
@@ -293,7 +293,7 @@ CreationInfo::CreationInfo(const CreationInfo &o)
 		if (m_flags & B_WEAK_BINDER_LINK) {
 			m_team->IncWeak(m_team);
 		} else {
-			m_team->IncStrong(m_team);
+			m_team->incStrong(m_team);
 		}
 	}
 }
@@ -305,7 +305,7 @@ CreationInfo::~CreationInfo()
 		if (m_flags & B_WEAK_BINDER_LINK) {
 			m_team->DecWeak(m_team);
 		} else {
-			m_team->DecStrong(m_team);
+			m_team->decStrong(m_team);
 		}
 	}
 }

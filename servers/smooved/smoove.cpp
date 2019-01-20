@@ -201,7 +201,7 @@ private:
 
 			if (proc == NULL) {
 				// Process doesn't exist...  create and publish it.
-				proc = BCatalog::Context().NewProcess(procName, SContext::PREFER_REMOTE, B_UNDEFINED_VALUE, err);
+				proc = BCatalog::Context().NewProcess(procName, SContext::PREFER_REMOTE, SValue(), err);
 				if (proc != NULL) {
 					SValue procValue(SValue::WeakBinder(proc->AsBinder()));
 					//bout << "Proc value: " << procValue << endl;
@@ -385,7 +385,7 @@ int main(int argc, char* argv[])
 		// now that we have booted run the OnInstall's
 		SValue entry = g_rootContext.Lookup(BV_INSTALL_HANDLERS_PATH);
 
-		if (entry != B_UNDEFINED_VALUE)
+		if (entry != SValue())
 		{
 			sptr<IProcess> process = g_rootContext.NewProcess(BV_INSTALL_HANDLERS);
 

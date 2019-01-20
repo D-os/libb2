@@ -10,8 +10,8 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef	_SUPPORT_BYTESTREAM_H
-#define	_SUPPORT_BYTESTREAM_H
+#ifndef SUPPORT_BYTESTREAM_H
+#define SUPPORT_BYTESTREAM_H
 
 /*!	@file support/ByteStream.h
 	@ingroup CoreSupportDataModel
@@ -22,16 +22,15 @@
 	underlying random-access storage.
 */
 
-#include <support/SupportDefs.h>
+#include <support/Atom.h>
 #include <support/IByteStream.h>
 #include <support/IStorage.h>
+#include <support/SupportDefs.h>
 
 #include <sys/uio.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*---------------------------------------------------------------------*/
 /*------- Local Streams -----------------------------------------------*/
@@ -45,66 +44,63 @@ namespace support {
 
 class BnByteInput : public BnInterface<IByteInput>
 {
-public:
-		virtual	status_t		Link(const sptr<IBinder>& to, const SValue &bindings, uint32_t flags = 0);
-		virtual	status_t		Unlink(const wptr<IBinder>& from, const SValue &bindings, uint32_t flags = 0);
-		virtual	status_t		Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
-		virtual	status_t		Transact(uint32_t code, SParcel& data, SParcel* reply = NULL, uint32_t flags = 0);
+ public:
+  virtual status_t Link(const sptr<IBinder> &to, const SValue &bindings, uint32_t flags = 0);
+  virtual status_t Unlink(const wptr<IBinder> &from, const SValue &bindings, uint32_t flags = 0);
+  virtual status_t Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
+  virtual status_t Transact(uint32_t code, SParcel &data, SParcel *reply = NULL, uint32_t flags = 0);
 
-protected:
-		inline					BnByteInput() : BnInterface<IByteInput>() { }
-		inline					BnByteInput(const SContext& c) : BnInterface<IByteInput>(c) { }
-		inline virtual			~BnByteInput() { }
+ protected:
+  inline BnByteInput() : BnInterface<IByteInput>() {}
+  inline virtual ~BnByteInput() {}
 
-		virtual	status_t		HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
+  virtual status_t HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
 
-private:
-								BnByteInput(const BnByteInput& o);	// no implementation
-		BnByteInput&			operator=(const BnByteInput& o);	// no implementation
+ private:
+  BnByteInput(const BnByteInput &o);             // no implementation
+  BnByteInput &operator=(const BnByteInput &o);  // no implementation
 };
 
 /*-----------------------------------------------------------------*/
 
 class BnByteOutput : public BnInterface<IByteOutput>
 {
-public:
-		virtual	status_t		Link(const sptr<IBinder>& to, const SValue &bindings, uint32_t flags = 0);
-		virtual	status_t		Unlink(const wptr<IBinder>& from, const SValue &bindings, uint32_t flags = 0);
-		virtual	status_t		Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
-		virtual	status_t		Transact(uint32_t code, SParcel& data, SParcel* reply = NULL, uint32_t flags = 0);
+ public:
+  virtual status_t Link(const sptr<IBinder> &to, const SValue &bindings, uint32_t flags = 0);
+  virtual status_t Unlink(const wptr<IBinder> &from, const SValue &bindings, uint32_t flags = 0);
+  virtual status_t Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
+  virtual status_t Transact(uint32_t code, SParcel &data, SParcel *reply = NULL, uint32_t flags = 0);
 
-protected:
-		inline					BnByteOutput() : BnInterface<IByteOutput>() { }
-		inline					BnByteOutput(const SContext& c) : BnInterface<IByteOutput>(c) { }
-		inline virtual			~BnByteOutput() { }
+ protected:
+  inline BnByteOutput() : BnInterface<IByteOutput>() {}
+  inline virtual ~BnByteOutput() {}
 
-		virtual	status_t		HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
+  virtual status_t HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
 
-private:
-								BnByteOutput(const BnByteOutput& o);	// no implementation
-		BnByteOutput&			operator=(const BnByteOutput& o);		// no implementation
+ private:
+  BnByteOutput(const BnByteOutput &o);             // no implementation
+  BnByteOutput &operator=(const BnByteOutput &o);  // no implementation
 };
 
 /*-----------------------------------------------------------------*/
 
 class BnByteSeekable : public BnInterface<IByteSeekable>
 {
-public:
-		virtual	status_t		Link(const sptr<IBinder>& to, const SValue &bindings, uint32_t flags = 0);
-		virtual	status_t		Unlink(const wptr<IBinder>& from, const SValue &bindings, uint32_t flags = 0);
-		virtual	status_t		Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
-		virtual	status_t		Transact(uint32_t code, SParcel& data, SParcel* reply = NULL, uint32_t flags = 0);
+ public:
+  virtual status_t Link(const sptr<IBinder> &to, const SValue &bindings, uint32_t flags = 0);
+  virtual status_t Unlink(const wptr<IBinder> &from, const SValue &bindings, uint32_t flags = 0);
+  virtual status_t Effect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
+  virtual status_t Transact(uint32_t code, SParcel &data, SParcel *reply = NULL, uint32_t flags = 0);
 
-protected:
-		inline					BnByteSeekable() : BnInterface<IByteSeekable>() { }
-		inline					BnByteSeekable(const SContext& c) : BnInterface<IByteSeekable>(c) { }
-		inline virtual			~BnByteSeekable() { }
+ protected:
+  inline BnByteSeekable() : BnInterface<IByteSeekable>() {}
+  inline virtual ~BnByteSeekable() {}
 
-		virtual	status_t		HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
+  virtual status_t HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
 
-private:
-								BnByteSeekable(const BnByteSeekable& o);	// no implementation
-		BnByteSeekable&			operator=(const BnByteSeekable& o);			// no implementation
+ private:
+  BnByteSeekable(const BnByteSeekable &o);             // no implementation
+  BnByteSeekable &operator=(const BnByteSeekable &o);  // no implementation
 };
 
 /*!	@addtogroup CoreSupportDataModel
@@ -119,29 +115,28 @@ private:
 	a random access IStorage interface. */
 class BByteStream : public BnByteInput, public BnByteOutput, public BnByteSeekable
 {
-public:
+ public:
+  BByteStream(const sptr<IStorage> &store);
 
-							BByteStream(const sptr<IStorage>& store);
+  virtual SValue Inspect(const sptr<IBinder> &caller, const SValue &which, uint32_t flags = 0);
 
-	virtual	SValue			Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
+  virtual ssize_t  ReadV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
+  virtual ssize_t  WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
+  virtual status_t Sync();
 
-	virtual	ssize_t			ReadV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
-	virtual	ssize_t			WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
-	virtual	status_t		Sync();
+  virtual off_t Seek(off_t position, uint32_t seek_mode);
+  virtual off_t Position() const;
 
-	virtual off_t			Seek(off_t position, uint32_t seek_mode);
-	virtual	off_t			Position() const;
+ protected:
+  BByteStream(IStorage *This);
 
-protected:
-							BByteStream(IStorage *This);
+  virtual ~BByteStream();
 
-	virtual					~BByteStream();
+ private:
+  BByteStream(const BByteStream &);
 
-private:
-							BByteStream(const BByteStream&);
-
-			off_t			m_pos;
-			IStorage *		m_store;
+  off_t     m_pos;
+  IStorage *m_store;
 };
 
 //!	Read-only byte streams on top of an IStorage.
@@ -149,27 +144,26 @@ private:
 	a random access IStorage interface. */
 class BReadOnlyStream : public BnByteInput, public BnByteSeekable
 {
-public:
+ public:
+  BReadOnlyStream(const sptr<IStorage> &store);
 
-							BReadOnlyStream(const sptr<IStorage>& store);
+  virtual SValue Inspect(const sptr<IBinder> &caller, const SValue &which, uint32_t flags = 0);
 
-	virtual	SValue			Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
+  virtual ssize_t ReadV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
 
-	virtual	ssize_t			ReadV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
+  virtual off_t Seek(off_t position, uint32_t seek_mode);
+  virtual off_t Position() const;
 
-	virtual off_t			Seek(off_t position, uint32_t seek_mode);
-	virtual	off_t			Position() const;
+ protected:
+  BReadOnlyStream(IStorage *This);
 
-protected:
-							BReadOnlyStream(IStorage *This);
+  virtual ~BReadOnlyStream();
 
-	virtual					~BReadOnlyStream();
+ private:
+  BReadOnlyStream(const BByteStream &);
 
-private:
-							BReadOnlyStream(const BByteStream&);
-
-			off_t			m_pos;
-			IStorage *		m_store;
+  off_t     m_pos;
+  IStorage *m_store;
 };
 
 //!	Write-only byte streams on top of an IStorage.
@@ -177,36 +171,34 @@ private:
 	a random access IStorage interface. */
 class BWriteOnlyStream : public BnByteOutput, public BnByteSeekable
 {
-public:
+ public:
+  BWriteOnlyStream(const sptr<IStorage> &store);
 
-							BWriteOnlyStream(const sptr<IStorage>& store);
+  virtual SValue Inspect(const sptr<IBinder> &caller, const SValue &which, uint32_t flags = 0);
 
-	virtual	SValue			Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
+  virtual ssize_t  WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
+  virtual status_t Sync();
 
-	virtual	ssize_t			WriteV(const struct iovec *vector, ssize_t count, uint32_t flags = 0);
-	virtual	status_t		Sync();
+  virtual off_t Seek(off_t position, uint32_t seek_mode);
+  virtual off_t Position() const;
 
-	virtual off_t			Seek(off_t position, uint32_t seek_mode);
-	virtual	off_t			Position() const;
+ protected:
+  BWriteOnlyStream(IStorage *This);
 
-protected:
-							BWriteOnlyStream(IStorage *This);
+  virtual ~BWriteOnlyStream();
 
-	virtual					~BWriteOnlyStream();
+ private:
+  BWriteOnlyStream(const BByteStream &);
 
-private:
-							BWriteOnlyStream(const BByteStream&);
-
-			off_t			m_pos;
-			IStorage *		m_store;
+  off_t     m_pos;
+  IStorage *m_store;
 };
 
 /*-------------------------------------------------------------*/
 
 /*!	@} */
 
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
-#endif /* _SUPPORT_BYTESTREAM_H */
+#endif /* SUPPORT_BYTESTREAM_H */

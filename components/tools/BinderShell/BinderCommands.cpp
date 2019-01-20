@@ -99,7 +99,7 @@ SValue BHelp::Run(const ArgList& args)
 {
 	const sptr<ITextOutput> out(TextOutput());
 
-	SValue arg1 = args.CountItems() > 1 ? args[1] : B_UNDEFINED_VALUE;
+	SValue arg1 = args.CountItems() > 1 ? args[1] : SValue();
 
 	if (!arg1.IsDefined()) {
 
@@ -161,7 +161,7 @@ SValue BHelp::Run(const ArgList& args)
 		}
 
 		// This is a built-in command.
-		commands.AddItem(kExit, SString::EmptyString());
+		commands.AddItem(kExit, SString::empty());
 
 		// Now print commands to stdout.
 
@@ -237,7 +237,7 @@ SString BSleep::Documentation() const {
 
 SValue BSleep::Run(const ArgList& args)
 {
-	const SValue time(args.CountItems() > 1 ? args[1] : B_UNDEFINED_VALUE);
+	const SValue time(args.CountItems() > 1 ? args[1] : SValue());
 	if (!time.IsDefined()) {
 		TextError() << "sleep: no time supplied" << endl;
 		return (const SValue&)SSimpleStatusValue(B_BAD_VALUE);
@@ -263,7 +263,7 @@ SString BStrError::Documentation() const {
 
 SValue BStrError::Run(const ArgList& args)
 {
-	const SValue err(args.CountItems() > 1 ? args[1] : B_UNDEFINED_VALUE);
+	const SValue err(args.CountItems() > 1 ? args[1] : SValue());
 	if (!err.IsDefined()) {
 		TextError() << "strerror: no value supplied" << endl;
 		return (const SValue&)SSimpleStatusValue(B_BAD_VALUE);
@@ -658,7 +658,7 @@ SValue BContextCommand::Run(const ArgList& args)
 			// first see if we have an actual context, and if not
 			// try create from a directory
 			i++;
-			SValue val(i < N ? args[i] : B_UNDEFINED_VALUE);
+			SValue val(i < N ? args[i] : SValue());
 			status_t err = B_OK;
 			set = val.AsBinder(&err);
 			if (err != B_OK) {
@@ -680,7 +680,7 @@ SValue BContextCommand::Run(const ArgList& args)
 	}
 
 	// Next argument must be the context name.
-	const SValue nameValue(i < N ? args[i] : B_UNDEFINED_VALUE);
+	const SValue nameValue(i < N ? args[i] : SValue());
 
 	if (!nameValue.IsDefined()) {
 		TextError() << "context: no context name specified" << endl;
@@ -699,7 +699,7 @@ SValue BContextCommand::Run(const ArgList& args)
 		SLooper::SetContextObject(set, name);
 	}
 
-	return SLooper::GetContextObject(name, SLooper::Process()->AsBinder());
+	return SLooper::GetContextObject(name, ProcessState::self()->AsBinder());
 }
 
 BSU::BSU(const SContext& context)
@@ -746,7 +746,7 @@ SValue BSU::Run(const ArgList& args)
 			i++;
 			// XXX It would be REALLY nice to do this in the -new-
 			// context (so we can for example see /processes/system).
-			SValue v(i < N ? args[i] : B_UNDEFINED_VALUE);
+			SValue v(i < N ? args[i] : SValue());
 			team = interface_cast<IProcess>(ArgToBinder(v));
 			if (team == NULL) {
 				TextError() << "su: process argument '" << v << "' invalid" << endl;
@@ -761,7 +761,7 @@ SValue BSU::Run(const ArgList& args)
 
 	// Get context to use, if specified.
 	SContext context;
-	const SValue contextValue = i < N ? args[i++] : B_UNDEFINED_VALUE;
+	const SValue contextValue = i < N ? args[i++] : SValue();
 	if (contextValue.IsDefined()) {
 		context = SContext(interface_cast<INode>(ArgToBinder(contextValue)));
 		if (context.Root() == NULL) {
@@ -846,7 +846,7 @@ SValue BNew::Run(const ArgList& args)
 		// Parse the option.
 		if (opt == "-p" || opt == "--publish") {
 			i++;
-			const SValue publishVal(i < N ? args[i] : B_UNDEFINED_VALUE);
+			const SValue publishVal(i < N ? args[i] : SValue());
 			publish = ArgToPath(publishVal);
 			if (publish == "") {
 				TextError() << "new: publish argument " << publishVal << " is not a string" << endl;
@@ -855,14 +855,14 @@ SValue BNew::Run(const ArgList& args)
 		}
 		else if (opt == "-i" || opt == "--inspect") {
 			i++;
-			iface = i < N ? args[i] : B_UNDEFINED_VALUE;
+			iface = i < N ? args[i] : SValue();
 			if (!iface.IsDefined()) {
 				TextError() << "new: interface argument " << iface << " is not defined" << endl;
 			}
 		}
 		else if (opt == "-r" || opt == "-P" || opt == "--process" || opt == "-t") {
 			i++;
-			SValue val = i < N ? args[i] : B_UNDEFINED_VALUE;
+			SValue val = i < N ? args[i] : SValue();
 			team = interface_cast<IProcess>(ArgToBinder(val));
 			if (team == NULL) {
 				TextError() << "new: process argument '" << val << "' invalid" << endl;
@@ -870,7 +870,7 @@ SValue BNew::Run(const ArgList& args)
 		}
 		else if (opt == "-c" || opt == "--context") {
 			i++;
-			SValue val = i < N ? args[i] : B_UNDEFINED_VALUE;
+			SValue val = i < N ? args[i] : SValue();
 			context = SContext(interface_cast<INode>(ArgToBinder(val)));
 			if (context.Root() == NULL) {
 				TextError() << "new: context argument '" << val << "' invalid" << endl;
@@ -885,7 +885,7 @@ SValue BNew::Run(const ArgList& args)
 
 	// Next argument must be the name of the component to
 	// instantiate.
-	const SValue service = i < N ? args[i++] : B_UNDEFINED_VALUE;
+	const SValue service = i < N ? args[i++] : SValue();
 
 	if (!service.IsDefined()) {
 		TextError() << "new: no component specified" << endl;
@@ -901,7 +901,7 @@ SValue BNew::Run(const ArgList& args)
 		context = Context();
 	}
 
-	const SValue serviceArgs = i < N ? args[i++] : B_UNDEFINED_VALUE;
+	const SValue serviceArgs = i < N ? args[i++] : SValue();
 
 	sptr<IBinder> binder = ( team == NULL
 		? context.New(service, serviceArgs)
@@ -940,7 +940,7 @@ BInspect::BInspect(const SContext& context)
 
 SValue BInspect::Run(const ArgList& args)
 {
-	const SValue object = args.CountItems() > 1 ? args[1] : B_UNDEFINED_VALUE;
+	const SValue object = args.CountItems() > 1 ? args[1] : SValue();
 	const sptr<IBinder> binder = ArgToBinder(object);
 	if (binder == NULL)
 	{
@@ -981,18 +981,18 @@ SValue BInvoke::Run(const ArgList& args)
 	const size_t N = args.CountItems();
 	size_t idx = 1;
 
-	object = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+	object = idx < N ? args[idx] : SValue();
 	while (1) {
 		if (object == kDashi) {
 			idx++;
-			descriptor = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+			descriptor = idx < N ? args[idx] : SValue();
 		} else if (object == kDasha) {
 			all = true;
 		} else {
 			break;
 		}
 		idx++;
-		object = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+		object = idx < N ? args[idx] : SValue();
 	}
 
 	sptr<IBinder> binder = ArgToBinder(object);
@@ -1011,7 +1011,7 @@ SValue BInvoke::Run(const ArgList& args)
 	}
 
 	idx++;
-	SValue method = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+	SValue method = idx < N ? args[idx] : SValue();
 
 	SValue nuargs;
 
@@ -1060,16 +1060,16 @@ SValue BPut::Run(const ArgList& args)
 	const size_t N = args.CountItems();
 	size_t idx = 1;
 
-	object = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+	object = idx < N ? args[idx] : SValue();
 	while (1) {
 		if (object == kDashi) {
 			idx++;
-			descriptor = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+			descriptor = idx < N ? args[idx] : SValue();
 		} else {
 			break;
 		}
 		idx++;
-		object = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+		object = idx < N ? args[idx] : SValue();
 	}
 
 	sptr<IBinder> binder = ArgToBinder(object);
@@ -1088,10 +1088,10 @@ SValue BPut::Run(const ArgList& args)
 	}
 
 	idx++;
-	SValue key = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+	SValue key = idx < N ? args[idx] : SValue();
 
 	idx++;
-	const SValue value = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+	const SValue value = idx < N ? args[idx] : SValue();
 	if (!value.IsDefined()) {
 		TextError() << "put: no value supplied" << endl;
 		return (const SValue&)SSimpleStatusValue(B_BAD_VALUE);
@@ -1127,16 +1127,16 @@ SValue BGet::Run(const ArgList& args)
 	const size_t N = args.CountItems();
 	size_t idx = 1;
 
-	object = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+	object = idx < N ? args[idx] : SValue();
 	while (1) {
 		if (object == kDashi) {
 			idx++;
-			descriptor = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+			descriptor = idx < N ? args[idx] : SValue();
 		} else {
 			break;
 		}
 		idx++;
-		object = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+		object = idx < N ? args[idx] : SValue();
 	}
 
 	sptr<IBinder> binder = ArgToBinder(object);
@@ -1155,11 +1155,11 @@ SValue BGet::Run(const ArgList& args)
 	}
 
 	idx++;
-	SValue key = idx < N ? args[idx] : B_UNDEFINED_VALUE;
+	SValue key = idx < N ? args[idx] : SValue();
 	if (!key.IsDefined()) key = SValue::Wild();
 
 	SValue out;
-	status_t result = binder->Effect(B_UNDEFINED_VALUE,B_UNDEFINED_VALUE,key,&out);
+	status_t result = binder->Effect(SValue(),SValue(),key,&out);
 
 	if (result != B_OK) {
 		return (const SValue&)SSimpleStatusValue(result);
@@ -1193,7 +1193,7 @@ SValue BLs::Run(const ArgList& args)
 	size_t optind = 1;
 	bool longFormat = false;
 
-	SValue opt = optind < N ? args[optind] : B_UNDEFINED_VALUE;
+	SValue opt = optind < N ? args[optind] : SValue();
 	if (opt == kDashl) {
 		longFormat = true;
 		optind++;
@@ -1207,7 +1207,7 @@ SValue BLs::Run(const ArgList& args)
 	}
 
 	sptr<IIterable> dir;
-	SValue pathVal = optind < N ? args[optind] : B_UNDEFINED_VALUE;
+	SValue pathVal = optind < N ? args[optind] : SValue();
 	if (!pathVal.IsDefined() || pathVal.Type() == B_STRING_TYPE) {
 		SString catPath(ArgToPath(pathVal.IsDefined() ? pathVal : SValue::String("")));
 		SValue catValue;
@@ -1361,7 +1361,7 @@ SValue BPublish::Run(const ArgList& args)
 		return (const SValue&)SSimpleStatusValue(B_BAD_VALUE);
 	}
 
-	const SValue value = args.CountItems() > 2 ? args[2] : B_UNDEFINED_VALUE;
+	const SValue value = args.CountItems() > 2 ? args[2] : SValue();
 	if (!value.IsDefined()) {
 		TextError() << "publish: no value supplied" << endl;
 		return (const SValue&)SSimpleStatusValue(B_BAD_VALUE);
@@ -1426,10 +1426,10 @@ SValue BLookup::Run(const ArgList& args)
 	const size_t N=args.CountItems();
 	size_t i=1;
 	while (true) {
-		SValue arg = i < N ? args[i] : B_UNDEFINED_VALUE;
+		SValue arg = i < N ? args[i] : SValue();
 		if (arg == kDashi || arg == kDashInspect) {
 			i++;
-			interface = i < N ? args[i] : B_UNDEFINED_VALUE;
+			interface = i < N ? args[i] : SValue();
 			i++;
 		}
 		else {
@@ -1613,7 +1613,7 @@ SValue BLink::Run(const ArgList& args)
 
 	size_t i=1;
 	while (true) {
-		SValue a = i < N ? args[i] : B_UNDEFINED_VALUE;
+		SValue a = i < N ? args[i] : SValue();
 		//bout << "arg [" << i << "] " << a << endl;
 		if (!a.IsDefined()) break;
 		SString s = a.AsString();
@@ -1870,7 +1870,7 @@ void BSpawnFaerie::thread_func(void *ptr)
 
 	shell->Run(script_args);
 
-	This->DecStrong(NULL);
+	This->decStrong(NULL);
 #endif // LINUX_DEMO_HACK
 }
 
@@ -1918,7 +1918,7 @@ SValue BPush::Run(const ArgList& args)
 	sptr<IBinder> b = GetProperty(kSELF).AsBinder();
 	sptr<BBinder> self = b->LocalBinder();
 	if (self != NULL) {
-		self->Push(args.CountItems() > 1 ? args[1] : B_UNDEFINED_VALUE);
+		self->Push(args.CountItems() > 1 ? args[1] : SValue());
 	} else {
 		TextError() << "push can't get a local SELF binder :-(" << endl;
 	}

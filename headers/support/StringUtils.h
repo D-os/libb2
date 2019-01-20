@@ -10,21 +10,20 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _SUPPORTKIT_STRINGUTILS_H_INCLUDED_
-#define _SUPPORTKIT_STRINGUTILS_H_INCLUDED_
+#ifndef SUPPORTKIT_STRINGUTILS_H_INCLUDED
+#define SUPPORTKIT_STRINGUTILS_H_INCLUDED
 
 /*!	@file support/StringUtils.h
 	@ingroup CoreSupportUtilities
 	@brief Additional string utilities.
 */
 
+#include <support/Errors.h>
 #include <support/String.h>
 #include <support/Vector.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*!	@addtogroup CoreSupportUtilities
 	@{
@@ -33,30 +32,29 @@ namespace support {
 /*!	@name String Utilities */
 //@{
 
-            //! Fills the strList vector with the list of string created by splitting the string on splitOn.
-            /*! Splits the string into a vector of string that are seperated by the splitOn string.  If the
+//! Fills the strList vector with the list of string created by splitting the string on splitOn.
+/*! Splits the string into a vector of string that are seperated by the splitOn string.  If the
                 append parameter is set to true then the strList parameter will be appended.  If the append
                 parameter is false then MakeEmpty is call on strList before it is filled with the split apart
                 strings.
                 */
-status_t    StringSplit(const SString& srcStr, const SString& splitOn, SVector<SString>* strList, bool append = false);
+status_t StringSplit(const SString& srcStr, const SString& splitOn, SVector<SString>* strList, bool append = false);
 
-            //! Fills the strList vector with the list of string created by splitting the string on splitOn.
-            /*! Splits the string into a vector of strings that are seperated by the splitOn string.  If the
+//! Fills the strList vector with the list of string created by splitting the string on splitOn.
+/*! Splits the string into a vector of strings that are seperated by the splitOn string.  If the
                 append parameter is set to true then the strList parameter will be appended.  If the append
                 parameter is false then MakeEmpty is call on strList before it is filled with the split apart
                 strings.  The splitOnLen parameter is the length of the splitOn string not including the
                 \0 null terminating zero.  You can use strlen to get the correct length to pass for this
                 parameter.
                 */
-status_t    StringSplit(const char* srcStr, int32_t srcStrLen, const char* splitOn, int32_t splitOnLen, SVector<SString>* strList, bool append = false);
+status_t StringSplit(const char* srcStr, int32_t srcStrLen, const char* splitOn, int32_t splitOnLen, SVector<SString>* strList, bool append = false);
 
 //@}
 
 /*!	@} */
 
-#if _SUPPORTS_NAMESPACE
-} }	// namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
-#endif //_SUPPORTKIT_STRINGUTILS_H_INCLUDED_
+#endif /* SUPPORTKIT_STRINGUTILS_H_INCLUDED */

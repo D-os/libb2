@@ -10,8 +10,8 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _STORAGE_GENERICDATUM_H
-#define _STORAGE_GENERICDATUM_H
+#ifndef STORAGE_GENERICDATUM_H
+#define STORAGE_GENERICDATUM_H
 
 /*!	@file storage/GenericDatum.h
 	@ingroup CoreSupportDataModel
@@ -20,11 +20,9 @@
 
 #include <support/IDatum.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace storage {
 using namespace support;
-#endif
 
 /*!	@addtogroup CoreSupportDataModel
 	@{
@@ -46,19 +44,19 @@ using namespace support;
 */
 class BGenericDatum : public BnDatum
 {
-public:
-									BGenericDatum();
-									BGenericDatum(const SContext& context);
+ public:
+  BGenericDatum();
+  BGenericDatum(const SContext& context);
 
-	virtual	status_t				CopyTo(const sptr<IDatum>& dest, uint32_t flags = 0);
-	virtual	status_t				CopyFrom(const sptr<IDatum>& src, uint32_t flags = 0);
+  virtual status_t CopyTo(const sptr<IDatum>& dest, uint32_t flags = 0);
+  virtual status_t CopyFrom(const sptr<IDatum>& src, uint32_t flags = 0);
 
-protected:
-	virtual							~BGenericDatum();
+ protected:
+  virtual ~BGenericDatum();
 
-private:
-									BGenericDatum(const BGenericDatum&);
-			BGenericDatum&			operator=(const BGenericDatum&);
+ private:
+  BGenericDatum(const BGenericDatum&);
+  BGenericDatum& operator=(const BGenericDatum&);
 };
 
 // ==========================================================================
@@ -66,8 +64,7 @@ private:
 
 /*!	@} */
 
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::storage
-#endif
+}  // namespace storage
+}  // namespace os
 
-#endif // _STORAGE_GENERICDATUM_H
+#endif /* STORAGE_GENERICDATUM_H */

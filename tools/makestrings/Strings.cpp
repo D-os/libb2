@@ -33,7 +33,7 @@ class StringsParser : public BCreator
  public:
   StringsParser(const SString& filename, SKeyedVector<SString, SKeyedVector<SString, SString>*>& pairs);
 
-  virtual status_t OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator);
+  virtual status_t OnStartTag(SString& name, SValueMap& attributes, sptr<BCreator>& newCreator);
   virtual status_t OnEndTag(SString& name);
   virtual status_t OnText(SString& data);
   virtual status_t Done();
@@ -68,7 +68,7 @@ StringsParser::~StringsParser()
 {
 }
 
-status_t StringsParser::OnStartTag(SString& name, SValue& attributes, sptr<BCreator>& newCreator)
+status_t StringsParser::OnStartTag(SString& name, SValueMap& attributes, sptr<BCreator>& newCreator)
 {
   switch (m_state) {
     case TOP: {
@@ -96,15 +96,17 @@ status_t StringsParser::OnStartTag(SString& name, SValue& attributes, sptr<BCrea
         m_state = KEY;
       }
       else if (name == "value") {
-        m_state  = VALUE;
-        m_locale = attributes["locale"].AsString();
+        m_state = VALUE;
+        SString m_locale;
+        attributes["locale"].getString(&m_locale);
 
         if (m_locale != "" && m_pairs.ValueFor(m_locale) == NULL) {
           m_pairs.AddItem(m_locale, new SKeyedVector<SString, SString>());
         }
         else if (m_locale == "") {
           berr << "makestrings: could not create vector for locale '" << m_locale << "'" << endl;
-          berr << indent << attributes << dedent << endl;
+          STUB;
+          //berr << indent << attributes << dedent << endl;
         }
       }
     }
@@ -190,7 +192,7 @@ status_t readargs(int argc, char** argv, SString& outputdir, SVector<SString>& l
       }
 
       case 'L': {
-        locales.AddItem(SString(optarg));
+        locales.add(SString(optarg));
         break;
       }
 
@@ -207,7 +209,7 @@ status_t readargs(int argc, char** argv, SString& outputdir, SVector<SString>& l
   }
   else {
     for (int ifile = optind; ifile < argc; ifile++) {
-      files.AddItem(SString(argv[ifile]));
+      files.add(SString(argv[ifile]));
     }
   }
 
@@ -216,9 +218,9 @@ status_t readargs(int argc, char** argv, SString& outputdir, SVector<SString>& l
 
 status_t read_files(const SVector<SString>& files, SKeyedVector<SString, SKeyedVector<SString, SString>*>& pairs)
 {
-  const size_t COUNT = files.CountItems();
+  const size_t COUNT = files.size();
   for (size_t i = 0; i < COUNT; i++) {
-    int                  fd    = open(files[i].String(), O_RDONLY);
+    int                  fd    = open(files[i].string(), O_RDONLY);
     sptr<IByteInput>     input = new BKernelIStr(fd);
     BXMLIByteInputSource source(input);
     sptr<StringsParser>  creator = new StringsParser(files[i], pairs);
@@ -235,17 +237,17 @@ status_t read_files(const SVector<SString>& files, SKeyedVector<SString, SKeyedV
 status_t write_pairs(const SString& outputdir, const SString& locale, SKeyedVector<SString, SString>* pairs)
 {
   SString path(outputdir);
-  path.PathAppend(locale);
+  path.appendPath(locale);
 
-  status_t err = mkdir(path.String(), 0777);
+  status_t err = mkdir(path.string(), 0777);
 
   if (err != B_OK && errno != EEXIST) {
     berr << "makestrings: could not create directory '" << path << "' err = " << strerror(errno) << endl;
     return err;
   }
 
-  path.PathAppend("Strings.localized");
-  int fd = open(path.String(), O_CREAT | O_RDWR, 0777);
+  path.appendPath("Strings.localized");
+  int fd = open(path.string(), O_CREAT | O_RDWR, 0777);
 
   if (fd != -1) {
     const size_t COUNT = pairs->CountItems();
@@ -261,13 +263,13 @@ status_t write_pairs(const SString& outputdir, const SString& locale, SKeyedVect
     uint32_t offsetIndex = 1;
 
     for (size_t j = 0; j < COUNT; j++) {
-      offset += pairs->KeyAt(j).Length() + 1;
+      offset += pairs->KeyAt(j).length() + 1;
       offsetArray[offsetIndex] = offset;
       offsetIndex++;
     }
 
     for (size_t j = 0; j < COUNT; j++) {
-      offset += pairs->ValueAt(j).Length() + 1;
+      offset += pairs->ValueAt(j).length() + 1;
       offsetArray[offsetIndex] = offset;
       offsetIndex++;
     }
@@ -275,11 +277,11 @@ status_t write_pairs(const SString& outputdir, const SString& locale, SKeyedVect
     write(fd, offsetArray, ARRAY_SIZE);
 
     for (size_t j = 0; j < COUNT; j++) {
-      write(fd, pairs->KeyAt(j).String(), pairs->KeyAt(j).Length() + 1);
+      write(fd, pairs->KeyAt(j).string(), pairs->KeyAt(j).length() + 1);
     }
 
     for (size_t j = 0; j < COUNT; j++) {
-      write(fd, pairs->ValueAt(j).String(), pairs->ValueAt(j).Length() + 1);
+      write(fd, pairs->ValueAt(j).string(), pairs->ValueAt(j).length() + 1);
     }
 
     off_t len = lseek(fd, 0, SEEK_END);
@@ -336,11 +338,11 @@ status_t write_pairs(const SString& outputdir, const SString& locale, SKeyedVect
 status_t output_files(const SString& outputdir, const SKeyedVector<SString, SKeyedVector<SString, SString>*>& pairs, const SVector<SString>& locales)
 {
   status_t     err   = B_OK;
-  const size_t COUNT = locales.CountItems();
+  const size_t COUNT = locales.size();
 
   if (COUNT > 0) {
     for (size_t i = 0; i < COUNT; i++) {
-      SString                         locale = locales.ItemAt(i);
+      SString                         locale = locales.itemAt(i);
       SKeyedVector<SString, SString>* vector = pairs.ValueFor(locale);
 
       if (vector != NULL) {

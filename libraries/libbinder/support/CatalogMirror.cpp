@@ -31,7 +31,7 @@ namespace support {
 class BMergedIterator : public BnRandomIterator
 {
 public:
-	BMergedIterator(const SValue& options = B_UNDEFINED_VALUE);
+	BMergedIterator(const SValue& options = SValue());
 
 	// IIterator
 	virtual	SValue Options() const;
@@ -170,7 +170,7 @@ void BMergedIterator::SetPosition(size_t value)
 class BCatalogMirror::IteratorWrapper : public BnRandomIterator
 {
 public:
-						IteratorWrapper(const sptr<BCatalogMirror>& mirror, const SValue& args = B_UNDEFINED_VALUE);
+						IteratorWrapper(const sptr<BCatalogMirror>& mirror, const SValue& args = SValue());
 
 	virtual	SValue		Inspect(const sptr<IBinder>& caller, const SValue &which, uint32_t flags = 0);
 

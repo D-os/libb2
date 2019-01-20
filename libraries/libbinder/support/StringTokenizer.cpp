@@ -43,9 +43,9 @@ SStringTokenizer::SStringTokenizer(const char* string, const char* delimeters)
 
 inline void SStringTokenizer::RegularExpressionize()
 {
-	SString exp = m_delimeters;
-	exp.Prepend("[^");
-	exp.Append("]+");
+    SString exp("[^");
+    exp.append(m_delimeters);
+    exp.append("]+");
 	m_regexp.SetTo(exp);
 }
 
@@ -80,9 +80,9 @@ SString SStringTokenizer::NextToken()
 	SString token("");
 	if (found)
 	{
-		char* string = (char*)m_string.String();
+        char* string = (char*)m_string.string();
 		string += start;
-		token.SetTo(string, (end - start));
+        token.setTo(string, (end - start));
 		m_position = end;
 	}
 

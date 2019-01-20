@@ -26,6 +26,15 @@ namespace os {
 namespace support {
 #endif
 
+//!     spawn_thread for binder debugging.
+/*!     This is just like spawn_thread(), except it takes care of propagating
+        simulated team information when debugging the binder driver.
+ */
+SysHandle SpawnThread(thread_func function_name,
+                      const char* thread_name,
+                      int32_t     priority,
+                      void*       arg);
+
 /*!	@addtogroup CoreSupportUtilities
 	@{
 */
@@ -44,30 +53,29 @@ namespace support {
 */
 class SThread : public virtual SAtom
 {
-public:
+ public:
+  SThread();
 
-								SThread();
-
-	//!	Start the thread.
-	/*!	Returns B_OK if it is off and running.  The
+  //!	Start the thread.
+  /*!	Returns B_OK if it is off and running.  The
 		thread is assigned the given name, standard priority level at
 		which to run, and number of bytes to allocate for its stack. */
-	virtual	status_t			Run(const char* name, int32_t priority, size_t stackSize);
+  virtual status_t Run(const char* name, int32_t priority, size_t stackSize);
 
-	//!	Request for the object's thread to exit.
-	/*!	Returns immediately; does not wait for the thread to actually do so.
+  //!	Request for the object's thread to exit.
+  /*!	Returns immediately; does not wait for the thread to actually do so.
 		Note that the thread itself must take care of handling this --
 		either by looping or explicitly checking with ExitRequested(). */
-	virtual	void				RequestExit();
-	//!	Block until this object's thread exits.  BEWARE DEADLOCKS!
-			void				WaitForExit();
+  virtual void RequestExit();
+  //!	Block until this object's thread exits.  BEWARE DEADLOCKS!
+  void WaitForExit();
 
-protected:
-	virtual						~SThread();
+ protected:
+  virtual ~SThread();
 
-	//!	Main entry of thread.
+  //!	Main entry of thread.
 
-	/*!	Two models of execution are supported.
+  /*!	Two models of execution are supported.
 
 		Looping: If you return true from this function, it will be
 		called again if (a) someone still holds a reference on the
@@ -78,32 +86,33 @@ protected:
 		One-shot: If you return false from this function, the thread
 		will immediately exit.
 	*/
-	virtual	bool				ThreadEntry() = 0;
-	//!	Called after the thread is created but before started to give derived classes a chance to do stuff.
-	virtual	status_t			AboutToRun(SysHandle thread);
+  virtual bool ThreadEntry() = 0;
+  //!	Called after the thread is created but before started to give derived classes a chance to do stuff.
+  virtual status_t AboutToRun(SysHandle thread);
 
-	//!	Return true if RequestExit() has been called.
-			bool				ExitRequested() const;
+  //!	Return true if RequestExit() has been called.
+  bool ExitRequested() const;
 
-private:
+ private:
 #if TARGET_HOST == TARGET_HOST_PALMOS
-	static	void				top_entry(void* object);
+  static void top_entry(void* object);
 #else
-	static	int32_t				top_entry(void* object);
+  static int32_t top_entry(void* object);
 #endif
 
-			status_t			m_status;
-			SysHandle			m_thread;
+  status_t  m_status;
+  SysHandle m_thread;
 
-			SLocker				m_lock;
-			SysConditionVariableType	m_ended;	// condition var
-			bool				m_ending : 1;
+  SLocker                  m_lock;
+  SysConditionVariableType m_ended;  // condition var
+  bool                     m_ending : 1;
 };
 
 /*!	@} */
 
 #if _SUPPORTS_NAMESPACE
-} } // end namespace os::support
+}
+}  // end namespace os::support
 #endif
 
-#endif	/* _SUPPORT_THREAD_H_ */
+#endif /* _SUPPORT_THREAD_H_ */

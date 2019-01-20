@@ -35,7 +35,7 @@ SValue SampleComponent::Run(const ArgList& args)
 	const size_t N = args.CountItems();
 	
 	// Retrieve first argument -- command name
-	SValue me(0 < N ? args[0] : B_UNDEFINED_VALUE);
+	SValue me(0 < N ? args[0] : SValue());
 
 	// Retrieve second argument -- someone else
 	SString you(1 < N ? args[1].AsString() : SString());

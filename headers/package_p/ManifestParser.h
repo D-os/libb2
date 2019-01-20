@@ -10,20 +10,18 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _PACKAGE_MANIFESTPARSER_H
-#define _PACKAGE_MANIFESTPARSER_H
+#ifndef PACKAGE_MANIFESTPARSER_H
+#define PACKAGE_MANIFESTPARSER_H
 
 #include <support/Atom.h>
 #include <support/ByteStream.h>
 #include <support/Package.h>
 #include <support/String.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace package {
-#endif
 
-class SManifestParser : public support::SLightAtom
+class SManifestParser : public support::SAtom
 {
  public:
   //!	Parses an IByteInput and calls the callbacks on a parser
@@ -43,9 +41,7 @@ class SManifestParser : public support::SLightAtom
   virtual void OnDeclareComponent(const support::SValue& componentInfo) = 0;
 };
 
-#if _SUPPORTS_NAMESPACE
-}
-}  // namespace os::package
-#endif
+}  // namespace package
+}  // namespace os
 
-#endif  // _PACKAGE_MANIFESTPARSER_H
+#endif /* PACKAGE_MANIFESTPARSER_H */

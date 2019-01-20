@@ -10,22 +10,20 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef	_SUPPORT_STRINGIO_H
-#define	_SUPPORT_STRINGIO_H
+#ifndef SUPPORT_STRINGIO_H
+#define SUPPORT_STRINGIO_H
 
 /*!	@file support/StringIO.h
 	@ingroup CoreSupportDataModel
 	@brief Binder IO stream for creating C strings.
 */
 
-#include <support/TextStream.h>
 #include <support/ByteStream.h>
 #include <support/MemoryStore.h>
+#include <support/TextStream.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*!	@addtogroup CoreSupportDataModel
 	@{
@@ -36,16 +34,15 @@ namespace support {
 
 class BStringIO : public BMallocStore, public BTextOutput
 {
-	public:
+ public:
+  BStringIO();
+  virtual ~BStringIO();
 
-							BStringIO();
-		virtual				~BStringIO();
-
-		const char *		String();
-		size_t				StringLength() const;
-		void				Clear(off_t to);
-		void				Reset();
-		void				PrintAndReset(const sptr<ITextOutput>& io);
+  const char* String();
+  size_t      StringLength() const;
+  void        Clear(off_t to);
+  void        Reset();
+  void        PrintAndReset(const sptr<ITextOutput>& io);
 };
 
 /*-------------------------------------------------------------*/
@@ -53,8 +50,7 @@ class BStringIO : public BMallocStore, public BTextOutput
 
 /*!	@} */
 
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
-#endif /* _SUPPORT_STRINGIO_H */
+#endif /* SUPPORT_STRINGIO_H */
