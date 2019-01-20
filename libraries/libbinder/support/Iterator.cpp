@@ -213,7 +213,7 @@ BRandomIterator::BRandomIterator(const sptr<IIterator>& iter)
 
 BRandomIterator::~BRandomIterator()
 {
-	m_iterator->AsBinder()->Unlink(static_cast<BObserver*>(this), B_UNDEFINED_VALUE, B_UNLINK_ALL_TARGETS);
+	m_iterator->AsBinder()->Unlink(static_cast<BObserver*>(this), SValue(), B_UNLINK_ALL_TARGETS);
 }
 
 void

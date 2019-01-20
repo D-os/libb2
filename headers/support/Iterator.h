@@ -56,14 +56,14 @@ public:
 	//@{
 
 	SIterator();
-	SIterator(const SContext& context, const SString& path, const SValue& args = B_UNDEFINED_VALUE);
-	SIterator(const sptr<IIterable>& dir, const SValue& args = B_UNDEFINED_VALUE);
+	SIterator(const SContext& context, const SString& path, const SValue& args = SValue());
+	SIterator(const sptr<IIterable>& dir, const SValue& args = SValue());
 	SIterator(const sptr<IIterator>& it);
-	SIterator(const sptr<INode>& node, const SValue& args = B_UNDEFINED_VALUE);
+	SIterator(const sptr<INode>& node, const SValue& args = SValue());
 	~SIterator();
 
-	status_t SetTo(const SContext& context, const SString& path, const SValue& args = B_UNDEFINED_VALUE);
-	status_t SetTo(const sptr<IIterable>& dir, const SValue& args = B_UNDEFINED_VALUE);
+	status_t SetTo(const SContext& context, const SString& path, const SValue& args = SValue());
+	status_t SetTo(const sptr<IIterable>& dir, const SValue& args = SValue());
 	status_t SetTo(const sptr<IIterator>& it);
 
 	status_t StatusCheck() const;

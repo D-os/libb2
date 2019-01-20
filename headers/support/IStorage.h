@@ -10,23 +10,23 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef	_SUPPORT_ISTORAGE_INTERFACE_H
-#define	_SUPPORT_ISTORAGE_INTERFACE_H
+#ifndef SUPPORT_ISTORAGE_INTERFACE_H
+#define SUPPORT_ISTORAGE_INTERFACE_H
 
 /*!	@file support/IStorage.h
 	@ingroup CoreSupportDataModel
 	@brief Random-access interface to a block of raw data.
 */
 
-#include <support/SupportDefs.h>
-#include <support/IInterface.h>
 #include <support/Binder.h>
+#include <support/Context.h>
+#include <support/IInterface.h>
+#include <support/Parcel.h>
+#include <support/SupportDefs.h>
 #include <sys/uio.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*!	@addtogroup CoreSupportDataModel
 	@{
@@ -37,16 +37,16 @@ namespace support {
 
 //! Raw storage read and write transaction codes.
 enum {
-	B_WRITE_AT_TRANSACTION		= 'WRAT',
-	B_READ_AT_TRANSACTION		= 'RDAT'
+  B_WRITE_AT_TRANSACTION = B_PACK_CHARS('W', 'R', 'A', 'T'),
+  B_READ_AT_TRANSACTION  = B_PACK_CHARS('R', 'D', 'A', 'T'),
 };
 
 //! This is the contents of a B_READ_AT_TRANSACTION parcel.
 /*!	The reply parcel contains a ssize_t followed by the raw data. */
 struct read_at_transaction
 {
-	off_t	position;
-	size_t	size;
+  off_t  position;
+  size_t size;
 };
 
 //!	This is the front of a B_WRITE_AT_TRANSACTION parcel; it
@@ -56,41 +56,40 @@ struct read_at_transaction
 */
 struct write_at_transaction
 {
-	off_t	position;
+  off_t position;
 };
 
 //!	Random-access interface to a block of raw data.
 class IStorage : public IInterface
 {
-	public:
+ public:
+  DECLARE_META_INTERFACE(Storage)
 
-		B_DECLARE_META_INTERFACE(Storage)
+  //!	Return the total number of bytes in the store.
+  virtual off_t Size() const = 0;
+  //!	Set the total number of bytes in the store.
+  virtual status_t SetSize(off_t size) = 0;
 
-				//!	Return the total number of bytes in the store.
-		virtual	off_t		Size() const = 0;
-				//!	Set the total number of bytes in the store.
-		virtual	status_t	SetSize(off_t size) = 0;
-
-				//!	Read the bytes described by \a iovec from location \a position in the storage.
-				/*!	Returns the number of bytes actually read, or a
+  //!	Read the bytes described by \a iovec from location \a position in the storage.
+  /*!	Returns the number of bytes actually read, or a
 					negative error code. */
-		virtual	ssize_t		ReadAtV(off_t position, const struct iovec *vector, ssize_t count) = 0;
+  virtual ssize_t ReadAtV(off_t position, const struct iovec* vector, ssize_t count) = 0;
 
-				//!	Convenience for reading a vector of one buffer.
-				ssize_t		ReadAt(off_t position, void* buffer, size_t size);
+  //!	Convenience for reading a vector of one buffer.
+  ssize_t ReadAt(off_t position, void* buffer, size_t size);
 
-				//!	Write the bytes described by \a iovec at location \a position in the storage.
-				/*!	Returns the number of bytes actually written,
+  //!	Write the bytes described by \a iovec at location \a position in the storage.
+  /*!	Returns the number of bytes actually written,
 					or a negative error code. */
-		virtual	ssize_t		WriteAtV(off_t position, const struct iovec *vector, ssize_t count) = 0;
+  virtual ssize_t WriteAtV(off_t position, const struct iovec* vector, ssize_t count) = 0;
 
-				//!	Convenience for reading a vector of one buffer.
-				ssize_t		WriteAt(off_t position, const void* buffer, size_t size);
+  //!	Convenience for reading a vector of one buffer.
+  ssize_t WriteAt(off_t position, const void* buffer, size_t size);
 
-				//!	Make sure all data in the storage is written to its physical device.
-				/*!	Returns B_OK if the data is safely stored away, else
+  //!	Make sure all data in the storage is written to its physical device.
+  /*!	Returns B_OK if the data is safely stored away, else
 					an error code. */
-		virtual	status_t	Sync() = 0;
+  virtual status_t Sync() = 0;
 };
 
 /*-----------------------------------------------------------------*/
@@ -99,44 +98,42 @@ class IStorage : public IInterface
 
 class BnStorage : public BnInterface<IStorage>
 {
-public:
-		virtual	status_t		Transact(uint32_t code, SParcel& data, SParcel* reply = NULL, uint32_t flags = 0);
+ public:
+  virtual status_t Transact(uint32_t code, SParcel& data, SParcel* reply = NULL, uint32_t flags = 0);
 
-protected:
-		inline					BnStorage() : BnInterface<IStorage>() { }
-		inline					BnStorage(const SContext& c) : BnInterface<IStorage>(c) { }
-		inline virtual			~BnStorage() { }
+ protected:
+  inline BnStorage() : BnInterface<IStorage>() {}
+  inline virtual ~BnStorage() {}
 
-		virtual	status_t		HandleEffect(const SValue &in, const SValue &inBindings, const SValue &outBindings, SValue *out);
+  virtual status_t HandleEffect(const SValue& in, const SValue& inBindings, const SValue& outBindings, SValue* out);
 
-private:
-								BnStorage(const BnStorage& o);	// no implementation
-		BnStorage&				operator=(const BnStorage& o);	// no implementation
+ private:
+  BnStorage(const BnStorage& o);             // no implementation
+  BnStorage& operator=(const BnStorage& o);  // no implementation
 };
 
 /*-------------------------------------------------------------*/
 /*---- No user serviceable parts after this -------------------*/
 
-inline ssize_t IStorage::ReadAt(off_t position, void *buffer, size_t size)
+inline ssize_t IStorage::ReadAt(off_t position, void* buffer, size_t size)
 {
-	iovec v;
-	v.iov_base = buffer;
-	v.iov_len = size;
-	return ReadAtV(position, &v,1);
+  iovec v;
+  v.iov_base = buffer;
+  v.iov_len  = size;
+  return ReadAtV(position, &v, 1);
 }
 
-inline ssize_t IStorage::WriteAt(off_t position, const void *buffer, size_t size)
+inline ssize_t IStorage::WriteAt(off_t position, const void* buffer, size_t size)
 {
-	iovec v;
-	v.iov_base = const_cast<void*>(buffer);
-	v.iov_len = size;
-	return WriteAtV(position, &v,1);
+  iovec v;
+  v.iov_base = const_cast<void*>(buffer);
+  v.iov_len  = size;
+  return WriteAtV(position, &v, 1);
 }
 
 /*--------------------------------------------------------------*/
 
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
-#endif	// _SUPPORT_ISTORAGE_INTERFACE_H
+#endif /* SUPPORT_ISTORAGE_INTERFACE_H */

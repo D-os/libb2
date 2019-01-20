@@ -13,51 +13,48 @@
 #ifndef _VALUE_PARSER_H
 #define _VALUE_PARSER_H
 
-#include <xml/XMLParser.h>
 #include <support/Package.h>
+#include <xml/XMLParser.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace xml {
-#endif
 
 // ==================================================================
 class BXML2ValueCreator : public BCreator
 {
-public:
-	BXML2ValueCreator(SValue &targetValue, const SValue &attributes, const SPackage& resources = B_NO_PACKAGE, const SValue &references = B_UNDEFINED_VALUE);
+ public:
+  BXML2ValueCreator(SValue &targetValue, const SValueMap &attributes, const SPackage &resources = B_NO_PACKAGE, const SValueMap &references = SValueMap());
 
-	virtual status_t	OnStartTag(				SString			& name,
-												SValue			& attributes,
-												sptr<BCreator>	& newCreator	);
+  virtual status_t OnStartTag(SString &       name,
+                              SValueMap &     attributes,
+                              sptr<BCreator> &newCreator);
 
-	virtual status_t	OnEndTag(				SString			& name			);
+  virtual status_t OnEndTag(SString &name);
 
-	virtual status_t	OnText(					SString			& data			);
+  virtual status_t OnText(SString &data);
 
-	virtual status_t	Done();
+  virtual status_t Done();
 
-private:
-	static status_t ParseSignedInteger (const BNS(os::support::) SString &from, int64_t maximum, int64_t *val);
-	SPackage m_resources;
-	BNS(os::support::) SValue &m_targetValue;
-	BNS(os::support::) SValue m_key;
-	BNS(os::support::) SValue m_value;
-	BNS(os::support::) SString m_data;
-	BNS(os::support::) SString m_dataType;
-	status_t m_status;
-	SValue m_references;
-	type_code m_rawTypeCode;
-	size_t m_rawSize;
-	int32_t m_resID;
-	int32_t m_strIndex;
-	bool m_isReference : 1;
+ private:
+  static status_t      ParseSignedInteger(const os::support::SString &from, int64_t maximum, int64_t *val);
+  SPackage             m_resources;
+  os::support::SValue &m_targetValue;
+  os::support::SValue  m_key;
+  os::support::SValue  m_value;
+  os::support::SString m_data;
+  os::support::SString m_dataType;
+  status_t             m_status;
+  SValue               m_references;
+  type_code            m_rawTypeCode;
+  size_t               m_rawSize;
+  int32_t              m_resID;
+  int32_t              m_strIndex;
+  bool                 m_isReference : 1;
 
-	int32_t m_id;
+  int32_t m_id;
 };
 
-#if _SUPPORTS_NAMESPACE
-} } // os::xml
-#endif
+}  // namespace xml
+}  // namespace os
 
 #endif

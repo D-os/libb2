@@ -10,18 +10,16 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _PACKAGE_KIT_H
-#define _PACKAGE_KIT_H
+#ifndef PACKAGE_KIT_H
+#define PACKAGE_KIT_H
 
-#include <support/Value.h>
+#include <support/Atom.h>
 #include <support/IByteStream.h>
+#include <support/Value.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace package {
-using namespace os::storage;
 using namespace os::support;
-#endif
 
 // Returns an SValue given a component description (from the manifest)
 // using the standard names:
@@ -29,9 +27,7 @@ using namespace os::support;
 //       file     string        Path to the script file
 sptr<IByteInput> get_script_data_from_value(const SValue &info, status_t *err = NULL);
 
+}  // namespace package
+}  // namespace os
 
-#if _SUPPORTS_NAMESPACE
-} }
-#endif
-
-#endif // _PACKAGE_KIT_H
+#endif /* PACKAGE_KIT_H */

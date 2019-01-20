@@ -207,7 +207,7 @@ void ipc_stats::print()
 		calls_by_count countItem;
 		countItem.count = item.count;
 		countItem.index = i;
-		byCount.AddItem(countItem);
+        byCount.add(countItem);
 	}
 
 	// Can't do this because we may get to this point during the
@@ -220,7 +220,7 @@ void ipc_stats::print()
 	bout << "Showing " << maxItems << " of " << N
 		<< " call stacks (" << totalCalls << " total calls using " << totalTime << "us) by count" << endl;
 	count = 0;
-	i = byCount.CountItems();
+    i = byCount.size();
 	while (count < maxItems && i > 0) {
 		i--;
 		count++;

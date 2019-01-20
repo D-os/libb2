@@ -314,7 +314,7 @@ The @e readonly attribute specifies that a given property is read-only.
 The @a optional attribute specifies that a method argument is not
 required.  If that argument is not supplied, a default value for
 the argument's type will be used.  For numeric types (integers and
-floats), the default value is zero; for SValue it is B_UNDEFINED_VALUE;
+floats), the default value is zero; for SValue it is SValue();
 for strings it is ""; for interfaces it is NULL.
 
 @subsubsection weak

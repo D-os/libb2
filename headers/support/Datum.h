@@ -91,9 +91,9 @@ public:
 					the datum if using IDatum::Open(); if it is larger,
 					the fetch will fail with B_OUT_OF_RANGE.
 				@param[out] outError Optional error code output in the
-					case when B_UNDEFINED_VALUE is returned.
+					case when SValue() is returned.
 				@result A value SValue if the data was successfully
-					fetched, else B_UNDEFINED_VALUE.
+					fetched, else SValue().
 
 				If this is a raw blob of data in an SValue, that is returned
 				directly.  Otherwise, if IDatum::Value() succeeds, that
@@ -101,7 +101,7 @@ public:
 				by opening the datum and streaming in the bytes.
 
 				If, in case of reading the data, IDatum::Size() is larger than maxSize,
-				B_UNDEFINED_VALUE is returned and @a outError is set to B_OUT_OF_RANGE.
+				SValue() is returned and @a outError is set to B_OUT_OF_RANGE.
 				Otherwise the data is read in.  The function may return an
 				undefined value if some other error occurs while reading, such
 				as running out of memory, in which case @a outError is set
@@ -115,10 +115,10 @@ public:
 					only that number of bytes is read and @a outError is
 					set to B_DATA_TRUNCATED.
 				@param[out] outError Optional error code output in the
-					case when B_UNDEFINED_VALUE is returned or data is
+					case when SValue() is returned or data is
 					truncated.
 				@result A value SValue if the data was successfully
-					fetched, else B_UNDEFINED_VALUE.  If the data is truncated,
+					fetched, else SValue().  If the data is truncated,
 					this will contain only the truncated data and
 					@a outError will be set to B_DATA_TRUNCATED.
 

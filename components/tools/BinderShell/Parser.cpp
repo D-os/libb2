@@ -946,7 +946,7 @@ static ssize_t parse_variable(const sptr<ICommand>& shell, const char* buffer, i
 		// places.)
 		SString propName(buffer+start, end-start);
 		if (propName == "PROCESS") {
-			*outValue = SValue::Binder(SLooper::Process()->AsBinder());
+			*outValue = SValue::Binder(ProcessState::self()->AsBinder());
 			*outGotValue = true;
 		} else {
 			*outValue = shell->GetProperty(SValue(SString(buffer+start, end-start)));
@@ -1216,7 +1216,7 @@ SValue make_value(const sptr<ICommand>& shell, int32_t* outIndex, const char* da
 						break;
 
 					case B_UNDEFINED_TYPE:
-						value = B_UNDEFINED_VALUE;
+						value = SValue();
 						break;
 
 					case B_NULL_TYPE:

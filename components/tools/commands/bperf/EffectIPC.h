@@ -107,7 +107,7 @@ public:
 	virtual	void					CommitTransaction();
 	virtual uint32_t				TransactionFlags() const;
 	virtual uint32_t				DrawingFlags() const;
-	virtual	status_t				MakeSelected(uint32_t selected, const SValue& hints = B_UNDEFINED_VALUE, uint32_t execFlags = 0);
+	virtual	status_t				MakeSelected(uint32_t selected, const SValue& hints = SValue(), uint32_t execFlags = 0);
 	virtual void					ScrollTo(double x, double y, uint32_t execFlags);
 	virtual void					ScrollBy(double dx, double dy, uint32_t execFlags);
 	virtual void					SetXScrollPosition(double x);

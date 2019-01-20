@@ -2562,8 +2562,8 @@ SValue BinderPerformance::RunIncStrongTest()
 	t.Start();
 	for (int32_t i=0; i<t.N; i++) {
 #if BUILD_TYPE == BUILD_TYPE_DEBUG
-		target->IncStrong(&target);
-		target->DecStrong(&target);
+		target->incStrong(&target);
+		target->decStrong(&target);
 #else
 		target->IncStrongFast();
 		target->DecStrongFast();

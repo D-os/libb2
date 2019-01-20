@@ -46,10 +46,8 @@
 #include <support/RegExp.h>
 #include <support/String.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 // The first byte of the regexp internal "program" is actually this magic
 // number; the start node begins in the second byte.
@@ -175,7 +173,7 @@ SRegExp::SRegExp(const SString &pattern)
 	:	fError(B_OK),
 		fRegExp(NULL)
 {
-	fRegExp = Compile(pattern.String());
+    fRegExp = Compile(pattern.string());
 }
 
 SRegExp::~SRegExp()
@@ -203,7 +201,7 @@ SRegExp::SetTo(const SString &pattern)
 {
 	fError = B_OK;
 	free(fRegExp);
-	fRegExp = Compile(pattern.String());
+    fRegExp = Compile(pattern.string());
 	return fError;
 }
 
@@ -222,7 +220,7 @@ SRegExp::Matches(const SString &string) const
 	if (!fRegExp)
 		return false;
 
-	return RunMatcher(fRegExp, string.String()) == 1;
+    return RunMatcher(fRegExp, string.string()) == 1;
 }
 
 bool
@@ -1311,6 +1309,4 @@ SRegExp::RegExpError(const char *) const
 
 #endif // DEBUG
 
-#if _SUPPORTS_NAMESPACE
 } } // namespace os::support
-#endif

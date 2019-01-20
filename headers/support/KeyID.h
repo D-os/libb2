@@ -26,36 +26,39 @@
 
 typedef uint32_t KeyID;
 
-BNS(namespace os {)
-BNS(namespace support {)
+namespace os {
+namespace support {
 
 /*!	@addtogroup CoreSupportBinder
 	@{
 */
 
 //!	Class representing a kernel KeyID.
-class SKeyID : virtual public SAtom {
-public:
+class SKeyID : virtual public SAtom
+{
+ public:
+  class FreeKey
+  {
+   public:
+    FreeKey();
+    virtual ~FreeKey();
+    virtual status_t operator()(KeyID key) = 0;
+  };
+  SKeyID(KeyID id, FreeKey* cleanup);
+  KeyID AsKeyID();
 
-	class FreeKey {
-		public:
-					FreeKey();
-			virtual	~FreeKey();
-			virtual	status_t	operator()(KeyID key) = 0;
-	};
-					SKeyID(KeyID id, FreeKey* cleanup);
-	KeyID			AsKeyID();
-protected:
-	virtual			~SKeyID();
+ protected:
+  virtual ~SKeyID();
 
-private:
-					SKeyID(const SKeyID&);
-	KeyID			m_key;
-	FreeKey			*m_cleanup;
+ private:
+  SKeyID(const SKeyID&);
+  KeyID    m_key;
+  FreeKey* m_cleanup;
 };
 
 /*!	@} */
 
-BNS(} })
+}  // namespace support
+}  // namespace os
 
 #endif

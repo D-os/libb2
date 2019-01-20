@@ -11,65 +11,64 @@
  */
 
 #include <DebugMgr.h>
+#include <assert.h>
 #include <support/Debug.h>
 #include <support/KeyedVector.h>
+#include <support/StdIO.h>
 #include <support/String.h>
 #include <support/TextStream.h>
-#include <support/StdIO.h>
-#include <assert.h>
+#include <support/Vector.h>
 
 #if TARGET_HOST == TARGET_HOST_BEOS
 
-extern "C" void ErrFatalErrorInContext(const char*, uint32_t, const char* errMsg, uint32_t)
+extern "C" void ErrFatalErrorInContext(const char *, uint32_t, const char *errMsg, uint32_t)
 {
-	ErrFatalError(errMsg);
+  ErrFatalError(errMsg);
 }
 
 #endif
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace osp {
 
 using namespace os::support;
-#endif
 
 class BRangedVector
 {
-public:
-	void		AddItem(uint32_t start, uint32_t end, const SString &value);
-	SString		FindItem(uintptr_t key, bool *found) const;
+ public:
+  void    AddItem(uint32_t start, uint32_t end, const SString &value);
+  SString FindItem(uintptr_t key, bool *found) const;
 
-	struct range
-	{
-		range();
-		range(uint32_t s, uint32_t e, const SString &v);
-		range(const range &r);
-		uint32_t start;
-		uint32_t end;
-		SString value;
-	};
-	SVector<range> m_ranges;
+  struct range
+  {
+    range();
+    range(uint32_t s, uint32_t e, const SString &v);
+    range(const range &r);
+    uint32_t start;
+    uint32_t end;
+    SString  value;
+  };
+  SVector<range> m_ranges;
 };
 
-const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const BRangedVector::range &r);
-const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const BRangedVector &v);
+const sptr<ITextOutput> &operator<<(const sptr<ITextOutput> &io, const BRangedVector::range &r);
+const sptr<ITextOutput> &operator<<(const sptr<ITextOutput> &io, const BRangedVector &v);
 
-
-inline const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const BRangedVector::range &r)
+inline const sptr<ITextOutput> &operator<<(const sptr<ITextOutput> &io, const BRangedVector::range &r)
 {
-	return io << "range(start: " << r.start << "  end: " << r.end << " value: " << r.value << ")";
+  return io << "range(start: " << r.start << "  end: " << r.end << " value: " << r.value << ")";
 }
 
-inline const sptr<ITextOutput>& operator<<(const sptr<ITextOutput>& io, const BRangedVector &v)
+inline const sptr<ITextOutput> &operator<<(const sptr<ITextOutput> &io, const BRangedVector &v)
 {
-	io << "BRangedVector {"<< endl << indent;
-	size_t i, count=v.m_ranges.CountItems();
-	for (i=0; i<count; i++) {
-		io << v.m_ranges[i] << endl;
-	}
-	io << dedent << "}";
-	return io;
+  io << "BRangedVector {" << endl
+     << indent;
+  size_t i, count = v.m_ranges.size();
+  for (i = 0; i < count; i++) {
+    io << v.m_ranges[i] << endl;
+  }
+  io << dedent << "}";
+  return io;
 }
 
 BRangedVector::range::range()
@@ -77,191 +76,174 @@ BRangedVector::range::range()
 }
 
 BRangedVector::range::range(uint32_t s, uint32_t e, const SString &v)
-	:start(s), end(e), value(v)
+    : start(s), end(e), value(v)
 {
 }
 
 BRangedVector::range::range(const range &r)
-	:start(r.start), end(r.end), value(r.value)
+    : start(r.start), end(r.end), value(r.value)
 {
 }
 
-
-void
-BRangedVector::AddItem(uint32_t start, uint32_t end, const SString &value)
+void BRangedVector::AddItem(uint32_t start, uint32_t end, const SString &value)
 {
-	if (end < start) return ;
-	bool added = false;
-	size_t i, count=m_ranges.CountItems();
-	for (i=0; i<count && !added; i++) {
-		range &r = m_ranges.EditItemAt(i);
-		if (start < r.start) {
-			// Insert it here
-			m_ranges.AddItemAt(range(start, end, value), i);
-			added = true;
-		}
-		else if (start == r.start) {
-			if (end >= r.end) {
-				// this new one entirely overlaps the old one
-				r.end = end;
-				r.value = value;
-				added = true;
-			}
-			else {
-				// need to split (will lose start position)
-				r.start = end+1;
-				m_ranges.AddItemAt(range(start, end, value), i);
-				added = true;
-			}
-		}
-		else if (start > r.start && start <= r.end) {
-			if (end < r.end) {
-				// need to split (will split into two, three items total now)
-				uint32_t third_end = r.end;
-				r.end = start-1;
-				m_ranges.AddItemAt(range(start, end, value), i+1);
-				m_ranges.AddItemAt(range(end+1, third_end, r.value), i+2);
-				added = true;
-				i++;
-			}
-			else {
-				// need to split (will lose the end)
-				r.end = start-1;
-				m_ranges.AddItemAt(range(start, end, value), i+1);
-				added = true;
-				i++;
-			}
-		}
-	}
+  if (end < start) return;
+  bool   added = false;
+  size_t i, count = m_ranges.size();
+  for (i = 0; i < count && !added; i++) {
+    range &r = m_ranges.editItemAt(i);
+    if (start < r.start) {
+      // Insert it here
+      m_ranges.insertAt(range(start, end, value), i);
+      added = true;
+    }
+    else if (start == r.start) {
+      if (end >= r.end) {
+        // this new one entirely overlaps the old one
+        r.end   = end;
+        r.value = value;
+        added   = true;
+      }
+      else {
+        // need to split (will lose start position)
+        r.start = end + 1;
+        m_ranges.insertAt(range(start, end, value), i);
+        added = true;
+      }
+    }
+    else if (start > r.start && start <= r.end) {
+      if (end < r.end) {
+        // need to split (will split into two, three items total now)
+        uint32_t third_end = r.end;
+        r.end              = start - 1;
+        m_ranges.insertAt(range(start, end, value), i + 1);
+        m_ranges.insertAt(range(end + 1, third_end, r.value), i + 2);
+        added = true;
+        i++;
+      }
+      else {
+        // need to split (will lose the end)
+        r.end = start - 1;
+        m_ranges.insertAt(range(start, end, value), i + 1);
+        added = true;
+        i++;
+      }
+    }
+  }
 
-	if (added) {
-		count=m_ranges.CountItems();
-		// clean up the rest of them after in the list, if we need to
-		while (i<count) {
-			range &r = m_ranges.EditItemAt(i);
-			if (end >= r.end) {
-				// r is entirely within me
-				m_ranges.RemoveItemsAt(i, 1);
-				count--;
-				continue;
-			}
-			else if (r.start <= end) {
-				// end is between r.start and r.end
-				r.start = end+1;
-			}
-			else {
-				// r.start > end, so we're done picking up the pieces
-				break;
-			}
-			i++;
-		}
-	}
-	else {
-		// add it at the end
-		m_ranges.AddItem(range(start, end, value));
-	}
+  if (added) {
+    count = m_ranges.size();
+    // clean up the rest of them after in the list, if we need to
+    while (i < count) {
+      range &r = m_ranges.editItemAt(i);
+      if (end >= r.end) {
+        // r is entirely within me
+        m_ranges.removeAt(i);
+        count--;
+        continue;
+      }
+      else if (r.start <= end) {
+        // end is between r.start and r.end
+        r.start = end + 1;
+      }
+      else {
+        // r.start > end, so we're done picking up the pieces
+        break;
+      }
+      i++;
+    }
+  }
+  else {
+    // add it at the end
+    m_ranges.add(range(start, end, value));
+  }
 }
 
 SString
 BRangedVector::FindItem(uintptr_t key, bool *found) const
 {
-	size_t i, count=m_ranges.CountItems();
-	for (i=0; i<count; i++) {
-		const range &r = m_ranges.ItemAt(i);
-		if (key >= r.start && key <= r.end) {
-			if (found) *found = true;
-			return r.value;
-		}
-		else if (key < r.start) break;
-	}
-	if (found) *found = false;
-	return SString();
+  size_t i, count = m_ranges.size();
+  for (i = 0; i < count; i++) {
+    const range &r = m_ranges.itemAt(i);
+    if (key >= r.start && key <= r.end) {
+      if (found) *found = true;
+      return r.value;
+    }
+    else if (key < r.start)
+      break;
+  }
+  if (found) *found = false;
+  return SString();
 }
 
-
-
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::osp
+}  // namespace osp
+}  // namespace os
 
 using namespace os::osp;
 using namespace os::support;
 
-#endif
-
-
-
 BRangedVector g_debugData;
-size_t g_debugFieldWidth = 12;
+size_t        g_debugFieldWidth = 12;
 
-
-void
-add_debug_atom(BNS(os::support::) SAtom * atom, const char *name)
+void add_debug_atom(os::support::SAtom *atom, const char *name)
 {
-//	add_debug_sized(atom, atom->AtomObjectSize(), name);
+  //	add_debug_sized(atom, atom->AtomObjectSize(), name);
 }
 
-void
-add_debug_atom(const BNS(os::support::)sptr<BNS(os::support::) SAtom>& atom, const char *name)
+void add_debug_atom(const os::support::sptr<os::support::SAtom> &atom, const char *name)
 {
-//	add_debug_sized(atom.ptr(), atom->AtomObjectSize(), name);
+  //	add_debug_sized(atom.ptr(), atom->AtomObjectSize(), name);
 }
 
-void
-add_debug_sized(const void *key, size_t size, const char *name)
+void add_debug_sized(const void *key, size_t size, const char *name)
 {
 #if 0
 static const char debug[]	= "[Debug]                              ";
 	SString str(debug, MIN(sizeof(debug)-1, g_debugFieldWidth));
 	bout << str << "Adding debug info named \"" << name << "\" from " << key << " to " << (void*)((int)key+size) << endl;
-	g_debugData.AddItem((uint32_t)key, ((uint32_t)key)+size-1, SString(name));
+    g_debugData.add((uint32_t)key, ((uint32_t)key)+size-1, SString(name));
 #endif
 }
 
-
-void
-set_debug_fieldwidth(int width)
+void set_debug_fieldwidth(int width)
 {
-	g_debugFieldWidth = width;
+  g_debugFieldWidth = width;
 }
-
 
 SString
-lookup_debug(const BNS(os::support::)sptr<BNS(os::support::) SAtom>& atom, bool padding)
+lookup_debug(const os::support::sptr<os::support::SAtom> &atom, bool padding)
 {
-	SString empty;
-	return empty;
-//	return lookup_debug((void *)atom.ptr(), padding);
+  SString empty;
+  return empty;
+  //	return lookup_debug((void *)atom.ptr(), padding);
 }
-
 
 SString
 lookup_debug(const void *key, bool padding)
 {
-	SString str;
-	bool found;
-	str = g_debugData.FindItem((uintptr_t)key, &found);
-	if (!found) {
-		char buf[12];
-		sprintf(buf, "%p", key);
-		str = buf;
-	}
-	if (padding) {
-		size_t len = str.Length();
-		if (len < g_debugFieldWidth) str.Append(' ', g_debugFieldWidth-len);
-	}
-	return str;
+  SString str;
+  bool    found;
+  str = g_debugData.FindItem((uintptr_t)key, &found);
+  if (!found) {
+    char buf[12];
+    sprintf(buf, "%p", key);
+    str = buf;
+  }
+  if (padding) {
+    size_t len = str.length();
+    if (len < g_debugFieldWidth) str.append(SString(" "), g_debugFieldWidth - len);  // FIXME: this code looks fishy
+  }
+  return str;
 }
 
-
-extern "C"
+extern "C" {
+int _debuggerAssert(const char *file, int line, const char *expr)
 {
-int _debuggerAssert(const char * file, int line, const char * expr)
-{
-berr << "ASSERT FAILED: File: " << file << ", Line: " << line << indent << endl
-	 << "failed condition: " << expr << dedent << endl;
-	 printf("FIX ME! support/Debug.cpp");
-	assert(false);
-	return 0;
+  berr << "ASSERT FAILED: File: " << file << ", Line: " << line << indent << endl
+       << "failed condition: " << expr << dedent << endl;
+  printf("FIX ME! support/Debug.cpp");
+  assert(false);
+  return 0;
 }
 }
 
@@ -275,40 +257,40 @@ test_ranged_vector()
 
 	bout << "Empty: " << v << endl;
 
-	v.AddItem(13, 12, SString("Wrong!"));
+    v.add(13, 12, SString("Wrong!"));
 	bout << v << endl << endl;
 
-	v.AddItem(100, 200, SString("100-200"));
+    v.add(100, 200, SString("100-200"));
 	bout << v << endl << endl;
 
-	v.AddItem(10, 20, SString("10-20"));
+    v.add(10, 20, SString("10-20"));
 	bout << v << endl << endl;
 
-	v.AddItem(100, 200, SString("100-200"));
+    v.add(100, 200, SString("100-200"));
 	bout << v << endl << endl;
 
-	v.AddItem(50, 60, SString("50-60"));
+    v.add(50, 60, SString("50-60"));
 	bout << v << endl << endl;
 
-	v.AddItem(80, 100, SString("80-100"));
+    v.add(80, 100, SString("80-100"));
 	bout << v << endl << endl;
 
-	v.AddItem(60, 80, SString("60-80"));
+    v.add(60, 80, SString("60-80"));
 	bout << v << endl << endl;
 
-	v.AddItem(110, 120, SString("110-120"));
+    v.add(110, 120, SString("110-120"));
 	bout << v << endl << endl;
 
-	v.AddItem(180, 200, SString("180-200"));
+    v.add(180, 200, SString("180-200"));
 	bout << v << endl << endl;
 
-	v.AddItem(190, 210, SString("190-210"));
+    v.add(190, 210, SString("190-210"));
 	bout << v << endl << endl;
 
-	v.AddItem(500, 600, SString("500-600"));
+    v.add(500, 600, SString("500-600"));
 	bout << v << endl << endl;
 
-	v.AddItem(500, 550, SString("500-600"));
+    v.add(500, 550, SString("500-600"));
 	bout << v << endl << endl;
 
 	uint32_t n;

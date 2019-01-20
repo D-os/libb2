@@ -39,8 +39,8 @@
 
 // ALTERED VERSION: Modified to work as a Palm OS API, 2001-2004.
 
-#ifndef _REG_EXB_H
-#define _REG_EXB_H
+#ifndef REG_EXB_H
+#define REG_EXB_H
 
 /*!	@file support/RegExp.h
 	@ingroup CoreSupportUtilities
@@ -48,18 +48,35 @@
 */
 
 #include <support/Debug.h>
+#include <support/String.h>
 #include <support/SupportDefs.h>
+#include <CmnErrors.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*!	@addtogroup CoreSupportUtilities
 	@{
 */
 
-class SString;
+//!	Regular Expression error codes.
+enum regexp_error_codes_enum {
+    B_REGEXP_UNMATCHED_PARENTHESIS              = regexpErrUnmatchedParenthesis,           /*!< @copydoc regexpErrUnmatchedParenthesis */
+    B_REGEXP_TOO_BIG                            = regexpErrTooBig,                         /*!< @copydoc regexpErrTooBig */
+    B_REGEXP_TOO_MANY_PARENTHESIS               = regexpErrTooManyParenthesis,             /*!< @copydoc regexpErrTooManyParenthesis */
+    B_REGEXP_JUNK_ON_END                        = regexpErrJunkOnEnd,                      /*!< @copydoc regexpErrJunkOnEnd */
+    B_REGEXP_STAR_PLUS_OPERAND_EMPTY            = regexpErrStarPlusOneOperandEmpty,        /*!< @copydoc regexpErrStarPlusOneOperandEmpty */
+    B_REGEXP_NESTED_STAR_QUESTION_PLUS          = regexpErrNestedStarQuestionPlus,         /*!< @copydoc regexpErrNestedStarQuestionPlus */
+    B_REGEXP_INVALID_BRACKET_RANGE              = regexpErrInvalidBracketRange,            /*!< @copydoc regexpErrInvalidBracketRange */
+    B_REGEXP_UNMATCHED_BRACKET                  = regexpErrUnmatchedBracket,               /*!< @copydoc regexpErrUnmatchedBracket */
+    B_REGEXP_INTERNAL_ERROR                     = regexpErrInternalError,                  /*!< @copydoc regexpErrInternalError */
+    B_REGEXP_QUESTION_PLUS_STAR_FOLLOWS_NOTHING = regexpErrQuestionPlusStarFollowsNothing, /*!< @copydoc regexpErrQuestionPlusStarFollowsNothing */
+    B_REGEXP_TRAILING_BACKSLASH                 = regexpErrTrailingBackslash,              /*!< @copydoc regexpErrTrailingBackslash */
+    B_REGEXP_CORRUPTED_PROGRAM                  = regexpErrCorruptedProgram,               /*!< @copydoc regexpErrCorruptedProgram */
+    B_REGEXP_MEMORY_CORRUPTION                  = regexpErrMemoryCorruption,               /*!< @copydoc regexpErrMemoryCorruption */
+    B_REGEXP_CORRUPTED_POINTERS                 = regexpErrCorruptedPointers,              /*!< @copydoc regexpErrCorruptedPointers */
+    B_REGEXP_CORRUPTED_OPCODE                   = regexpErrCorruptedOpcode                 /*!< @copydoc regexpErrCorruptedOpcode */
+};
 
 const int32_t kSubExpressionMax = 10;
 
@@ -157,8 +174,6 @@ private:
 
 /*!	@} */
 
-#if _SUPPORTS_NAMESPACE
 } }
-#endif
 
 #endif

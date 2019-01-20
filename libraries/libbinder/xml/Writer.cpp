@@ -12,24 +12,27 @@
 
 #include <xml/Writer.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace xml {
-#endif
 
-#define WriteString(str) err = m_stream->Write((str), strlen((str))); if (err < 0) return err;
-#define WriteStringLength(str, len) err = m_stream->Write((str), (len)); if (err < 0) return err;
-#define WriteData(str, len) err = write_xml_data(m_stream, (str), (len)); if (err != B_OK) return err;
+#define WriteString(str)                       \
+  err = m_stream->Write((str), strlen((str))); \
+  if (err < 0) return err;
+#define WriteStringLength(str, len)    \
+  err = m_stream->Write((str), (len)); \
+  if (err < 0) return err;
+#define WriteData(str, len)                     \
+  err = write_xml_data(m_stream, (str), (len)); \
+  if (err != B_OK) return err;
 
-status_t write_xml_data(const sptr<IByteOutput>& stream, const char *data, int32_t size);
+status_t write_xml_data(const sptr<IByteOutput> &stream, const char *data, int32_t size);
 
 char g_chars[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 inline static char
 tohex(unsigned char c)
 {
-	return g_chars[c];
+  return g_chars[c];
 }
-
 
 #if 0
 // =====================================================================
@@ -82,28 +85,23 @@ print_children_list(SString & str, BElementDecl::List * list)
 }
 #endif
 
-
-
 // =====================================================================
-BWriter::BWriter(const sptr<IByteOutput>& data, uint32_t formattingStyle)
-	:m_stream(data),
-	 m_elementStack(),
-	 m_formattingStyle(formattingStyle),
-	 m_openStartTag(false),
-	 m_doneDOCTYPE(false),
-	 m_startedInternalDTD(false),
-	 m_depth(0),
-	 m_lastPrettyDepth(0)
+BWriter::BWriter(const sptr<IByteOutput> &data, uint32_t formattingStyle)
+    : m_stream(data),
+      m_elementStack(),
+      m_formattingStyle(formattingStyle),
+      m_openStartTag(false),
+      m_doneDOCTYPE(false),
+      m_startedInternalDTD(false),
+      m_depth(0),
+      m_lastPrettyDepth(0)
 {
 }
-
 
 // =====================================================================
 BWriter::~BWriter()
 {
-
 }
-
 
 #if 0
 // =====================================================================
@@ -302,258 +300,247 @@ BWriter::OnEntityDecl(const BEntityDecl * decl)
 
 // =====================================================================
 status_t
-BWriter::StartTag(const SString &name, const SValue &attributes, uint32_t formattingHints)
+BWriter::StartTag(const SString &name, const SValueMap &attributes, uint32_t formattingHints)
 {
-	status_t err;
-	void * cookie;
-	SValue key, value;
+  status_t err;
 
-	if (m_openStartTag) {
-		WriteString(">");
-		m_openStartTag = false;
-	}
+  if (m_openStartTag) {
+    WriteString(">");
+    m_openStartTag = false;
+  }
 
-	err = indent();
-	if (err != B_OK)
-		return err;
+  err = indent();
+  if (err != B_OK)
+    return err;
 
-	WriteString("<");
-	WriteStringLength(name.String(), name.Length());
+  WriteString("<");
+  WriteStringLength(name.string(), name.length());
 
-	cookie = NULL;
-	while (B_OK == attributes.GetNextItem(&cookie, &key, &value))
-	{
-		SString n = key.AsString();
-		SString v = value.AsString();
-		WriteString(" ");
-		WriteStringLength(n.String(), n.Length());
-		WriteString("=\"");
-		WriteData(v.String(), v.Length());
-		WriteString("\"");
-	}
+  for (auto const &[key, value] : attributes) {
+    SString n(key.c_str());
+    SString v;
+    value.getString(&v);
+    WriteString(" ");
+    WriteStringLength(n.string(), n.length());
+    WriteString("=\"");
+    WriteData(v.string(), v.length());
+    WriteString("\"");
+  }
 
-	// If we are currently adding whitespace, and we're going to be inside this one,
-	// then increment perty depth
-	if ((m_lastPrettyDepth == m_depth) && !(formattingHints & NO_EXTRA_WHITESPACE))
-		m_lastPrettyDepth = m_depth+1;
+  // If we are currently adding whitespace, and we're going to be inside this one,
+  // then increment perty depth
+  if ((m_lastPrettyDepth == m_depth) && !(formattingHints & NO_EXTRA_WHITESPACE))
+    m_lastPrettyDepth = m_depth + 1;
 
-	// m_depth tells us how far in we really are.
-	m_depth++;
+  // m_depth tells us how far in we really are.
+  m_depth++;
 
-	m_openStartTag = true;
-	m_elementStack.AddItem(name);
-	return B_OK;
+  m_openStartTag = true;
+  m_elementStack.add(name);
+  return B_OK;
 }
-
 
 // =====================================================================
 status_t
 BWriter::EndTag()
 {
-	status_t err;
+  status_t err;
 
-	if (m_elementStack.CountItems() <= 0)
-		return B_BAD_INDEX;
+  if (m_elementStack.size() <= 0)
+    return B_BAD_INDEX;
 
-	// This checks one level deeper than indent() will print, which is right
-	bool noExtraWhitespace = !(m_lastPrettyDepth == m_depth);
-	m_depth--;
-	if (m_lastPrettyDepth > m_depth) m_lastPrettyDepth = m_depth;
+  // This checks one level deeper than indent() will print, which is right
+  bool noExtraWhitespace = !(m_lastPrettyDepth == m_depth);
+  m_depth--;
+  if (m_lastPrettyDepth > m_depth) m_lastPrettyDepth = m_depth;
 
-	if (m_openStartTag) {
-		WriteString(" />");
-		m_openStartTag = false;
-		m_elementStack.RemoveItemsAt(m_elementStack.CountItems()-1);
-		return B_OK;
-	}
+  if (m_openStartTag) {
+    WriteString(" />");
+    m_openStartTag = false;
+    m_elementStack.removeItemsAt(m_elementStack.size() - 1);
+    return B_OK;
+  }
 
-	if (!noExtraWhitespace) {
-		err = indent();
-		if (err != B_OK)
-			return err;
-	}
+  if (!noExtraWhitespace) {
+    err = indent();
+    if (err != B_OK)
+      return err;
+  }
 
-	const SString & name = m_elementStack[m_elementStack.CountItems()-1];
-	WriteString("</");
-	WriteStringLength(name.String(), name.Length());
-	WriteString(">");
+  const SString &name = m_elementStack[m_elementStack.size() - 1];
+  WriteString("</");
+  WriteStringLength(name.string(), name.length());
+  WriteString(">");
 
-	m_elementStack.RemoveItemsAt(m_elementStack.CountItems()-1);
+  m_elementStack.removeItemsAt(m_elementStack.size() - 1);
 
-	return B_OK;
+  return B_OK;
 }
-
 
 // =====================================================================
 status_t
-BWriter::TextData(const char	* data, int32_t size)
+BWriter::TextData(const char *data, int32_t size)
 {
-	status_t err;
+  status_t err;
 
-	if (m_openStartTag) {
-		WriteString(">");
-		m_openStartTag = false;
-	}
+  if (m_openStartTag) {
+    WriteString(">");
+    m_openStartTag = false;
+  }
 
-	err = indent();
-	if (err != B_OK)
-		return err;
+  err = indent();
+  if (err != B_OK)
+    return err;
 
-	WriteData(data, size);
+  WriteData(data, size);
 
-	return B_OK;
+  return B_OK;
 }
-
 
 // =====================================================================
 status_t
 BWriter::WriteEscaped(const char *data, int32_t size)
 {
-	status_t err;
-	SString s;
+  status_t err;
+  SString  s;
 
-	if (m_openStartTag) {
-		WriteString(">");
-		m_openStartTag = false;
-	}
+  if (m_openStartTag) {
+    WriteString(">");
+    m_openStartTag = false;
+  }
 
-	char escaped[7];
-	escaped[0] = '&';
-	escaped[1] = '#';
-	escaped[2] = 'x';
-	escaped[5] = ';';
-	escaped[6] = '\0';
+  char escaped[7];
+  escaped[0] = '&';
+  escaped[1] = '#';
+  escaped[2] = 'x';
+  escaped[5] = ';';
+  escaped[6] = '\0';
 
-	s.BeginBuffering();
+  //  s.BeginBuffering();
+  for (int32_t i = 0; i < size; i++) {
+    unsigned char c = data[i];
+    escaped[3]      = tohex(c >> 4);
+    escaped[4]      = tohex(c & 0x0f);
+    s.append(escaped, 6);
+  }
+  //  s.EndBuffering();
 
-	for (int32_t i=0; i<size; i++) {
-		unsigned char c = data[i];
-		escaped[3] = tohex(c >> 4);
-		escaped[4] = tohex(c & 0x0f);
-		s.Append(escaped, 6);
-	}
-
-	s.EndBuffering();
-
-	err = m_stream->Write(s.String(), s.Length());
-	if (err > 0) err = B_OK;
-	return err;
+  err = m_stream->Write(s.string(), s.length());
+  if (err > 0) err = B_OK;
+  return err;
 }
 
 // =====================================================================
 status_t
-BWriter::CData(const char	* data, int32_t size)
+BWriter::CData(const char *data, int32_t size)
 {
-	status_t err;
+  status_t err;
 
-	if (m_openStartTag) {
-		WriteString(">");
-		m_openStartTag = false;
-	}
+  if (m_openStartTag) {
+    WriteString(">");
+    m_openStartTag = false;
+  }
 
-	err = indent();
-	if (err != B_OK)
-		return err;
+  err = indent();
+  if (err != B_OK)
+    return err;
 
-	WriteString("<![CDATA[");
-	WriteData(data, size);
-	WriteString("]]>");
+  WriteString("<![CDATA[");
+  WriteData(data, size);
+  WriteString("]]>");
 
-	return B_OK;
+  return B_OK;
 }
-
 
 // =====================================================================
 status_t
 BWriter::Comment(const char *data, int32_t size)
 {
-	status_t err;
+  status_t err;
 
-	if (m_openStartTag) {
-		WriteString(">");
-		m_openStartTag = false;
-	}
+  if (m_openStartTag) {
+    WriteString(">");
+    m_openStartTag = false;
+  }
 
-	err = indent();
-	if (err != B_OK)
-		return err;
+  err = indent();
+  if (err != B_OK)
+    return err;
 
-	WriteString("<!--");
-	WriteStringLength(data, size);
-	WriteString("-->");
+  WriteString("<!--");
+  WriteStringLength(data, size);
+  WriteString("-->");
 
-	return B_OK;
+  return B_OK;
 }
-
 
 // =====================================================================
 status_t
-BWriter::ProcessingInstruction(const SString & target, const SString & data)
+BWriter::ProcessingInstruction(const SString &target, const SString &data)
 {
-	status_t err;
+  status_t err;
 
-	if (m_openStartTag) {
-		WriteString(">");
-		m_openStartTag = false;
-	}
+  if (m_openStartTag) {
+    WriteString(">");
+    m_openStartTag = false;
+  }
 
-	err = indent();
-	if (err != B_OK)
-		return err;
+  err = indent();
+  if (err != B_OK)
+    return err;
 
-	WriteString("<?");
-	WriteStringLength(target.String(), target.Length());
-	WriteString(" ");
-	WriteStringLength(data.String(), data.Length());
-	WriteString("?>");
+  WriteString("<?");
+  WriteStringLength(target.string(), target.length());
+  WriteString(" ");
+  WriteStringLength(data.string(), data.length());
+  WriteString("?>");
 
-	return B_OK;
+  return B_OK;
 }
-
 
 // =====================================================================
 status_t
 BWriter::open_doctype()
 {
-	status_t err;
-	if (!(m_formattingStyle & SKIP_DOCTYPE_OPENER)) {
-		if (!m_doneDOCTYPE) {
-			WriteString("<!DOCTYPE [");
-			m_doneDOCTYPE = true;
-			m_startedInternalDTD = true;
-		} else if (!m_startedInternalDTD) {
-			WriteString(" [");
-			m_startedInternalDTD = true;
-		}
-	}
-	return B_OK;
+  status_t err;
+  if (!(m_formattingStyle & SKIP_DOCTYPE_OPENER)) {
+    if (!m_doneDOCTYPE) {
+      WriteString("<!DOCTYPE [");
+      m_doneDOCTYPE        = true;
+      m_startedInternalDTD = true;
+    }
+    else if (!m_startedInternalDTD) {
+      WriteString(" [");
+      m_startedInternalDTD = true;
+    }
+  }
+  return B_OK;
 }
 
-
 // =====================================================================
-static const char *kIndents	= "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
-static const int32_t kTabCount	= 16;
+static const char *  kIndents  = "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
+static const int32_t kTabCount = 16;
 status_t
 BWriter::indent()
 {
-	status_t err;
+  status_t err;
 
-	// if they're different, then we're in a NO_EXTRA_WHITESPACE section
-	if (m_formattingStyle & BALANCE_WHITESPACE
-			&& m_lastPrettyDepth == m_depth) {
-		const char *s = kIndents;
-		int32_t newlineOnce=1,size,depth = m_depth;
-		do {
-			size = depth;
-			if (size > kTabCount) size = kTabCount;
-			depth -= size;
-			WriteStringLength(s, size+newlineOnce);
-			s += newlineOnce;
-			newlineOnce = 0;
-		} while (depth);
-	}
+  // if they're different, then we're in a NO_EXTRA_WHITESPACE section
+  if (m_formattingStyle & BALANCE_WHITESPACE
+      && m_lastPrettyDepth == m_depth) {
+    const char *s           = kIndents;
+    int32_t     newlineOnce = 1, size, depth = m_depth;
+    do {
+      size = depth;
+      if (size > kTabCount) size = kTabCount;
+      depth -= size;
+      WriteStringLength(s, size + newlineOnce);
+      s += newlineOnce;
+      newlineOnce = 0;
+    } while (depth);
+  }
 
-	return B_OK;
+  return B_OK;
 }
 
 #if 0
@@ -769,7 +756,5 @@ WriteXML(const BXMLObject * object, const sptr<IByteOutput>& stream, bool noWhit
 }
 #endif
 
-#if _SUPPORTS_NAMESPACE
-}; // namespace xml
-}; // namespace os
-#endif
+};  // namespace xml
+};  // namespace os

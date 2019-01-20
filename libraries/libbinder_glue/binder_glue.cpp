@@ -54,7 +54,7 @@ palmsource_inc_package_ref()
     g_sharedObjectLock.Lock();
     //bout << "Inc package ref: " << package.SharedObject() << endl;
     if (package.SharedObject() != NULL)
-      package.SharedObject()->IncStrong((const void*)&g_sharedBufferRefs);
+      package.SharedObject()->incStrong((const void*)&g_sharedBufferRefs);
     else
       g_pendingBufferRef = 1;
     g_sharedObjectLock.Unlock();
@@ -73,7 +73,7 @@ palmsource_dec_package_ref()
     g_sharedObjectLock.Lock();
     //bout << "Dec package ref: " << package.SharedObject() << endl;
     if (package.SharedObject() != NULL)
-      package.SharedObject()->DecStrong((const void*)&g_sharedBufferRefs);
+      package.SharedObject()->decStrong((const void*)&g_sharedBufferRefs);
     else
       g_pendingBufferRef = 0;
     g_sharedObjectLock.Unlock();

@@ -16,3 +16,14 @@ Why?
 
 
 sudo chmod 0666 /dev/binder /dev/kmsg ; sudo sysctl -q kernel.printk_devkmsg=on; bins/servicemanager/servicemanager
+
+https://developer.android.com/reference/android/os/IBinder
+
+Android's PersistableBundle is a lot like BeOS BMessage. Can work as a mutable replacement for SValue.
+(OpenBinder SMessage is _nothing_ like BMessage)
+
+Attaching to ShellInterface will give you stdin/stdout/stderr file descriptors, that are not
+byte streams, but packet socket(2)s of unix(7) domain type DGRAM.
+Or maybe just connect()/accept() one socket of SOCK_SEQPACKET type?
+Protocol is undetermined, but shell sends PersistableBundle (or MsgPack?) of form [type, payload].
+

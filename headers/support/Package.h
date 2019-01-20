@@ -10,30 +10,30 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _SUPPORT_PACKAGE_H
-#define _SUPPORT_PACKAGE_H
+#ifndef SUPPORT_PACKAGE_H
+#define SUPPORT_PACKAGE_H
 
 /*!	@file support/Package.h
 	@ingroup CoreSupportBinder
 	@brief Interface to an executable image representing a Binder package.
 */
 
+#include <support/Atom.h>
+#include <support/IByteStream.h>
 #include <support/KeyedVector.h>
 #include <support/Locker.h>
 #include <support/String.h>
 #include <support/Value.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*!	@addtogroup CoreSupportBinder
 	@{
 */
 
-#if 0 // FIXME: (defined(__GNUC__))
-#define ATTRIBUTE_VISIBILITY_HIDDEN __attribute__ ((visibility("hidden")))
+#if 0  // FIXME: (defined(__GNUC__))
+#define ATTRIBUTE_VISIBILITY_HIDDEN __attribute__((visibility("hidden")))
 #else
 #define ATTRIBUTE_VISIBILITY_HIDDEN
 #endif
@@ -42,19 +42,18 @@ namespace support {
 #include <CmnLaunchCodes.h>
 #include <DataMgr.h>
 #else
-#define sysPackageLaunchAttachImage				71
+#define sysPackageLaunchAttachImage 71
 #endif
 
 class BSharedObject;
 
 struct SysPackageLaunchAttachImageType
 {
-      size_t                  size;
-      sptr<BSharedObject>     image;
+  size_t              size;
+  sptr<BSharedObject> image;
 };
 
-typedef void	(*attach_func)(const sptr<BSharedObject>& image);
-
+typedef void (*attach_func)(const sptr<BSharedObject>& image);
 
 /*---------------------------------------------------------------*/
 /*----- SPackage ------------------------------------------------*/
@@ -62,149 +61,146 @@ typedef void	(*attach_func)(const sptr<BSharedObject>& image);
 //! and doing useful things with it.
 class SPackage
 {
-public:
-	SPackage();
-	SPackage(const SString& name);
-	SPackage(const SValue& value, status_t* err=NULL);
-	SValue AsValue();
+ public:
+  SPackage();
+  SPackage(const SString& name);
+  SPackage(const SValue& value, status_t* err = NULL);
+  SValue AsValue();
 
-	~SPackage();
+  ~SPackage();
 
-	status_t StatusCheck();
-	SString Name();
-	SString Path();
+  status_t StatusCheck();
+  SString  Name();
+  SString  Path();
 
-	sptr<IByteInput> OpenResource(const SString& fileName, const SString& locale = SString::EmptyString());
+  sptr<IByteInput> OpenResource(const SString& fileName, const SString& locale = SString::empty());
 
-	SString LoadString(const SString& key, const SString& locale = SString::EmptyString());
-	SString LoadString(uint32_t index, const SString& locale = SString::EmptyString());
+  SString LoadString(const SString& key, const SString& locale = SString::empty());
+  SString LoadString(uint32_t index, const SString& locale = SString::empty());
 
-private:
-	class MemoryMap : public virtual SAtom
-	{
-	public:
-		MemoryMap(const SString& path);
+ private:
+  class MemoryMap : public virtual SAtom
+  {
+   public:
+    MemoryMap(const SString& path);
 
-		void* Buffer();
-		size_t Size();
-	protected:
-		~MemoryMap();
+    void*  Buffer();
+    size_t Size();
 
-	private:
-		int m_fd;
-		void* m_buffer;
-		size_t m_length;
-	};
+   protected:
+    ~MemoryMap();
 
-	class Data : public virtual SAtom
-	{
-	public:
-		Data(const SString& name, const SString& path);
+   private:
+    int    m_fd;
+    void*  m_buffer;
+    size_t m_length;
+  };
 
-		SString Name();
-		SString Path();
-		SString ResourcePath();
+  class Data : public virtual SAtom
+  {
+   public:
+    Data(const SString& name, const SString& path);
 
-		SString LoadString(const SString& key, const SString& locale);
-		SString LoadString(uint32_t index, const SString& locale);
+    SString Name();
+    SString Path();
+    SString ResourcePath();
 
-	protected:
-		virtual ~Data();
+    SString LoadString(const SString& key, const SString& locale);
+    SString LoadString(uint32_t index, const SString& locale);
 
-	private:
-		char* get_buffer_for(const SString& locale);
+   protected:
+    virtual ~Data();
 
-		SLocker m_lock;
-		SString m_name;
-		SString m_path;
-		SString m_resourcePath;
+   private:
+    char* get_buffer_for(const SString& locale);
 
-		SKeyedVector<SString, sptr<SPackage::MemoryMap> > m_maps;
-	};
+    SLocker m_lock;
+    SString m_name;
+    SString m_path;
+    SString m_resourcePath;
 
-	class Pool
-	{
-	public:
-		Pool();
+    SKeyedVector<SString, sptr<SPackage::MemoryMap>> m_maps;
+  };
 
-		sptr<SPackage::Data> DataFor(const SString& pkgName);
+  class Pool
+  {
+   public:
+    Pool();
 
-	private:
-		SLocker m_lock;
-		SKeyedVector<SString, wptr<SPackage::Data> > m_packages;
-	};
+    sptr<SPackage::Data> DataFor(const SString& pkgName);
 
+   private:
+    SLocker                                     m_lock;
+    SKeyedVector<SString, wptr<SPackage::Data>> m_packages;
+  };
 
-	static SPackage::Pool g_pool;
-	sptr<Data> m_data;
+  static SPackage::Pool g_pool;
+  sptr<Data>            m_data;
 };
 
 extern const SPackage B_NO_PACKAGE;
-
 
 /*---------------------------------------------------------------*/
 /*----- BSharedObject -------------------------------------------*/
 //!	A representation of a loaded executable image.
 class BSharedObject : public virtual SAtom
 {
-public:
-			//!	Create a new BSharedObject, loading \a file as an add-on.
-			/*!	The image will be unloaded when the BSharedObject is destoyed. */
-							BSharedObject(const SValue& src, const SPackage &package, attach_func attach = NULL);
-			//!	Create a new BSharedObject for \a image.
-			/*!	The given image will never be unloaded. */
-			//				BSharedObject(const image_id image);
+ public:
+  //!	Create a new BSharedObject, loading \a file as an add-on.
+  /*!	The image will be unloaded when the BSharedObject is destoyed. */
+  BSharedObject(const SValue& src, const SPackage& package, attach_func attach = NULL);
+  //!	Create a new BSharedObject for \a image.
+  /*!	The given image will never be unloaded. */
+  //				BSharedObject(const image_id image);
 
-			//!	Return the image_id this object is for.
-			image_id		ID() const;
-			//! Return source of this image.
-			SValue			Source() const;
-			//!	Return the filename the image came from.
-			//!	Deprecated -- used Source() instead.
-			SString			File() const;
+  //!	Return the image_id this object is for.
+  image_id ID() const;
+  //! Return source of this image.
+  SValue Source() const;
+  //!	Return the filename the image came from.
+  //!	Deprecated -- used Source() instead.
+  SString File() const;
 
-			//!	Look up a symbol in the image by name.
-			/*!	\sa get_image_symbol() */
-			status_t		GetSymbolFor(	const char* name,
-											int32_t sclass,
-											void** outPtr) const;
-			//!	Look up a symvol in the image by index.
-			/*!	\sa get_nth_image_symbol() */
-			status_t		GetSymbolAt(	int32_t index,
-											SString* outName,
-											int32_t* outSClass,
-											void** outPtr) const;
+  //!	Look up a symbol in the image by name.
+  /*!	\sa get_image_symbol() */
+  status_t GetSymbolFor(const char* name,
+                        int32_t     sclass,
+                        void**      outPtr) const;
+  //!	Look up a symvol in the image by index.
+  /*!	\sa get_nth_image_symbol() */
+  status_t GetSymbolAt(int32_t  index,
+                       SString* outName,
+                       int32_t* outSClass,
+                       void**   outPtr) const;
 
-			//!	Detach this BSharedObject from the image it loaded.
-			/*!	This makes it so that any future SPackageSptr instantations
+  //!	Detach this BSharedObject from the image it loaded.
+  /*!	This makes it so that any future SPackageSptr instantations
 				in the image's code will fail, so that (eventually) all
 				weak references on the image can go away. */
-			void			Detach();
+  void Detach();
 
-			inline SPackage	Package() { return m_package; }
+  inline SPackage Package() { return m_package; }
 
-protected:
-	virtual					~BSharedObject();
-	virtual	void			InitAtom();
+ protected:
+  virtual ~BSharedObject();
+  virtual void InitAtom();
 
-private:
-			void			close_resource();
+ private:
+  void close_resource();
 
-			const SValue	m_source;
-			SValue			m_extra;
-			image_id		m_handle;
-			attach_func		m_attachFunc;
-			SPackage		m_package;
+  const SValue m_source;
+  SValue       m_extra;
+  image_id     m_handle;
+  attach_func  m_attachFunc;
+  SPackage     m_package;
 
-private:
+ private:
+  // copy constructor not supported
+  BSharedObject(const BSharedObject& rhs);
 
-	// copy constructor not supported
-	BSharedObject( const BSharedObject& rhs );
-
-	// operator= not supported
-	BSharedObject& operator=( const BSharedObject& rhs );
+  // operator= not supported
+  BSharedObject& operator=(const BSharedObject& rhs);
 };
-
 
 /*-----------------------------------------------------------*/
 /*----- SPackageSptr ----------------------------------------*/
@@ -232,42 +228,40 @@ private:
 */
 class SPackageSptr
 {
-public:
-	//!	Acquire a reference on your package.
-	/*!	This method is included as part of the glue code that your
+ public:
+  //!	Acquire a reference on your package.
+  /*!	This method is included as part of the glue code that your
 		application links with, so that it can retrieve the BSharedObject
 		associated with your executable. */
-									SPackageSptr()
-									 ATTRIBUTE_VISIBILITY_HIDDEN
-									 ;
-	//!	Note that the destructor is very intentionally NOT virtual.
-	/*!	It wouldn't cause problems if it was virtual, but there is
+  SPackageSptr()
+      ATTRIBUTE_VISIBILITY_HIDDEN;
+  //!	Note that the destructor is very intentionally NOT virtual.
+  /*!	It wouldn't cause problems if it was virtual, but there is
 		no reason to do so and it causes unneeded code to be generated. */
-	inline							~SPackageSptr()
-									 ATTRIBUTE_VISIBILITY_HIDDEN
-									 ;
+  inline ~SPackageSptr()
+      ATTRIBUTE_VISIBILITY_HIDDEN;
 
-	//!	Retrieve your package object.
-	inline	const sptr<BSharedObject>&	SharedObject() const ATTRIBUTE_VISIBILITY_HIDDEN;
-	inline	SPackage					Package() const ATTRIBUTE_VISIBILITY_HIDDEN;
+  //!	Retrieve your package object.
+  inline const sptr<BSharedObject>& SharedObject() const ATTRIBUTE_VISIBILITY_HIDDEN;
+  inline SPackage                   Package() const ATTRIBUTE_VISIBILITY_HIDDEN;
 
-	//!	Convenience to retrieve resource data from your package via SPackage::OpenResource().
-	sptr<IByteInput> OpenResource(const SString& fileName, const SString& locale = SString::EmptyString()) const ATTRIBUTE_VISIBILITY_HIDDEN;
+  //!	Convenience to retrieve resource data from your package via SPackage::OpenResource().
+  sptr<IByteInput> OpenResource(const SString& fileName, const SString& locale = SString::empty()) const ATTRIBUTE_VISIBILITY_HIDDEN;
 
-	//! Convenience to retrieve a string from your package via SPackage::LoadString().
-	SString LoadString(const SString& key, const SString& locale = SString::EmptyString()) const ATTRIBUTE_VISIBILITY_HIDDEN;
-	//! Convenience to retrieve a string from your package via SPackage::LoadString().
-	SString LoadString(uint32_t index, const SString& locale = SString::EmptyString()) const ATTRIBUTE_VISIBILITY_HIDDEN;
+  //! Convenience to retrieve a string from your package via SPackage::LoadString().
+  SString LoadString(const SString& key, const SString& locale = SString::empty()) const ATTRIBUTE_VISIBILITY_HIDDEN;
+  //! Convenience to retrieve a string from your package via SPackage::LoadString().
+  SString LoadString(uint32_t index, const SString& locale = SString::empty()) const ATTRIBUTE_VISIBILITY_HIDDEN;
 
-	// XXX This are old APIs from Cobalt.
+  // XXX This are old APIs from Cobalt.
 
-	//!	Convenience to retrieve resource data from your package.
-	inline	sptr<IByteInput>		OpenResource(uint32_t type, int32_t id) const ATTRIBUTE_VISIBILITY_HIDDEN;
-	//!	Convenience to retrieve a string from your package.
-	inline	SString					LoadString(int32_t id, int32_t index = 0) const ATTRIBUTE_VISIBILITY_HIDDEN;
+  //!	Convenience to retrieve resource data from your package.
+  inline sptr<IByteInput> OpenResource(uint32_t type, int32_t id) const ATTRIBUTE_VISIBILITY_HIDDEN;
+  //!	Convenience to retrieve a string from your package.
+  inline SString LoadString(int32_t id, int32_t index = 0) const ATTRIBUTE_VISIBILITY_HIDDEN;
 
-private:
-			sptr<BSharedObject>		m_so;
+ private:
+  sptr<BSharedObject> m_so;
 };
 
 inline SPackageSptr::~SPackageSptr()
@@ -276,43 +270,42 @@ inline SPackageSptr::~SPackageSptr()
 
 inline const sptr<BSharedObject>& SPackageSptr::SharedObject() const
 {
-	return m_so;
+  return m_so;
 }
 inline SPackage SPackageSptr::Package() const
 {
-	return m_so->Package();
+  return m_so->Package();
 }
 
 inline sptr<IByteInput> SPackageSptr::OpenResource(const SString& fileName, const SString& locale) const
 {
-	return m_so->Package().OpenResource(fileName, locale);
+  return m_so->Package().OpenResource(fileName, locale);
 }
 
 inline SString SPackageSptr::LoadString(const SString& key, const SString& locale) const
 {
-	return m_so->Package().LoadString(key, locale);
+  return m_so->Package().LoadString(key, locale);
 }
 
 inline SString SPackageSptr::LoadString(uint32_t index, const SString& locale) const
 {
-	return m_so->Package().LoadString(index, locale);
+  return m_so->Package().LoadString(index, locale);
 }
 
 inline sptr<IByteInput> SPackageSptr::OpenResource(uint32_t type, int32_t id) const
 {
-	return NULL;
+  return NULL;
 }
 inline SString SPackageSptr::LoadString(int32_t id, int32_t index) const
 {
-	return SString();
+  return SString();
 }
 
 typedef SPackageSptr SDontForgetThis;
 
 /*!	@} */
 
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
-#endif
+#endif /* SUPPORT_PACKAGE_H */

@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
 project(LIBB2 VERSION 0.1.0 LANGUAGES CXX C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 # Policies
 if(POLICY CMP0076)
@@ -49,7 +51,7 @@ set(GLOBAL_CFLAGS
     -DVALIDATES_REGION=0
     -DVALIDATES_VALUE=0
     -DSUPPORTS_LOCK_DEBUG=1
-    -DSUPPORTS_ATOM_DEBUG=1
+    -DSUPPORTS_ATOM_DEBUG=0
     -DSUPPORTS_NAMESPACE=1
     -DSUPPORTS_UNIX_FILE_PATH=1
     -DSUPPORTS_TEXT_STREAM=1
@@ -95,6 +97,7 @@ message(STATUS "CMAKE_C_COMPILER:                ${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER:              ${CMAKE_CXX_COMPILER}")
 message(STATUS "CMAKE_AR:                        ${CMAKE_AR}")
 message(STATUS "CMAKE_RANLIB:                    ${CMAKE_RANLIB}")
+message(STATUS "INTERFACE_HEADERS_DIR:           ${INTERFACE_HEADERS_DIR}")
 message(STATUS "=============================================")
 message(STATUS "")
 
@@ -103,7 +106,7 @@ set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 
 # Sub directories.
 add_subdirectory(headers)
-add_subdirectory(interfaces)
+#add_subdirectory(interfaces)
 add_subdirectory(libs)
 add_subdirectory(libraries)
 add_subdirectory(cmds)
@@ -111,7 +114,7 @@ add_subdirectory(tools)
 add_subdirectory(servers)
 add_subdirectory(commands)
 add_subdirectory(components)
-add_subdirectory(samples)
+#add_subdirectory(samples)
 
 # Tests
 add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)

@@ -10,97 +10,88 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef _B_XML2_DATA_SOURCE_H
-#define _B_XML2_DATA_SOURCE_H
+#ifndef B_XML2_DATA_SOURCE_H
+#define B_XML2_DATA_SOURCE_H
 
+#include <CmnErrors.h>
+#include <stdio.h>
+#include <support/Atom.h>
 #include <support/IByteStream.h>
 #include <support/SupportDefs.h>
-#include <stdio.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace xml {
+
 using namespace support;
-#endif
 
 // BXMLDataSource
 // =====================================================================
 // Allows you to get some data to parse with minimal copying
 class BXMLDataSource
 {
-public:
-	// GetNextBuffer is the same idea as DataIO, except it doesn't require
-	// a data copy.  It will be provided with a buffer in *data, so if you
-	// have to copy data, then copy into that, but if you have your own
-	// buffer, then just replace *data with your pointer.
-	// You should return how much data there is in size, and
-	// if this is the last iteration, then return a non-zero value in done.
-	virtual status_t	GetNextBuffer(size_t * size, uint8_t ** data, int * done) = 0;
-	virtual 			~BXMLDataSource();
+ public:
+  // GetNextBuffer is the same idea as DataIO, except it doesn't require
+  // a data copy.  It will be provided with a buffer in *data, so if you
+  // have to copy data, then copy into that, but if you have your own
+  // buffer, then just replace *data with your pointer.
+  // You should return how much data there is in size, and
+  // if this is the last iteration, then return a non-zero value in done.
+  virtual status_t GetNextBuffer(size_t *size, uint8_t **data, int *done) = 0;
+  virtual ~BXMLDataSource();
 };
-
-
 
 // BXMLIByteInputSource
 // =====================================================================
 // Subclass of BBXMLDataSource that uses an IByteInput to get the data
 class BXMLIByteInputSource : public BXMLDataSource
 {
-public:
-						BXMLIByteInputSource(const sptr<IByteInput>& data);
-	virtual				~BXMLIByteInputSource();
-	virtual status_t	GetNextBuffer(size_t * size, uint8_t ** data, int * done);
+ public:
+  BXMLIByteInputSource(const sptr<IByteInput> &data);
+  virtual ~BXMLIByteInputSource();
+  virtual status_t GetNextBuffer(size_t *size, uint8_t **data, int *done);
 
-private:
-
-	sptr<IByteInput>		_data;
+ private:
+  sptr<IByteInput> _data;
 };
-
-
 
 // BXMLBufferSource
 // =====================================================================
 // Subclass of BBXMLDataSource that uses a buffer you give it to get the data
 class BXMLBufferSource : public BXMLDataSource
 {
-public:
-						// If len < 0, it is null terminated, so do strlen
-						BXMLBufferSource(const char * buffer, int32_t len = -1);
-	virtual				~BXMLBufferSource();
-	virtual status_t	GetNextBuffer(size_t * size, uint8_t ** data, int * done);
+ public:
+  // If len < 0, it is null terminated, so do strlen
+  BXMLBufferSource(const char *buffer, int32_t len = -1);
+  virtual ~BXMLBufferSource();
+  virtual status_t GetNextBuffer(size_t *size, uint8_t **data, int *done);
 
-private:
-						// Illegal
-						BXMLBufferSource();
-						BXMLBufferSource(const BXMLBufferSource & copy);
-	const char	* _data;
-	int32_t		_length;
+ private:
+  // Illegal
+  BXMLBufferSource();
+  BXMLBufferSource(const BXMLBufferSource &copy);
+  const char *_data;
+  int32_t     _length;
 };
-
 
 // BXMLfstreamSource
 // =====================================================================
 // Subclass of BBXMLDataSource that uses a buffer you give it to get the data
 class BXMLfstreamSource : public BXMLDataSource
 {
-public:
-						// If len < 0, it is null terminated, so do strlen
-						BXMLfstreamSource(FILE *file);
-	virtual				~BXMLfstreamSource();
-	virtual status_t	GetNextBuffer(size_t * size, uint8_t ** data, int * done);
+ public:
+  // If len < 0, it is null terminated, so do strlen
+  BXMLfstreamSource(FILE *file);
+  virtual ~BXMLfstreamSource();
+  virtual status_t GetNextBuffer(size_t *size, uint8_t **data, int *done);
 
-private:
-						// Illegal
-						BXMLfstreamSource();
-						BXMLfstreamSource(const BXMLBufferSource & copy);
-	FILE *m_file;
+ private:
+  // Illegal
+  BXMLfstreamSource();
+  BXMLfstreamSource(const BXMLBufferSource &copy);
+  FILE *m_file;
 };
 
+};  // namespace xml
+};  // namespace os
 
-
-#if _SUPPORTS_NAMESPACE
-}; // namespace xml
-}; // namespace os
-#endif
-
-#endif // _B_XML2_DATA_SOURCE_H
+#endif /* B_XML2_DATA_SOURCE_H */

@@ -1,4 +1,4 @@
 target_sources(ob PRIVATE
-    app/BCommand.cpp
-    app/SGetOpts.cpp
+#    app/BCommand.cpp
+#    app/SGetOpts.cpp
 )

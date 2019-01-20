@@ -1,6 +1,7 @@
 # IDE stuff
 /*.pro.user
 /*.txt.user
+/.vscode/ipch/
 
 # CMake/Ninja stuff
 CMakeCache.txt

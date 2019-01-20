@@ -11,7 +11,7 @@
  */
 
 #ifndef _BUILDDEFAULTS_H_
-#define	_BUILDDEFAULTS_H_
+#define _BUILDDEFAULTS_H_
 
 #include <BuildDefines.h>
 
@@ -25,7 +25,6 @@
 // to include <BuildDefines.h>, then "AppBuildRules.MSC.h", then <PalmTypes.h>
 // instead of the previous <Pilot.h>
 
-
 /************************************************************
  * Settings that can be overriden in the makefile
  *************************************************************/
@@ -33,18 +32,18 @@
 // Must be defined (-d or prefix file) before using.  See comment in <BuildDefines.h>.
 // Since it's really important, we cannot simply use a default value for it.
 #if !defined(BUILD_TYPE)
-#	error BUILD_TYPE MUST be defined.
+#error BUILD_TYPE MUST be defined.
 #endif
 
 /*
 ERROR_CHECK_LEVEL is now obsolete.
 */
-#ifdef 	ERROR_CHECK_LEVEL
-	#error "ERROR_CHECK_LEVEL is an obsolete build flag! - See BUILD_TYPE instead"
+#ifdef ERROR_CHECK_LEVEL
+#error "ERROR_CHECK_LEVEL is an obsolete build flag! - See BUILD_TYPE instead"
 #endif
 
 #ifndef DEFAULT_LIB_ENTRIES
-	#define DEFAULT_LIB_ENTRIES	12			// space for 12 libraries in library table
+#define DEFAULT_LIB_ENTRIES 12  // space for 12 libraries in library table
 #endif
 
 // Default to allow access to internal data structures exposed in system/ui header files.
@@ -52,20 +51,20 @@ ERROR_CHECK_LEVEL is now obsolete.
 // DO_NOT_ALLOW_ACCESS_TO_INTERNALS_OF_STRUCTS before including this file.
 #ifndef DO_NOT_ALLOW_ACCESS_TO_INTERNALS_OF_STRUCTS
 
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_CLIPBOARDS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_CONTROLS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_FIELDS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_FINDPARAMS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_FORMS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_LISTS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_MENUS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_PROGRESS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_SCROLLBARS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_TABLES
+#define ALLOW_ACCESS_TO_INTERNALS_OF_CLIPBOARDS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_CONTROLS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_FIELDS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_FINDPARAMS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_FORMS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_LISTS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_MENUS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_PROGRESS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_SCROLLBARS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_TABLES
 
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_BITMAPS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_FONTS
-#	define ALLOW_ACCESS_TO_INTERNALS_OF_WINDOWS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_BITMAPS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_FONTS
+#define ALLOW_ACCESS_TO_INTERNALS_OF_WINDOWS
 
 #endif
 
@@ -75,107 +74,104 @@ ERROR_CHECK_LEVEL is now obsolete.
  *	These are automatically defined and must not be changed
  *************************************************************/
 
-#	ifndef CPU_TYPE
-#		if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86)
-#			define  CPU_TYPE	CPU_x86
-#		elif defined(__POWERPC__) || defined(__powerpc__)
-#			define  CPU_TYPE	CPU_PPC
-#		elif defined(__arm__) || defined(__arm)
-#			define  CPU_TYPE	CPU_ARM
-#		else
-#			error "Unable to automatically define CPU_TYPE from existing predefined macros."
-#		endif
-#	endif // CPU_TYPE
+#ifndef CPU_TYPE
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86)
+#define CPU_TYPE CPU_x86
+#elif defined(__POWERPC__) || defined(__powerpc__)
+#define CPU_TYPE CPU_PPC
+#elif defined(__arm__) || defined(__arm)
+#define CPU_TYPE CPU_ARM
+#else
+#error "Unable to automatically define CPU_TYPE from existing predefined macros."
+#endif
+#endif  // CPU_TYPE
 
 #if CPU_TYPE != CPU_ARM && CPU_TYPE != CPU_x86 && CPU_TYPE != CPU_PPC
-#	error "Unsupported CPU_TYPE - CPU_ARM CPU_x86 CPU_PPC are supported in this release."
+#error "Unsupported CPU_TYPE - CPU_ARM CPU_x86 CPU_PPC are supported in this release."
 #endif
 
 #ifndef CPU_ENDIAN
-#	if (CPU_TYPE == CPU_x86) || (CPU_TYPE == CPU_ARM)
-#		define CPU_ENDIAN	CPU_ENDIAN_LITTLE
-#	else
-#		define CPU_ENDIAN	CPU_ENDIAN_BIG
-#	endif
+#if (CPU_TYPE == CPU_x86) || (CPU_TYPE == CPU_ARM)
+#define CPU_ENDIAN CPU_ENDIAN_LITTLE
+#else
+#define CPU_ENDIAN CPU_ENDIAN_BIG
+#endif
 #endif
 
-#	ifndef BUS_ALIGN
-#		if (CPU_TYPE == CPU_ARM) || (CPU_TYPE == CPU_x86) || (CPU_TYPE == CPU_PPC)
-#			define BUS_ALIGN	BUS_ALIGN_32
-#		else
-#			define BUS_ALIGN	BUS_ALIGN_16
-#		endif
-#	endif
+#ifndef BUS_ALIGN
+#if (CPU_TYPE == CPU_ARM) || (CPU_TYPE == CPU_x86) || (CPU_TYPE == CPU_PPC)
+#define BUS_ALIGN BUS_ALIGN_32
+#else
+#define BUS_ALIGN BUS_ALIGN_16
+#endif
+#endif
 
-
-
-#	if (BUS_ALIGN == BUS_ALIGN_16)
-		// if we are on a 16-bit bus, we want the 16-bit
-		// structures (the 32-bit ones will always be defined
-		// but not used on the 16-bit devices)
-#		define INCLUDE_ALIGN_16_STRUCT
-#	endif
-
+#if (BUS_ALIGN == BUS_ALIGN_16)
+// if we are on a 16-bit bus, we want the 16-bit
+// structures (the 32-bit ones will always be defined
+// but not used on the 16-bit devices)
+#define INCLUDE_ALIGN_16_STRUCT
+#endif
 
 // Bit field layout
 // for MS Visual C++ (used for CPU_x86), BITFIELD_LAYOUT must be set to LSB_TO_MSB
 // for the ARM tools, when compiling little endian target, layout is also LSB_TO_MSB
 #ifndef BITFIELD_LAYOUT
-#	if (CPU_TYPE == CPU_x86) || (CPU_TYPE == CPU_ARM)
-#		define BITFIELD_LAYOUT	LSB_TO_MSB
-#	else
-#		define BITFIELD_LAYOUT	MSB_TO_LSB
-#	endif
+#if (CPU_TYPE == CPU_x86) || (CPU_TYPE == CPU_ARM)
+#define BITFIELD_LAYOUT LSB_TO_MSB
+#else
+#define BITFIELD_LAYOUT MSB_TO_LSB
+#endif
 #endif
 
 // The macro expansion for the filename is different on the ARM compiler
 // The ARM compiler expands __FILE__ to the full path (too much for PalmOS)
 // so this define allows us to use the shorter form on the ARM compiler.
-#if defined (__CC_ARM)
-	#define MODULE_NAME				__MODULE__
+#if defined(__CC_ARM)
+#define MODULE_NAME __MODULE__
 #else
-	#define MODULE_NAME				__FILE__
+#define MODULE_NAME __FILE__
 #endif
 
 // The inline keyword differs from compiler to compiler.
 // (or some compilers may not even support inlining)
 #ifdef __ARMCC_VERSION
-	#define INLINE_FNC				__inline
-#elif defined (_MSC_VER)
-	#define INLINE_FNC				__inline
-#elif defined (__MWERKS__)
-	#define INLINE_FNC				inline
-#elif defined (_PACC_VER)
-	#define INLINE_FNC				__inline
-#elif defined (__GNUC__)
-#  ifdef __cplusplus
-	#define INLINE_FNC				inline		// C++ syntax
-#  else
-	#define INLINE_FNC				static inline	// C99 syntax
-#  endif
+#define INLINE_FNC __inline
+#elif defined(_MSC_VER)
+#define INLINE_FNC __inline
+#elif defined(__MWERKS__)
+#define INLINE_FNC inline
+#elif defined(_PACC_VER)
+#define INLINE_FNC __inline
+#elif defined(__GNUC__)
+#ifdef __cplusplus
+#define INLINE_FNC inline  // C++ syntax
 #else
-	// Define it to nothing
-	#warning No __inline available; linkage errors may arise
-	#define INLINE_FNC
+#define INLINE_FNC static inline  // C99 syntax
 #endif
-#define INLINE_FUNCTION			INLINE_FNC
+#else
+// Define it to nothing
+#warning No __inline available; linkage errors may arise
+#define INLINE_FNC
+#endif
+#define INLINE_FUNCTION INLINE_FNC
 
 // The inline keyword differs from compiler to compiler.
 // (or some compilers may not even support inlining)
 #ifdef __ARMCC_VERSION
-	#define PURE_FUNCTION			__pure
-#elif defined (_MSC_VER)
-	#define PURE_FUNCTION
-#elif defined (__MWERKS__)
-	#define PURE_FUNCTION
-#elif defined (_PACC_VER)
-	#define PURE_FUNCTION			__pure
-#elif defined (__GNUC__)
-	#define PURE_FUNCTION
+#define PURE_FUNCTION __pure
+#elif defined(_MSC_VER)
+#define PURE_FUNCTION
+#elif defined(__MWERKS__)
+#define PURE_FUNCTION
+#elif defined(_PACC_VER)
+#define PURE_FUNCTION __pure
+#elif defined(__GNUC__)
+#define PURE_FUNCTION
 #else
-	// Define it to nothing
-	#warning No __pure available; linkage errors may arise
-	#define PURE_FUNCTION
+// Define it to nothing
+#warning No __pure available; linkage errors may arise
+#define PURE_FUNCTION
 #endif
 
 // The method of specifying structure alignment differs from compiler
@@ -183,63 +179,62 @@ ERROR_CHECK_LEVEL is now obsolete.
 // (note that, when using MSVC, you must also add '#pragma pack(1)'
 // to your source file)
 #ifdef __ARMCC_VERSION
-	#define PACKED						__packed
+#define PACKED __packed
 #elif defined(_MSC_VER)  // MS VC++ Compiler
-	#define PACKED
-	#pragma warning( disable : 4103 )  // To remove "used #pragma pack to change alignment" warning
+#define PACKED
+#pragma warning(disable : 4103)  // To remove "used #pragma pack to change alignment" warning
 #else
-	#define PACKED
-	#if defined (__GNUC__) && defined (__UNIX__)
-		#pragma pack(1)
-	#endif
+#define PACKED
+#if defined(__GNUC__) && defined(__UNIX__)
+#pragma pack(1)
+#endif
 #endif
 
 // Some PalmOS structs need to be packed on 16-bit boundaries.
 // This define/pragma is used to ensure that they are.
 #ifdef __ARMCC_VERSION
-	#define PACKED16					__packed
+#define PACKED16 __packed
 #elif defined(_MSC_VER)  // MS VC++ Compiler
-	#define PACKED16
-	#pragma warning( disable : 4103 )  // To remove "used #pragma pack to change alignment" warning
+#define PACKED16
+#pragma warning(disable : 4103)  // To remove "used #pragma pack to change alignment" warning
 #else
-	#define PACKED16
-	#if defined (__GNUC__) && defined (__UNIX__)
-		#pragma pack(2)
-	#endif
+#define PACKED16
+#if defined(__GNUC__) && defined(__UNIX__)
+#pragma pack(2)
+#endif
 #endif
 
 // Use this to work around ADS1.1 compiler bugs. For example:
 // #ifdef ADS11_COMPILER_BUG
 // #pragma Ono_peephole
 // #endif
-#if defined (__ARMCC_VERSION) && (__ARMCC_VERSION / 10000 == 11)
-#	define ADS11_COMPILER_BUG	1
+#if defined(__ARMCC_VERSION) && (__ARMCC_VERSION / 10000 == 11)
+#define ADS11_COMPILER_BUG 1
 #endif
 
-#if defined (__ARMCC_VERSION) && (__ARMCC_VERSION / 10000 == 12)
-#	define ADS12_COMPILER_BUG	1
-#endif
-
-#ifndef TARGET_PLATFORM
-#	if defined(WIN32)
-#		define TARGET_PLATFORM	TARGET_PLATFORM_PALMSIM_WIN32
-#	elif defined(__arm__) || defined(__arm) || defined(__ARMCC_VERSION)
-#		define TARGET_PLATFORM	TARGET_PLATFORM_DEVICE_ARM
-#   elif defined(MACOS)
-#		define TARGET_PLATFORM TARGET_PLATFORM_PALMSIM_MACOS
-#	elif defined(LINUX)
-#		define TARGET_PLATFORM TARGET_PLATFORM_PALMSIM_LINUX
-#	endif
+#if defined(__ARMCC_VERSION) && (__ARMCC_VERSION / 10000 == 12)
+#define ADS12_COMPILER_BUG 1
 #endif
 
 #ifndef TARGET_PLATFORM
-#	error TARGET_PLATFORM "is not specified in your project file and it's not possible to set a default value."
+#if defined(WIN32)
+#define TARGET_PLATFORM TARGET_PLATFORM_PALMSIM_WIN32
+#elif defined(__arm__) || defined(__arm) || defined(__ARMCC_VERSION)
+#define TARGET_PLATFORM TARGET_PLATFORM_DEVICE_ARM
+#elif defined(MACOS)
+#define TARGET_PLATFORM TARGET_PLATFORM_PALMSIM_MACOS
+#elif defined(LINUX)
+#define TARGET_PLATFORM TARGET_PLATFORM_PALMSIM_LINUX
+#endif
+#endif
+
+#ifndef TARGET_PLATFORM
+#error TARGET_PLATFORM "is not specified in your project file and it's not possible to set a default value."
 #endif
 
 #ifndef TARGET_HOST
 #define TARGET_HOST TARGET_HOST_PALMOS
 #endif
-
 
 /**************************************************************************
  * Kernel functions accessed via traps.  In ARM, traps are SWIs and
@@ -250,17 +245,17 @@ ERROR_CHECK_LEVEL is now obsolete.
  * that use Win32 SendMessage.
  **************************************************************************/
 #if !defined(LINUX_DEMO_HACK) && TARGET_PLATFORM == TARGET_PLATFORM_DEVICE_ARM
-#	ifdef __ARMCC_VERSION
-#		define KERNEL_TRAP(x) __swi(x)
-#		define KERNEL_TRAP_INDIRECT(x) __swi_indirect(x)
-#		define RETURN_STRUCT __value_in_regs
-#	else
-#		error Unsupported ARM compiler
-#	endif
+#ifdef __ARMCC_VERSION
+#define KERNEL_TRAP(x) __swi(x)
+#define KERNEL_TRAP_INDIRECT(x) __swi_indirect(x)
+#define RETURN_STRUCT __value_in_regs
 #else
-#	define KERNEL_TRAP(x)
-#	define KERNEL_TRAP_INDIRECT(x)
-#	define RETURN_STRUCT
+#error Unsupported ARM compiler
+#endif
+#else
+#define KERNEL_TRAP(x)
+#define KERNEL_TRAP_INDIRECT(x)
+#define RETURN_STRUCT
 #endif
 
 // If not already specified, try to determine whether we can
@@ -300,14 +295,6 @@ ERROR_CHECK_LEVEL is now obsolete.
 #define B_SNS(x)
 #endif
 
-// Convenience macro to conditionalize on whether namespaces
-// are supported.
-#if _SUPPORTS_NAMESPACE
-#define BNS(x) x
-#else
-#define BNS(x)
-#endif
-
 // If not already specified, determine whether RTTI is supported
 #ifndef _SUPPORTS_RTTI
 #if TARGET_HOST == TARGET_HOST_PALMOS
@@ -345,17 +332,15 @@ ERROR_CHECK_LEVEL is now obsolete.
 #endif
 */
 
-
 // Provide macro covers for __declspec(), which is needed when performing
 // a native Windows build.
 #if (TARGET_HOST == TARGET_HOST_WIN32)
-#define	_EXPORT		__declspec(dllexport)
-#define	_IMPORT		__declspec(dllimport)
+#define _EXPORT __declspec(dllexport)
+#define _IMPORT __declspec(dllimport)
 #else
-#define	_EXPORT
-#define	_IMPORT
+#define _EXPORT
+#define _IMPORT
 #endif
-
 
 /*
 Disable most frequent VS warnings so we can still build in Warning level 4.
@@ -397,146 +382,145 @@ These warnings may reveal bugs and SHOULD be fixed anyway
  * Obsolete Options
  *************************************************************/
 
-#ifdef 	MEMORY_FORCE_LOCK
-	#error "MEMORY_FORCE_LOCK is an obsolete build flag!"
-#endif
-
-#ifdef 	MODEL
-	#error "MODEL is an obsolete build flag!"
-#endif
-
-#ifdef 	USER_MODE
-	#error "USER_MODE is an obsolete build flag!"
-#endif
-
-#ifdef 	INTERNAL_COMMANDS
-	#error "INTERNAL_COMMANDS is an obsolete build flag!"
-#endif
-
-#ifdef 	INCLUDE_DES
-	#error "INCLUDE_DES is an obsolete build flag!"
-#endif
-
-#ifdef 	RESOURCE_FILE_PREFIX
-	#error "RESOURCE_FILE_PREFIX is an obsolete build flag!"
-#endif
-
-#ifdef 	SHELL_COMMAND_DB
-	#error "SHELL_COMMAND_DB is an obsolete build flag!"
-#endif
-
-#ifdef 	SHELL_COMMAND_UI
-	#error "SHELL_COMMAND_UI is an obsolete build flag!"
-#endif
-
-#ifdef 	SHELL_COMMAND_APP
-	#error "SHELL_COMMAND_APP is an obsolete build flag!"
-#endif
-
-#ifdef 	SHELL_COMMAND_EMULATOR
-	#error "SHELL_COMMAND_EMULATOR is an obsolete build flag!"
-#endif
-
-#ifdef 	CML_ENCODER
-	#error "CML_ENCODER is an obsolete build flag!"
-#endif
-
-#ifdef	EMULATION_LEVEL
-	#error "EMULATION_LEVEL is an obsolete build flag!"
-#endif
-
-#ifdef	PLATFORM_TYPE
-	#error "PLATFORM_TYPE is an obsolete build flag!"
-#endif
-
-#ifdef 	USE_TRAPS
-	#error "USE_TRAPS is an obsolete build flag!"
-#endif
-
-#ifdef ENVIRONMENT
-	#error "ENVIRONMENT is an obsolete build flag!"
+#ifdef MEMORY_FORCE_LOCK
+#error "MEMORY_FORCE_LOCK is an obsolete build flag!"
 #endif
 
 #ifdef MODEL
-	#error "MODEL is an obsolete build flag!"
+#error "MODEL is an obsolete build flag!"
 #endif
 
-#ifdef 	DISABLE_HAL_TRAPS
-	#error "DISABLE_HAL_TRAPS is an obsolete build flag!"
+#ifdef USER_MODE
+#error "USER_MODE is an obsolete build flag!"
 #endif
 
-#ifdef 	_DONT_USE_FP_TRAPS_
-	#error "_DONT_USE_FP_TRAPS_ is an obsolete build flag!"
+#ifdef INTERNAL_COMMANDS
+#error "INTERNAL_COMMANDS is an obsolete build flag!"
 #endif
 
-#ifdef 	_DONT_USE_FP_TRAPSE_
-	#error "_DONT_USE_FP_TRAPSE_ is an obsolete build flag!"
+#ifdef INCLUDE_DES
+#error "INCLUDE_DES is an obsolete build flag!"
 #endif
 
-#ifdef 	RUNTIME_MODEL
-	#error "RUNTIME_MODEL is an obsolete build flag!"
+#ifdef RESOURCE_FILE_PREFIX
+#error "RESOURCE_FILE_PREFIX is an obsolete build flag!"
 #endif
 
-#ifdef 	MEMORY_TYPE
-	#error "MEMORY_TYPE is an obsolete build flag!"
+#ifdef SHELL_COMMAND_DB
+#error "SHELL_COMMAND_DB is an obsolete build flag!"
 #endif
 
-#ifdef 	DAL_DEVELOPMENT
-	#error "DAL_DEVELOPMENT is an obsolete build flag!"
+#ifdef SHELL_COMMAND_UI
+#error "SHELL_COMMAND_UI is an obsolete build flag!"
 #endif
 
-#ifdef 	DYN_MEM_SIZE_MAX
-	#error "DYN_MEM_SIZE_MAX is an obsolete build flag!"
+#ifdef SHELL_COMMAND_APP
+#error "SHELL_COMMAND_APP is an obsolete build flag!"
 #endif
 
-#ifdef 	SMALL_ROM_SIZE
-	#error "SMALL_ROM_SIZE is an obsolete build flag!"
+#ifdef SHELL_COMMAND_EMULATOR
+#error "SHELL_COMMAND_EMULATOR is an obsolete build flag!"
 #endif
 
-#ifdef 	CONSOLE_SERIAL_LIB
-	#error "CONSOLE_SERIAL_LIB is an obsolete build flag!"
+#ifdef CML_ENCODER
+#error "CML_ENCODER is an obsolete build flag!"
 #endif
 
-#ifdef 	PILOT_SERIAL_MGR
-	#error "PILOT_SERIAL_MGR is an obsolete build flag!"
+#ifdef EMULATION_LEVEL
+#error "EMULATION_LEVEL is an obsolete build flag!"
 #endif
 
-#ifdef 	MEMORY_VERSION
-	#error "MEMORY_VERSION is an obsolete build flag!"
+#ifdef PLATFORM_TYPE
+#error "PLATFORM_TYPE is an obsolete build flag!"
 #endif
 
-#ifdef 	GRAPHICS_VERSION
-	#error "GRAPHICS_VERSION is an obsolete build flag!"
+#ifdef USE_TRAPS
+#error "USE_TRAPS is an obsolete build flag!"
 #endif
 
-#ifdef 	HW_TARGET
-	#error "HW_TARGET is an obsolete build flag!"
+#ifdef ENVIRONMENT
+#error "ENVIRONMENT is an obsolete build flag!"
 #endif
 
-#ifdef 	HW_REV
-	#error "HW_REV is an obsolete build flag!"
+#ifdef MODEL
+#error "MODEL is an obsolete build flag!"
 #endif
 
-#ifdef 	RMP_LIB_INCLUDE
-	#error "RMP_LIB_INCLUDE is an obsolete build flag!"
+#ifdef DISABLE_HAL_TRAPS
+#error "DISABLE_HAL_TRAPS is an obsolete build flag!"
 #endif
 
-#ifdef 	OEM_PRODUCT
-	#error "OEM_PRODUCT is an obsolete build flag!"
+#ifdef _DONT_USE_FP_TRAPS_
+#error "_DONT_USE_FP_TRAPS_ is an obsolete build flag!"
 #endif
 
-#ifdef 	LANGUAGE
-	#error "LANGUAGE is an obsolete build flag!"
+#ifdef _DONT_USE_FP_TRAPSE_
+#error "_DONT_USE_FP_TRAPSE_ is an obsolete build flag!"
 #endif
 
-#ifdef 	COUNTRY
-	#error "COUNTRY is an obsolete build flag!"
+#ifdef RUNTIME_MODEL
+#error "RUNTIME_MODEL is an obsolete build flag!"
 #endif
 
-#ifdef 	LOCALE
-	#error "LOCALE is an obsolete build flag!"
+#ifdef MEMORY_TYPE
+#error "MEMORY_TYPE is an obsolete build flag!"
 #endif
 
+#ifdef DAL_DEVELOPMENT
+#error "DAL_DEVELOPMENT is an obsolete build flag!"
+#endif
+
+#ifdef DYN_MEM_SIZE_MAX
+#error "DYN_MEM_SIZE_MAX is an obsolete build flag!"
+#endif
+
+#ifdef SMALL_ROM_SIZE
+#error "SMALL_ROM_SIZE is an obsolete build flag!"
+#endif
+
+#ifdef CONSOLE_SERIAL_LIB
+#error "CONSOLE_SERIAL_LIB is an obsolete build flag!"
+#endif
+
+#ifdef PILOT_SERIAL_MGR
+#error "PILOT_SERIAL_MGR is an obsolete build flag!"
+#endif
+
+#ifdef MEMORY_VERSION
+#error "MEMORY_VERSION is an obsolete build flag!"
+#endif
+
+#ifdef GRAPHICS_VERSION
+#error "GRAPHICS_VERSION is an obsolete build flag!"
+#endif
+
+#ifdef HW_TARGET
+#error "HW_TARGET is an obsolete build flag!"
+#endif
+
+#ifdef HW_REV
+#error "HW_REV is an obsolete build flag!"
+#endif
+
+#ifdef RMP_LIB_INCLUDE
+#error "RMP_LIB_INCLUDE is an obsolete build flag!"
+#endif
+
+#ifdef OEM_PRODUCT
+#error "OEM_PRODUCT is an obsolete build flag!"
+#endif
+
+#ifdef LANGUAGE
+#error "LANGUAGE is an obsolete build flag!"
+#endif
+
+#ifdef COUNTRY
+#error "COUNTRY is an obsolete build flag!"
+#endif
+
+#ifdef LOCALE
+#error "LOCALE is an obsolete build flag!"
+#endif
 
 /************************************************************
  *	Settings that can be overriden in the makefile
@@ -544,9 +528,9 @@ These warnings may reveal bugs and SHOULD be fixed anyway
  *************************************************************/
 // Default Palm Reporter trace policy
 #ifndef TRACE_OUTPUT
-#	if	BUILD_TYPE == BUILD_TYPE_DEBUG
-#		define TRACE_OUTPUT TRACE_OUTPUT_ON
-#	endif
+#if BUILD_TYPE == BUILD_TYPE_DEBUG
+#define TRACE_OUTPUT TRACE_OUTPUT_ON
+#endif
 #endif
 
 /* NO_RUNTIME_SHARED_LIBRARIES is defined by the jamfile */
@@ -554,4 +538,4 @@ These warnings may reveal bugs and SHOULD be fixed anyway
 /************************************************************
  *************************************************************/
 
-#endif // __BUILDDEFAULTS_H__
+#endif  // __BUILDDEFAULTS_H__

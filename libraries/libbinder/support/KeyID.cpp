@@ -11,39 +11,37 @@
  */
 
 //#define DEBUG 1
-#include <support/KeyID.h>
 #include <support/Debug.h>
+#include <support/KeyID.h>
 #if DEBUG
 #include <support/StdIO.h>
 #endif
 
-BNS(namespace os {)
-BNS(namespace support {)
+namespace os {
+namespace support {
 
 SKeyID::SKeyID(KeyID id, FreeKey* cleanup)
-	: SAtom(), m_key(id), m_cleanup(cleanup)
+    : SAtom(), m_key(id), m_cleanup(cleanup)
 {
 #if DEBUG
-	bout << SPrintf("SKeyID(%8lx)", m_key) << endl;
+  bout << SPrintf("SKeyID(%8lx)", m_key) << endl;
 #endif
 }
 
 SKeyID::~SKeyID()
 {
 #if DEBUG
-	bout << SPrintf("~SKeyID(%8lx)", m_key) << endl;
+  bout << SPrintf("~SKeyID(%8lx)", m_key) << endl;
 #endif
-	if (m_cleanup)
-	{
-		(*m_cleanup)(m_key);
-		delete m_cleanup;
-	}
+  if (m_cleanup) {
+    (*m_cleanup)(m_key);
+    delete m_cleanup;
+  }
 }
 
-KeyID
-SKeyID::AsKeyID()
+KeyID SKeyID::AsKeyID()
 {
-	return m_key;
+  return m_key;
 }
 
 SKeyID::FreeKey::FreeKey()
@@ -54,4 +52,5 @@ SKeyID::FreeKey::~FreeKey()
 {
 }
 
-BNS(} }) // os::support
+}  // namespace support
+}  // namespace os

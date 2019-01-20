@@ -10,52 +10,44 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#include <xml/StringUtils.h>
-#include <support/Value.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <support/Value.h>
+#include <xml/StringUtils.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace xml {
-#endif
 
 // Return the next string in str, starting after pos, in split.
 // split will start in the next character after any whitespace happening
 // at pos, and continue up until, but not including any whitespace.
 // =====================================================================
-bool
-SplitStringOnWhitespace(const SString & str, SString & split, int32_t * pos)
+bool SplitStringOnWhitespace(const SString& str, SString& split, int32_t* pos)
 {
-	if (*pos >= str.Length())
-		return false;
+  if (*pos >= str.length())
+    return false;
 
-	int count = 0;
-	const char * p = str.String() + *pos;
+  int         count = 0;
+  const char* p     = str.string() + *pos;
 
-	// Use up any preceeding whitespace
-	while (*p && isspace(*p))
-		p++;
-	if (*p == '\0')
-		return false;
+  // Use up any preceeding whitespace
+  while (*p && isspace(*p))
+    p++;
+  if (*p == '\0')
+    return false;
 
-	const char * s = p;
+  const char* s = p;
 
-	// Go until the end
-	while (*p && !isspace(*p))
-	{
-		count++;
-		p++;
-	}
+  // Go until the end
+  while (*p && !isspace(*p)) {
+    count++;
+    p++;
+  }
 
-	split.SetTo(s, count);
-	*pos = p - str.String();
-	return true;
+  split.setTo(s, count);
+  *pos = p - str.string();
+  return true;
 }
 
-
-
-#if _SUPPORTS_NAMESPACE
-}; // namespace xml
-}; // namespace os
-#endif
+};  // namespace xml
+};  // namespace os

@@ -169,7 +169,7 @@ sptr<IBinder> SContext::RemoteNew(const SValue &component, const sptr<IProcess>&
 		// The caller has asked that the component go in some other process, but the
 		// package manager didn't do that.  Instead, what we will do is create a new
 		// process in which to instantiate it.
-		realProcess = NewProcess(id, flags, B_UNDEFINED_VALUE, outError);
+		realProcess = NewProcess(id, flags, SValue(), outError);
 		if (realProcess == NULL) return NULL;
 	}
 

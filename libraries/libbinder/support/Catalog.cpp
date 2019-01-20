@@ -328,7 +328,7 @@ status_t BCatalog::AddEntry(const SString& name, const SValue& entry)
 		{
 			OnEntryModified(name, binder);
 			if (BnNode::IsLinked()) {
-				PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, B_UNDEFINED_VALUE);
+				PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, SValue());
 				PushEntryModified(this, name, binder);
 			}
 		}
@@ -336,7 +336,7 @@ status_t BCatalog::AddEntry(const SString& name, const SValue& entry)
 		{
 			OnEntryCreated(name, binder);
 			if (BnNode::IsLinked()) {
-				PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, B_UNDEFINED_VALUE);
+				PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, SValue());
 				PushEntryCreated(this, name, binder);
 			}
 		}
@@ -363,7 +363,7 @@ status_t BCatalog::RemoveEntry(const SString& name)
 	{
 		OnEntryRemoved(name);
 		if (BnNode::IsLinked()) {
-			PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, B_UNDEFINED_VALUE);
+			PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, SValue());
 			PushEntryRemoved(this, name);
 		}
 		err = B_OK;
@@ -416,7 +416,7 @@ status_t BCatalog::RenameEntry(const SString& old_name, const SString& new_name)
 	{
 		OnEntryRenamed(old_name, new_name, binder);
 		if (BnNode::IsLinked()) {
-			PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, B_UNDEFINED_VALUE);
+			PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, SValue());
 			PushEntryRenamed(this, old_name, new_name, binder);
 		}
 	}
@@ -456,7 +456,7 @@ sptr<INode> BCatalog::CreateNode(SString* name, status_t* err)
 		// send the creation event
 		OnEntryCreated(*name, catalog->AsBinder());
 		if (BnNode::IsLinked()) {
-			PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, B_UNDEFINED_VALUE);
+			PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, SValue());
 			PushEntryCreated(this, *name, catalog->AsBinder());
 		}
 	}
@@ -496,7 +496,7 @@ sptr<IDatum> BCatalog::CreateDatum(SString* name, uint32_t flags, status_t* err)
 		// send the entry created event
 		OnEntryCreated(*name, datum->AsBinder());
 		if (BnNode::IsLinked()) {
-			PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, B_UNDEFINED_VALUE);
+			PushNodeChanged(this, INode::CHANGE_DETAILS_SENT, SValue());
 			PushEntryCreated(this, *name, datum->AsBinder());
 		}
 	}

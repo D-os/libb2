@@ -52,7 +52,7 @@ public:
 												const sptr<IBinder>& target,
 												const SValue &method,
 												uint32_t flags = 0,
-												const SValue &cookie = B_UNDEFINED_VALUE);
+												const SValue &cookie = SValue());
 
 	/*!	Register to have your component created when key is pushed.
 

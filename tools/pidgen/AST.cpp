@@ -12,445 +12,418 @@
 
 #include "AST.h"
 
-
 Expression::Expression(bool statement_requires_semicolon)
-	:SAtom(),
-	 m_statement_requires_semicolon(statement_requires_semicolon)
+    : SAtom(),
+      m_statement_requires_semicolon(statement_requires_semicolon)
 {
 }
 
-bool
-Expression::StatementRequiresSemicolon()
+bool Expression::StatementRequiresSemicolon()
 {
-	return m_statement_requires_semicolon;
+  return m_statement_requires_semicolon;
 }
 
 Comment::Comment(const SString &str)
-	:Expression(false),
-	 m_str(str)
+    : Expression(false),
+      m_str(str)
 {
 }
 
 Comment::Comment(const char *str)
-	:Expression(false),
-	 m_str(str)
+    : Expression(false),
+      m_str(str)
 {
 }
 
-void
-Comment::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void Comment::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	stream << "/* " << m_str << " */";
+  stream << "/* " << m_str << " */";
 }
 
 Literal::Literal(bool requires_semi, const char *fmt, ...)
-	:Expression(requires_semi)
+    : Expression(requires_semi)
 {
-	va_list ap;
-	va_start(ap, fmt);
-	char buffer[1024];
-	vsprintf(buffer, fmt, ap);
-	va_end(ap);
-	m_value = buffer;
+  va_list ap;
+  va_start(ap, fmt);
+  char buffer[1024];
+  vsprintf(buffer, fmt, ap);
+  va_end(ap);
+  m_value = buffer;
 }
 
-void
-Literal::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void Literal::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	stream << m_value;
+  stream << m_value;
 }
 
 StringLiteral::StringLiteral(const SString &value, bool requires_semi)
-	:Expression(requires_semi),
-	 m_value(value)
+    : Expression(requires_semi),
+      m_value(value)
 {
 }
 
 StringLiteral::StringLiteral(const char *value, bool requires_semi)
-	:Expression(requires_semi),
-	 m_value(value)
+    : Expression(requires_semi),
+      m_value(value)
 {
 }
 
-void
-StringLiteral::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void StringLiteral::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	stream << m_value;
+  stream << m_value;
 }
-
 
 IntLiteral::IntLiteral(int value)
-	:Expression(true),
-	 m_value(value)
+    : Expression(true),
+      m_value(value)
 {
 }
 
-void
-IntLiteral::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void IntLiteral::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	stream << m_value;
+  stream << m_value;
 }
 
 ArrayInitializer::ArrayInitializer()
-	:Expression(true)
+    : Expression(true)
 {
 }
 
-void
-ArrayInitializer::AddItem(const sptr<Expression> &value)
+void ArrayInitializer::AddItem(const sptr<Expression> &value)
 {
-	m_list.AddItem(value);
+  m_list.add(value);
 }
 
-void
-ArrayInitializer::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void ArrayInitializer::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	stream << "{";
-	size_t count = m_list.CountItems();
-	for (size_t i=0; i<count; i++) {
-		m_list[i]->Output(stream);
-		if (i != count-1) {
-			stream << ",";
-		}
-	}
-	stream << "}";
+  stream << "{";
+  size_t count = m_list.size();
+  for (size_t i = 0; i < count; i++) {
+    m_list[i]->Output(stream);
+    if (i != count - 1) {
+      stream << ",";
+    }
+  }
+  stream << "}";
 }
 
 VariableDefinition::VariableDefinition(const SString &type, const SString name,
-							uint32_t cv, const sptr<Expression> &initial,
-							int array, int pointer_indirection)
-	:Expression(true),
-	 m_type(type),
-	 m_name(name),
-	 m_cv(cv),
-	 m_initial(initial),
-	 m_array(array),
-	 m_pointer(pointer_indirection)
+                                       uint32_t cv, const sptr<Expression> &initial,
+                                       int array, int pointer_indirection)
+    : Expression(true),
+      m_type(type),
+      m_name(name),
+      m_cv(cv),
+      m_initial(initial),
+      m_array(array),
+      m_pointer(pointer_indirection)
 {
 }
 
-void
-VariableDefinition::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void VariableDefinition::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	if (m_cv & VIRTUAL) {
-		stream << "virtual ";
-	}
-	if (m_cv & CONST) {
-		stream << "const ";
-	}
-	if (m_cv & STATIC) {
-		stream << "static ";
-	}
-	stream << m_type;
-	stream << " ";
-	for (int i=0; i<m_pointer; i++) {
-		stream << "*";
-	}
-	stream << m_name;
-	if (m_array == 0) {
-		stream << "[]";
-	}
-	else if (m_array != -1) {
-		stream << "[" << m_array << "]";
-	}
-	if (m_initial != NULL) {
-		stream << " = ";
-		m_initial->Output(stream);
-	}
+  if (m_cv & VIRTUAL) {
+    stream << "virtual ";
+  }
+  if (m_cv & CONST) {
+    stream << "const ";
+  }
+  if (m_cv & STATIC) {
+    stream << "static ";
+  }
+  stream << m_type;
+  stream << " ";
+  for (int i = 0; i < m_pointer; i++) {
+    stream << "*";
+  }
+  stream << m_name;
+  if (m_array == 0) {
+    stream << "[]";
+  }
+  else if (m_array != -1) {
+    stream << "[" << m_array << "]";
+  }
+  if (m_initial != NULL) {
+    stream << " = ";
+    m_initial->Output(stream);
+  }
 }
 
 StatementList::StatementList()
-	:Expression(false)
+    : Expression(false)
 {
 }
 
-void
-StatementList::AddItem(const sptr<Expression> &item)
+void StatementList::AddItem(const sptr<Expression> &item)
 {
-	m_statements.AddItem(item);
+  m_statements.add(item);
 }
 
-void
-StatementList::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void StatementList::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	size_t count = m_statements.CountItems();
-	for (size_t i=0; i<count; i++) {
-		sptr<Expression> e = m_statements[i];
-		e->Output(stream);
-		if (e->StatementRequiresSemicolon()) {
-			stream << ";";
-		}
-		if (dynamic_cast<StatementList*>(e.ptr()) == NULL) {
-			stream << endl;
-		}
-	}
+  size_t count = m_statements.size();
+  for (size_t i = 0; i < count; i++) {
+    sptr<Expression> e = m_statements[i];
+    e->Output(stream);
+    if (e->StatementRequiresSemicolon()) {
+      stream << ";";
+    }
+    if (dynamic_cast<StatementList *>(e.get()) == NULL) {
+      stream << endl;
+    }
+  }
 }
 
 FunctionPrototype::FunctionPrototype(const SString &return_type, const SString &name, uint32_t linkage,
-									 uint32_t cv, const SString & clas)
-	:Expression(true),
-	 m_return_type(return_type),
-	 m_name(name),
-	 m_classname(clas),
-	 m_linkage(linkage),
-	 m_cv(cv)
+                                     uint32_t cv, const SString &clas)
+    : Expression(true),
+      m_return_type(return_type),
+      m_name(name),
+      m_classname(clas),
+      m_linkage(linkage),
+      m_cv(cv)
 {
 }
 
-void
-FunctionPrototype::AddParameter(const SString &type, const SString &name)
+void FunctionPrototype::AddParameter(const SString &type, const SString &name)
 {
-	Param p;
-	p.type = type;
-	p.name = name;
-	m_params.AddItem(p);
+  Param p;
+  p.type = type;
+  p.name = name;
+  m_params.add(p);
 }
 
-void
-FunctionPrototype::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void FunctionPrototype::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	if (!(flags & nolinkage)) {
-		if (m_linkage & VIRTUAL) {
-			stream << " virtual ";
-		}
-		if (m_linkage & EXTERN) {
-			stream << "extern ";
-		}
-		if (m_linkage & STATIC) {
-			stream << "static ";
-		}
-	}
-	stream << m_return_type << " ";
-	if (flags & classname && m_classname != "") {
-		stream << m_classname << "::";
-	}
-	stream << m_name << "(";
-	size_t count = m_params.CountItems();
-	for (size_t i=0; i<count; i++) {
-		const Param &p = m_params[i];
-		stream << p.type << " " << p.name;
-		if (i != count-1) {
-			stream << ",";
-		}
-	}
-	stream << ") ";
-	if (m_cv & CONST) {
-		stream << " const ";
-	}
+  if (!(flags & nolinkage)) {
+    if (m_linkage & VIRTUAL) {
+      stream << " virtual ";
+    }
+    if (m_linkage & EXTERN) {
+      stream << "extern ";
+    }
+    if (m_linkage & STATIC) {
+      stream << "static ";
+    }
+  }
+  stream << m_return_type << " ";
+  if (flags & classname && m_classname != "") {
+    stream << m_classname << "::";
+  }
+  stream << m_name << "(";
+  size_t count = m_params.size();
+  for (size_t i = 0; i < count; i++) {
+    const Param &p = m_params[i];
+    stream << p.type << " " << p.name;
+    if (i != count - 1) {
+      stream << ",";
+    }
+  }
+  stream << ") ";
+  if (m_cv & CONST) {
+    stream << " const ";
+  }
 }
 
 Function::Function(const sptr<FunctionPrototype> &prototype)
-	:StatementList(),
-	 m_prototype(prototype)
+    : StatementList(),
+      m_prototype(prototype)
 {
 }
 
-void
-Function::AddStatement(const sptr<Expression> &item)
+void Function::AddStatement(const sptr<Expression> &item)
 {
-	m_statements.AddItem(item);
+  m_statements.add(item);
 }
 
-void
-Function::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void Function::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	m_prototype->Output(stream, FunctionPrototype::nolinkage|FunctionPrototype::classname);
-	stream << endl << "{" << endl << indent;
-	StatementList::Output(stream);
-	stream << dedent << "}" << endl;
+  m_prototype->Output(stream, FunctionPrototype::nolinkage | FunctionPrototype::classname);
+  stream << endl
+         << "{" << endl
+         << indent;
+  StatementList::Output(stream);
+  stream << dedent << "}" << endl;
 }
 
 Return::Return(const sptr<Expression> &value)
-	:Expression(true),
-	 m_value(value)
+    : Expression(true),
+      m_value(value)
 {
 }
 
-void
-Return::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void Return::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	stream << "return ";
-	m_value->Output(stream);
+  stream << "return ";
+  m_value->Output(stream);
 }
 
 StaticCast::StaticCast(const SString &type, int indirection,
-								const sptr<Expression> value)
-	:Expression(true),
-	 m_type(type),
-	 m_indirection(indirection),
-	 m_value(value)
+                       const sptr<Expression> value)
+    : Expression(true),
+      m_type(type),
+      m_indirection(indirection),
+      m_value(value)
 {
 }
 
-void
-StaticCast::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void StaticCast::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	stream << "static_cast<" << m_type;
-	for (int i=0; i<m_indirection; i++) {
-		stream << "*";
-	}
-	stream << ">(";
-	m_value->Output(stream);
-	stream << ")";
+  stream << "static_cast<" << m_type;
+  for (int i = 0; i < m_indirection; i++) {
+    stream << "*";
+  }
+  stream << ">(";
+  m_value->Output(stream);
+  stream << ")";
 }
 
 FunctionCall::FunctionCall(const SString &name)
-	:Expression(true),
-	 m_object(),
-	 m_namespace(),
-	 m_name(name)
+    : Expression(true),
+      m_object(),
+      m_namespace(),
+      m_name(name)
 {
 }
 
 FunctionCall::FunctionCall(const SString &namespac, const SString &name)
-	:Expression(true),
-	 m_object(),
-	 m_namespace(namespac),
-	 m_name(name)
+    : Expression(true),
+      m_object(),
+      m_namespace(namespac),
+      m_name(name)
 {
 }
 
 FunctionCall::FunctionCall(const SString &object, const SString &namespac, const SString &name)
-	:Expression(true),
-	 m_object(object),
-	 m_namespace(namespac),
-	 m_name(name)
+    : Expression(true),
+      m_object(object),
+      m_namespace(namespac),
+      m_name(name)
 {
 }
 
-void
-FunctionCall::AddArgument(const sptr<Expression> &item)
+void FunctionCall::AddArgument(const sptr<Expression> &item)
 {
-	m_arguments.AddItem(item);
+  m_arguments.add(item);
 }
 
-void
-FunctionCall::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void FunctionCall::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	if (m_object != "") {
-		stream << m_object << "->";
-	}
-	if (m_namespace != "") {
-		stream << m_namespace << "::";
-	}
-	stream << m_name << "(";
-	size_t count = m_arguments.CountItems();
-	for (size_t i=0; i<count; i++) {
-		m_arguments[i]->Output(stream);
-		if (i != count-1) {
-			stream << ",";
-		}
-	}
-	stream << ")";
+  if (m_object != "") {
+    stream << m_object << "->";
+  }
+  if (m_namespace != "") {
+    stream << m_namespace << "::";
+  }
+  stream << m_name << "(";
+  size_t count = m_arguments.size();
+  for (size_t i = 0; i < count; i++) {
+    m_arguments[i]->Output(stream);
+    if (i != count - 1) {
+      stream << ",";
+    }
+  }
+  stream << ")";
 }
 
 Assignment::Assignment(const sptr<Expression> &lvalue, const sptr<Expression> &rvalue)
-	:Expression(true),
-	 m_lvalue(lvalue),
-	 m_rvalue(rvalue)
+    : Expression(true),
+      m_lvalue(lvalue),
+      m_rvalue(rvalue)
 {
 }
 
-
-void
-Assignment::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void Assignment::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	m_lvalue->Output(stream);
-	stream << " = ";
-	m_rvalue->Output(stream);
+  m_lvalue->Output(stream);
+  stream << " = ";
+  m_rvalue->Output(stream);
 }
 
 Optional::Optional(const sptr<Expression> &expr, bool initial, bool requires_semi)
-	:Expression(requires_semi),
-	 m_expr(expr),
-	 m_will_output(initial)
+    : Expression(requires_semi),
+      m_expr(expr),
+      m_will_output(initial)
 {
 }
 
-void
-Optional::SetOutput(bool will_output)
+void Optional::SetOutput(bool will_output)
 {
-	m_will_output = will_output;
+  m_will_output = will_output;
 }
 
-void
-Optional::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void Optional::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	if (m_will_output) {
-		m_expr->Output(stream);
-	}
+  if (m_will_output) {
+    m_expr->Output(stream);
+  }
 }
 
-bool
-Optional::StatementRequiresSemicolon()
+bool Optional::StatementRequiresSemicolon()
 {
-	return m_will_output && Expression::StatementRequiresSemicolon();
+  return m_will_output && Expression::StatementRequiresSemicolon();
 }
 
 ClassDeclaration::ClassDeclaration(const SString &name)
-	:StatementList(),
-	 m_name(name),
-	 m_base_classes()
+    : StatementList(),
+      m_name(name),
+      m_base_classes()
 {
 }
 
-void
-ClassDeclaration::AddBaseClass(const SString &name, const SString &scope)
+void ClassDeclaration::AddBaseClass(const SString &name, const SString &scope)
 {
-	base_class bc;
-		bc.name = name;
-		bc.scope = scope;
-	m_base_classes.AddItem(bc);
+  base_class bc;
+  bc.name  = name;
+  bc.scope = scope;
+  m_base_classes.add(bc);
 }
 
-void
-ClassDeclaration::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void ClassDeclaration::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	stream << "class " << m_name;
-	size_t base_count = m_base_classes.CountItems();
-	if (base_count > 0) {
-		stream << ":";
-	}
-	for (size_t i=0; i<base_count; i++) {
-		stream << " " << m_base_classes[i].scope << " " << m_base_classes[i].name;
-		if (i != base_count-1) {
-			stream << ",";
-		}
-	}
-	stream << endl << "{" << endl;
-	stream << indent;
-	StatementList::Output(stream);
-	stream << dedent;
-	stream << "};" << endl;
+  stream << "class " << m_name;
+  size_t base_count = m_base_classes.size();
+  if (base_count > 0) {
+    stream << ":";
+  }
+  for (size_t i = 0; i < base_count; i++) {
+    stream << " " << m_base_classes[i].scope << " " << m_base_classes[i].name;
+    if (i != base_count - 1) {
+      stream << ",";
+    }
+  }
+  stream << endl
+         << "{" << endl;
+  stream << indent;
+  StatementList::Output(stream);
+  stream << dedent;
+  stream << "};" << endl;
 }
 
 ParameterUse::ParameterUse()
-			:Expression(false)
+    : Expression(false)
 {
 }
 
-void
-ParameterUse::AddParameter(const SString &name)
+void ParameterUse::AddParameter(const SString &name)
 {
-	m_expr.AddItem(name);
+  m_expr.add(name);
 }
 
-void
-ParameterUse::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void ParameterUse::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	size_t count = m_expr.CountItems();
-	for (size_t i = 0; i < count; i++) {
-		stream << "(void)" << m_expr[i] << "; ";
-	}
+  size_t count = m_expr.size();
+  for (size_t i = 0; i < count; i++) {
+    stream << "(void)" << m_expr[i] << "; ";
+  }
 }
 
 Null::Null()
-	:Expression(true)
+    : Expression(true)
 {
 }
 
-void
-Null::Output(const sptr<ITextOutput> &stream, int32_t flags) const
+void Null::Output(const sptr<ITextOutput> &stream, int32_t flags) const
 {
-	stream << "NULL";
+  stream << "NULL";
 }

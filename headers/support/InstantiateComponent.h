@@ -18,9 +18,9 @@
 	@brief API to package executables that contain components.
 */
 
+#include <support/Context.h>
 #include <support/IBinder.h>
 #include <support/String.h>
-#include <support/Context.h>
 
 /*!	@addtogroup CoreSupportBinder
 	@{
@@ -29,36 +29,31 @@
 #if TARGET_HOST == TARGET_HOST_PALMOS
 #include <CmnLaunchCodes.h>
 #else
-#define sysPackageLaunchGetInstantiate			72
+#define sysPackageLaunchGetInstantiate 72
 #endif
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
-typedef sptr<IBinder> (*instantiate_component_func)(const SString& component,
-													const SContext& context,
-													const SValue &args);
+typedef sptr<IBinder> (*instantiate_component_func)(const SString&  component,
+                                                    const SContext& context,
+                                                    const SValue&   args);
 
 struct SysPackageLaunchGetInstantiateType
 {
-	size_t						size;
-	instantiate_component_func	out_instantiate;
+  size_t                     size;
+  instantiate_component_func out_instantiate;
 };
 
-#if _SUPPORTS_NAMESPACE
-} }	// namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
 //!	This is a prototype for the factory function you should implement to create components.
-extern "C"
-BNS(os::support::) sptr<BNS(os::support::)IBinder>
-InstantiateComponent(	const BNS(os::support::) SString& component,
-						const BNS(os::support::) SContext& context,
-						const BNS(os::support::) SValue& args);
-
+extern "C" os::support::sptr<os::support::IBinder>
+InstantiateComponent(const os::support::SString&  component,
+                     const os::support::SContext& context,
+                     const os::support::SValue&   args);
 
 /*!	@} */
 
-#endif // _B_SUPPORT_INSTANTIATECOMPONENT
+#endif  // _B_SUPPORT_INSTANTIATECOMPONENT

@@ -306,7 +306,7 @@ SString SPackage::Data::LoadString(const SString& key, const SString& locale)
 
 	char* buf = NULL;
 
-	if (locale == SString::EmptyString())
+	if (locale == SString::empty())
 	{
 		// FIX ME! need to get the system locale
 		//berr << "FIX ME! SPackage::LoadString() defaulting to enUS" << endl;
@@ -457,12 +457,12 @@ status_t SPackage::StatusCheck()
 
 SString SPackage::Name()
 {
-	return (m_data != NULL) ? m_data->Name() : SString::EmptyString();
+	return (m_data != NULL) ? m_data->Name() : SString::empty();
 }
 
 SString SPackage::Path()
 {
-	return (m_data != NULL) ? m_data->Path() : SString::EmptyString();
+	return (m_data != NULL) ? m_data->Path() : SString::empty();
 }
 
 sptr<IByteInput> SPackage::OpenResource(const SString& fileName, const SString& locale)
@@ -471,7 +471,7 @@ sptr<IByteInput> SPackage::OpenResource(const SString& fileName, const SString& 
 
 	SString path(m_data->ResourcePath());
 
-	if (locale != SString::EmptyString())
+	if (locale != SString::empty())
 	{
 		path.PathAppend(locale);
 		struct stat sb;
@@ -505,12 +505,12 @@ sptr<IByteInput> SPackage::OpenResource(const SString& fileName, const SString& 
 
 SString SPackage::LoadString(const SString& key, const SString& locale)
 {
-	return (m_data != NULL) ? m_data->LoadString(key, locale) : SString::EmptyString();
+	return (m_data != NULL) ? m_data->LoadString(key, locale) : SString::empty();
 }
 
 SString SPackage::LoadString(uint32_t index, const SString& locale)
 {
-	return (m_data != NULL) ? m_data->LoadString(index, locale) : SString::EmptyString();
+	return (m_data != NULL) ? m_data->LoadString(index, locale) : SString::empty();
 }
 
 
