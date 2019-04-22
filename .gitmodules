@@ -16,3 +16,6 @@
 [submodule "cmds"]
 	path = cmds
 	url = git@github.com:D-os/cmds.git
+[submodule "tools/hidl"]
+	path = tools/hidl
+	url = git@github.com:D-os/hidl.git
