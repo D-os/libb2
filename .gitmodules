@@ -19,3 +19,6 @@
 [submodule "tools/hidl"]
 	path = tools/hidl
 	url = git@github.com:D-os/hidl.git
+[submodule "libs/base"]
+	path = libs/base
+	url = git@github.com:D-os/base.git
