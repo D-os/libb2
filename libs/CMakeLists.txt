@@ -1,3 +1,4 @@
+add_subdirectory(base)
 add_subdirectory(libcutils)
 add_subdirectory(libutils)
 
