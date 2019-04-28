@@ -59,7 +59,7 @@ set(GLOBAL_CFLAGS
     -DLINUX_DEMO_HACK=1
 )
 
-set(SOURCE_HEADERS_DIR "${CMAKE_SOURCE_DIR}/headers")
+set(SOURCE_HEADERS_DIR "${CMAKE_SOURCE_DIR}/headers/android" "${CMAKE_SOURCE_DIR}/headers/os")
 set(INTERFACE_HEADERS_DIR "${CMAKE_BINARY_DIR}/headers")
 
 # Default include directories.
