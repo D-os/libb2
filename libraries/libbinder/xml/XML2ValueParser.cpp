@@ -24,14 +24,14 @@ using namespace os::support;
 
 static int32_t gID = 0;
 
-constexpr string_view kIDAttribute       = "id";
-constexpr string_view kIDTypeAttribute   = "id_type";
-constexpr string_view kTypeAttribute     = "type";
-constexpr string_view kTypeCodeAttribute = "type_code";
-constexpr string_view kSizeAttribute     = "size";
-constexpr string_view kResIDAttribute    = "resid";
-constexpr string_view kIndexAttribute    = "index";
-constexpr string_view kRefAttribute      = "ref";
+B_STATIC_STRING_VALUE_SMALL(kIDAttribute, "id", );
+B_STATIC_STRING_VALUE_LARGE(kIDTypeAttribute, "id_type", );
+B_STATIC_STRING_VALUE_LARGE(kTypeAttribute, "type", );
+B_STATIC_STRING_VALUE_LARGE(kTypeCodeAttribute, "type_code", );
+B_STATIC_STRING_VALUE_LARGE(kSizeAttribute, "size", );
+B_STATIC_STRING_VALUE_LARGE(kResIDAttribute, "resid", );
+B_STATIC_STRING_VALUE_LARGE(kIndexAttribute, "index", );
+B_STATIC_STRING_VALUE_SMALL(kRefAttribute, "ref", );
 
 // ==================================================================
 BXML2ValueCreator::BXML2ValueCreator(SValue &targetValue, const SValueMap &attributes, const SPackage &resources,

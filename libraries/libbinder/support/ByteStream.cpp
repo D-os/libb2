@@ -16,6 +16,7 @@
 #include <support/IByteStream.h>
 #include <support/Parcel.h>
 #include <support/StdIO.h>
+#include <support/StringUtils.h>
 
 #include <binder/Debug.h>
 #include <support/Debug.h>
@@ -31,11 +32,11 @@
 namespace os {
 namespace support {
 
-constexpr string_view key_Read     = "Read";
-constexpr string_view key_Write    = "Write";
-constexpr string_view key_Sync     = "Sync";
-constexpr string_view key_Position = "Position";
-constexpr string_view key_Seek     = "Seek";
+B_STATIC_STRING_VALUE_8(key_Read, "Read", );
+B_STATIC_STRING_VALUE_8(key_Write, "Write", );
+B_STATIC_STRING_VALUE_8(key_Sync, "Sync", );
+B_STATIC_STRING_VALUE_12(key_Position, "Position", );
+B_STATIC_STRING_VALUE_8(key_Seek, "Seek", );
 
 /*-----------------------------------------------------------------*/
 

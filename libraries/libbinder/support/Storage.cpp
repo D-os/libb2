@@ -16,15 +16,16 @@
 #include <binder/Debug.h>
 #include <stdlib.h>
 #include <support/StdIO.h>
+#include <support/StringUtils.h>
 
 namespace os {
 namespace support {
 
-constexpr string_view key_Size    = "Size";
-constexpr string_view key_SetSize = "SetSize";
-constexpr string_view key_ReadAt  = "ReadAt";
-constexpr string_view key_WriteAt = "WriteAt";
-constexpr string_view key_Sync    = "Sync";
+B_STATIC_STRING_VALUE_8(key_Size, "Size", );
+B_STATIC_STRING_VALUE_8(key_SetSize, "SetSize", );
+B_STATIC_STRING_VALUE_8(key_ReadAt, "ReadAt", );
+B_STATIC_STRING_VALUE_8(key_WriteAt, "WriteAt", );
+B_STATIC_STRING_VALUE_8(key_Sync, "Sync", );
 
 /*-----------------------------------------------------------------*/
 

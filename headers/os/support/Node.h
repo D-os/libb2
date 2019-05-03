@@ -22,6 +22,7 @@
 #include <support/ICatalog.h>
 #include <support/INode.h>
 #include <support/INodeObserver.h>
+#include <support/StringUtils.h>
 
 #if _SUPPORTS_NAMESPACE
 namespace os {
@@ -32,10 +33,10 @@ namespace support {
 	@{
 */
 
-B_CONST_STRING_VALUE_LARGE(BV_ENTRY_CREATED,		"EntryCreated", );
-B_CONST_STRING_VALUE_LARGE(BV_ENTRY_MODIFIED,		"EntryModified", );
-B_CONST_STRING_VALUE_LARGE(BV_ENTRY_REMOVED,		"EntryRemoved", );
-B_CONST_STRING_VALUE_LARGE(BV_ENTRY_RENAMED,		"EntryRenamed", );
+B_CONST_STRING_VALUE_LARGE(BV_ENTRY_CREATED, "EntryCreated", );
+B_CONST_STRING_VALUE_LARGE(BV_ENTRY_MODIFIED, "EntryModified", );
+B_CONST_STRING_VALUE_LARGE(BV_ENTRY_REMOVED, "EntryRemoved", );
+B_CONST_STRING_VALUE_LARGE(BV_ENTRY_RENAMED, "EntryRenamed", );
 
 //!	Convenience class for operating on the INode interface.
 /*!	This class provides some convenience methods for making
