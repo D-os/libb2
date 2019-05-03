@@ -54,6 +54,18 @@ status_t StringSplit(const char* srcStr, int32_t srcStrLen, const char* splitOn,
 
 /*!	@} */
 
+/* FIXME: legacy, to be removed */
+#define B_CONST_STRING_VALUE_LARGE(ident, string, prefix) \
+  constexpr std::string_view prefix##ident = string;
+
+#define B_STATIC_STRING_VALUE(ident, string, prefix) \
+  static constexpr std::string_view prefix##ident = string;
+
+#define B_STATIC_STRING_VALUE_8 B_STATIC_STRING_VALUE
+#define B_STATIC_STRING_VALUE_12 B_STATIC_STRING_VALUE
+#define B_STATIC_STRING_VALUE_SMALL B_STATIC_STRING_VALUE
+#define B_STATIC_STRING_VALUE_LARGE B_STATIC_STRING_VALUE
+
 }  // namespace support
 }  // namespace os
 

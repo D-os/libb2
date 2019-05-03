@@ -26,7 +26,7 @@ namespace package {
 using namespace os::support;
 using namespace os::xml;
 
-constexpr string_view key_package = "package";
+B_CONST_STRING_VALUE_LARGE(key_package, "package", )
 
 class BManifestParseCreator : public BCreator
 {
