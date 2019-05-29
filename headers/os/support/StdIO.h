@@ -10,22 +10,19 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef	_SUPPORT_STDIO_H
-#define	_SUPPORT_STDIO_H
+#ifndef _SUPPORT_STDIO_H
+#define _SUPPORT_STDIO_H
 
 /*!	@file support/StdIO.h
 	@ingroup CoreSupportDataModel
 	@brief Binder-based standard IO streams.
 */
 
-#include <support/Value.h>
 #include <support/IByteStream.h>
 #include <support/ITextStream.h>
 
-#if _SUPPORTS_NAMESPACE
 namespace os {
 namespace support {
-#endif
 
 /*!	@addtogroup CoreSupportDataModel
 	@{
@@ -39,9 +36,9 @@ Another approach could be to put this in TraceMgr.h and include this header here
 but you would need to add several path to the search dir (and reduce the build time).
 */
 #if defined(TRACE_OUTPUT) && TRACE_OUTPUT == TRACE_OUTPUT_ON
-#	define TO(x)	x
+#define TO(x) x
 #else
-#	define TO(x)
+#define TO(x)
 #endif
 
 // The new function names for raw byte streams.
@@ -50,8 +47,6 @@ extern _IMPEXP_SUPPORT const sptr<IByteOutput>& StandardByteOutput(void);
 extern _IMPEXP_SUPPORT const sptr<IByteOutput>& StandardByteError(void);
 extern _IMPEXP_SUPPORT const sptr<IByteInput>& NullByteInput(void);
 extern _IMPEXP_SUPPORT const sptr<IByteOutput>& NullByteOutput(void);
-
-#if TARGET_HOST != TARGET_HOST_PALMOS
 
 // Raw byte streams for the standard C files.
 extern _IMPEXP_SUPPORT const sptr<IByteInput> Stdin;
@@ -63,22 +58,11 @@ extern _IMPEXP_SUPPORT const sptr<IByteOutput> Stderr;
 extern _IMPEXP_SUPPORT sptr<ITextOutput> bout;
 extern _IMPEXP_SUPPORT sptr<ITextOutput> berr;
 
-#else
-
-extern _IMPEXP_SUPPORT sptr<ITextOutput>& _get_bout(void);
-extern _IMPEXP_SUPPORT sptr<ITextOutput>& _get_berr(void);
-
-#define bout _get_bout()
-#define berr _get_berr()
-
-#endif
-
 /**************************************************************************************/
 
 /*!	@} */
 
-#if _SUPPORTS_NAMESPACE
-} } // namespace os::support
-#endif
+}  // namespace support
+}  // namespace os
 
 #endif /* _SUPPORT_STDIO_H */

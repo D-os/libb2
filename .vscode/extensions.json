@@ -8,7 +8,7 @@
 		"vector-of-bool.cmake-tools",
 		"xaver.clang-format",
 		"llvm-vs-code-extensions.vscode-clangd",
-		"keqingrong.vscode-webidl"
+		"mythmon.idl"
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
 	"unwantedRecommendations": []

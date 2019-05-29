@@ -1,25 +1,25 @@
 set(interfaceFiles
-    "${CMAKE_CURRENT_SOURCE_DIR}/app/ICommand.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/app/IProgress.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/app/ITerminalView.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/package/IInstallHandler.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/services/IInformant.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/storage/IReferable.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/ICatalogPermissions.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/ICatalog.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/IDatum.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/IIterable.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/IIterator.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/INib.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/INode.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/INodeObserver.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/IProcess.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/IProcessManager.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/IRandomIterator.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/ISelector.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/ITable.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/IUuid.idl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/support/IVirtualMachine.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/app/ICommand.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/app/IProgress.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/app/ITerminalView.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/package/IInstallHandler.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/services/IInformant.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/storage/IReferable.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/ICatalogPermissions.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/ICatalog.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/IDatum.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/IIterable.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/IIterator.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/INib.idl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/support/INode.hidl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/INodeObserver.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/IProcess.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/IProcessManager.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/IRandomIterator.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/ISelector.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/ITable.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/IUuid.idl"
+    # "${CMAKE_CURRENT_SOURCE_DIR}/support/IVirtualMachine.idl"
 )
 set(interfaces_install_dir /headers/os)
 install(FILES ${interfaceFiles} DESTINATION ${interfaces_install_dir})
@@ -35,9 +35,10 @@ foreach(IF ${interfaceFiles})
     file(MAKE_DIRECTORY ${HEADER_DIR})
     add_custom_command(
         OUTPUT ${OUT_HEADER} ${OUT_CPP}
-        COMMAND pidgen_bs -I "${CMAKE_CURRENT_SOURCE_DIR}" -O "${CPP_DIR}" -S "${HEADER_DIR}" "${IF}"
+        # COMMAND pidgen_bs -I "${CMAKE_CURRENT_SOURCE_DIR}" -O "${CPP_DIR}" -S "${HEADER_DIR}" "${IF}"
+        COMMAND hidl-gen-bin -L c++-impl -o "${CPP_DIR}" "os.support@1.0"
         MAIN_DEPENDENCY "${IF}"
-        DEPENDS pidgen_bs
+        DEPENDS hidl-gen-bin
         COMMENT "Compiling IDL ${REL_IF}"
         )
     list (APPEND interfaceSources "${OUT_CPP}")

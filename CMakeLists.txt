@@ -40,7 +40,7 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
 # Common compiler flags.
-set(COMMON_FLAGS "-Wall -Wpointer-arith -Wcast-align -Wsign-compare -Wstrict-aliasing -Wno-multichar -fPIC ${DIAG_FLAGS}")
+set(COMMON_FLAGS "-Wall -Wpointer-arith -Wcast-align -Wsign-compare -Wstrict-aliasing -Wno-multichar -Wno-reserved-id-macro -fPIC ${DIAG_FLAGS}")
 
 # OpenBinder defines
 set(GLOBAL_CFLAGS
@@ -106,7 +106,7 @@ set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 
 # Sub directories.
 add_subdirectory(headers)
-#add_subdirectory(interfaces)
+add_subdirectory(interfaces)
 add_subdirectory(libs)
 add_subdirectory(libraries)
 add_subdirectory(cmds)
