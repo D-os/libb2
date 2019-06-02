@@ -54,7 +54,7 @@ target_sources(ob PRIVATE
     support/MemoryStore.cpp
 #    support/Message.cpp
 #    support/MessageList.cpp
-#    support/Node.cpp
+    support/Node.cpp
     support/NullStreams.cpp
 #    support/Observer.cpp
 #    support/Package.cpp
