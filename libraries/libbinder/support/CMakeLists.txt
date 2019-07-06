@@ -1,5 +1,5 @@
 target_sources(ob_bootstrap PRIVATE
-    support/Autobinder.cpp
+    # support/Autobinder.cpp
     support/Bitfield.cpp
     support/ByteStream.cpp
     #support/CallStack.cpp
@@ -31,7 +31,7 @@ target_sources(ob_bootstrap PRIVATE
 )
 
 target_sources(ob PRIVATE
-    support/Autobinder.cpp
+    # support/Autobinder.cpp
     support/Bitfield.cpp
     support/ByteStream.cpp
     #support/CallStack.cpp

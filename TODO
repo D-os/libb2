@@ -5,3 +5,20 @@
 - possibly remove SysThread*.h ?
 - link libbinder as a separate dynamic library for apps to directly use
 
+API:
+- Add IObject interface specifying OB IBinder operations: inspect, effect, link, etc.
+
+Migration:
+- rename libob to libb2
+- drop XML parser - use TOML instead (external/toml)
+- reimplement OB component system using HIDL + TOML
+- implement WPS using HIDL .idl
+- implement support for BApplication using SContext component
+- implement libbe using OB + WPS
+  - merge WIP/beapi branch
+  - App messaging using OB/Android binder messaging
+  - GUI controls as proxies to WPS components
+
+Display Server:
+- use Wayland's Weston
+- port C version of Compiz as a Weston graphical shell

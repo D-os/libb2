@@ -5,15 +5,15 @@ target_compile_definitions(ob_bootstrap PRIVATE -DLIBBE_BOOTSTRAP=1)
 
 add_library(ob SHARED "")
 target_link_libraries(ob PUBLIC binder)
-#target_link_libraries(ob PRIVATE
-#    "-Wl,--whole-archive"
-#    interfaces
-#    "-Wl,--no-whole-archive"
-#)
+target_link_libraries(ob PRIVATE
+    "-Wl,--whole-archive"
+    interfaces
+    "-Wl,--no-whole-archive"
+)
 file(GLOB_RECURSE privateHeaderFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 target_sources(ob PRIVATE
     ${headerFiles}
-#    ${interfaceFiles}
+    ${interfaceFiles}
     ${privateHeaderFiles}
 )
 set_target_properties(ob PROPERTIES LINKER_LANGUAGE CXX)

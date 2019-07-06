@@ -534,7 +534,7 @@ static SValue
 byteseekable_hook_Position(const sptr<IInterface> &i)
 {
   STUB;
-  return 0;  //STUB: SValue::Int64(static_cast<IByteSeekable *>(i.ptr())->Position());
+  return SValue();  //STUB: SValue::Int64(static_cast<IByteSeekable *>(i.ptr())->Position());
 }
 
 //static const struct effect_action_def byteseekable_actions[] = {

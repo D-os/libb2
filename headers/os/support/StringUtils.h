@@ -10,8 +10,8 @@
  * history and logs, available at http://www.openbinder.org
  */
 
-#ifndef SUPPORTKIT_STRINGUTILS_H_INCLUDED
-#define SUPPORTKIT_STRINGUTILS_H_INCLUDED
+#ifndef _SUPPORTKIT_STRINGUTILS_H_INCLUDED
+#define _SUPPORTKIT_STRINGUTILS_H_INCLUDED
 
 /*!	@file support/StringUtils.h
 	@ingroup CoreSupportUtilities
@@ -69,4 +69,4 @@ status_t StringSplit(const char* srcStr, int32_t srcStrLen, const char* splitOn,
 }  // namespace support
 }  // namespace os
 
-#endif /* SUPPORTKIT_STRINGUTILS_H_INCLUDED */
+#endif /* _SUPPORTKIT_STRINGUTILS_H_INCLUDED */

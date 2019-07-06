@@ -283,7 +283,7 @@ static SValue
 storage_hook_Size(const sptr<IInterface>& i)
 {
   STUB;
-  return 0;  //STUB: SValue::Offset(static_cast<IStorage*>(i.ptr())->Size());
+  return SValue();  //STUB: SValue::Offset(static_cast<IStorage*>(i.ptr())->Size());
 }
 
 static SValue

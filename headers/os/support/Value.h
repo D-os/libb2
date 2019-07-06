@@ -19,6 +19,7 @@
 */
 
 #include <binder/Map.h>
+#include <binder/Parcelable.h>
 #include <binder/Value.h>
 
 namespace os {
@@ -28,7 +29,14 @@ namespace support {
 	@{
 */
 
-using SValue    = ::android::binder::Value;
+class SValue : public ::android::binder::Value, public ::android::Parcelable
+{
+ public:
+  // unhide Parcelable methods implemented in Value
+  virtual ::android::status_t writeToParcel(::android::Parcel* parcel) const override;
+  virtual ::android::status_t readFromParcel(const ::android::Parcel* parcel) override;
+};
+
 using SValueMap = ::android::binder::Map;
 
 /*!	@} */

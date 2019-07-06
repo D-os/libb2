@@ -150,7 +150,7 @@ sptr<ITextOutput>& _get_berr(void) { return berr; }
 
 #endif /* TARGET_HOST != TARGET_HOST_PALMOS */
 
-const SValue B_FIELD_NAME("be:name");
+//const SValue B_FIELD_NAME("be:name");
 
 #if !LIBBE_BOOTSTRAP
 const SPackage B_NO_PACKAGE;
@@ -171,18 +171,18 @@ using namespace os::support;
 #if TARGET_HOST != TARGET_HOST_PALMOS
 
 // IBinderVector<> keys
-const SValue g_keyAddChild("AddChild");
-const SValue g_keyAddChildAt("AddChildAt");
-const SValue g_keyOverlayAttributes("OverlayAttributes");
-const SValue g_keyRemoveChild("RemoveChild");
-const SValue g_keyChildAt("ChildAt");
-const SValue g_keyChildAt_child("child");
-const SValue g_keyChildAt_attr("attr");
-const SValue g_keyChildFor("ChildFor");
-const SValue g_keyIndexOf("IndexOf");
-const SValue g_keyNameOf("NameOf");
-const SValue g_keyCount("Count");
-const SValue g_keyReorder("Reorder");
+//const SValue g_keyAddChild("AddChild");
+//const SValue g_keyAddChildAt("AddChildAt");
+//const SValue g_keyOverlayAttributes("OverlayAttributes");
+//const SValue g_keyRemoveChild("RemoveChild");
+//const SValue g_keyChildAt("ChildAt");
+//const SValue g_keyChildAt_child("child");
+//const SValue g_keyChildAt_attr("attr");
+//const SValue g_keyChildFor("ChildFor");
+//const SValue g_keyIndexOf("IndexOf");
+//const SValue g_keyNameOf("NameOf");
+//const SValue g_keyCount("Count");
+//const SValue g_keyReorder("Reorder");
 
 #endif
 

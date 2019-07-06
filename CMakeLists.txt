@@ -66,6 +66,7 @@ set(INTERFACE_HEADERS_DIR "${CMAKE_BINARY_DIR}/headers")
 include_directories(
     ${SOURCE_HEADERS_DIR}
     ${INTERFACE_HEADERS_DIR}
+    ${INTERFACE_HEADERS_DIR}/os
 )
 
 # Set flags.
@@ -108,13 +109,13 @@ set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 add_subdirectory(headers)
 add_subdirectory(interfaces)
 add_subdirectory(libs)
-# add_subdirectory(libraries)
-# add_subdirectory(cmds)
+add_subdirectory(libraries)
+add_subdirectory(cmds)
 add_subdirectory(tools)
-# add_subdirectory(servers)
-# add_subdirectory(commands)
-# add_subdirectory(components)
-# #add_subdirectory(samples)
+add_subdirectory(servers)
+add_subdirectory(commands)
+add_subdirectory(components)
+#add_subdirectory(samples)
 
 # Tests
 add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)

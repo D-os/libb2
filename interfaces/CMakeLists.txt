@@ -6,13 +6,13 @@ set(interfaceFiles
     # "${CMAKE_CURRENT_SOURCE_DIR}/services/IInformant.idl"
     # "${CMAKE_CURRENT_SOURCE_DIR}/storage/IReferable.idl"
     # "${CMAKE_CURRENT_SOURCE_DIR}/support/ICatalogPermissions.idl"
-    # "${CMAKE_CURRENT_SOURCE_DIR}/support/ICatalog.idl"
-    # "${CMAKE_CURRENT_SOURCE_DIR}/support/IDatum.idl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/ICatalog.aidl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/IDatum.aidl"
     # "${CMAKE_CURRENT_SOURCE_DIR}/support/IIterable.idl"
     # "${CMAKE_CURRENT_SOURCE_DIR}/support/IIterator.idl"
     # "${CMAKE_CURRENT_SOURCE_DIR}/support/INib.idl"
     "${CMAKE_CURRENT_SOURCE_DIR}/os/support/INode.aidl"
-    # "${CMAKE_CURRENT_SOURCE_DIR}/support/INodeObserver.idl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/os/support/INodeObserver.aidl"
     # "${CMAKE_CURRENT_SOURCE_DIR}/support/IProcess.idl"
     # "${CMAKE_CURRENT_SOURCE_DIR}/support/IProcessManager.idl"
     # "${CMAKE_CURRENT_SOURCE_DIR}/support/IRandomIterator.idl"
@@ -33,13 +33,13 @@ foreach(IF ${interfaceFiles})
     set(OUT_CPP "${CPP_DIR}/${NAME_IF}.cpp")
     file(MAKE_DIRECTORY ${HEADER_DIR})
     add_custom_command(
-        OUTPUT ${HEADER_DIR} ${OUT_CPP}
+        OUTPUT ${OUT_CPP}
         # COMMAND pidgen_bs -I "${CMAKE_CURRENT_SOURCE_DIR}" -O "${CPP_DIR}" -S "${HEADER_DIR}" "${IF}"
-        COMMAND aidl-cpp "${IF}" "${INTERFACE_HEADERS_DIR}" "${OUT_CPP}"
+        COMMAND aidl-cpp -I"${CMAKE_CURRENT_SOURCE_DIR}" "${IF}" "${INTERFACE_HEADERS_DIR}" "${OUT_CPP}"
         MAIN_DEPENDENCY "${IF}"
         DEPENDS aidl-cpp
         COMMENT "Compiling IDL ${REL_IF}"
-        )
+    )
     list (APPEND interfaceSources "${OUT_CPP}")
 endforeach()
 

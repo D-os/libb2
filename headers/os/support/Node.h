@@ -18,10 +18,12 @@
 	@brief Helper class for calling the INode interface.
 */
 
+#include <support/Atom.h>
 #include <support/Binder.h>
+#include <support/Context.h>
 #include <support/ICatalog.h>
 #include <support/INode.h>
-#include <support/INodeObserver.h>
+#include <support/BnNodeObserver.h>
 #include <support/StringUtils.h>
 
 namespace os {
