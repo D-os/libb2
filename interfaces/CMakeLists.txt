@@ -24,24 +24,8 @@ set(interfaceFiles
 set(interfaces_install_dir /headers/os)
 install(FILES ${interfaceFiles} DESTINATION ${interfaces_install_dir})
 
-foreach(IF ${interfaceFiles})
-    file(RELATIVE_PATH REL_IF ${CMAKE_CURRENT_SOURCE_DIR} ${IF})
-    get_filename_component(NAME_IF ${REL_IF} NAME_WE)
-    get_filename_component(DIR_IF ${REL_IF} DIRECTORY)
-    set(HEADER_DIR "${INTERFACE_HEADERS_DIR}/${DIR_IF}")
-    set(CPP_DIR "${CMAKE_CURRENT_BINARY_DIR}/${DIR_IF}")
-    set(OUT_CPP "${CPP_DIR}/${NAME_IF}.cpp")
-    file(MAKE_DIRECTORY ${HEADER_DIR})
-    add_custom_command(
-        OUTPUT ${OUT_CPP}
-        # COMMAND pidgen_bs -I "${CMAKE_CURRENT_SOURCE_DIR}" -O "${CPP_DIR}" -S "${HEADER_DIR}" "${IF}"
-        COMMAND aidl-cpp -I"${CMAKE_CURRENT_SOURCE_DIR}" "${IF}" "${INTERFACE_HEADERS_DIR}" "${OUT_CPP}"
-        MAIN_DEPENDENCY "${IF}"
-        DEPENDS aidl-cpp
-        COMMENT "Compiling IDL ${REL_IF}"
-    )
-    list (APPEND interfaceSources "${OUT_CPP}")
-endforeach()
+include(AIDL)
+add_aidl(interfaceSources ${INTERFACE_HEADERS_DIR} ${interfaceFiles})
 
 file(GLOB_RECURSE interfaceHeaders "${INTERFACE_HEADERS_DIR}/*.h")
 install(FILES ${interfaceHeaders} DESTINATION ${interfaces_install_dir})

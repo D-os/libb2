@@ -31,8 +31,8 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <syslog.h>
 #include <sys/types.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -41,35 +41,34 @@ extern "C" {
 #endif
 
 typedef enum {
-    LOG_FATAL = 0,    /* syslog LOG_EMERG */
-//    LOG_ALERT = 1,
-//    LOG_CRIT = 2,
-    LOG_ERROR = 3,    /* syslog LOG_ERR */
-    LOG_WARN = 4,     /* syslog LOG_WARNING */
-//    LOG_INFO = 5,     /* syslog NOTICE */
-//    LOG_DEBUG = 6,    /* syslog INFO */
-    LOG_VERBOSE = 7,  /* syslog DEBUG */
+  LOG_FATAL = 0,   /* syslog LOG_EMERG */
+                   //    LOG_ALERT = 1,
+                   //    LOG_CRIT = 2,
+  LOG_ERROR = 3,   /* syslog LOG_ERR */
+  LOG_WARN  = 4,   /* syslog LOG_WARNING */
+                   //    LOG_INFO = 5,     /* syslog NOTICE */
+                   //    LOG_DEBUG = 6,    /* syslog INFO */
+  LOG_VERBOSE = 7, /* syslog DEBUG */
 } log_priority;
 typedef enum android_LogPriority {
-//  ANDROID_LOG_UNKNOWN = 0,
-//  ANDROID_LOG_DEFAULT, /* only for SetMinPriority() */
+  //  ANDROID_LOG_UNKNOWN = 0,
+  //  ANDROID_LOG_DEFAULT, /* only for SetMinPriority() */
   ANDROID_LOG_VERBOSE = LOG_DEBUG,
-  ANDROID_LOG_DEBUG = LOG_INFO,
-  ANDROID_LOG_INFO = LOG_NOTICE,
-//  ANDROID_LOG_WARN,
-//  ANDROID_LOG_ERROR,
-//  ANDROID_LOG_FATAL,
-//  ANDROID_LOG_SILENT, /* only for SetMinPriority(); must be last */
+  ANDROID_LOG_DEBUG   = LOG_INFO,
+  ANDROID_LOG_INFO    = LOG_NOTICE,
+  //  ANDROID_LOG_WARN,
+  //  ANDROID_LOG_ERROR,
+  //  ANDROID_LOG_FATAL,
+  //  ANDROID_LOG_SILENT, /* only for SetMinPriority(); must be last */
 } android_LogPriority;
-
 
 /*
  * The maximum size of the log entry payload that can be
  * written to the logger. An attempt to write more than
  * this amount will result in a truncated log entry.
  */
-#define LOGGER_PREFIX_MAX_LEN       32
-#define LOGGER_PAYLOAD_MAX_LEN      512
+#define LOGGER_PREFIX_MAX_LEN 32
+#define LOGGER_PAYLOAD_MAX_LEN 512
 
 /*
  * Send a simple string to the log.
@@ -79,16 +78,16 @@ void __log_write(int facility, int priority, const char *tag, const char *text);
 /*
  * Send a formatted string to the log, used like printf(fmt,...)
  */
-void __log_print(int priority, const char *tag,  const char *fmt, ...)
+void __log_print(int priority, const char *tag, const char *fmt, ...)
 #if defined(__GNUC__)
 #ifdef __USE_MINGW_ANSI_STDIO
 #if __USE_MINGW_ANSI_STDIO
-    __attribute__ ((format(gnu_printf, 3, 4)))
+    __attribute__((format(gnu_printf, 3, 4)))
 #else
-    __attribute__ ((format(printf, 3, 4)))
+    __attribute__((format(printf, 3, 4)))
 #endif
 #else
-    __attribute__ ((format(printf, 3, 4)))
+    __attribute__((format(printf, 3, 4)))
 #endif
 #endif
     ;
@@ -98,24 +97,24 @@ void __log_print(int priority, const char *tag,  const char *fmt, ...)
  * additional parameters.
  */
 void __log_vprint(int priority, const char *tag,
-                         const char *fmt, va_list ap);
+                  const char *fmt, va_list ap);
 
 /*
  * Log an assertion failure and abort the process to have a chance
  * to inspect it if a debugger is attached. This uses the FATAL priority.
  */
 void __log_assert(const char *cond, const char *tag,
-                          const char *fmt, ...)
+                  const char *fmt, ...)
 #if defined(__GNUC__)
-    __attribute__ ((noreturn))
+    __attribute__((noreturn))
 #ifdef __USE_MINGW_ANSI_STDIO
 #if __USE_MINGW_ANSI_STDIO
-    __attribute__ ((format(gnu_printf, 3, 4)))
+    __attribute__((format(gnu_printf, 3, 4)))
 #else
-    __attribute__ ((format(printf, 3, 4)))
+    __attribute__((format(printf, 3, 4)))
 #endif
 #else
-    __attribute__ ((format(printf, 3, 4)))
+    __attribute__((format(printf, 3, 4)))
 #endif
 #endif
     ;
@@ -162,7 +161,10 @@ int __log_is_loggable(int prio, const char *tag, int def);
 #ifndef ALOGV
 #define __ALOGV(...) ((void)ALOG(LOG_DEBUG, LOG_TAG, __VA_ARGS__))
 #if LOG_NDEBUG
-#define ALOGV(...) do { if (0) { __ALOGV(__VA_ARGS__); } } while (0)
+#define ALOGV(...)                   \
+  do {                               \
+    if (0) { __ALOGV(__VA_ARGS__); } \
+  } while (0)
 #else
 #define ALOGV(...) __ALOGV(__VA_ARGS__)
 #endif
@@ -170,12 +172,12 @@ int __log_is_loggable(int prio, const char *tag, int def);
 
 #ifndef ALOGV_IF
 #if LOG_NDEBUG
-#define ALOGV_IF(cond, ...)   ((void)0)
+#define ALOGV_IF(cond, ...) ((void)0)
 #else
-#define ALOGV_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)ALOG(LOG_DEBUG, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define ALOGV_IF(cond, ...)                            \
+  ((__predict_false(cond))                             \
+       ? ((void)ALOG(LOG_DEBUG, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 #endif
 
@@ -187,10 +189,10 @@ int __log_is_loggable(int prio, const char *tag, int def);
 #endif
 
 #ifndef ALOGD_IF
-#define ALOGD_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)ALOG(LOG_INFO, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define ALOGD_IF(cond, ...)                           \
+  ((__predict_false(cond))                            \
+       ? ((void)ALOG(LOG_INFO, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 
 /*
@@ -201,10 +203,10 @@ int __log_is_loggable(int prio, const char *tag, int def);
 #endif
 
 #ifndef ALOGI_IF
-#define ALOGI_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)ALOG(LOG_NOTICE, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define ALOGI_IF(cond, ...)                             \
+  ((__predict_false(cond))                              \
+       ? ((void)ALOG(LOG_NOTICE, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 
 /*
@@ -215,10 +217,10 @@ int __log_is_loggable(int prio, const char *tag, int def);
 #endif
 
 #ifndef ALOGW_IF
-#define ALOGW_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)ALOG(LOG_WARNING, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define ALOGW_IF(cond, ...)                              \
+  ((__predict_false(cond))                               \
+       ? ((void)ALOG(LOG_WARNING, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 
 /*
@@ -229,10 +231,10 @@ int __log_is_loggable(int prio, const char *tag, int def);
 #endif
 
 #ifndef ALOGE_IF
-#define ALOGE_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)ALOG(LOG_ERR, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define ALOGE_IF(cond, ...)                          \
+  ((__predict_false(cond))                           \
+       ? ((void)ALOG(LOG_ERR, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 
 // ---------------------------------------------------------------------
@@ -281,7 +283,6 @@ int __log_is_loggable(int prio, const char *tag, int def);
 #define IF_ALOGE() IF_ALOG(LOG_ERR, LOG_TAG)
 #endif
 
-
 // ---------------------------------------------------------------------
 
 /*
@@ -289,9 +290,12 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #ifndef SLOGV
 #define __SLOGV(...) \
-    ((void)__log_print(LOG_ID_SYSTEM, LOG_DEBUG, LOG_TAG, __VA_ARGS__))
+  ((void)__log_print(LOG_DEBUG, LOG_TAG, __VA_ARGS__))
 #if LOG_NDEBUG
-#define SLOGV(...) do { if (0) { __SLOGV(__VA_ARGS__); } } while (0)
+#define SLOGV(...)                   \
+  do {                               \
+    if (0) { __SLOGV(__VA_ARGS__); } \
+  } while (0)
 #else
 #define SLOGV(...) __SLOGV(__VA_ARGS__)
 #endif
@@ -299,12 +303,12 @@ int __log_is_loggable(int prio, const char *tag, int def);
 
 #ifndef SLOGV_IF
 #if LOG_NDEBUG
-#define SLOGV_IF(cond, ...)   ((void)0)
+#define SLOGV_IF(cond, ...) ((void)0)
 #else
-#define SLOGV_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)__log_print(LOG_ID_SYSTEM, LOG_DEBUG, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGV_IF(cond, ...)                                   \
+  ((__predict_false(cond))                                    \
+       ? ((void)__log_print(LOG_DEBUG, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 #endif
 
@@ -313,14 +317,14 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #ifndef SLOGD
 #define SLOGD(...) \
-    ((void)__log_print(LOG_ID_SYSTEM, LOG_INFO, LOG_TAG, __VA_ARGS__))
+  ((void)__log_print(LOG_INFO, LOG_TAG, __VA_ARGS__))
 #endif
 
 #ifndef SLOGD_IF
-#define SLOGD_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)__log_print(LOG_ID_SYSTEM, LOG_INFO, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGD_IF(cond, ...)                                  \
+  ((__predict_false(cond))                                   \
+       ? ((void)__log_print(LOG_INFO, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 
 /*
@@ -328,14 +332,14 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #ifndef SLOGI
 #define SLOGI(...) \
-    ((void)__log_print(LOG_ID_SYSTEM, LOG_NOTICE, LOG_TAG, __VA_ARGS__))
+  ((void)__log_print(LOG_NOTICE, LOG_TAG, __VA_ARGS__))
 #endif
 
 #ifndef SLOGI_IF
-#define SLOGI_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)__log_print(LOG_ID_SYSTEM, LOG_NOTICE, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGI_IF(cond, ...)                                    \
+  ((__predict_false(cond))                                     \
+       ? ((void)__log_print(LOG_NOTICE, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 
 /*
@@ -343,14 +347,14 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #ifndef SLOGW
 #define SLOGW(...) \
-    ((void)__log_print(LOG_ID_SYSTEM, LOG_WARNING, LOG_TAG, __VA_ARGS__))
+  ((void)__log_print(LOG_WARNING, LOG_TAG, __VA_ARGS__))
 #endif
 
 #ifndef SLOGW_IF
-#define SLOGW_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)__log_print(LOG_ID_SYSTEM, LOG_WARNING, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGW_IF(cond, ...)                                     \
+  ((__predict_false(cond))                                      \
+       ? ((void)__log_print(LOG_WARNING, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 
 /*
@@ -358,14 +362,14 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #ifndef SLOGE
 #define SLOGE(...) \
-    ((void)__log_print(LOG_ID_SYSTEM, LOG_ERR, LOG_TAG, __VA_ARGS__))
+  ((void)__log_print(LOG_ERR, LOG_TAG, __VA_ARGS__))
 #endif
 
 #ifndef SLOGE_IF
-#define SLOGE_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)__log_print(LOG_ID_SYSTEM, LOG_ERR, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGE_IF(cond, ...)                                 \
+  ((__predict_false(cond))                                  \
+       ? ((void)__log_print(LOG_ERR, LOG_TAG, __VA_ARGS__)) \
+       : (void)0)
 #endif
 
 // ---------------------------------------------------------------------
@@ -377,15 +381,15 @@ int __log_is_loggable(int prio, const char *tag, int def);
  * is -inverted- from the normal assert() semantics.
  */
 #ifndef LOG_ALWAYS_FATAL_IF
-#define LOG_ALWAYS_FATAL_IF(cond, ...) \
-    ( (__predict_false(cond)) \
-    ? ((void)__log_printAssert(#cond, LOG_TAG, ## __VA_ARGS__)) \
-    : (void)0 )
+#define LOG_ALWAYS_FATAL_IF(cond, ...)                            \
+  ((__predict_false(cond))                                        \
+       ? ((void)__log_printAssert(#cond, LOG_TAG, ##__VA_ARGS__)) \
+       : (void)0)
 #endif
 
 #ifndef LOG_ALWAYS_FATAL
 #define LOG_ALWAYS_FATAL(...) \
-    ( ((void)__log_printAssert(NULL, LOG_TAG, ## __VA_ARGS__)) )
+  (((void)__log_printAssert(NULL, LOG_TAG, ##__VA_ARGS__)))
 #endif
 
 /*
@@ -404,7 +408,7 @@ int __log_is_loggable(int prio, const char *tag, int def);
 #else
 
 #ifndef LOG_FATAL_IF
-#define LOG_FATAL_IF(cond, ...) LOG_ALWAYS_FATAL_IF(cond, ## __VA_ARGS__)
+#define LOG_FATAL_IF(cond, ...) LOG_ALWAYS_FATAL_IF(cond, ##__VA_ARGS__)
 #endif
 #ifndef LOG_FATAL
 #define LOG_FATAL(...) LOG_ALWAYS_FATAL(__VA_ARGS__)
@@ -417,7 +421,7 @@ int __log_is_loggable(int prio, const char *tag, int def);
  * Stripped out of release builds.  Uses the current LOG_TAG.
  */
 #ifndef ALOG_ASSERT
-#define ALOG_ASSERT(cond, ...) LOG_FATAL_IF(!(cond), ## __VA_ARGS__)
+#define ALOG_ASSERT(cond, ...) LOG_FATAL_IF(!(cond), ##__VA_ARGS__)
 //#define ALOG_ASSERT(cond) LOG_FATAL_IF(!(cond), "Assertion failed: " #cond)
 #endif
 
@@ -433,7 +437,7 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #ifndef ALOG
 #define ALOG(priority, tag, ...) \
-    LOG_PRINT(priority, tag, __VA_ARGS__)
+  LOG_PRINT(priority, tag, __VA_ARGS__)
 #endif
 
 /*
@@ -441,7 +445,7 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #ifndef LOG_PRINT
 #define LOG_PRINT(priority, tag, ...) \
-    __log_print(priority, tag, __VA_ARGS__)
+  __log_print(priority, tag, __VA_ARGS__)
 #endif
 
 /*
@@ -449,7 +453,7 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #ifndef LOG_PRINT_VA
 #define LOG_PRINT_VA(priority, tag, fmt, args) \
-    __log_vprint(priority, NULL, tag, fmt, args)
+  __log_vprint(priority, NULL, tag, fmt, args)
 #endif
 
 /*
@@ -457,7 +461,7 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #ifndef IF_ALOG
 #define IF_ALOG(priority, tag) \
-    if (__log_testLog(priority, tag))
+  if (__log_testLog(priority, tag))
 #endif
 
 /*
@@ -474,19 +478,19 @@ int __log_is_loggable(int prio, const char *tag, int def);
 /* Returns 2nd arg.  Used to substitute default value if caller's vararg list
  * is empty.
  */
-#define __log_second(dummy, second, ...)     second
+#define __log_second(dummy, second, ...) second
 
 /* If passed multiple args, returns ',' followed by all but 1st arg, otherwise
  * returns nothing.
  */
-#define __log_rest(first, ...)               , ## __VA_ARGS__
+#define __log_rest(first, ...) , ##__VA_ARGS__
 
 #define __log_printAssert(cond, tag, fmt...) \
-    __log_assert(cond, tag, \
-        __log_second(0, ## fmt, NULL) __log_rest(fmt))
+  __log_assert(cond, tag,                    \
+               __log_second(0, ##fmt, NULL) __log_rest(fmt))
 
 #define __log_writeLog(prio, tag, text) \
-    __log_write(prio, tag, text)
+  __log_write(prio, tag, text)
 
 /*
  *    IF_ALOG uses __log_testLog, but IF_ALOG can be overridden.
@@ -497,10 +501,10 @@ int __log_is_loggable(int prio, const char *tag, int def);
  */
 #if LOG_NDEBUG /* Production */
 #define __log_testLog(prio, tag) \
-    (__log_is_loggable(prio, tag, LOG_INFO) != 0)
+  (__log_is_loggable(prio, tag, LOG_INFO) != 0)
 #else
 #define __log_testLog(prio, tag) \
-    (__log_is_loggable(prio, tag, LOG_DEBUG) != 0)
+  (__log_is_loggable(prio, tag, LOG_DEBUG) != 0)
 #endif
 
 #ifdef __cplusplus

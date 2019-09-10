@@ -18,7 +18,7 @@
 	@brief Common base implementation of IDatum interface.
 */
 
-#include <support/IDatum.h>
+#include <support/BnDatum.h>
 
 namespace os {
 namespace storage {
