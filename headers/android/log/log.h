@@ -56,9 +56,9 @@ typedef enum android_LogPriority {
   ANDROID_LOG_VERBOSE = LOG_DEBUG,
   ANDROID_LOG_DEBUG   = LOG_INFO,
   ANDROID_LOG_INFO    = LOG_NOTICE,
-  //  ANDROID_LOG_WARN,
-  //  ANDROID_LOG_ERROR,
-  //  ANDROID_LOG_FATAL,
+  ANDROID_LOG_WARN    = LOG_WARNING,
+  ANDROID_LOG_ERROR   = LOG_ERR,
+  ANDROID_LOG_FATAL   = LOG_CRIT,
   //  ANDROID_LOG_SILENT, /* only for SetMinPriority(); must be last */
 } android_LogPriority;
 
