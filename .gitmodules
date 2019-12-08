@@ -22,3 +22,6 @@
 [submodule "libs/base"]
 	path = libs/base
 	url = git@github.com:D-os/base.git
+[submodule "libs/libbinderthreadstate"]
+	path = libs/libbinderthreadstate
+	url = git@github.com:D-os/libbinderthreadstate.git
