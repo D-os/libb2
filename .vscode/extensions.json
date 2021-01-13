@@ -5,7 +5,6 @@
 	"recommendations": [
 		"ms-vscode.cpptools",
 		"twxs.cmake",
-		"vector-of-bool.cmake-tools",
 		"xaver.clang-format",
 		"llvm-vs-code-extensions.vscode-clangd",
 		"matepek.vscode-catch2-test-adapter",
