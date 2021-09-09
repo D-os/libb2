@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "thread exited: %d\n", return_value);
 
-    image_id addon = load_add_on("/usr/libexec/notification-daemon"); // just some random library
+    image_id addon = load_add_on("/usr/libexec/abrt-gdb-exploitable"); // just some random library
     if (addon == B_ERROR) {
         fprintf(stderr, "load_addon failed: %ld %s\n", addon, dlerror());
         exit(EXIT_FAILURE);
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     void *init, *fini;
     get_image_symbol(addon, "_init", B_SYMBOL_TYPE_TEXT, &init);
     get_image_symbol(addon, "_fini", B_SYMBOL_TYPE_TEXT, &fini);
-    fprintf(stderr, "addon image sumbols: %p %p\n", init, fini);
+    fprintf(stderr, "addon image symbols: %p %p\n", init, fini);
 
     return return_value;
 }

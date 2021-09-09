@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     int pos;
     int ret = EXIT_SUCCESS;
 
-    char temp[] = "/tmp/attrXXXXXX";
+    char temp[] = "/var/tmp/attrXXXXXX";
     fd = mkostemp(temp, O_RDONLY);
     if (fd < 0) {
         fprintf(stderr, "Error creating temp file: %d %s\n", errno, strerror(errno));

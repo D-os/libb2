@@ -328,7 +328,7 @@ template <typename Wrapper> static inline typename Wrapper::pointer qGetPtrHelpe
 
 /* Use the built-in atomic functions, if requested and available. */
 
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || (defined(__clang__) && __has_feature(cxx_atomic))
 
 
 static __inline__ void
