@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
 project(LIBB2 VERSION 0.1.0 LANGUAGES CXX C)
 set(CMAKE_C_STANDARD 11)
@@ -107,6 +107,16 @@ message(STATUS "")
 set(EXTERNAL_GOOGLETEST_DIR "${CMAKE_SOURCE_DIR}/external/googletest")
 set(EXTERNAL_SAFE_IOP_DIR "${CMAKE_SOURCE_DIR}/external/safe-iop")
 
+# Tests
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(DBUILD_GMOCK OFF)
+set(INSTALL_GTEST OFF)
+add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}" EXCLUDE_FROM_ALL)
+
+include(GoogleTest)
+include(CTest)
+enable_testing()
+
 # Sub directories.
 add_subdirectory(headers)
 add_subdirectory(interfaces)
@@ -119,6 +129,4 @@ add_subdirectory(commands)
 add_subdirectory(components)
 #add_subdirectory(samples)
 
-# Tests
-add_subdirectory("${EXTERNAL_GOOGLETEST_DIR}/googlemock" EXCLUDE_FROM_ALL)
 #add_subdirectory(tests)
