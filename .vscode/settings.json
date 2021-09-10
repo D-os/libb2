@@ -1,7 +1,7 @@
 {
-    "editor.tabSize": 2,
-    "editor.trimAutoWhitespace": true,
-    "files.trimTrailingWhitespace": true,
-    // "C_Cpp.configurationWarnings": "Disabled",
-    "editor.formatOnSave": true
+  "editor.tabSize": 2,
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  // "C_Cpp.configurationWarnings": "Disabled",
+  "editor.formatOnSave": false
 }
