@@ -1,7 +1,0 @@
-LIBBE_0.1 {
-  global:
-    *;
-};
-
-LIBBE_1_ALPHA1 {
-} LIBBE_0.1;

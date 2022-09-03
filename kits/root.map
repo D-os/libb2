@@ -1,9 +1,0 @@
-LIBROOT_0.1 {
-  global:
-    *;
-};
-
-LIBROOT_BASE {
-} LIBROOT_0.1;
-LIBROOT_1_ALPHA5 {
-} LIBROOT_0.1;
