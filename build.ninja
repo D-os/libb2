@@ -34,4 +34,6 @@ build $BUILDROOT/os/libbe.so: so $
   libs = $libs -lbinder
 
 
+subninja system/os/services/build.ninja
+
 subninja system/os/tests/build.ninja

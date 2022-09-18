@@ -1,0 +1,17 @@
+build $BUILDROOT/os/aidl/src/os/services/sampservice/ISampService.cpp $
+| $BUILDROOT/os/aidl/include/os/services/sampservice/ISampService.h $
+  $BUILDROOT/os/aidl/include/os/services/sampservice/BpSampService.h $
+  $BUILDROOT/os/aidl/include/os/services/sampservice/BnSampService.h: aidl $
+  system/os/services/sampservice/ISampService.aidl $
+| $HOSTAIDL
+
+build $BUILDROOT/os/aidl/${TARGET}/os/services/sampservice/ISampService.o: cxx out/build/os/aidl/src/os/services/sampservice/ISampService.cpp
+
+build $BUILDROOT/os/services/sampservice/SampService.o: cxx system/os/services/sampservice/SampService.cpp
+build $BUILDROOT/os/services/sampservice/main.o: cxx system/os/services/sampservice/main.cpp
+
+build $BUILDROOT/os/services/sampservice/sampservice: link $
+  $BUILDROOT/os/aidl/${TARGET}/os/services/sampservice/ISampService.o $
+  $BUILDROOT/os/services/sampservice/SampService.o $
+  $BUILDROOT/os/services/sampservice/main.o $
+

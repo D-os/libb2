@@ -1,0 +1,15 @@
+headerDir = $BUILDROOT/os/aidl/include
+lang = cpp
+optionalFlags = -Weverything -Wno-missing-permission-annotation
+outDir = $BUILDROOT/os/aidl/src
+
+includes = -I$BUILDROOT/os/aidl/include $
+  -Iframeworks/native/libs/binder/include $
+  -Isystem/libbase/include $
+  -Isystem/core/libutils/include $
+  -Isystem/logging/liblog/include $
+  -Isystem/core/libcutils/include $
+
+libs = $libs -lbinder -lutils -lcutils -llog
+
+subninja system/os/services/sampservice/build.ninja
