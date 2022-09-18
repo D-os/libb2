@@ -1,6 +1,9 @@
 BasedOnStyle: Google
+IndentWidth: 4
+TabWidth: 4
+UseTab: Always
 Language: Cpp
-Standard: Cpp11
+Standard: Latest
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterClass:      true
@@ -27,3 +30,5 @@ AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
 Cpp11BracedListStyle: true
 ColumnLimit: 0
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackParameters: true

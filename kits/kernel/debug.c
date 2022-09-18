@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 void debug_vprintf(const char *format, va_list args)
 {
@@ -27,7 +28,7 @@ void debugger(const char *message)
 
 int _debuggerAssert(const char *file, int line, const char *message)
 {
-        debug_printf("%" B_PRId32 ": ASSERT: %s:%d %s\n",
+        debug_printf("%" PRId32 ": ASSERT: %s:%d %s\n",
                      find_thread(NULL), file, line, message);
         abort();
 }

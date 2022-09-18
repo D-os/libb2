@@ -1,0 +1,8 @@
+cflags = $cflags -DDEBUG
+cxxflags = $cxxflags -DDEBUG
+libs = $libs -lbe
+
+build $BUILDROOT/os/tests/app/app.o: cxx system/os/tests/app/app.cpp
+build $BUILDROOT/os/tests/app/app: link $
+  $BUILDROOT/os/tests/app/app.o $
+| $SYSROOT/lib/libbe.so
