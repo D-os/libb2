@@ -13,3 +13,4 @@ includes = -I$BUILDROOT/os/aidl/include $
 libs = $libs -lbinder -lutils -lcutils -llog
 
 subninja system/os/services/sampservice/build.ninja
+subninja system/os/services/rosterservice/build.ninja

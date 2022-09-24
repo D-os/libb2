@@ -1,0 +1,17 @@
+build $BUILDROOT/os/aidl/src/os/services/rosterservice/IRosterService.cpp $
+| $BUILDROOT/os/aidl/include/os/services/rosterservice/IRosterService.h $
+  $BUILDROOT/os/aidl/include/os/services/rosterservice/BpRosterService.h $
+  $BUILDROOT/os/aidl/include/os/services/rosterservice/BnRosterService.h: aidl $
+  system/os/services/rosterservice/IRosterService.aidl $
+| $HOSTAIDL
+
+build $BUILDROOT/os/aidl/${TARGET}/os/services/rosterservice/IRosterService.o: cxx out/build/os/aidl/src/os/services/rosterservice/IRosterService.cpp
+
+build $BUILDROOT/os/services/rosterservice/RosterService.o: cxx system/os/services/rosterservice/RosterService.cpp
+build $BUILDROOT/os/services/rosterservice/main.o: cxx system/os/services/rosterservice/main.cpp
+
+build $BUILDROOT/os/services/rosterservice/rosterservice: link $
+  $BUILDROOT/os/aidl/${TARGET}/os/services/rosterservice/IRosterService.o $
+  $BUILDROOT/os/services/rosterservice/RosterService.o $
+  $BUILDROOT/os/services/rosterservice/main.o $
+
