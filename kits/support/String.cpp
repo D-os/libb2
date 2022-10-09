@@ -6,7 +6,7 @@
 #include <string>
 
 #define DATA_PTR(data) reinterpret_cast<std::string *>(data)
-#define DATA DATA_PTR(data)
+#define DATA DATA_PTR(this->data)
 
 BString::BString() : data(new std::string())
 {
