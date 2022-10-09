@@ -30,7 +30,7 @@ int main(int /* argc */, char** /* argv */)
 	signal(SIGPIPE, SIG_IGN);
 
 	// publish SampService
-	sp<SampService>		sampservice = new SampService();
+	sp<SampService>		sampservice = sp<SampService>::make();
 	sp<IServiceManager> sm(defaultServiceManager());
 	sm->addService(String16(SampService::SERVICE_NAME), sampservice, false);
 

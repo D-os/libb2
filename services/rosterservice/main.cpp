@@ -30,7 +30,7 @@ int main(int /* argc */, char** /* argv */)
 	signal(SIGPIPE, SIG_IGN);
 
 	// publish RosterService
-	sp<RosterService>	rosterservice = new RosterService();
+	sp<RosterService>	rosterservice = sp<RosterService>::make();
 	sp<IServiceManager> sm(defaultServiceManager());
 	sm->addService(String16(RosterService::SERVICE_NAME), rosterservice, false);
 

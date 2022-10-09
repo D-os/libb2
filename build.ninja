@@ -3,6 +3,7 @@ cflags = -O0 -ggdb -Wall -Werror $
 
 cxxflags = $cflags $
   -fexceptions $
+  -DANDROID_UTILS_REF_BASE_DISABLE_IMPLICIT_CONSTRUCTION $
 
 includes = $
   -Isystem/os/headers $
