@@ -6,3 +6,8 @@ build $BUILDROOT/os/tests/app/app.o: cxx system/os/tests/app/app.cpp
 build $BUILDROOT/os/tests/app/app: link $
   $BUILDROOT/os/tests/app/app.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/kits.o: cxx system/os/tests/kits.cpp
+build $BUILDROOT/os/tests/kits: link $
+  $BUILDROOT/os/tests/kits.o $
+| $SYSROOT/lib/libbe.so

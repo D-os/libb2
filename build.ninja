@@ -11,6 +11,7 @@ includes = $
   -Isystem/os/headers/interface $
   -Isystem/os/headers/kernel $
   -Isystem/os/headers/storage $
+  -Iexternal/doctest $
 
 libs = -lc++ -lunwind
 
@@ -20,9 +21,12 @@ build $BUILDROOT/os/libbe/app/Looper.o: cxx system/os/kits/app/Looper.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
 build $BUILDROOT/os/libbe/support/Archivable.o: cxx system/os/kits/support/Archivable.cpp
 build $BUILDROOT/os/libbe/support/List.o: cxx system/os/kits/support/List.cpp
+build $BUILDROOT/os/libbe/support/String.o: cxx system/os/kits/support/String.cpp
 build $BUILDROOT/os/libbe/kernel/debug.o: cc system/os/kits/kernel/debug.c
 build $BUILDROOT/os/libbe/kernel/rwlock.o: cc system/os/kits/kernel/rwlock.c
 build $BUILDROOT/os/libbe/kernel/thread.o: cc system/os/kits/kernel/thread.c
+
+build $BUILDROOT/os/tests/doctest.o: cxx system/os/tests/doctest.cpp
 
 build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/Application.o $
@@ -31,9 +35,11 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/Roster.o $
   $BUILDROOT/os/libbe/support/Archivable.o $
   $BUILDROOT/os/libbe/support/List.o $
+  $BUILDROOT/os/libbe/support/String.o $
   $BUILDROOT/os/libbe/kernel/debug.o $
   $BUILDROOT/os/libbe/kernel/rwlock.o $
   $BUILDROOT/os/libbe/kernel/thread.o $
+  $BUILDROOT/os/tests/doctest.o $
 | $SYSROOT/lib/libbinder.so
   libs = $libs -lbinder
 

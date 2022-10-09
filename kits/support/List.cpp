@@ -6,14 +6,12 @@
 #define DATA_PTR(data) reinterpret_cast<std::vector<void *> *>(data)
 #define DATA DATA_PTR(data)
 
-BList::BList(int32 initialAllocSize)
+BList::BList(int32 initialAllocSize) : data(new std::vector<void *>(initialAllocSize))
 {
-	data = new std::vector<void *>(initialAllocSize);
 }
 
-BList::BList(const BList &other)
+BList::BList(const BList &other) : data(new std::vector<void *>(*DATA_PTR(other.data)))
 {
-	data = new std::vector<void *>(*DATA_PTR(other.data));
 }
 
 BList::~BList()
