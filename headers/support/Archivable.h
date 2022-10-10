@@ -12,6 +12,8 @@ class BArchivable
 	virtual ~BArchivable();
 
 	BArchivable(BMessage *from);
+	virtual status_t	Archive(BMessage *into, bool deep = true) const;
+	static BArchivable *Instantiate(BMessage *from);
 };
 
 typedef BArchivable *(*instantiation_func)(BMessage *);

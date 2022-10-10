@@ -17,7 +17,7 @@ void debug_printf(const char *format, ...)
     debug_vprintf(format, args);
 }
 
-void debugger(const char *message)
+_Noreturn void debugger(const char *message)
 {
     // FIXME: launch real debugger:
     // FIXME: open terminal window, attach stdin/out/err and drop to gdb there
