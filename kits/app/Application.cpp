@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include <Roster.h>
+#include <binder/IPCThreadState.h>
 
 BApplication *be_app = nullptr;
 // BMessenger *be_app_messenger = nullptr;
@@ -31,8 +32,8 @@ status_t BApplication::Archive(BMessage *data, bool deep) const
 
 thread_id BApplication::Run()
 {
-	debugger(__PRETTY_FUNCTION__);
-	return -1;
+	android::IPCThreadState::self()->joinThreadPool();
+	return find_thread(NULL);
 }
 
 void BApplication::Quit()
