@@ -4,6 +4,10 @@
 #include <Entry.h>
 #include <OS.h>
 
+#include <memory>
+
+class BList;
+
 /// app_info Struct and Values
 struct app_info
 {
@@ -50,6 +54,24 @@ class BRoster
    public:
 	BRoster();
 	~BRoster();
+
+	/// Querying for apps
+	bool	 IsRunning(const char *mime_sig) const;
+	bool	 IsRunning(entry_ref *ref) const;
+	team_id	 TeamFor(const char *mime_sig) const;
+	team_id	 TeamFor(entry_ref *ref) const;
+	void	 GetAppList(BList *team_id_list) const;
+	void	 GetAppList(const char *sig, BList *team_id_list) const;
+	status_t GetAppInfo(const char *sig, app_info *info) const;
+	status_t GetAppInfo(entry_ref *ref, app_info *info) const;
+	status_t GetRunningAppInfo(team_id team, app_info *info) const;
+	status_t GetActiveAppInfo(app_info *info) const;
+	status_t FindApp(const char *mime_type, entry_ref *app) const;
+	status_t FindApp(entry_ref *ref, entry_ref *app) const;
+
+   private:
+	class impl;
+	std::unique_ptr<impl> _impl;
 };
 
 /// Global be_roster

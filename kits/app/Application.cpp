@@ -1,7 +1,10 @@
 #include "Application.h"
 
-BApplication *be_app = NULL;
-// BMessenger be_app_messenger;
+#include <Roster.h>
+
+BApplication *be_app = nullptr;
+// BMessenger *be_app_messenger = nullptr;
+const BRoster *be_roster = nullptr;
 
 BApplication::BApplication(const char *signature)
 	: BLooper(signature)
@@ -10,11 +13,14 @@ BApplication::BApplication(const char *signature)
 		debugger("BApplication already created. Only one is allowed.");
 
 	be_app = this;
-	// be_app_messenger = BMessenger(this);
+	// be_app_messenger = new BMessenger(this);
+	be_roster = new BRoster();
 }
 
 BApplication::~BApplication()
 {
+	delete be_roster;
+	// delete be_app_messenger;
 }
 
 status_t BApplication::Archive(BMessage *data, bool deep) const
