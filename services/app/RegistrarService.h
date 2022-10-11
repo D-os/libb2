@@ -1,28 +1,29 @@
 #pragma once
 #include <cutils/compiler.h>
-#include <os/services/rosterservice/BnRosterService.h>
+#include <os/services/BnRegistrarService.h>
 
 namespace os {
 namespace services {
-namespace rosterservice {
+namespace registrar {
 
 using namespace android;
 
-class RosterService : public BnRosterService
+class RegistrarService : public BnRegistrarService
 {
    public:
 	static const char* const SERVICE_NAME ANDROID_API;
 
-	RosterService() ANDROID_API;
+	RegistrarService() ANDROID_API;
 
    protected:
-	binder::Status add(int32_t a, int32_t b, int32_t* _aidl_return) override;
-	binder::Status sub(int32_t a, int32_t b, int32_t* _aidl_return) override;
+	virtual binder::Status addApplication() override;
+	virtual binder::Status listApplications() override;
+	virtual binder::Status getApplication() override;
 
 	status_t shellCommand(int in, int out, int err, Vector<String16>& args,
 						  const sp<IShellCallback>&	 callback,
 						  const sp<IResultReceiver>& resultReceiver) override;
 };
-}  // namespace rosterservice
+}  // namespace registrar
 }  // namespace services
 }  // namespace os

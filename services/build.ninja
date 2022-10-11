@@ -3,14 +3,25 @@ lang = cpp
 optionalFlags = -Weverything -Wno-missing-permission-annotation
 outDir = $BUILDROOT/os/aidl/src
 
-includes = -I$BUILDROOT/os/aidl/include $
-  -Iframeworks/native/libs/binder/include $
-  -Isystem/libbase/include $
-  -Isystem/core/libutils/include $
-  -Isystem/logging/liblog/include $
-  -Isystem/core/libcutils/include $
+includes = $
+  -isystem $BUILDROOT/os/aidl/include $
+  -isystem frameworks/native/libs/binder/include $
+  -isystem system/core/libcutils/include $
+  -isystem system/core/libutils/include $
+  -isystem system/libbase/include $
+  -isystem system/logging/liblog/include $
 
-libs = $libs -lbinder -lutils -lcutils -llog
+libs = -lc++ -lunwind $
+  -lbinder -lutils -lcutils -llog
+
+build $BUILDROOT/os/aidl/src/os/services/IRegistrarService.cpp $
+| $BUILDROOT/os/aidl/include/os/services/IRegistrarService.h $
+  $BUILDROOT/os/aidl/include/os/services/BpRegistrarService.h $
+  $BUILDROOT/os/aidl/include/os/services/BnRegistrarService.h: aidl $
+  system/os/services/IRegistrarService.aidl $
+| $HOSTAIDL
+
+build $BUILDROOT/os/aidl/${TARGET}/os/services/app/IRegistrarService.o: cxx $BUILDROOT/os/aidl/src/os/services/IRegistrarService.cpp
 
 subninja system/os/services/sampservice/build.ninja
-subninja system/os/services/rosterservice/build.ninja
+subninja system/os/services/app/build.ninja

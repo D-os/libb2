@@ -1,35 +1,38 @@
-#include "RosterService.h"
-
 #include <binder/IResultReceiver.h>
 #include <binder/IShellCallback.h>
 #include <utils/Trace.h>
 
-using namespace os::services::rosterservice;
+#include "RegistrarService.h"
+
+using namespace os::services::registrar;
 
 namespace {
 status_t cmdHelp(int out);
 }
 
-const char* const RosterService::SERVICE_NAME = "samp";
+const char* const RegistrarService::SERVICE_NAME = "registrar";
 
-RosterService::RosterService()
+RegistrarService::RegistrarService()
 {
 }
 
-binder::Status RosterService::add(int32_t a, int32_t b, int32_t* _aidl_return)
+binder::Status RegistrarService::addApplication()
 {
-	*_aidl_return = a + b;
 	return binder::Status::ok();
 }
 
-binder::Status RosterService::sub(int32_t a, int32_t b, int32_t* _aidl_return)
+binder::Status RegistrarService::listApplications()
 {
-	*_aidl_return = a - b;
 	return binder::Status::ok();
 }
 
-status_t RosterService::shellCommand(int in, int out, int err, Vector<String16>& args,
-									 const sp<IShellCallback>& callback, const sp<IResultReceiver>& resultReceiver)
+binder::Status RegistrarService::getApplication()
+{
+	return binder::Status::ok();
+}
+
+status_t RegistrarService::shellCommand(int in, int out, int err, Vector<String16>& args,
+										const sp<IShellCallback>& callback, const sp<IResultReceiver>& resultReceiver)
 {
 	ATRACE_CALL();
 
@@ -60,12 +63,12 @@ status_t cmdHelp(int out)
 {
 	FILE* outs = fdopen(out, "w");
 	if (!outs) {
-		ALOGE("RosterService: failed to create out stream: %s (%d)", strerror(errno), errno);
+		ALOGE("RegistrarService: failed to create out stream: %s (%d)", strerror(errno), errno);
 		return BAD_VALUE;
 	}
 
 	fprintf(outs,
-			"RosterService commands:\n"
+			"RegistrarService commands:\n"
 			"  help   print this help message\n");
 
 	fclose(outs);

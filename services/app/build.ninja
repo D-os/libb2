@@ -1,0 +1,8 @@
+build $BUILDROOT/os/services/app/RegistrarService.o: cxx system/os/services/app/RegistrarService.cpp | $BUILDROOT/os/aidl/include/os/services/BnRegistrarService.h
+build $BUILDROOT/os/services/app/main.o: cxx system/os/services/app/main.cpp | $BUILDROOT/os/aidl/include/os/services/BnRegistrarService.h
+
+build $BUILDROOT/os/services/app/app_service: link $
+  $BUILDROOT/os/aidl/${TARGET}/os/services/app/IRegistrarService.o $
+  $BUILDROOT/os/services/app/RegistrarService.o $
+  $BUILDROOT/os/services/app/main.o $
+

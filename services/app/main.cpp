@@ -20,19 +20,19 @@
 #include <signal.h>
 #include <sys/resource.h>
 
-#include "RosterService.h"
+#include "RegistrarService.h"
 
 using namespace android;
-using namespace os::services::rosterservice;
+using namespace os::services::registrar;
 
 int main(int /* argc */, char** /* argv */)
 {
 	signal(SIGPIPE, SIG_IGN);
 
-	// publish RosterService
-	sp<RosterService>	rosterservice = sp<RosterService>::make();
-	sp<IServiceManager> sm(defaultServiceManager());
-	sm->addService(String16(RosterService::SERVICE_NAME), rosterservice, false);
+	// publish RegistrarService
+	sp<RegistrarService> registrar = sp<RegistrarService>::make();
+	sp<IServiceManager>	 sm(defaultServiceManager());
+	sm->addService(String16(RegistrarService::SERVICE_NAME), registrar, false);
 
 	// limit the number of binder threads to 4.
 	ProcessState::self()->setThreadPoolMaxThreadCount(4);
