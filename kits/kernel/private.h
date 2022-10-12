@@ -3,12 +3,6 @@
 /* Pause instruction to prevent excess processor bus usage */
 #define cpu_relax() __builtin_ia32_pause()
 
-// stdatomics.h ??!
-#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
-#define atomic_add(P, V) __sync_add_and_fetch((P), (V))
-#define atomic_sub(P, V) __sync_add_and_fetch((P), -(V))
-#define atomic_xadd(P, V) __sync_fetch_and_add((P), (V))
-
 #define likely(x)    __builtin_expect (!!(x), 1)
 #define unlikely(x)  __builtin_expect (!!(x), 0)
 
@@ -20,8 +14,8 @@ typedef enum {
 } _task_state;
 
 typedef struct _thread_info_struct {
+    pid_t           tid; // futex
     pthread_t       pthread;
-    pid_t           tid;
     team_id         team;
     char			name[B_OS_NAME_LENGTH];
     int32			priority;

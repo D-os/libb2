@@ -229,8 +229,6 @@ class BString
 	BString &operator<<(const char *);
 	BString &operator<<(const BString &);
 	BString &operator<<(char);
-	BString &operator<<(int);
-	BString &operator<<(unsigned int);
 	BString &operator<<(uint32);
 	BString &operator<<(int32);
 	BString &operator<<(uint64);

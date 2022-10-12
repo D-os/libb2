@@ -1,38 +1,31 @@
 #ifndef _SUPPORT_DEFS_H
 #define _SUPPORT_DEFS_H
 
-#ifndef _SYS_TYPES_H
-typedef unsigned long  ulong;
-typedef unsigned int   uint;
-typedef unsigned short ushort;
-#endif /* _SYS_TYPES_H */
-
 #include <Errors.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
 
-/// Shorthand type formats
+// fixed-size integer types
+typedef int8_t	  int8;
+typedef u_int8_t  uint8;
+typedef int16_t	  int16;
+typedef u_int16_t uint16;
+typedef int32_t	  int32;
+typedef u_int32_t uint32;
+typedef int64_t	  int64;
+typedef u_int64_t uint64;
 
-typedef signed char			   int8;
-typedef unsigned char		   uint8;
-typedef volatile signed char   vint8;
-typedef volatile unsigned char vuint8;
-
-typedef short					int16;
-typedef unsigned short			uint16;
-typedef volatile short			vint16;
-typedef volatile unsigned short vuint16;
-
-typedef long				   int32;
-typedef unsigned long		   uint32;
-typedef volatile long		   vint32;
-typedef volatile unsigned long vuint32;
-
-typedef long long					int64;
-typedef unsigned long long			uint64;
-typedef volatile long long			vint64;
-typedef volatile unsigned long long vuint64;
+/// shorthand types
+typedef volatile int8	vint8;
+typedef volatile uint8	vuint8;
+typedef volatile int16	vint16;
+typedef volatile uint16 vuint16;
+typedef volatile int32	vint32;
+typedef volatile uint32 vuint32;
+typedef volatile int64	vint64;
+typedef volatile uint64 vuint64;
 
 typedef volatile long  vlong;
 typedef volatile int   vint;

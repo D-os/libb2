@@ -1,6 +1,6 @@
 #include <KernelKit.h>
-
 #include <stdio.h>
+#include <stdlib.h>
 
 int32 status(void *data)
 {

@@ -203,22 +203,6 @@ BString &BString::operator<<(char value)
 	return *this;
 }
 
-BString &BString::operator<<(int value)
-{
-	std::ostringstream str;
-	str << value;
-	DATA->append(str.str());
-	return *this;
-}
-
-BString &BString::operator<<(unsigned int value)
-{
-	std::ostringstream str;
-	str << value;
-	DATA->append(str.str());
-	return *this;
-}
-
 BString &BString::operator<<(uint32 value)
 {
 	std::ostringstream str;

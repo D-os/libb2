@@ -3,6 +3,8 @@
 
 #include <StorageDefs.h>
 #include <SupportDefs.h>
+#include <stdint.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,15 +12,15 @@ extern "C" {
 
 // system-wide constants; also see storage/StorageDefs.h.
 #define B_OS_NAME_LENGTH 32
-#define B_PAGE_SIZE 4096
+#define B_PAGE_SIZE ((unsigned int)getpagesize())
 #define B_INFINITE_TIMEOUT (9223372036854775807LL)
 
 // types
-typedef int32 area_id;
-typedef int32 port_id;
-typedef int32 sem_id;
-typedef int32 thread_id;
-typedef int32 team_id;
+typedef intptr_t  area_id;
+typedef int		  port_id;
+typedef uintptr_t sem_id;
+typedef pid_t	  thread_id;
+typedef pid_t	  team_id;
 
 /// Areas
 #define B_NO_LOCK 0
@@ -66,6 +68,7 @@ extern status_t resize_area(area_id id, size_t new_size);
 extern status_t set_area_protection(area_id id,
 									uint32	new_protection);
 
+/* system private, use macros instead */
 extern status_t _get_area_info(area_id id, area_info *ainfo,
 							   size_t size);
 extern status_t _get_next_area_info(team_id team, int32 *cookie,
@@ -116,6 +119,7 @@ extern status_t close_port(port_id port);
 
 extern status_t delete_port(port_id port);
 
+/* system private, use macros instead */
 extern status_t _get_port_info(port_id port, port_info *info,
 							   size_t size);
 extern status_t _get_next_port_info(team_id team, int32 *cookie, port_info *info, size_t size);
@@ -125,6 +129,12 @@ extern status_t _get_next_port_info(team_id team, int32 *cookie, port_info *info
 
 #define get_next_port_info(team, cookie, info) \
 	_get_next_port_info((team), (cookie), (info), sizeof(*(info)))
+
+// Atomics
+#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
+#define atomic_add(P, V) __sync_add_and_fetch((P), (V))
+#define atomic_sub(P, V) __sync_add_and_fetch((P), -(V))
+#define atomic_xadd(P, V) __sync_fetch_and_add((P), (V))
 
 // Semaphores
 typedef struct sem_info
@@ -136,10 +146,10 @@ typedef struct sem_info
 	thread_id latest_holder;
 } sem_info;
 
-extern sem_id	create_sem(int32 count, const char *name);
+extern sem_id	create_sem(uint32 count, const char *name);
 extern status_t delete_sem(sem_id sem);
 extern status_t acquire_sem(sem_id sem);
-extern status_t acquire_sem_etc(sem_id sem, int32 count,
+extern status_t acquire_sem_etc(sem_id sem, uint32 count,
 								uint32 flags, bigtime_t microsecond_timeout);
 extern status_t release_sem(sem_id sem);
 extern status_t release_sem_etc(sem_id sem, int32 count,
@@ -148,6 +158,7 @@ extern status_t get_sem_count(sem_id sem, int32 *count); /* be careful! */
 
 extern status_t set_sem_owner(sem_id sem, team_id team);
 
+/* system private, use the macros instead */
 extern status_t _get_sem_info(sem_id sem, sem_info *info,
 							  size_t size);
 extern status_t _get_next_sem_info(team_id team, int32 *cookie,
@@ -238,6 +249,7 @@ extern status_t wait_for_thread(thread_id thread,
 								status_t *thread_return_value);
 extern status_t on_exit_thread(void (*callback)(void *), void *data);
 
+/* system private, use macros instead */
 extern status_t _get_thread_info(thread_id thread, thread_info *info, size_t size);
 extern status_t _get_next_thread_info(team_id tmid, int32 *cookie, thread_info *info, size_t size);
 extern status_t _get_team_usage_info(team_id tmid, int32 who, team_usage_info *ti, size_t size);
@@ -270,16 +282,14 @@ extern status_t snooze_until(bigtime_t time, int timebase);
 #define B_SYSTEM_TIMEBASE (0)
 
 /// Teams
-#define B_SYSTEM_TEAM 2
-
 typedef struct
 {
 	team_id	  team;
 	int32	  image_count;
 	int32	  thread_count;
 	int32	  area_count;
-	thread_id debugger_nub_thread;
-	port_id	  debugger_nub_port;
+	// thread_id debugger_nub_thread;
+	// port_id	  debugger_nub_port;
 
 	int32 argc;		/* number of args on the command line */
 	char  args[64]; /* abbreviated command line args */
@@ -287,8 +297,9 @@ typedef struct
 	gid_t gid;
 } team_info;
 
-extern status_t kill_team(team_id team); /* see also: send_signal() */
+extern status_t kill_team(team_id team);  /// see also: send_signal()
 
+/* system private, use macros instead */
 extern status_t _get_team_info(team_id team, team_info *info, size_t size);
 extern status_t _get_next_team_info(int32 *cookie, team_info *info, size_t size);
 
