@@ -85,7 +85,6 @@ static status_t _suspend_thread(_thread_info *info, _task_state state)
     return B_BAD_THREAD_ID;
 }
 
-#include <stdio.h>
 static void* _thread_wrapper(void *arg)
 {
     _info = arg;
@@ -97,6 +96,7 @@ static void* _thread_wrapper(void *arg)
     sigaction(SIGCONT, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
 
+    _info->pthread = pthread_self();
     _info->tid = syscall(SYS_gettid);
     prctl(PR_SET_NAME, (unsigned long) _info->name, 0, 0, 0);
 
