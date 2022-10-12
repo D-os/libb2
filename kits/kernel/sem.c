@@ -17,10 +17,6 @@
 
 sem_id create_sem(uint32 thread_count, const char * name)
 {
-    if (thread_count < 0) {
-        return B_BAD_VALUE;
-    }
-
     _sem_info *info = malloc(sizeof(_sem_info));
 
     if (info == NULL) {
@@ -36,13 +32,11 @@ sem_id create_sem(uint32 thread_count, const char * name)
 
 status_t delete_sem(sem_id sem)
 {
-    const _sem_info *info = (_sem_info *)sem;
-
-    if (info->team != _info->team) {
+    if (((_sem_info *)sem)->team != _info->team) {
         return B_BAD_SEM_ID;
     }
 
-    syscall(SYS_futex, &info->count, FUTEX_WAKE, info->count, NULL, NULL, 0);
+    syscall(SYS_futex, (uint32_t *)sem, FUTEX_WAKE_PRIVATE, INT_MAX, NULL, NULL, 0);
 
     free((void*)sem);
 
@@ -73,13 +67,9 @@ status_t _get_sem_info(sem_id sem, struct sem_info *info, size_t infoSize)
 
 // http://locklessinc.com/articles/mutex_cv_futex/
 
-status_t acquire_sem_etc(sem_id sem, uint32 count, uint32 flags, bigtime_t timeout)
+status_t acquire_sem_etc(sem_id sem, uint32 count, uint32 flags, bigtime_t microsecond_timeout)
 {
-    if (count < 1) {
-        return B_BAD_VALUE;
-    }
-
-    if (timeout == 0 && flags & B_RELATIVE_TIMEOUT && *((uint32*)sem) < count) {
+    if (microsecond_timeout == 0 && flags & B_RELATIVE_TIMEOUT && *((uint32*)sem) < count) {
         return B_WOULD_BLOCK;
     }
 
@@ -94,10 +84,10 @@ status_t acquire_sem_etc(sem_id sem, uint32 count, uint32 flags, bigtime_t timeo
             }
         }
         else {
-            memset(&timeout, 0, sizeof(struct timespec));
+            memset(&tm, 0, sizeof(struct timespec));
         }
-        tm.tv_sec += timeout / 1000000;
-        tm.tv_nsec += (timeout % 1000000) * 1000;
+        tm.tv_sec += microsecond_timeout / 1000000;
+        tm.tv_nsec += (microsecond_timeout % 1000000) * 1000;
         if (tm.tv_nsec > 1000000000) {
             tm.tv_nsec -= 1000000000;
             tm.tv_sec++;
@@ -116,6 +106,9 @@ again:
             c = cmpxchg((uint32*)sem, a, b);
             /* managed to take what we wanted? */
             if (c == a) {
+                _info->state = 0;
+                _info->sem = 0;
+
                 /* BeBook: Warning:
                  * The lastest_holder field is highly undependable; in some cases,
                  * the kernel doesn't even record the semaphore acquirer. Although
@@ -123,8 +116,7 @@ again:
                  * take it too seriously. Love, Mom.
                  */
                 ((_sem_info *)sem)->latest_holder = _info->tid;
-                _info->state = 0;
-                _info->sem = 0;
+
                 return B_NO_ERROR;
             }
         }
@@ -135,10 +127,10 @@ again:
     _info->state = B_THREAD_WAITING;
     _info->sem = sem;
 
-    while (*((uint32*)sem) < count)
+    while (((_sem_info *)sem)->count < count)
     {
         /* Wait in the kernel */
-        if (syscall(SYS_futex, (int*)sem, FUTEX_WAIT_PRIVATE, *((int*)sem), to, NULL, 0) != 0) {
+        if (syscall(SYS_futex, (uint32_t *)sem, FUTEX_WAIT_PRIVATE, ((_sem_info *)sem)->count, to, NULL, 0) != 0) {
             switch (errno) {
             case ETIMEDOUT:
                 return B_TIMED_OUT;
@@ -195,7 +187,7 @@ status_t release_sem_etc(sem_id sem, int32 count, uint32 flags)
     }
 
     /* we need to wake someone(s) up */
-    syscall(SYS_futex, (int*)sem, FUTEX_WAKE_PRIVATE, *((int*)sem), NULL, NULL, 0);
+    syscall(SYS_futex, (uint32_t*)sem, FUTEX_WAKE_PRIVATE, count, NULL, NULL, 0);
 
     return B_NO_ERROR;
 }
