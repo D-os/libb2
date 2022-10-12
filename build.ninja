@@ -31,9 +31,13 @@ build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
 build $BUILDROOT/os/libbe/support/Archivable.o: cxx system/os/kits/support/Archivable.cpp
 build $BUILDROOT/os/libbe/support/List.o: cxx system/os/kits/support/List.cpp
 build $BUILDROOT/os/libbe/support/String.o: cxx system/os/kits/support/String.cpp
+build $BUILDROOT/os/libbe/kernel/area.o: cc system/os/kits/kernel/area.c
 build $BUILDROOT/os/libbe/kernel/debug.o: cc system/os/kits/kernel/debug.c
 build $BUILDROOT/os/libbe/kernel/rwlock.o: cc system/os/kits/kernel/rwlock.c
+build $BUILDROOT/os/libbe/kernel/sem.o: cc system/os/kits/kernel/sem.c
+build $BUILDROOT/os/libbe/kernel/team.o: cc system/os/kits/kernel/team.c
 build $BUILDROOT/os/libbe/kernel/thread.o: cc system/os/kits/kernel/thread.c
+build $BUILDROOT/os/libbe/kernel/time.o: cc system/os/kits/kernel/time.c
 
 build $BUILDROOT/os/tests/doctest.o: cxx system/os/tests/doctest.cpp
 
@@ -46,9 +50,13 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/support/Archivable.o $
   $BUILDROOT/os/libbe/support/List.o $
   $BUILDROOT/os/libbe/support/String.o $
+  $BUILDROOT/os/libbe/kernel/area.o $
   $BUILDROOT/os/libbe/kernel/debug.o $
   $BUILDROOT/os/libbe/kernel/rwlock.o $
+  $BUILDROOT/os/libbe/kernel/sem.o $
+  $BUILDROOT/os/libbe/kernel/team.o $
   $BUILDROOT/os/libbe/kernel/thread.o $
+  $BUILDROOT/os/libbe/kernel/time.o $
   $BUILDROOT/os/tests/doctest.o $
   $BUILDROOT/os/aidl/${TARGET}/os/services/app/IRegistrarService.o $
 | $SYSROOT/lib/libbinder.so

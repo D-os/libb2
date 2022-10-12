@@ -11,3 +11,33 @@ build $BUILDROOT/os/tests/kits.o: cxx system/os/tests/kits.cpp
 build $BUILDROOT/os/tests/kits: link $
   $BUILDROOT/os/tests/kits.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/kernel/thread.o: cxx system/os/tests/kernel/thread.cpp
+build $BUILDROOT/os/tests/kernel_thread: link $
+  $BUILDROOT/os/tests/kernel/thread.o $
+| $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/kernel/team.o: cxx system/os/tests/kernel/team.cpp
+build $BUILDROOT/os/tests/kernel_team: link $
+  $BUILDROOT/os/tests/kernel/team.o $
+| $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/kernel/sem.o: cxx system/os/tests/kernel/sem.cpp
+build $BUILDROOT/os/tests/kernel_sem: link $
+  $BUILDROOT/os/tests/kernel/sem.o $
+| $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/kernel/area.o: cxx system/os/tests/kernel/area.cpp
+build $BUILDROOT/os/tests/kernel_area: link $
+  $BUILDROOT/os/tests/kernel/area.o $
+| $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/kernel/port.o: cxx system/os/tests/kernel/port.cpp
+build $BUILDROOT/os/tests/kernel_port: link $
+  $BUILDROOT/os/tests/kernel/port.o $
+| $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/kernel/image.o: cxx system/os/tests/kernel/image.cpp
+build $BUILDROOT/os/tests/kernel_image: link $
+  $BUILDROOT/os/tests/kernel/image.o $
+| $SYSROOT/lib/libbe.so
