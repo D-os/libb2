@@ -2,11 +2,6 @@ cflags = $cflags -DDEBUG
 cxxflags = $cxxflags -DDEBUG
 libs = $libs -lbe
 
-build $BUILDROOT/os/tests/app/app.o: cxx system/os/tests/app/app.cpp
-build $BUILDROOT/os/tests/app/app: link $
-  $BUILDROOT/os/tests/app/app.o $
-| $SYSROOT/lib/libbe.so
-
 build $BUILDROOT/os/tests/kits.o: cxx system/os/tests/kits.cpp
 build $BUILDROOT/os/tests/kits: link $
   $BUILDROOT/os/tests/kits.o $
@@ -40,4 +35,19 @@ build $BUILDROOT/os/tests/kernel_port: link $
 build $BUILDROOT/os/tests/kernel/image.o: cxx system/os/tests/kernel/image.cpp
 build $BUILDROOT/os/tests/kernel_image: link $
   $BUILDROOT/os/tests/kernel/image.o $
+| $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/kernel/debug.o: cxx system/os/tests/kernel/debug.cpp
+build $BUILDROOT/os/tests/kernel_debug: link $
+  $BUILDROOT/os/tests/kernel/debug.o $
+| $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/app/app.o: cxx system/os/tests/app/app.cpp
+build $BUILDROOT/os/tests/app_application: link $
+  $BUILDROOT/os/tests/app/app.o $
+| $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/app/message.o: cxx system/os/tests/app/message.cpp
+build $BUILDROOT/os/tests/app_message: link $
+  $BUILDROOT/os/tests/app/message.o $
 | $SYSROOT/lib/libbe.so

@@ -34,7 +34,7 @@ build $BUILDROOT/os/libbe/support/List.o: cxx system/os/kits/support/List.cpp
 build $BUILDROOT/os/libbe/support/Locker.o: cxx system/os/kits/support/Locker.cpp
 build $BUILDROOT/os/libbe/support/String.o: cxx system/os/kits/support/String.cpp
 build $BUILDROOT/os/libbe/kernel/area.o: cc system/os/kits/kernel/area.c
-build $BUILDROOT/os/libbe/kernel/debug.o: cc system/os/kits/kernel/debug.c
+build $BUILDROOT/os/libbe/kernel/debug.o: cxx system/os/kits/kernel/debug.cpp
 build $BUILDROOT/os/libbe/kernel/rwlock.o: cc system/os/kits/kernel/rwlock.c
 build $BUILDROOT/os/libbe/kernel/sem.o: cc system/os/kits/kernel/sem.c
 build $BUILDROOT/os/libbe/kernel/team.o: cc system/os/kits/kernel/team.c
