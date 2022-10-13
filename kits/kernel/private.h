@@ -3,6 +3,12 @@
 /* Pause instruction to prevent excess processor bus usage */
 #define cpu_relax() __builtin_ia32_pause()
 
+// <atomic> is incompatible with <stdatomic.h> before C++23
+#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
+#define atomic_add(P, V) __sync_add_and_fetch((P), (V))
+#define atomic_sub(P, V) __sync_add_and_fetch((P), -(V))
+#define atomic_xadd(P, V) __sync_fetch_and_add((P), (V))
+
 #define likely(x)    __builtin_expect (!!(x), 1)
 #define unlikely(x)  __builtin_expect (!!(x), 0)
 

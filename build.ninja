@@ -30,6 +30,7 @@ build $BUILDROOT/os/libbe/app/Message.o: cxx system/os/kits/app/Message.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
 build $BUILDROOT/os/libbe/support/Archivable.o: cxx system/os/kits/support/Archivable.cpp
 build $BUILDROOT/os/libbe/support/List.o: cxx system/os/kits/support/List.cpp
+build $BUILDROOT/os/libbe/support/Locker.o: cxx system/os/kits/support/Locker.cpp
 build $BUILDROOT/os/libbe/support/String.o: cxx system/os/kits/support/String.cpp
 build $BUILDROOT/os/libbe/kernel/area.o: cc system/os/kits/kernel/area.c
 build $BUILDROOT/os/libbe/kernel/debug.o: cc system/os/kits/kernel/debug.c
@@ -49,6 +50,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/Roster.o $
   $BUILDROOT/os/libbe/support/Archivable.o $
   $BUILDROOT/os/libbe/support/List.o $
+  $BUILDROOT/os/libbe/support/Locker.o $
   $BUILDROOT/os/libbe/support/String.o $
   $BUILDROOT/os/libbe/kernel/area.o $
   $BUILDROOT/os/libbe/kernel/debug.o $

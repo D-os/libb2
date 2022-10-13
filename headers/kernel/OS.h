@@ -130,12 +130,6 @@ extern status_t _get_next_port_info(team_id team, int32 *cookie, port_info *info
 #define get_next_port_info(team, cookie, info) \
 	_get_next_port_info((team), (cookie), (info), sizeof(*(info)))
 
-// Atomics
-#define cmpxchg(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
-#define atomic_add(P, V) __sync_add_and_fetch((P), (V))
-#define atomic_sub(P, V) __sync_add_and_fetch((P), -(V))
-#define atomic_xadd(P, V) __sync_fetch_and_add((P), (V))
-
 // Semaphores
 typedef struct sem_info
 {
