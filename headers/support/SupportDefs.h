@@ -66,3 +66,31 @@ extern const char *B_EMPTY_STRING;
 #endif
 
 #endif /* _SUPPORT_DEFS_H */
+
+#ifdef __cplusplus
+/// Pimpl - https://herbsutter.com/gotw/_101/
+// We put it here for ease of use.
+// We would have to include it in os header files anyway,
+// so we might just have it in a common file.
+#ifndef PIMPL_H_H
+#define PIMPL_H_H
+
+#include <memory>
+
+template <typename T>
+class pimpl
+{
+   private:
+	std::unique_ptr<T> m;
+
+   public:
+	pimpl();
+	template <typename... Args>
+	pimpl(Args&&...);
+	~pimpl();
+	T* operator->() const;
+	T& operator*() const;
+};
+
+#endif /* PIMPL_H_H */
+#endif /* __cplusplus */

@@ -9,25 +9,90 @@
 #include <utility>
 #include <vector>
 
-namespace {
-typedef std::vector<std::pair<ssize_t, const void *>> NodeData;
+#include "Errors.h"
+
+typedef std::vector<std::pair<ssize_t, const void *const>> NodeData;
 
 struct Node
 {
-	const char *name;
-	type_code	type;
-	NodeData	data;
+	const char *const name;
+	type_code		  type;
+	NodeData		  data;
 };
-}  // namespace
 
-#define DATA_PTR(data) reinterpret_cast<std::forward_list<Node> *>(data)
-#define DATA DATA_PTR(this->data)
+class BMessage::impl
+{
+	std::forward_list<Node> *m_nodes;
 
-BMessage::BMessage() : data(nullptr)
+   public:
+	impl() : m_nodes{nullptr} {}
+
+	~impl()
+{
+		clearNodes();
+}
+
+	bool hasNodes() const
+	{
+		return m_nodes;
+	}
+
+	std::forward_list<Node> &nodes()
+	{
+		if (m_nodes == nullptr) m_nodes = new std::forward_list<Node>();
+		return *m_nodes;
+	}
+
+	status_t pushNode(int32 count, const char *const name, type_code type,
+					  ssize_t size, const void *const data);
+
+	void clearNodes()
+	{
+		if (hasNodes()) {
+			for (auto &node : nodes()) {
+				for (auto &d : node.data) {
+					free(const_cast<void *>(d.second));
+				}
+				free(const_cast<char *>(node.name));
+			}
+
+			delete m_nodes;
+			m_nodes = nullptr;
+		}
+	}
+};
+
+status_t BMessage::impl::pushNode(int32 count, const char *const name, type_code type,
+								  ssize_t size, const void *const data)
+{
+	auto &nodes = this->nodes();
+
+	Node *node = nullptr;
+	for (auto &el : nodes) {
+		if (strncmp(el.name, name, B_FIELD_NAME_LENGTH) == 0) {
+			if (el.type != type) return B_BAD_TYPE;
+
+			node = &el;
+			break;
+		}
+	}
+	if (!node) {
+		const char *new_name = strndup(name, B_FIELD_NAME_LENGTH);
+		Node		new_node{new_name, type};
+		new_node.data.reserve(count);
+		nodes.push_front(std::move(new_node));
+		node = &nodes.front();
+	}
+
+	node->data.push_back({size, data});
+	return B_OK;
+}
+
+BMessage::BMessage()
 {
 }
 
-BMessage::BMessage(uint32 what) : what(what), data(nullptr)
+BMessage::BMessage(uint32 what) : what(what)
 {
 }
 
@@ -45,8 +110,8 @@ BMessage::~BMessage()
 int32 BMessage::CountNames(type_code type) const
 {
 	int32 count = 0;
-	if (DATA)
-		for (auto &node : *DATA) {
+	if (m->hasNodes())
+		for (auto &node : m->nodes()) {
 			if (type == B_ANY_TYPE || type == node.type) count++;
 		}
 	return count;
@@ -54,7 +119,7 @@ int32 BMessage::CountNames(type_code type) const
 
 bool BMessage::IsEmpty() const
 {
-	return !DATA || DATA->empty();
+	return !m->hasNodes() || m->nodes().empty();
 }
 
 bool BMessage::IsSystem() const
@@ -97,11 +162,40 @@ status_t BMessage::AddData(const char *name, type_code type, const void *data,
 		node = &DATA->front();
 	}
 
-	void *data_copy = malloc(numBytes);
-	if (!data_copy) return B_NO_MEMORY;
-	memcpy(data_copy, data, numBytes);
-	node->data.push_back({numBytes, data_copy});
+status_t BMessage::Unflatten(BDataIO *stream)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
 
+status_t BMessage::AddData(const char *name, type_code type, const void *data,
+						   ssize_t num_bytes, bool is_fixed_size, int32 count)
+{
+	auto name_copy = strndup(name, B_FIELD_NAME_LENGTH);
+	if (!name_copy) return B_NO_MEMORY;
+
+	auto data_copy = malloc(num_bytes);
+	if (!data_copy) return B_NO_MEMORY;
+	memcpy(data_copy, data, num_bytes);
+
+	return m->pushNode(count, name_copy, type, num_bytes, data_copy);
+}
+
+status_t BMessage::RemoveData(const char *name, int32 index)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+status_t BMessage::RemoveName(const char *name)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+status_t BMessage::MakeEmpty()
+{
+	m->clearNodes();
 	return B_OK;
 }
 
@@ -130,5 +224,9 @@ TEST_SUITE("BMessage")
 		CHECK_FALSE(test.IsEmpty());
 		CHECK(test.CountNames(B_ANY_TYPE) == 1);
 		CHECK(test.CountNames(B_STRING_TYPE) == 1);
+
+		test.MakeEmpty();
+		CHECK(test.IsEmpty());
+		CHECK(test.CountNames(B_ANY_TYPE) == 0);
 	}
 }

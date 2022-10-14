@@ -212,7 +212,8 @@ class BMessage
 	friend class BMessenger;
 	friend class BApplication;
 
-	void *data;
+	class impl;
+	pimpl<impl> m;
 };
 
 #endif /* _MESSAGE_H */
