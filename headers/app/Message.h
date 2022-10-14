@@ -4,7 +4,7 @@
 #include <OS.h>
 
 /// For convenience
-// #include <AppDefs.h>
+#include <AppDefs.h>
 #include <TypeConstants.h>
 
 class BDataIO;
@@ -108,9 +108,13 @@ class BMessage
 	status_t AddString(const char *name, const char *a_string);
 	status_t AddString(const char *name, const BString &a_string);
 	status_t AddInt8(const char *name, int8 val);
+	status_t AddUInt8(const char *name, uint8 val);
 	status_t AddInt16(const char *name, int16 val);
+	status_t AddUInt16(const char *name, uint16 val);
 	status_t AddInt32(const char *name, int32 val);
+	status_t AddUInt32(const char *name, uint32 val);
 	status_t AddInt64(const char *name, int64 val);
+	status_t AddUInt64(const char *name, uint64 val);
 	status_t AddBool(const char *name, bool a_boolean);
 	status_t AddFloat(const char *name, float a_float);
 	status_t AddDouble(const char *name, double a_double);
@@ -138,12 +142,20 @@ class BMessage
 	status_t FindString(const char *name, int32 index, BString *str) const;
 	status_t FindInt8(const char *name, int8 *value) const;
 	status_t FindInt8(const char *name, int32 index, int8 *val) const;
+	status_t FindUInt8(const char *name, uint8 *value) const;
+	status_t FindUInt8(const char *name, int32 index, uint8 *val) const;
 	status_t FindInt16(const char *name, int16 *value) const;
 	status_t FindInt16(const char *name, int32 index, int16 *val) const;
+	status_t FindUInt16(const char *name, uint16 *value) const;
+	status_t FindUInt16(const char *name, int32 index, uint16 *val) const;
 	status_t FindInt32(const char *name, int32 *value) const;
 	status_t FindInt32(const char *name, int32 index, int32 *val) const;
+	status_t FindUInt32(const char *name, uint32 *value) const;
+	status_t FindUInt32(const char *name, int32 index, uint32 *val) const;
 	status_t FindInt64(const char *name, int64 *value) const;
 	status_t FindInt64(const char *name, int32 index, int64 *val) const;
+	status_t FindUInt64(const char *name, uint64 *value) const;
+	status_t FindUInt64(const char *name, int32 index, uint64 *val) const;
 	status_t FindBool(const char *name, bool *value) const;
 	status_t FindBool(const char *name, int32 index, bool *value) const;
 	status_t FindFloat(const char *name, float *f) const;
@@ -176,12 +188,20 @@ class BMessage
 	status_t ReplaceString(const char *name, int32 index, const BString &string);
 	status_t ReplaceInt8(const char *name, int8 val);
 	status_t ReplaceInt8(const char *name, int32 index, int8 val);
+	status_t ReplaceUInt8(const char *name, uint8 val);
+	status_t ReplaceUInt8(const char *name, int32 index, uint8 val);
 	status_t ReplaceInt16(const char *name, int16 val);
 	status_t ReplaceInt16(const char *name, int32 index, int16 val);
+	status_t ReplaceUInt16(const char *name, uint16 val);
+	status_t ReplaceUInt16(const char *name, int32 index, uint16 val);
 	status_t ReplaceInt32(const char *name, int32 val);
 	status_t ReplaceInt32(const char *name, int32 index, int32 val);
+	status_t ReplaceUInt32(const char *name, uint32 val);
+	status_t ReplaceUInt32(const char *name, int32 index, uint32 val);
 	status_t ReplaceInt64(const char *name, int64 val);
 	status_t ReplaceInt64(const char *name, int32 index, int64 val);
+	status_t ReplaceUInt64(const char *name, uint64 val);
+	status_t ReplaceUInt64(const char *name, int32 index, uint64 val);
 	status_t ReplaceBool(const char *name, bool a_bool);
 	status_t ReplaceBool(const char *name, int32 index, bool a_bool);
 	status_t ReplaceFloat(const char *name, float a_float);

@@ -4,6 +4,9 @@
 #include <Looper.h>
 #include <Messenger.h>
 
+/// For convenience
+#include <AppDefs.h>
+
 class BCursor;
 class BList;
 class BWindow;

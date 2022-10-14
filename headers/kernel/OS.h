@@ -4,6 +4,7 @@
 #include <StorageDefs.h>
 #include <SupportDefs.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #ifdef __cplusplus

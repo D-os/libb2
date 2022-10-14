@@ -28,6 +28,7 @@ build $BUILDROOT/os/libbe/app/Handler.o: cxx system/os/kits/app/Handler.cpp
 build $BUILDROOT/os/libbe/app/Looper.o: cxx system/os/kits/app/Looper.cpp
 build $BUILDROOT/os/libbe/app/Message.o: cxx system/os/kits/app/Message.cpp
 build $BUILDROOT/os/libbe/app/MessageQueue.o: cxx system/os/kits/app/MessageQueue.cpp
+build $BUILDROOT/os/libbe/app/Messenger.o: cxx system/os/kits/app/Messenger.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
 build $BUILDROOT/os/libbe/support/Archivable.o: cxx system/os/kits/support/Archivable.cpp
 build $BUILDROOT/os/libbe/support/List.o: cxx system/os/kits/support/List.cpp
@@ -49,6 +50,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/Looper.o $
   $BUILDROOT/os/libbe/app/Message.o $
   $BUILDROOT/os/libbe/app/MessageQueue.o $
+  $BUILDROOT/os/libbe/app/Messenger.o $
   $BUILDROOT/os/libbe/app/Roster.o $
   $BUILDROOT/os/libbe/support/Archivable.o $
   $BUILDROOT/os/libbe/support/List.o $
