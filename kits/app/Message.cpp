@@ -4,25 +4,45 @@
 #include <Point.h>
 #include <Rect.h>
 #include <String.h>
-#include <ctype.h>
 #include <doctest/doctest.h>
 #include <pimpl.h>
 
-#include <cstdlib>
-#include <cstring>
 #include <forward_list>
-#include <utility>
 #include <vector>
 
-#include "Errors.h"
+struct DataItem
+{
+	ssize_t		size;
+	const void *data;
 
-typedef std::vector<std::pair<ssize_t, const void *const>> NodeData;
+	DataItem(ssize_t size, const void *data) : size(size), data(data) {}
+
+	DataItem(const DataItem &)			  = delete;
+	DataItem &operator=(const DataItem &) = delete;
+
+	DataItem(DataItem &&source) : size(source.size), data(source.data)
+	{
+		source.size = 0;
+		source.data = nullptr;
+	}
+
+	~DataItem()
+	{
+		if (data) free(const_cast<void *>(data));
+	}
+};
+
+std::ostream &operator<<(std::ostream &os, const DataItem &value)
+{
+	os << "DataItem[" << value.size << "]:" << value.data;
+	return os;
+}
 
 struct Node
 {
-	const char *const name;
-	type_code		  type;
-	NodeData		  data;
+	std::string			  name;
+	type_code			  type;
+	std::vector<DataItem> data;
 };
 
 class BMessage::impl
@@ -37,6 +57,20 @@ class BMessage::impl
 		clearNodes();
 	}
 
+	impl &operator=(const impl &other)
+	{
+		clearNodes();
+		if (other.m_nodes) {
+			for (auto &node : *other.m_nodes) {
+				const auto data_size = node.data.size();
+				for (auto &d : node.data) {
+					addNode(data_size, node.name.c_str(), node.type, d.size, d.data);
+				}
+			}
+		}
+		return *this;
+	}
+
 	bool hasNodes() const
 	{
 		return m_nodes;
@@ -48,24 +82,33 @@ class BMessage::impl
 		return *m_nodes;
 	}
 
+	/// Copy given data to NodeData
+	status_t addNode(int32 count, const char *const name, type_code type,
+					 ssize_t size, const void *const data);
+
+	/// Takes ownership of given *data into NodeData
+	/// Always make copy of *name string
 	status_t pushNode(int32 count, const char *const name, type_code type,
 					  ssize_t size, const void *const data);
 
 	void clearNodes()
 	{
-		if (hasNodes()) {
-			for (auto &node : nodes()) {
-				for (auto &d : node.data) {
-					free(const_cast<void *>(d.second));
-				}
-				free(const_cast<char *>(node.name));
-			}
-
+		if (m_nodes) {
 			delete m_nodes;
 			m_nodes = nullptr;
 		}
 	}
 };
+
+status_t BMessage::impl::addNode(int32 count, const char *const name, type_code type,
+								 ssize_t size, const void *const data)
+{
+	auto data_copy = malloc(size);
+	if (!data_copy) return B_NO_MEMORY;
+	memcpy(data_copy, data, size);
+
+	return pushNode(count, name, type, size, data_copy);
+}
 
 status_t BMessage::impl::pushNode(int32 count, const char *const name, type_code type,
 								  ssize_t size, const void *const data)
@@ -74,22 +117,25 @@ status_t BMessage::impl::pushNode(int32 count, const char *const name, type_code
 
 	Node *node = nullptr;
 	for (auto &el : nodes) {
-		if (strncmp(el.name, name, B_FIELD_NAME_LENGTH) == 0) {
-			if (el.type != type) return B_BAD_TYPE;
+		if (strncmp(el.name.c_str(), name, B_FIELD_NAME_LENGTH) == 0) {
+			if (el.type != type) {
+				free(const_cast<void *>(data));
+				return B_BAD_TYPE;
+			}
 
 			node = &el;
 			break;
 		}
 	}
 	if (!node) {
-		const char *new_name = strndup(name, B_FIELD_NAME_LENGTH);
-		Node		new_node{new_name, type};
+		Node new_node{std::string(name, B_FIELD_NAME_LENGTH), type};
 		new_node.data.reserve(count);
 		nodes.push_front(std::move(new_node));
 		node = &nodes.front();
 	}
 
-	node->data.push_back({size, data});
+	DataItem data_item(size, data);
+	node->data.push_back(std::move(data_item));
 	return B_OK;
 }
 
@@ -101,10 +147,9 @@ BMessage::BMessage(uint32 what) : what(what)
 {
 }
 
-BMessage::BMessage(const BMessage &a_message) : what(a_message.what)
+BMessage::BMessage(const BMessage &msg) : what(msg.what)
 {
-	// FIXME: copy a_message.data
-	debugger(__PRETTY_FUNCTION__);
+	*m = *msg.m;
 }
 
 BMessage::~BMessage()
@@ -114,7 +159,8 @@ BMessage::~BMessage()
 
 BMessage &BMessage::operator=(const BMessage &msg)
 {
-	debugger(__PRETTY_FUNCTION__);
+	what = msg.what;
+	*m	 = *msg.m;
 	return *this;
 }
 
@@ -123,7 +169,7 @@ int32 BMessage::CountNames(type_code type) const
 	int32 count = 0;
 	if (m->hasNodes())
 		for (auto &node : m->nodes()) {
-			if (type == B_ANY_TYPE || type == node.type) count++;
+			if (type == B_ANY_TYPE || type == node.type) count += node.data.size();
 		}
 	return count;
 }
@@ -190,14 +236,7 @@ status_t BMessage::Unflatten(BDataIO *stream)
 status_t BMessage::AddData(const char *name, type_code type, const void *data,
 						   ssize_t num_bytes, bool is_fixed_size, int32 count)
 {
-	auto name_copy = strndup(name, B_FIELD_NAME_LENGTH);
-	if (!name_copy) return B_NO_MEMORY;
-
-	auto data_copy = malloc(num_bytes);
-	if (!data_copy) return B_NO_MEMORY;
-	memcpy(data_copy, data, num_bytes);
-
-	return m->pushNode(count, name_copy, type, num_bytes, data_copy);
+	return m->addNode(count, name, type, num_bytes, data);
 }
 
 status_t BMessage::RemoveData(const char *name, int32 index)
@@ -688,8 +727,38 @@ TEST_SUITE("BMessage")
 		CHECK(test.CountNames(B_ANY_TYPE) == 1);
 		CHECK(test.CountNames(B_STRING_TYPE) == 1);
 
+		const auto value = true;
+		const auto ret	 = test.AddData("test", B_BOOL_TYPE, &value, sizeof(value));
+		CHECK(ret == B_BAD_TYPE);
+
+		test.AddData("bool", B_BOOL_TYPE, &value, sizeof(value));
+		CHECK(test.CountNames(B_ANY_TYPE) == 2);
+		CHECK(test.CountNames(B_STRING_TYPE) == 1);
+		CHECK(test.CountNames(B_BOOL_TYPE) == 1);
+
 		test.MakeEmpty();
 		CHECK(test.IsEmpty());
 		CHECK(test.CountNames(B_ANY_TYPE) == 0);
+	}
+	TEST_CASE("Copy Message")
+	{
+		BMessage test;
+		test.AddData("test", B_STRING_TYPE, "something", 4);
+		test.AddData("test", B_STRING_TYPE, "something", 8);
+		const auto value = true;
+		test.AddData("bool", B_BOOL_TYPE, &value, sizeof(value));
+		CHECK(test.CountNames(B_ANY_TYPE) == 3);
+
+		BMessage test2;
+		CHECK(test2.CountNames(B_ANY_TYPE) == 0);
+		test2 = test;
+		CHECK(test2.CountNames(B_ANY_TYPE) == 3);
+		CHECK(test2.CountNames(B_STRING_TYPE) == 2);
+		CHECK(test2.CountNames(B_BOOL_TYPE) == 1);
+
+		BMessage test3(test);
+		CHECK(test3.CountNames(B_ANY_TYPE) == 3);
+		CHECK(test3.CountNames(B_STRING_TYPE) == 2);
+		CHECK(test3.CountNames(B_BOOL_TYPE) == 1);
 	}
 }
