@@ -99,6 +99,8 @@ class BMessage::impl
 			m_nodes = nullptr;
 		}
 	}
+
+	status_t findData(const char *name, type_code type, int32 index, DataItem **dataItem) const;
 };
 
 status_t BMessage::impl::addNode(int32 count, const char *const name, type_code type,
@@ -139,6 +141,29 @@ status_t BMessage::impl::pushNode(int32 count, const char *const name, type_code
 	DataItem data_item(size, data);
 	node->data.push_back(std::move(data_item));
 	return B_OK;
+}
+
+status_t BMessage::impl::findData(const char *name, type_code type, int32 index, DataItem **dataItem) const
+{
+	if (!name || !dataItem) return B_BAD_VALUE;
+
+	if (m_nodes)
+		for (auto &node : *m_nodes) {
+			if (strncmp(node.name.c_str(), name, B_FIELD_NAME_LENGTH) == 0) {
+				if (type != B_ANY_TYPE && node.type != type) {
+					return B_BAD_TYPE;
+				}
+
+				if (index > node.data.size()) {
+					return B_BAD_INDEX;
+				}
+
+				*dataItem = &node.data[index];
+				return B_OK;
+			}
+		}
+
+	return B_NAME_NOT_FOUND;
 }
 
 BMessage::BMessage()
@@ -378,42 +403,44 @@ status_t BMessage::FindData(const char *name, type_code type, int32 index, const
 {
 	if (!name || !data || !size) return B_BAD_VALUE;
 
-	if (m->hasNodes())
-		for (auto &node : m->nodes()) {
-			if (strncmp(node.name.c_str(), name, B_FIELD_NAME_LENGTH) == 0) {
-				if (type != B_ANY_TYPE && node.type != type) {
-					*data = nullptr;
-					*size = 0;
-					return B_BAD_TYPE;
-				}
+	DataItem *data_item = nullptr;
+	status_t  status	= m->findData(name, type, index, &data_item);
+	if (status == B_OK && !data_item) status = B_ERROR;
 
-				if (index > node.data.size()) {
-					*data = nullptr;
-					*size = 0;
-					return B_BAD_INDEX;
-				}
+	if (status != B_OK) {
+		*data = nullptr;
+		*size = 0;
+		return status;
+	};
 
-				*data = node.data[index].data;
-				*size = node.data[index].size;
-				return B_OK;
-			}
-		}
-
-	*data = nullptr;
-	*size = 0;
-	return B_NAME_NOT_FOUND;
+	*data = data_item->data;
+	*size = data_item->size;
+	return B_OK;
 }
 
 status_t BMessage::ReplaceData(const char *name, type_code type, const void *data, ssize_t data_size)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	return ReplaceData(name, type, 0, data, data_size);
 }
 
 status_t BMessage::ReplaceData(const char *name, type_code type, int32 index, const void *data, ssize_t data_size)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	if (type == B_ANY_TYPE) return B_BAD_TYPE;
+
+	DataItem *data_item = nullptr;
+	status_t  status	= m->findData(name, type, index, &data_item);
+	if (status == B_OK && !data_item) status = B_ERROR;
+
+	if (status != B_OK) return status;
+
+	auto data_copy = malloc(data_size);
+	if (!data_copy) return B_NO_MEMORY;
+	memcpy(data_copy, data, data_size);
+
+	if (data_item->data) free(const_cast<void *>(data_item->data));
+	data_item->data = data_copy;
+	data_item->size = data_size;
+	return B_OK;
 }
 
 // #pragma mark - Macro definitions for data access methods
@@ -1034,5 +1061,25 @@ TEST_SUITE("BMessage")
 		CHECK(data != nullptr);
 		CHECK(data2 != nullptr);
 		CHECK(data != data2);  // test whether it is actually a copy of data
+	}
+	TEST_CASE("ReplaceData")
+	{
+		BMessage test('_TS_');
+		test.AddString("test", "something");
+		test.AddData("test", B_STRING_TYPE, "else", 4);
+		test.AddData("foo", B_STRING_TYPE, "bar", 3);
+		INFO(test);
+
+		test.ReplaceData("test", B_STRING_TYPE, 1, "something new @1", 16);
+		test.ReplaceString("foo", "baz");
+
+		CHECK(test.CountNames(B_STRING_TYPE) == 2);
+		const char *value;
+		CHECK(test.FindString("test", &value) == B_OK);
+		CHECK(std::string(value) == "something");
+		CHECK(test.FindString("test", 1, &value) == B_OK);
+		CHECK(std::string(value, 16) == "something new @1");
+		CHECK(test.FindString("foo", 0, &value) == B_OK);
+		CHECK(std::string(value, 3) == "baz");
 	}
 }
