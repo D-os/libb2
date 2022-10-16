@@ -10,7 +10,10 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <list>
 #include <vector>
+
+#include "Errors.h"
 
 struct DataItem
 {
@@ -43,7 +46,9 @@ struct Node
 
 class BMessage::impl
 {
-	std::forward_list<Node> *m_nodes;
+	// NOTE: This is list, not forward_list to keep adding order
+	// This is list not vector to avoid reallocation when creating new node
+	std::list<Node> *m_nodes;
 
    public:
 	impl() : m_nodes{nullptr} {}
@@ -72,9 +77,9 @@ class BMessage::impl
 		return m_nodes;
 	}
 
-	std::forward_list<Node> &nodes()
+	std::list<Node> &nodes()
 	{
-		if (m_nodes == nullptr) m_nodes = new std::forward_list<Node>();
+		if (m_nodes == nullptr) m_nodes = new std::list<Node>();
 		return *m_nodes;
 	}
 
@@ -124,10 +129,11 @@ status_t BMessage::impl::pushNode(int32 count, const char *const name, type_code
 		}
 	}
 	if (!node) {
-		Node new_node{std::string(name, B_FIELD_NAME_LENGTH), type};
+		const auto name_length = strlen(name);
+		Node	   new_node{std::string(name, min_c(B_FIELD_NAME_LENGTH, name_length)), type};
 		new_node.data.reserve(count);
-		nodes.push_front(std::move(new_node));
-		node = &nodes.front();
+		nodes.push_back(std::move(new_node));
+		node = &nodes.back();
 	}
 
 	DataItem data_item(size, data);
@@ -165,7 +171,7 @@ int32 BMessage::CountNames(type_code type) const
 	int32 count = 0;
 	if (m->hasNodes())
 		for (auto &node : m->nodes()) {
-			if (type == B_ANY_TYPE || type == node.type) count += node.data.size();
+			if (type == B_ANY_TYPE || type == node.type) count += 1;
 		}
 	return count;
 }
@@ -199,16 +205,92 @@ void BMessage::PrintToStream() const
 	std::cout << *this;
 }
 
+/// Flatten buffer is of the following structure:
+/// [what][type][name_length][name[name_length]][data_items][item_size][data_item[item_size]]...[\0]
 ssize_t BMessage::FlattenedSize() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return -1;
+	ssize_t size = sizeof(uint32);
+	size += sizeof(type_code);	// place for the terminating \0
+	if (m->hasNodes()) {
+		for (auto &node : m->nodes()) {
+			size += sizeof(type_code);	 // type
+			size += sizeof(uint8);		 // name length
+			size += node.name.length();	 // name
+			size += sizeof(uint32);		 // data vector length
+			for (auto &d : node.data) {
+				size += sizeof(uint64);	 // data item size
+				size += d.size;			 // data item
+			}
+		}
+	}
+	return size;
 }
 
-status_t BMessage::Flatten(char *buffer, ssize_t size) const
+status_t BMessage::Flatten(char *buffer, ssize_t max_size) const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	char	 *current	   = buffer;
+	ssize_t write_size = 0;
+
+	write_size += sizeof(uint32);
+	if (write_size > max_size) return B_NO_MEMORY;
+	*((uint32 *)current) = this->what;
+	current += sizeof(uint32);
+
+	if (m->hasNodes()) {
+		for (auto &node : m->nodes()) {
+			// type
+			const type_code type = node.type;
+			write_size += sizeof(type_code);
+			if (write_size > max_size) return B_NO_MEMORY;
+			*((type_code *)current) = type;
+			current += sizeof(type_code);
+
+			// name length
+			const auto name_length = node.name.length();
+			if (name_length > std::numeric_limits<uint8>::max()) return B_BAD_VALUE;
+			write_size += sizeof(uint8);
+			if (write_size > max_size) return B_NO_MEMORY;
+			*((uint8 *)current) = static_cast<uint8>(name_length);
+			current += sizeof(uint8);
+
+			// name
+			write_size += name_length;
+			if (write_size > max_size) return B_NO_MEMORY;
+			memcpy(current, node.name.c_str(), name_length);
+			current += name_length;
+
+			// data vector length
+			const auto data_size = node.data.size();
+			if (data_size > std::numeric_limits<uint32>::max()) return B_BAD_VALUE;
+			write_size += sizeof(uint32);
+			if (write_size > max_size) return B_NO_MEMORY;
+			*((uint32 *)current) = static_cast<uint32>(data_size);
+			current += sizeof(uint32);
+
+			// data vector items
+			for (auto &d : node.data) {
+				// data item size
+				const auto data_item_size = d.size;
+				if (data_item_size > std::numeric_limits<uint64>::max()) return B_BAD_VALUE;
+				write_size += sizeof(uint64);
+				if (write_size > max_size) return B_NO_MEMORY;
+				*((uint64 *)current) = static_cast<uint64>(data_item_size);
+				current += sizeof(uint64);
+
+				// data item
+				write_size += data_item_size;
+				if (write_size > max_size) return B_NO_MEMORY;
+				memcpy(current, d.data, data_item_size);
+				current += data_item_size;
+			}
+		}
+	}
+
+	// terminating \0
+	write_size += sizeof(type_code);
+	if (write_size > max_size) return B_NO_MEMORY;
+	*((type_code *)current) = (type_code)0;
+	return B_OK;
 }
 
 status_t BMessage::Flatten(BDataIO *stream, ssize_t *size) const
@@ -217,10 +299,43 @@ status_t BMessage::Flatten(BDataIO *stream, ssize_t *size) const
 	return B_ERROR;
 }
 
-status_t BMessage::Unflatten(const char *flat_buffer)
+status_t BMessage::Unflatten(const char *buf)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	m->clearNodes();
+
+	this->what = *((uint32 *)buf);
+	buf += sizeof(uint32);
+
+	type_code	type;
+	uint8		name_length;
+	std::string name;
+	uint32		data_size;
+	uint64		data_item_size;
+	status_t	ret;
+	while ((type = *((type_code *)buf))) {
+		buf += sizeof(type_code);
+
+		name_length = *((uint8 *)buf);
+		buf += sizeof(uint8);
+		if (name_length > B_FIELD_NAME_LENGTH) return B_BAD_VALUE;
+		name = std::string((char *)buf, name_length);
+		buf += name_length;
+
+		data_size = *((uint32 *)buf);
+		buf += sizeof(uint32);
+		while (data_size) {
+			data_item_size = *((uint64 *)buf);
+			buf += sizeof(uint64);
+
+			ret = this->AddData(name.c_str(), type, buf, data_item_size, data_size);
+			if (ret != B_NO_ERROR) return ret;
+
+			data_size -= 1;
+			buf += data_item_size;
+		}
+	}
+
+	return B_OK;
 }
 
 status_t BMessage::Unflatten(BDataIO *stream)
@@ -259,10 +374,34 @@ status_t BMessage::FindData(const char *name, type_code type, const void **data,
 	return B_ERROR;
 }
 
-status_t BMessage::FindData(const char *name, type_code type, int32 index, const void **data, ssize_t *numBytes) const
+status_t BMessage::FindData(const char *name, type_code type, int32 index, const void **data, ssize_t *size) const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	if (!name || !data || !size) return B_BAD_VALUE;
+
+	if (m->hasNodes())
+		for (auto &node : m->nodes()) {
+			if (strncmp(node.name.c_str(), name, B_FIELD_NAME_LENGTH) == 0) {
+				if (type != B_ANY_TYPE && node.type != type) {
+					*data = nullptr;
+					*size = 0;
+					return B_BAD_TYPE;
+				}
+
+				if (index > node.data.size()) {
+					*data = nullptr;
+					*size = 0;
+					return B_BAD_INDEX;
+				}
+
+				*data = node.data[index].data;
+				*size = node.data[index].size;
+				return B_OK;
+			}
+		}
+
+	*data = nullptr;
+	*size = 0;
+	return B_NAME_NOT_FOUND;
 }
 
 status_t BMessage::ReplaceData(const char *name, type_code type, const void *data, ssize_t data_size)
@@ -731,23 +870,26 @@ std::ostream &operator<<(std::ostream &os, const DataItem &value)
 		index += 16;
 	} while (index < value.size);
 
-	return os;
+	return os << std::dec;
 }
 
 namespace {
 inline void type2buf(char buf[11], const uint32 *value)
 {
-	if (isprint(*(char *)value)) {
-		buf[0] = '\'';
-		buf[1] = *((char *)value + 3);
-		buf[2] = *((char *)value + 2);
-		buf[3] = *((char *)value + 1);
-		buf[4] = *((char *)value + 0);
-		buf[5] = '\'';
-		buf[6] = 0;
+	buf[0] = '\'';
+	buf[1] = *((char *)value + 3);
+	buf[2] = *((char *)value + 2);
+	buf[3] = *((char *)value + 1);
+	buf[4] = *((char *)value + 0);
+	buf[5] = '\'';
+	buf[6] = 0;
+
+	for (int i = 1; i < 5; ++i) {
+		if (!isprint(buf[i])) {
+			snprintf(buf, 11, "0x%" PRIx32, *value);
+			return;
+		}
 	}
-	else
-		snprintf(buf, 11, "0x%" PRIx32, *value);
 }
 }  // namespace
 
@@ -764,9 +906,10 @@ std::ostream &operator<<(std::ostream &os, const BMessage &value)
 		size_t index = 0;
 		for (auto &node : value.m->nodes()) {
 			type2buf(buf, &node.type);
-			os << index << " " << node.name << ", type = " << buf << ", count = " << node.data.size() << std::endl;
+			os << '#' << index << ' ' << node.name << ", type = " << buf << ", count = " << node.data.size() << std::endl;
 
 			for (auto &d : node.data) {
+				os << ' ' << d.data << ' ' << d.size << " bytes:" << std::endl;
 				os << d;
 			}
 
@@ -781,6 +924,19 @@ TEST_SUITE("BMessage")
 {
 	TEST_CASE("Constructing")
 	{
+#include <cmath>
+		class V
+		{
+		   public:
+			virtual void v() {}
+		};
+
+		// what + pimpl + vtable
+		const float size = sizeof(uint32) + sizeof(void *) + sizeof(V);
+		// mem aligned
+		const auto msg_size = std::ceil(size / sizeof(void *)) * sizeof(void *);
+		CHECK(sizeof(BMessage) == msg_size);
+
 		BMessage empty;
 		empty.what = 0;
 		CHECK(empty.what == 0);
@@ -823,18 +979,60 @@ TEST_SUITE("BMessage")
 		test.AddData("test", B_STRING_TYPE, "something", 8);
 		const auto value = true;
 		test.AddData("bool", B_BOOL_TYPE, &value, sizeof(value));
-		CHECK(test.CountNames(B_ANY_TYPE) == 3);
+		CHECK(test.CountNames(B_ANY_TYPE) == 2);
+		CHECK(test.CountNames(B_STRING_TYPE) == 1);
+		CHECK(test.CountNames(B_BOOL_TYPE) == 1);
 
 		BMessage test2;
 		CHECK(test2.CountNames(B_ANY_TYPE) == 0);
 		test2 = test;
-		CHECK(test2.CountNames(B_ANY_TYPE) == 3);
-		CHECK(test2.CountNames(B_STRING_TYPE) == 2);
+		CHECK(test2.CountNames(B_ANY_TYPE) == 2);
+		CHECK(test2.CountNames(B_STRING_TYPE) == 1);
 		CHECK(test2.CountNames(B_BOOL_TYPE) == 1);
 
 		BMessage test3(test);
-		CHECK(test3.CountNames(B_ANY_TYPE) == 3);
-		CHECK(test3.CountNames(B_STRING_TYPE) == 2);
+		CHECK(test3.CountNames(B_ANY_TYPE) == 2);
+		CHECK(test3.CountNames(B_STRING_TYPE) == 1);
 		CHECK(test3.CountNames(B_BOOL_TYPE) == 1);
+	}
+	TEST_CASE("Flatten/Unflatten")
+	{
+		BMessage   test('_TES');
+		const auto str = "Some long string taking many characters,   with   useless  padding.  \01\02\03\04\05\06\07";
+		test.AddData("test", B_STRING_TYPE, str, strlen(str));
+		const auto value = true;
+		test.AddData("bool", B_BOOL_TYPE, &value, sizeof(value));
+		INFO(test);
+
+		const auto expected_size = 51 + strlen(str);
+		CHECK(test.FlattenedSize() == expected_size);
+
+		char		 *buffer = static_cast<char *>(malloc(expected_size));
+		const auto ret	  = test.Flatten(buffer, expected_size);
+		CHECK(ret == B_NO_ERROR);
+
+		BMessage test2;
+		test.AddData("foo", B_STRING_TYPE, "bar", 3);
+		test2.AddData("foo2", B_STRING_TYPE, "bar2", 4);
+
+		test2.Unflatten(buffer);
+		INFO(test2);
+		CHECK(test2.what == '_TES');
+		CHECK(test2.CountNames(B_ANY_TYPE) == 2);
+		CHECK(test2.CountNames(B_STRING_TYPE) == 1);
+		CHECK(test2.CountNames(B_BOOL_TYPE) == 1);
+
+		const void *data;
+		ssize_t		data_size;
+		const void *data2;
+		ssize_t		data2_size;
+		CHECK(test.FindData("test", B_STRING_TYPE, 0, &data, &data_size) == B_NO_ERROR);
+		CHECK(test2.FindData("test", B_STRING_TYPE, 0, &data2, &data2_size) == B_NO_ERROR);
+		CHECK(data_size == strlen(str));
+		CHECK(data2_size == strlen(str));
+		CHECK(data_size == data_size);
+		CHECK(data != nullptr);
+		CHECK(data2 != nullptr);
+		CHECK(data != data2);  // test whether it is actually a copy of data
 	}
 }
