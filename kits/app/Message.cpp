@@ -7,7 +7,9 @@
 #include <doctest/doctest.h>
 #include <pimpl.h>
 
-#include <forward_list>
+#include <cstring>
+#include <iomanip>
+#include <iostream>
 #include <vector>
 
 struct DataItem
@@ -31,12 +33,6 @@ struct DataItem
 		if (data) free(const_cast<void *>(data));
 	}
 };
-
-std::ostream &operator<<(std::ostream &os, const DataItem &value)
-{
-	os << "DataItem[" << value.size << "]:" << value.data;
-	return os;
-}
 
 struct Node
 {
@@ -200,7 +196,7 @@ bool BMessage::IsSystem() const
 
 void BMessage::PrintToStream() const
 {
-	debugger(__PRETTY_FUNCTION__);
+	std::cout << *this;
 }
 
 ssize_t BMessage::FlattenedSize() const
@@ -700,6 +696,86 @@ status_t BMessage::ReplaceMessage(const char *name, int32 index, const BMessage 
 
 // 	return error;
 // }
+
+std::ostream &operator<<(std::ostream &os, const DataItem &value)
+{
+	os << std::hex << std::setfill('0');
+	size_t index = 0;
+
+	do {
+		os << std::setw(8) << index;
+
+		for (int i = 0; i < 16; ++i) {
+			if (i % 8 == 0) os << ' ';
+
+			auto offset = index + i;
+			if (offset < value.size)
+				os << ' ' << std::setw(2) << (unsigned int)(*(((unsigned char *)value.data) + offset));
+			else
+				os << "   ";
+		}
+
+		os << "  ";
+		for (int i = 0; i < 16; ++i) {
+			auto offset = index + i;
+			if (offset < value.size) {
+				const char chr = *(((char *)value.data) + offset);
+				if (isprint(chr))
+					os << chr;
+				else
+					os << '.';
+			}
+		}
+
+		os << "\n";
+		index += 16;
+	} while (index < value.size);
+
+	return os;
+}
+
+namespace {
+inline void type2buf(char buf[11], const uint32 *value)
+{
+	if (isprint(*(char *)value)) {
+		buf[0] = '\'';
+		buf[1] = *((char *)value + 3);
+		buf[2] = *((char *)value + 2);
+		buf[3] = *((char *)value + 1);
+		buf[4] = *((char *)value + 0);
+		buf[5] = '\'';
+		buf[6] = 0;
+	}
+	else
+		snprintf(buf, 11, "0x%" PRIx32, *value);
+}
+}  // namespace
+
+std::ostream &operator<<(std::ostream &os, const BMessage &value)
+{
+	os << "BMessage(";
+
+	char buf[11];
+	type2buf(buf, &value.what);
+
+	os << buf << ")" << std::endl;
+
+	if (value.m->hasNodes()) {
+		size_t index = 0;
+		for (auto &node : value.m->nodes()) {
+			type2buf(buf, &node.type);
+			os << index << " " << node.name << ", type = " << buf << ", count = " << node.data.size() << std::endl;
+
+			for (auto &d : node.data) {
+				os << d;
+			}
+
+			index += 1;
+		}
+	}
+
+	return os;
+}
 
 TEST_SUITE("BMessage")
 {

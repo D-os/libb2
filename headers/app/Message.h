@@ -3,6 +3,8 @@
 
 #include <OS.h>
 
+#include <iostream>
+
 /// For convenience
 #include <AppDefs.h>
 #include <TypeConstants.h>
@@ -231,6 +233,7 @@ class BMessage
 	friend class BMessageQueue;
 	friend class BMessenger;
 	friend class BApplication;
+	friend std::ostream &operator<<(std::ostream &, const BMessage &);
 
 	class impl;
 	pimpl<impl> m;
