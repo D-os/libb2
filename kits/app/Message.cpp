@@ -230,6 +230,81 @@ void BMessage::PrintToStream() const
 	std::cout << *this;
 }
 
+status_t BMessage::Rename(const char *old_entry, const char *new_entry)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+bool BMessage::WasDelivered() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return false;
+}
+
+bool BMessage::IsSourceWaiting() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return false;
+}
+
+bool BMessage::IsSourceRemote() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return false;
+}
+
+BMessenger BMessage::ReturnAddress() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return BMessenger();
+}
+
+const BMessage *BMessage::Previous() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return nullptr;
+}
+
+bool BMessage::WasDropped() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return false;
+}
+
+status_t BMessage::SendReply(uint32 command, BHandler *reply_to)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+status_t BMessage::SendReply(BMessage *the_reply, BHandler *reply_to,
+							 bigtime_t timeout)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+status_t BMessage::SendReply(BMessage *the_reply, BMessenger reply_to,
+							 bigtime_t timeout)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+status_t BMessage::SendReply(uint32 command, BMessage *reply_to_reply)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+status_t BMessage::SendReply(BMessage *the_reply, BMessage *reply_to_reply,
+							 bigtime_t send_timeout, bigtime_t reply_timeout)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
 /// Flatten buffer is of the following structure:
 /// [what][type][name_length][name[name_length]][data_items][item_size][data_item[item_size]]...[\0]
 ssize_t BMessage::FlattenedSize() const
@@ -973,6 +1048,9 @@ TEST_SUITE("BMessage")
 
 		BMessage chr('_TST');
 		CHECK(chr.what == '_TST');
+
+		chr.what = 'ABCD';
+		CHECK(chr.what == 'ABCD');
 	}
 
 	TEST_CASE("AddData")

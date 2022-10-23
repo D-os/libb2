@@ -66,8 +66,16 @@ class BHandler : public BArchivable
 	bool		 IsWatched() const;
 
    private:
+	friend class BLooper;
+
 	BHandler(const BHandler &);
 	BHandler &operator=(const BHandler &);
+
+	void SetLooper(BLooper *loop);
+
+	char	 *fName;
+	BLooper	*fLooper;
+	BHandler *fNextHandler;
 };
 
 #endif /* _HANDLER_H */

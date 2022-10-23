@@ -2,6 +2,9 @@
 #define _LOOPER_H
 
 #include <Handler.h>
+#include <List.h>
+
+#include <mutex>
 
 class BMessageQueue;
 
@@ -85,7 +88,27 @@ class BLooper : public BHandler
 	BMessage *MessageFromPort(bigtime_t = B_INFINITE_TIMEOUT);
 
    private:
-	void *data;
+	friend class BApplication;
+
+	BLooper(const BLooper &);
+	BLooper &operator=(const BLooper &);
+
+	static status_t _task0_(void *arg);
+	virtual void	task_looper();
+	bool			AssertLocked() const;
+
+	BMessageQueue *fQueue;
+	BMessage		 *fLastMessage;
+	sem_id		   fLockSem;	// locks Looper between threads
+	std::mutex	   fLockMutex;	// protects Lock/Unlock critical sections in-thread
+	unsigned long  fOwnerCount;
+	thread_id	   fOwner;
+	thread_id	   fThread;
+	int32		   fInitPriority;
+	BHandler		 *fPreferred;
+	BList		   fHandlers;
+	bool		   fTerminating;
+	bool		   fRunCalled;
 };
 
 #endif /* _LOOPER_H */
