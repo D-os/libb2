@@ -265,9 +265,9 @@ extern status_t send_data(thread_id	  thread,
 						  const void *buf,
 						  size_t	  buffer_size);
 
-extern status_t receive_data(thread_id *sender,
-							 void	  *buf,
-							 size_t		buffer_size);
+extern int32 receive_data(thread_id *sender,
+						  void	   *buf,
+						  size_t	 buffer_size);
 
 extern bool has_data(thread_id thread);
 
@@ -314,6 +314,7 @@ extern bigtime_t system_time(void); /* time since booting in microseconds */
 /// debugging calls
 extern void		 debugger(const char *message);
 extern const int disable_debugger(int state);
+void			 sprint_code(char buf[11], const uint32 *value);
 
 #ifdef __cplusplus
 }

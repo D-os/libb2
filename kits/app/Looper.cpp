@@ -9,6 +9,9 @@
 #include <cstdio>
 #include <map>
 
+#define LOG_TAG "Looper"
+#include <log/log.h>
+
 static std::map<thread_id, BLooper *> g_Loopers;
 static std::mutex					  g_LoopersMutex;
 
@@ -16,7 +19,7 @@ BLooper::BLooper(const char *name, int32 priority, int32 _port_capacity)
 	: fQueue{new BMessageQueue()},
 	  fLastMessage{nullptr},
 	  fLockSem(create_sem(1, "BLooper Lock")),
-	  fOwnerCount(0),
+	  fOwnerCount{0},
 	  fOwner{B_ERROR},
 	  fThread{B_ERROR},
 	  fInitPriority{priority},
@@ -221,7 +224,7 @@ void BLooper::Quit()
 	}
 
 	if (!fRunCalled) {
-		MESSAGE("Run() has not been called yet");
+		ALOGD("Run() has not been called yet");
 		fTerminating = true;
 		delete this;
 		return;
@@ -231,12 +234,21 @@ void BLooper::Quit()
 	if (fThread != current_thread) {
 		fTerminating = true;
 		if (fThread >= 0) {
-			MESSAGE("fTerminating. Waiting for fThread ", fThread);
 			// Unlock fully to release task_looper to process messages and shutdown
 			while (IsLocked()) Unlock();
 
-			status_t exit_code;
-			wait_for_thread(fThread, &exit_code);
+			ALOGD("Terminating. Waiting for thread: %d", fThread);
+
+			status_t status_code = B_NO_ERROR;
+
+			if (!has_data(fThread)) {
+				// wake up the thread to process termination request
+				status_code = send_data(fThread, 'QUIT', NULL, 0);
+			}
+
+			if (status_code != B_BAD_THREAD_ID) {
+				wait_for_thread(fThread, &status_code);
+			}
 			// delete is done by Looper _task0_
 		}
 		else {
@@ -254,7 +266,7 @@ void BLooper::Quit()
 
 bool BLooper::QuitRequested()
 {
-	return fTerminating;
+	return true;
 }
 
 inline bool BLooper::Lock()
@@ -285,7 +297,7 @@ bool BLooper::IsLocked() const
 status_t BLooper::LockWithTimeout(bigtime_t timeout)
 {
 	thread_id current_thread = find_thread(NULL);
-	// MESSAGE("Try to lock by ", current_thread, ", Current ", fOwner);
+	// ALOGD("Try to lock by ", current_thread, ", Current ", fOwner);
 
 	fLockMutex.lock();
 
@@ -308,20 +320,21 @@ status_t BLooper::LockWithTimeout(bigtime_t timeout)
 	fOwner		= current_thread;
 	fOwnerCount = 1;
 
-	// MESSAGE("Locked by ", current_thread, ", Current ", fOwner, " count ", fOwnerCount);
+	// ALOGD("Locked by ", current_thread, ", Current ", fOwner, " count ", fOwnerCount);
 	return B_NO_ERROR;
 }
 
 thread_id BLooper::Thread() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	return fThread;
 }
 
 team_id BLooper::Team() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	thread_id	tid = fThread >= 0 ? fThread : find_thread(NULL);
+	thread_info tinfo;
+	status_t	ret = _get_thread_info(tid, &tinfo, sizeof(tinfo));
+	return ret == B_OK ? tinfo.team : ret;
 }
 
 BLooper *BLooper::LooperForThread(thread_id thread)
@@ -382,7 +395,7 @@ void BLooper::SetCommonFilterList(BList *filters)
 bool BLooper::AssertLocked() const
 {
 	if (!IsLocked()) {
-		debugger("looper must be locked before proceeding");
+		debugger("Looper must be locked before proceeding");
 		return false;
 	}
 
@@ -393,39 +406,50 @@ status_t BLooper::_task0_(void *arg)
 {
 	BLooper *looper = (BLooper *)arg;
 
-	MESSAGE("LOOPER: _task0_()");
+	ALOGD("LOOPER: _task0_()");
 
 	if (looper->Lock()) {
-		MESSAGE("LOOPER: looper locked");
+		ALOGV("LOOPER: looper locked");
 		looper->task_looper();
 
 		delete looper;
 	}
 
-	MESSAGE("LOOPER: _task0_() done: thread ", find_thread(NULL));
+	ALOGD("LOOPER: _task0_() done: thread %d", find_thread(NULL));
 	return B_OK;
 }
 
 void BLooper::task_looper()
 {
-	MESSAGE("BLooper::task_looper()");
+	ALOGD("BLooper::task_looper()");
 	// Check that looper is locked (should be)
 	AssertLocked();
 	// Unlock the looper
 	Unlock();
 
 	if (IsLocked())
-		debugger("looper must not be locked!");
+		debugger("cannot unlock Looper");
 
 	// loop: As long as we are not terminating.
 	while (!fTerminating) {
-		MESSAGE("LOOPER: outer loop ", fTerminating);
+		ALOGV("LOOPER: outer loop");
+
+		if (fQueue->IsEmpty()) {
+			ALOGV("LOOPER: waiting for data");
+			thread_id sender;
+			uint32	  code = receive_data(&sender, NULL, 0);
+#if !LOG_NDEBUG
+			char buf[11];
+			sprint_code(buf, &code);
+			ALOGD("LOOPER: received data from %d, code: %s", sender, buf);
+#endif
+		}
 
 		// loop: As long as there are messages in the queue and the port is
 		//               empty... and we are not terminating, of course.
 		bool dispatchNextMessage = true;
 		while (!fTerminating && dispatchNextMessage) {
-			MESSAGE("LOOPER: inner loop ", fTerminating);
+			ALOGV("LOOPER: inner loop");
 			// Get next message from queue (assign to fLastMessage after
 			// locking)
 			BMessage *message = fQueue->NextMessage();
@@ -440,8 +464,8 @@ void BLooper::task_looper()
 				dispatchNextMessage = false;
 			}
 			else {
-				MESSAGE("LOOPER: fLastMessage: 0x%x: %.4s\n", fLastMessage->what,
-						(char *)&fLastMessage->what);
+				ALOGV("LOOPER: fLastMessage: 0x%x: %.4s\n", fLastMessage->what,
+					  (char *)&fLastMessage->what);
 				INFO(*fLastMessage);
 			}
 
@@ -461,7 +485,7 @@ void BLooper::task_looper()
 				delete message;
 		}
 	}
-	MESSAGE("BLooper::task_looper() done");
+	ALOGD("BLooper::task_looper() done");
 }
 
 static size_t count_running_threads()

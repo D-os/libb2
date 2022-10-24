@@ -975,39 +975,19 @@ std::ostream &operator<<(std::ostream &os, const DataItem &value)
 	return os << std::dec;
 }
 
-namespace {
-inline void type2buf(char buf[11], const uint32 *value)
-{
-	buf[0] = '\'';
-	buf[1] = *((char *)value + 3);
-	buf[2] = *((char *)value + 2);
-	buf[3] = *((char *)value + 1);
-	buf[4] = *((char *)value + 0);
-	buf[5] = '\'';
-	buf[6] = 0;
-
-	for (int i = 1; i < 5; ++i) {
-		if (!isprint(buf[i])) {
-			snprintf(buf, 11, "0x%" PRIx32, *value);
-			return;
-		}
-	}
-}
-}  // namespace
-
 std::ostream &operator<<(std::ostream &os, const BMessage &value)
 {
 	os << "BMessage(";
 
 	char buf[11];
-	type2buf(buf, &value.what);
+	sprint_code(buf, &value.what);
 
 	os << buf << ")" << std::endl;
 
 	if (value.m->hasNodes()) {
 		size_t index = 0;
 		for (auto &node : value.m->nodes()) {
-			type2buf(buf, &node.type);
+			sprint_code(buf, &node.type);
 			os << '#' << index << ' ' << node.name << ", type = " << buf << ", count = " << node.data.size() << std::endl;
 
 			for (auto &d : node.data) {

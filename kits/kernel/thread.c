@@ -117,11 +117,15 @@ static void* _thread_wrapper(void *arg)
     if (_info->task_state_copy) *_info->task_state_copy = _info->task_state;
 
     _threads_wlock();
-    DL_DELETE(_threads, _info);
-    _threads_unlock();
-    free(_info);
 
-    return (void*)(intptr_t)exit;
+	// release anyone sending to us
+	syscall(SYS_futex, &_info->has_data, FUTEX_WAKE_PRIVATE, INT_MAX, NULL, NULL, 0);
+
+	DL_DELETE(_threads, _info);
+	_threads_unlock();
+	free(_info);
+
+	return (void *)(intptr_t)exit;
 }
 
 
@@ -388,12 +392,17 @@ status_t send_data(thread_id thread, int32 code, const void *buffer, size_t buff
                 goto exit;
             }
         }
-    }
 
-    /* at this point c (info->has_data) is 1, meaning someone is either consuming or producing message */
-    /* let's produce */
-    if (buffer && bufferSize) {
-        info->data_buffer = mmap(NULL, bufferSize,
+		if (_info->task_state == TASK_EXITED) {
+			status = B_BAD_THREAD_ID;
+			goto exit;
+		}
+	}
+
+	/* at this point c (info->has_data) is 1, meaning someone is either consuming or producing message */
+	/* let's produce */
+	if (buffer && bufferSize) {
+		info->data_buffer = mmap(NULL, bufferSize,
                                  PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
                                  -1, 0);
         if (info->data_buffer == MAP_FAILED) {
@@ -410,8 +419,8 @@ status_t send_data(thread_id thread, int32 code, const void *buffer, size_t buff
             }
         }
         memcpy(info->data_buffer, buffer, bufferSize);
-    }
-    else {
+	}
+	else {
         info->data_buffer = NULL;
     }
     info->data_buffer_size = bufferSize;

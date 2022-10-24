@@ -9,6 +9,24 @@
 #include <cstring>
 
 extern "C" {
+void sprint_code(char buf[11], const uint32 *value)
+{
+	buf[0] = '\'';
+	buf[1] = *((char *)value + 3);
+	buf[2] = *((char *)value + 2);
+	buf[3] = *((char *)value + 1);
+	buf[4] = *((char *)value + 0);
+	buf[5] = '\'';
+	buf[6] = 0;
+
+	for (int i = 1; i < 5; ++i) {
+		if (!isprint(buf[i])) {
+			snprintf(buf, 11, "0x%" PRIx32, *value);
+			return;
+		}
+	}
+}
+
 void debug_vprintf(const char *format, va_list args)
 {
 	vdprintf(2, format, args);
