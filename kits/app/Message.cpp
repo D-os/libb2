@@ -274,19 +274,17 @@ bool BMessage::WasDropped() const
 
 status_t BMessage::SendReply(uint32 command, BHandler *reply_to)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	BMessage message(command);
+	return SendReply(&message, reply_to);
 }
 
-status_t BMessage::SendReply(BMessage *the_reply, BHandler *reply_to,
-							 bigtime_t timeout)
+status_t BMessage::SendReply(BMessage *the_reply, BHandler *reply_to, bigtime_t timeout)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	BMessenger messenger(reply_to);
+	return SendReply(the_reply, messenger, timeout);
 }
 
-status_t BMessage::SendReply(BMessage *the_reply, BMessenger reply_to,
-							 bigtime_t timeout)
+status_t BMessage::SendReply(BMessage *the_reply, BMessenger reply_to, bigtime_t timeout)
 {
 	debugger(__PRETTY_FUNCTION__);
 	return B_ERROR;
@@ -944,7 +942,7 @@ std::ostream &operator<<(std::ostream &os, const DataItem &value)
 	size_t index = 0;
 
 	do {
-		os << std::setw(8) << index;
+		os << std::setw(4) << index << ':';
 
 		for (int i = 0; i < 16; ++i) {
 			if (i % 8 == 0) os << ' ';
@@ -991,7 +989,7 @@ std::ostream &operator<<(std::ostream &os, const BMessage &value)
 			os << '#' << index << ' ' << node.name << ", type = " << buf << ", count = " << node.data.size() << std::endl;
 
 			for (auto &d : node.data) {
-				os << ' ' << d.data << ' ' << d.size << " bytes:" << std::endl;
+				os << ' ' << d.data << ' ' << d.size << " bytes" << std::endl;
 				os << d;
 			}
 

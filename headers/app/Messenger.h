@@ -18,11 +18,11 @@ class BMessenger
 
 	BMessenger(const char *mime_sig,
 			   team_id	   team = -1,
-			   status_t	*perr = NULL);
+			   status_t	*perr = nullptr);
 
 	BMessenger(const BHandler *handler,
-			   const BLooper	 *looper = NULL,
-			   status_t		*perr	  = NULL);
+			   const BLooper	 *looper = nullptr,
+			   status_t		*perr	  = nullptr);
 	BMessenger(const BMessenger &from);
 	~BMessenger();
 
@@ -33,9 +33,9 @@ class BMessenger
 	status_t  LockTargetWithTimeout(bigtime_t timeout) const;
 
 	/// Message sending
-	status_t SendMessage(uint32 command, BHandler *reply_to = NULL) const;
+	status_t SendMessage(uint32 command, BHandler *reply_to = nullptr) const;
 	status_t SendMessage(BMessage *a_message,
-						 BHandler *reply_to = NULL,
+						 BHandler *reply_to = nullptr,
 						 bigtime_t timeout	= B_INFINITE_TIMEOUT) const;
 	status_t SendMessage(BMessage  *a_message,
 						 BMessenger reply_to,

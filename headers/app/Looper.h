@@ -14,7 +14,7 @@ class BMessageQueue;
 class BLooper : public BHandler
 {
    public:
-	BLooper(const char *name		  = NULL,
+	BLooper(const char *name		  = nullptr,
 			int32		priority	  = B_NORMAL_PRIORITY,
 			int32		port_capacity = B_LOOPER_PORT_DEFAULT_CAPACITY);
 	virtual ~BLooper();
@@ -29,10 +29,10 @@ class BLooper : public BHandler
 	status_t PostMessage(BMessage *message);
 	status_t PostMessage(uint32	   command,
 						 BHandler *handler,
-						 BHandler *reply_to = NULL);
+						 BHandler *reply_to = nullptr);
 	status_t PostMessage(BMessage *message,
 						 BHandler *handler,
-						 BHandler *reply_to = NULL);
+						 BHandler *reply_to = nullptr);
 
 	virtual void   DispatchMessage(BMessage *message, BHandler *handler);
 	virtual void   MessageReceived(BMessage *msg) override;
@@ -92,6 +92,10 @@ class BLooper : public BHandler
 
 	BLooper(const BLooper &);
 	BLooper &operator=(const BLooper &);
+
+	status_t _PostMessage(BMessage *msg,
+						  BHandler *handler,
+						  BHandler *reply_to);
 
 	static status_t _task0_(void *arg);
 	virtual void	task_looper();
