@@ -9,6 +9,20 @@
 #include <cstring>
 
 extern "C" {
+_Noreturn void debugger(const char *message)
+{
+	// FIXME: launch real debugger:
+	// FIXME: open terminal window, attach stdin/out/err and drop to gdb there
+
+	dprintf(2, "<>:< %s\n", message);
+
+	android::CallStack::CallStackUPtr stack(new android::CallStack());
+	stack->update(1);
+	stack->dump(2, 1);
+
+	abort();
+}
+
 void sprint_code(char buf[11], const uint32 *value)
 {
 	buf[0] = '\'';
@@ -37,20 +51,6 @@ void debug_printf(const char *format, ...)
 	va_list args;
 	va_start(args, format);
 	debug_vprintf(format, args);
-}
-
-_Noreturn void debugger(const char *message)
-{
-	// FIXME: launch real debugger:
-	// FIXME: open terminal window, attach stdin/out/err and drop to gdb there
-
-	dprintf(2, "<>:< %s\n", message);
-
-	android::CallStack::CallStackUPtr stack(new android::CallStack());
-	stack->update(1);
-	stack->dump(2, 1);
-
-	abort();
 }
 
 int _debuggerAssert(const char *file, int line, const char *message)

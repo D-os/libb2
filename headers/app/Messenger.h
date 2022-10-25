@@ -24,6 +24,7 @@ class BMessenger
 			   const BLooper	 *looper = nullptr,
 			   status_t		*perr	  = nullptr);
 	BMessenger(const BMessenger &from);
+	BMessenger(BMessenger &&from);
 	~BMessenger();
 
 	/// Target
@@ -58,10 +59,8 @@ class BMessenger
 	friend bool operator<(const BMessenger &a, const BMessenger &b);
 	friend bool operator!=(const BMessenger &a, const BMessenger &b);
 
-	BMessenger(team_id team,
-			   port_id port,
-			   int32   token,
-			   bool	   preferred);
+	const BHandler *fHandler;
+	const BLooper  *fLooper;
 };
 
 #endif /* _MESSENGER_H */

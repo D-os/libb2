@@ -464,9 +464,13 @@ int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
         munmap(_info->data_buffer, _info->data_buffer_size);
     }
 
-    _info->state = 0;
+	_info->has_data			= 0;
+	_info->data_buffer		= NULL;
+	_info->data_buffer_size = 0;
+	_info->state			= 0;
+	syscall(SYS_futex, &_info->has_data, FUTEX_WAKE_PRIVATE, INT_MAX, NULL, NULL, 0);
 
-    return _info->data_code;
+	return _info->data_code;
 }
 
 /** WARNING! you need to lock _threads in caller function! */

@@ -286,21 +286,19 @@ status_t BMessage::SendReply(BMessage *the_reply, BHandler *reply_to, bigtime_t 
 
 status_t BMessage::SendReply(BMessage *the_reply, BMessenger reply_to, bigtime_t timeout)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	return B_BAD_REPLY;
 }
 
 status_t BMessage::SendReply(uint32 command, BMessage *reply_to_reply)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	BMessage message(command);
+	return SendReply(&message, reply_to_reply);
 }
 
 status_t BMessage::SendReply(BMessage *the_reply, BMessage *reply_to_reply,
 							 bigtime_t send_timeout, bigtime_t reply_timeout)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	return B_BAD_REPLY;
 }
 
 /// Flatten buffer is of the following structure:

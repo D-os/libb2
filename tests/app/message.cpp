@@ -1,14 +1,12 @@
-#include <Message.h>
+#include <Application.h>
 #include <Archivable.h>
-#include <String.h>
 #include <Handler.h>
 #include <Looper.h>
-
+#include <Message.h>
+#include <Messenger.h>
+#include <String.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <Application.h>
-#include <Messenger.h>
 
 class TestArchivable : public BArchivable {
 public:
@@ -88,20 +86,25 @@ int main(int argc, char **argv)
     copy.ReplaceBool("bool", true);
     copy2.AddInt8("zero", 0);
 
-    msg.PrintToStream();
-    copy.PrintToStream();
-    copy2.PrintToStream();
-    unf.PrintToStream();
+	printf("=== msg ===\n");
+	msg.PrintToStream();
+	printf("=== copy ===\n");
+	copy.PrintToStream();
+	printf("=== copy2 ===\n");
+	copy2.PrintToStream();
+	printf("=== unf ===\n");
+	unf.PrintToStream();
 
-    // --- archiving
+	// --- archiving
     TestArchivable test;
     test.string = "FooBar";
     test.number = 42;
     BMessage archive;
     test.Archive(&archive);
-    archive.PrintToStream();
+	printf("=== archive ===\n");
+	archive.PrintToStream();
 
-    TestArchivable utest(&archive);
+	TestArchivable utest(&archive);
     printf("Test(%s, %d)\n", utest.string.String(), utest.number);
 
 //    Test *uitest = dynamic_cast<Test *>(instantiate_object(&archive));
@@ -111,13 +114,13 @@ int main(int argc, char **argv)
 
     // --- handler
     BHandler handler;
-    handler.SetName(test.string);
-    printf("Handler: %s\n", handler.Name());
+	handler.SetName(test.string.String());
+	printf("Handler: %s\n", handler.Name());
 
-    // --- looper
-    BLooper *looper = new TestLooper();
-    thread_id tid = looper->Run();
-    printf("Looper %p thread_id: %d\n", looper, tid);
+	// --- looper
+	BLooper	*looper = new TestLooper();
+	thread_id tid	 = looper->Run();
+	printf("Looper %p thread_id: %d\n", looper, tid);
 
     printf("PostMessage: %d\n", looper->PostMessage(&msg));
 

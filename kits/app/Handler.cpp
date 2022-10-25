@@ -6,6 +6,9 @@
 #include <cstdlib>
 #include <cstring>
 
+#define LOG_TAG "Handler"
+#include <log/log.h>
+
 BHandler::BHandler(const char *name) : fName(nullptr),
 									   fLooper(nullptr)
 {
@@ -22,6 +25,9 @@ status_t BHandler::Archive(BMessage *data, bool deep) const
 
 void BHandler::MessageReceived(BMessage *message)
 {
+	ALOGD("HANDLER: MessageReceived: %.4s, fNextHandler: %p",
+		  (char *)&(message->what), fNextHandler);
+
 	if (fNextHandler) {
 		// we need to apply the next handler's filters here, too
 		// FIXME: BHandler *target = Looper()->_HandlerFilter(message, fNextHandler);
@@ -35,8 +41,8 @@ void BHandler::MessageReceived(BMessage *message)
 		}
 	}
 	else if (message->what != B_MESSAGE_NOT_UNDERSTOOD
-			 && (message->WasDropped() /*|| message->HasSpecifiers()*/)) {
-		printf("BHandler %s: MessageReceived() couldn't understand the message:\n", Name());
+			 /*&& (message->WasDropped() || message->HasSpecifiers())*/) {
+		dprintf(2, "BHandler %s: MessageReceived() couldn't understand the message:\n", Name());
 		message->PrintToStream();
 		message->SendReply(B_MESSAGE_NOT_UNDERSTOOD);
 	}

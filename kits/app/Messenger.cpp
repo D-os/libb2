@@ -1,26 +1,35 @@
 #include "Messenger.h"
 
-BMessenger::BMessenger() {}
+#include <Handler.h>
 
-BMessenger::BMessenger(const BHandler *handler, const BLooper *looper, status_t *perr)
+BMessenger::BMessenger()
+	: fHandler{nullptr}, fLooper{nullptr} {}
+
+BMessenger::BMessenger(const BHandler *handler, const BLooper *looper, status_t *error)
+	: fHandler{handler}, fLooper{looper}
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!handler && !looper) {
+		if (error) *error = B_BAD_VALUE;
+		return;
+	}
+
+	if (handler) {
+		if (looper && handler->Looper() != looper) {
+			if (error) *error = B_MISMATCHED_VALUES;
+		}
+
+		return;
+	}
+
+	if (error) *error = B_OK;
 }
 
-BMessenger::BMessenger(const BMessenger &from)
-{
-	debugger(__PRETTY_FUNCTION__);
-}
+BMessenger::BMessenger(const BMessenger &from) = default;
+
+BMessenger::BMessenger(BMessenger &&from) = default;
 
 BMessenger::~BMessenger() = default;
 
-BMessenger &BMessenger::operator=(const BMessenger &from)
-{
-	debugger(__PRETTY_FUNCTION__);
-	return *this;
-}
-bool BMessenger::operator==(const BMessenger &other) const
-{
-	debugger(__PRETTY_FUNCTION__);
-	return false;
-}
+BMessenger &BMessenger::operator=(const BMessenger &from) = default;
+
+bool BMessenger::operator==(const BMessenger &other) const = default;

@@ -76,24 +76,22 @@ status_t BLooper::Archive(BMessage *data, bool deep) const
 
 status_t BLooper::PostMessage(uint32 command)
 {
-	fQueue->AddMessage(new BMessage(command));
-	return B_OK;
+	return _PostMessage(new BMessage(command), this, nullptr);
 }
 
 status_t BLooper::PostMessage(BMessage *message)
 {
-	fQueue->AddMessage(new BMessage(*message));
-	return B_OK;
+	return _PostMessage(new BMessage(*message), this, nullptr);
 }
 
 status_t BLooper::PostMessage(uint32 command, BHandler *handler, BHandler *reply_to)
 {
-	return B_ERROR;
+	return _PostMessage(new BMessage(command), handler, reply_to);
 }
 
 status_t BLooper::PostMessage(BMessage *message, BHandler *handler, BHandler *reply_to)
 {
-	return B_ERROR;
+	return _PostMessage(new BMessage(*message), handler, reply_to);
 }
 
 void BLooper::DispatchMessage(BMessage *message, BHandler *target)
@@ -110,6 +108,7 @@ void BLooper::DispatchMessage(BMessage *message, BHandler *target)
 
 void BLooper::MessageReceived(BMessage *msg)
 {
+	ALOGD("MessageReceived: %.4s", (char *)&(msg->what));
 	return BHandler::MessageReceived(msg);
 }
 
@@ -402,20 +401,35 @@ bool BLooper::AssertLocked() const
 	return true;
 }
 
+status_t BLooper::_PostMessage(BMessage *msg, BHandler *handler, BHandler *reply_to)
+{
+	if ((handler && handler != this) || reply_to) {
+		// FIXME: add handler and reply support
+		debugger(__PRETTY_FUNCTION__);
+	}
+
+	fQueue->AddMessage(msg);
+
+	if (fThread != B_ERROR && !has_data(fThread))
+		return send_data(fThread, '_MSG', nullptr, 0);
+
+	return B_OK;
+}
+
 status_t BLooper::_task0_(void *arg)
 {
 	BLooper *looper = (BLooper *)arg;
 
-	ALOGD("LOOPER: _task0_()");
+	ALOGD("_task0_()");
 
 	if (looper->Lock()) {
-		ALOGV("LOOPER: looper locked");
+		ALOGV("_task0_() looper locked");
 		looper->task_looper();
 
 		delete looper;
 	}
 
-	ALOGD("LOOPER: _task0_() done: thread %d", find_thread(NULL));
+	ALOGD("_task0_() done: thread %d", find_thread(NULL));
 	return B_OK;
 }
 
@@ -428,28 +442,24 @@ void BLooper::task_looper()
 	Unlock();
 
 	if (IsLocked())
-		debugger("cannot unlock Looper");
+		debugger("task_looper() cannot unlock Looper");
 
 	// loop: As long as we are not terminating.
 	while (!fTerminating) {
-		ALOGV("LOOPER: outer loop");
+		ALOGV("outer loop");
 
 		if (fQueue->IsEmpty()) {
-			ALOGV("LOOPER: waiting for data");
+			ALOGV("waiting for data");
 			thread_id sender;
 			uint32	  code = receive_data(&sender, NULL, 0);
-#if !LOG_NDEBUG
-			char buf[11];
-			sprint_code(buf, &code);
-			ALOGD("LOOPER: received data from %d, code: %s", sender, buf);
-#endif
+			ALOGD("received data from %d: %.4s", sender, (char *)&code);
 		}
 
 		// loop: As long as there are messages in the queue and the port is
 		//               empty... and we are not terminating, of course.
 		bool dispatchNextMessage = true;
 		while (!fTerminating && dispatchNextMessage) {
-			ALOGV("LOOPER: inner loop");
+			ALOGV("inner loop");
 			// Get next message from queue (assign to fLastMessage after
 			// locking)
 			BMessage *message = fQueue->NextMessage();
@@ -464,9 +474,42 @@ void BLooper::task_looper()
 				dispatchNextMessage = false;
 			}
 			else {
-				ALOGV("LOOPER: fLastMessage: 0x%x: %.4s\n", fLastMessage->what,
+				ALOGV("fLastMessage: 0x%x: %.4s", fLastMessage->what,
 					  (char *)&fLastMessage->what);
 				INFO(*fLastMessage);
+
+				// Get the target handler
+				BHandler *handler = nullptr;
+				// BMessage::Private messagePrivate(fLastMessage);
+				bool usePreferred = true;  // messagePrivate.UsePreferredTarget();
+
+				if (usePreferred) {
+					ALOGV("use preferred target");
+					handler = fPreferred;
+					if (handler == nullptr)
+						handler = this;
+				}
+				else {
+					// if this handler doesn't belong to us, we drop the message
+					if (handler != nullptr && handler->Looper() != this)
+						handler = nullptr;
+				}
+
+				// // Is this a scripting message? (BMessage::HasSpecifiers())
+				// if (handler != nullptr && fLastMessage->HasSpecifiers()) {
+				// 	int32 index = 0;
+				// 	// Make sure the current specifier is kosher
+				// 	if (fLastMessage->GetCurrentSpecifier(&index) == B_OK)
+				// 		handler = resolve_specifier(handler, fLastMessage);
+				// }
+
+				if (handler) {
+					// Do filtering
+					// handler = _TopLevelFilter(fLastMessage, handler);
+					// ALOGV("_TopLevelFilter(): %p", handler);
+					if (handler && handler->Looper() == this)
+						DispatchMessage(fLastMessage, handler);
+				}
 			}
 
 			if (fTerminating) {
@@ -521,6 +564,19 @@ TEST_SUITE("BLooper")
 		CHECK(loop->IsLocked());
 		snooze(100000);
 		loop->Quit();
+		CHECK(count_running_threads() == 1);
+	}
+
+	TEST_CASE("Messaging")
+	{
+		CHECK(count_running_threads() == 1);
+		BLooper *loop = new BLooper();
+		loop->Run();
+		snooze(1000);
+		CHECK(count_running_threads() == 2);
+
+		loop->PostMessage(B_QUIT_REQUESTED);
+		snooze(1000);
 		CHECK(count_running_threads() == 1);
 	}
 }
