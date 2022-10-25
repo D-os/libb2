@@ -21,6 +21,7 @@ class BRoster::impl
 
 BRoster::BRoster() : _impl(new impl{})
 {
+#ifndef RUN_WITHOUT_APP_SERVER
 	sp<android::IServiceManager> sm = android::defaultServiceManager();
 	if (sm == nullptr) {
 		throw std::system_error(std::error_code(ENOENT, std::system_category()), "Unable to reach service manager");
@@ -35,6 +36,9 @@ BRoster::BRoster() : _impl(new impl{})
 	if (_impl->service == nullptr) {
 		throw std::system_error(std::error_code(ENOENT, std::system_category()), "Unknown registrar service");
 	}
+#else
+	_impl->service = nullptr;
+#endif
 }
 
 BRoster::~BRoster() = default;
