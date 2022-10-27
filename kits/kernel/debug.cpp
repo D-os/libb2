@@ -14,7 +14,7 @@ _Noreturn void debugger(const char *message)
 	// FIXME: launch real debugger:
 	// FIXME: open terminal window, attach stdin/out/err and drop to gdb there
 
-	dprintf(2, "<>:< %s\n", message);
+	dprintf(2, "🚧 %s\n", message);
 
 	android::CallStack::CallStackUPtr stack(new android::CallStack());
 	stack->update(1);
@@ -64,7 +64,7 @@ static struct sigaction old_sa[NSIG];
 
 static void _abort_handler(int sig, siginfo_t *siginfo, void *ctx)
 {
-	dprintf(2, "SIGNAL %d @ %p: %s \n", sig, siginfo->si_addr, strsignal(sig));
+	dprintf(2, "💥 SIGNAL %d @ %p: %s \n", sig, siginfo->si_addr, strsignal(sig));
 
 	dprintf(2, "pid: %d, uid: %d, user %d system %d, stack %p, addr %p-%p\n",
 			siginfo->si_pid, siginfo->si_uid, siginfo->si_utime, siginfo->si_stime,

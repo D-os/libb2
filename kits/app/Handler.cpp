@@ -1,16 +1,18 @@
 #include "Handler.h"
 
+#define LOG_TAG "Handler"
+
 #include <Looper.h>
 #include <Message.h>
+#include <log/log.h>
 
 #include <cstdlib>
 #include <cstring>
 
-#define LOG_TAG "Handler"
-#include <log/log.h>
-
-BHandler::BHandler(const char *name) : fName(nullptr),
-									   fLooper(nullptr)
+BHandler::BHandler(const char *name)
+	: BArchivable(),
+	  fName(nullptr),
+	  fLooper(nullptr)
 {
 	SetName(name);
 }
@@ -25,9 +27,8 @@ status_t BHandler::Archive(BMessage *data, bool deep) const
 
 void BHandler::MessageReceived(BMessage *message)
 {
-	ALOGD("HANDLER: MessageReceived: %.4s, fNextHandler: %p",
-		  (char *)&(message->what), fNextHandler);
-
+	ALOGV("BHandler::MessageReceived 0x%x: %.4s, NextHandler: %p",
+		  message->what, (char *)&message->what, fNextHandler);
 	if (fNextHandler) {
 		// we need to apply the next handler's filters here, too
 		// FIXME: BHandler *target = Looper()->_HandlerFilter(message, fNextHandler);

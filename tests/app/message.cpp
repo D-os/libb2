@@ -57,8 +57,8 @@ int main(int argc, char **argv)
 {
     setbuf(stdout, NULL); // do not buffer
 
-    BMessage msg('MSG_');
-    printf("BMessage->what: %.4s\n", (char*)&msg.what);
+	BMessage msg('MESG');
+	printf("BMessage->what: %.4s\n", (char*)&msg.what);
 
     printf("IsSystem: %d\n", msg.IsSystem());
 

@@ -72,6 +72,9 @@ class BApplication : public BLooper
 	BApplication(uint32 signature);
 	BApplication(const BApplication &);
 	BApplication &operator=(const BApplication &);
+
+	status_t fInitError;
+	bool	 fReadyToRunCalled;
 };
 
 /// Global Objects

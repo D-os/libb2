@@ -1,22 +1,21 @@
 #include "Looper.h"
 
-#include <AppDefs.h>
+#define LOG_TAG "Looper"
+
 #include <Message.h>
 #include <MessageQueue.h>
-#include <OS.h>
 #include <doctest/doctest.h>
+#include <log/log.h>
 
 #include <cstdio>
 #include <map>
-
-#define LOG_TAG "Looper"
-#include <log/log.h>
 
 static std::map<thread_id, BLooper *> g_Loopers;
 static std::mutex					  g_LoopersMutex;
 
 BLooper::BLooper(const char *name, int32 priority, int32 _port_capacity)
-	: fQueue{new BMessageQueue()},
+	: BHandler(name),
+	  fQueue{new BMessageQueue()},
 	  fLastMessage{nullptr},
 	  fLockSem(create_sem(1, "BLooper Lock")),
 	  fOwnerCount{0},
@@ -96,6 +95,7 @@ status_t BLooper::PostMessage(BMessage *message, BHandler *handler, BHandler *re
 
 void BLooper::DispatchMessage(BMessage *message, BHandler *target)
 {
+	ALOGV("BLooper::DispatchMessage %p %p", message, target);
 	if (!message || !target) return;
 
 	if (message->what == B_QUIT_REQUESTED && target == this) {
@@ -106,10 +106,10 @@ void BLooper::DispatchMessage(BMessage *message, BHandler *target)
 	}
 }
 
-void BLooper::MessageReceived(BMessage *msg)
+void BLooper::MessageReceived(BMessage *message)
 {
-	ALOGD("MessageReceived: %.4s", (char *)&(msg->what));
-	return BHandler::MessageReceived(msg);
+	ALOGV("BLooper::MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
+	return BHandler::MessageReceived(message);
 }
 
 BMessageQueue *BLooper::MessageQueue() const
@@ -504,6 +504,7 @@ void BLooper::task_looper()
 				// }
 
 				if (handler) {
+					ALOGV("handler %p, %p, %p", this, handler, handler->Looper());
 					// Do filtering
 					// handler = _TopLevelFilter(fLastMessage, handler);
 					// ALOGV("_TopLevelFilter(): %p", handler);
