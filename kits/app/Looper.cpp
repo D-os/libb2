@@ -446,8 +446,6 @@ void BLooper::task_looper()
 
 	// loop: As long as we are not terminating.
 	while (!fTerminating) {
-		ALOGV("outer loop");
-
 		if (fQueue->IsEmpty()) {
 			ALOGV("waiting for data");
 			thread_id sender;
@@ -455,80 +453,59 @@ void BLooper::task_looper()
 			ALOGD("received data from %d: %.4s", sender, (char *)&code);
 		}
 
-		// loop: As long as there are messages in the queue and the port is
-		//               empty... and we are not terminating, of course.
-		bool dispatchNextMessage = true;
-		while (!fTerminating && dispatchNextMessage) {
-			ALOGV("inner loop");
-			// Get next message from queue (assign to fLastMessage after
-			// locking)
-			BMessage *message = fQueue->NextMessage();
+		Lock();
 
-			Lock();
+		// loop: As long as there are messages in the queue
+		while ((fLastMessage = fQueue->NextMessage())) {
+			ALOGV("fLastMessage: 0x%x: %.4s", fLastMessage->what, (char *)&fLastMessage->what);
+			INFO(*fLastMessage);
 
-			fLastMessage = message;
+			// Get the target handler
+			BHandler *handler = nullptr;
+			// BMessage::Private messagePrivate(fLastMessage);
+			bool usePreferred = true;  // messagePrivate.UsePreferredTarget();
 
-			if (!fLastMessage) {
-				// No more messages: Unlock the looper and terminate the
-				// dispatch loop.
-				dispatchNextMessage = false;
+			if (usePreferred) {
+				ALOGV("use preferred target");
+				handler = fPreferred;
+				if (handler == nullptr)
+					handler = this;
 			}
 			else {
-				ALOGV("fLastMessage: 0x%x: %.4s", fLastMessage->what,
-					  (char *)&fLastMessage->what);
-				INFO(*fLastMessage);
-
-				// Get the target handler
-				BHandler *handler = nullptr;
-				// BMessage::Private messagePrivate(fLastMessage);
-				bool usePreferred = true;  // messagePrivate.UsePreferredTarget();
-
-				if (usePreferred) {
-					ALOGV("use preferred target");
-					handler = fPreferred;
-					if (handler == nullptr)
-						handler = this;
-				}
-				else {
-					// if this handler doesn't belong to us, we drop the message
-					if (handler != nullptr && handler->Looper() != this)
-						handler = nullptr;
-				}
-
-				// // Is this a scripting message? (BMessage::HasSpecifiers())
-				// if (handler != nullptr && fLastMessage->HasSpecifiers()) {
-				// 	int32 index = 0;
-				// 	// Make sure the current specifier is kosher
-				// 	if (fLastMessage->GetCurrentSpecifier(&index) == B_OK)
-				// 		handler = resolve_specifier(handler, fLastMessage);
-				// }
-
-				if (handler) {
-					ALOGV("handler %p, %p, %p", this, handler, handler->Looper());
-					// Do filtering
-					// handler = _TopLevelFilter(fLastMessage, handler);
-					// ALOGV("_TopLevelFilter(): %p", handler);
-					if (handler && handler->Looper() == this)
-						DispatchMessage(fLastMessage, handler);
-				}
+				// if this handler doesn't belong to us, we drop the message
+				if (handler != nullptr && handler->Looper() != this)
+					handler = nullptr;
 			}
 
-			if (fTerminating) {
-				// we leave the looper locked when we quit
-				return;
+			// // Is this a scripting message? (BMessage::HasSpecifiers())
+			// if (handler != nullptr && fLastMessage->HasSpecifiers()) {
+			// 	int32 index = 0;
+			// 	// Make sure the current specifier is kosher
+			// 	if (fLastMessage->GetCurrentSpecifier(&index) == B_OK)
+			// 		handler = resolve_specifier(handler, fLastMessage);
+			// }
+
+			if (handler) {
+				ALOGV("handler %p, %p, %p", this, handler, handler->Looper());
+				// Do filtering
+				// handler = _TopLevelFilter(fLastMessage, handler);
+				// ALOGV("_TopLevelFilter(): %p", handler);
+				if (handler && handler->Looper() == this)
+					DispatchMessage(fLastMessage, handler);
 			}
-
-			message		 = fLastMessage;
-			fLastMessage = nullptr;
-
-			// Unlock the looper
-			Unlock();
 
 			// Delete the current message (fLastMessage)
-			if (message)
-				delete message;
+			BMessage *message = fLastMessage;
+			fLastMessage	  = nullptr;
+			delete message;
+		}
+
+		// we leave the looper locked when we quit
+		if (!fTerminating) {
+			Unlock();
 		}
 	}
+
 	ALOGD("BLooper::task_looper() done");
 }
 

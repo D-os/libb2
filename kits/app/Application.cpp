@@ -22,7 +22,10 @@ BApplication::BApplication(const char *signature)
 		debugger("BApplication already created. Only one is allowed.");
 
 	be_app = this;
+
+	// default delivery via looper using preferred handler
 	be_app_messenger = BMessenger(nullptr, this);
+
 	be_roster = new BRoster();
 
 	PostMessage(B_READY_TO_RUN, this);

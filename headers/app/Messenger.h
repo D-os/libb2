@@ -59,8 +59,10 @@ class BMessenger
 	friend bool operator<(const BMessenger &a, const BMessenger &b);
 	friend bool operator!=(const BMessenger &a, const BMessenger &b);
 
+	status_t		fStatus;
 	const BHandler *fHandler;
 	const BLooper  *fLooper;
+	team_id			fTeam;
 };
 
 #endif /* _MESSENGER_H */

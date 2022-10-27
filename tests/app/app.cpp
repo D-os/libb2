@@ -13,9 +13,20 @@ class MyApplication : public BApplication
 	{
 		BList *teams = new BList();
 		be_roster->GetAppList(teams);
-		std::cout << "Apps: " << teams->CountItems() << std::endl;
+		std::cout << "=== Apps: " << teams->CountItems() << std::endl;
 
 		Quit();
+	}
+
+	void MessageReceived(BMessage *message) override
+	{
+		switch (message->what) {
+			case 'TEST':
+				std::cout << "=== TEST message received" << std::endl;
+				break;
+			default:
+				BApplication::MessageReceived(message);
+		}
 	}
 };
 
@@ -28,8 +39,9 @@ int main()
 	new MyApplication("application/x-vnd.test-app", &app_status);
 	fprintf(stderr, "=== MyApplication status: %d\n", app_status);
 
-	// fprintf(stderr, "=== SendMessage\n");
-	// be_app_messenger.SendMessage('TEST', (BHandler*)NULL);
+	fprintf(stderr, "=== SendMessage\n");
+	auto ret = be_app_messenger.SendMessage('TEST');
+	fprintf(stderr, "=== SendMessage status: %d\n", ret);
 
 	fprintf(stderr, "=== Run()\n");
 	be_app->Run();

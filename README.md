@@ -1,2 +1,3 @@
 # libbe
-Be/Haiku API implementation for Linux kernel
+
+Be API implementation for Linux kernel
