@@ -3,7 +3,6 @@
 
 #include <Point.h>
 #include <SupportDefs.h>
-#include <math.h>
 
 class BRect
 {

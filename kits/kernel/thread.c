@@ -361,6 +361,20 @@ inline void exit_thread(status_t status)
     pthread_exit(&status);
 }
 
+status_t rename_thread(thread_id thread, const char *new_name)
+{
+	_threads_rlock();
+	_thread_info *info = _find_thread_info(thread);
+	if (info == NULL || info->task_state == TASK_EXITED) {
+		_threads_unlock();
+		return B_BAD_THREAD_ID;
+	}
+
+	pthread_t pthread = info->pthread;
+	_threads_unlock();
+	return B_FROM_POSIX_ERROR(pthread_setname_np(pthread, new_name));
+}
+
 bool has_data(thread_id thread)
 {
     _thread_info *info = _find_thread_info(thread);

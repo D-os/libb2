@@ -89,6 +89,7 @@ class BLooper : public BHandler
 
    private:
 	friend class BApplication;
+	friend class BWindow;
 
 	BLooper(const BLooper &);
 	BLooper &operator=(const BLooper &);

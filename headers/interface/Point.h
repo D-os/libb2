@@ -1,8 +1,6 @@
 #ifndef _POINT_H
 #define _POINT_H
 
-#include <SupportDefs.h>
-
 class BRect;
 
 class BPoint

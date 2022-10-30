@@ -1,6 +1,6 @@
 #include "Looper.h"
 
-#define LOG_TAG "Looper"
+#define LOG_TAG "BLooper"
 
 #include <Message.h>
 #include <MessageQueue.h>

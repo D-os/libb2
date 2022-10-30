@@ -1,6 +1,6 @@
 #include "Application.h"
 
-#define LOG_TAG "Application"
+#define LOG_TAG "BApplication"
 
 #include <Message.h>
 #include <Roster.h>

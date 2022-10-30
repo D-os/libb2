@@ -1,6 +1,6 @@
 #include "Handler.h"
 
-#define LOG_TAG "Handler"
+#define LOG_TAG "BHandler"
 
 #include <Looper.h>
 #include <Message.h>

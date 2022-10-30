@@ -66,8 +66,8 @@ static void _abort_handler(int sig, siginfo_t *siginfo, void *ctx)
 {
 	dprintf(2, "💥 SIGNAL %d @ %p: %s \n", sig, siginfo->si_addr, strsignal(sig));
 
-	dprintf(2, "pid: %d, uid: %d, user %d system %d, stack %p, addr %p-%p\n",
-			siginfo->si_pid, siginfo->si_uid, siginfo->si_utime, siginfo->si_stime,
+	dprintf(2, "   pid: %d, uid: %d, stack %p, bound %p-%p\n",
+			siginfo->si_pid, siginfo->si_uid,
 			((ucontext_t *)ctx)->uc_stack.ss_sp, siginfo->si_lower, siginfo->si_upper);
 
 	// TODO: print backtrace
@@ -85,8 +85,8 @@ static void _register_crash_handlers(void)
 	struct sigaction handler;
 
 	memset(&handler, 0, sizeof(handler));
-	handler.sa_sigaction = &_abort_handler;
 	handler.sa_flags	 = SA_SIGINFO;
+	handler.sa_sigaction = &_abort_handler;
 	if (sigfillset(&handler.sa_mask) != 0) {
 		perror("sigfillset");
 		exit(EXIT_FAILURE);

@@ -4,6 +4,7 @@
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 #include <os/services/IRegistrarService.h>
+#include <pimpl.h>
 #include <utils/String16.h>
 
 #include <system_error>
@@ -19,7 +20,7 @@ class BRoster::impl
 	sp<os::services::IRegistrarService> service;
 };
 
-BRoster::BRoster() : _impl(new impl{})
+BRoster::BRoster()
 {
 #ifndef RUN_WITHOUT_APP_SERVER
 	sp<android::IServiceManager> sm = android::defaultServiceManager();
@@ -32,12 +33,12 @@ BRoster::BRoster() : _impl(new impl{})
 		throw std::system_error(std::error_code(ENOENT, std::system_category()), "Unable to get registrar service");
 	}
 
-	_impl->service = android::interface_cast<os::services::IRegistrarService>(reg);
-	if (_impl->service == nullptr) {
+	m->service = android::interface_cast<os::services::IRegistrarService>(reg);
+	if (m->service == nullptr) {
 		throw std::system_error(std::error_code(ENOENT, std::system_category()), "Unknown registrar service");
 	}
 #else
-	_impl->service = nullptr;
+	m->service = nullptr;
 #endif
 }
 

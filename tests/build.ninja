@@ -51,3 +51,8 @@ build $BUILDROOT/os/tests/app/message.o: cxx system/os/tests/app/message.cpp
 build $BUILDROOT/os/tests/app_message: link $
   $BUILDROOT/os/tests/app/message.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/window.o: cxx system/os/tests/interface/window.cpp
+build $BUILDROOT/os/tests/interface_window: link $
+  $BUILDROOT/os/tests/interface/window.o $
+| $SYSROOT/lib/libbe.so

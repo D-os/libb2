@@ -20,10 +20,13 @@ includes = $
   -isystem system/core/libutils/include $
   -isystem system/libbase/include $
   -isystem system/logging/liblog/include $
+  -isystem external/wayland/src $
+  -isystem build/wayland/src $
+  -isystem $BUILDROOT/wayland $
   -isystem external/doctest $
 
 libs = -lc++ -lunwind $
-  -lbinder -lutils -lcutils -llog
+  -lbinder -lutils -lcutils -llog -lwayland-client
 
 build $BUILDROOT/os/libbe/app/Application.o: cxx system/os/kits/app/Application.cpp
 build $BUILDROOT/os/libbe/app/Handler.o: cxx system/os/kits/app/Handler.cpp
@@ -32,6 +35,9 @@ build $BUILDROOT/os/libbe/app/Message.o: cxx system/os/kits/app/Message.cpp
 build $BUILDROOT/os/libbe/app/MessageQueue.o: cxx system/os/kits/app/MessageQueue.cpp
 build $BUILDROOT/os/libbe/app/Messenger.o: cxx system/os/kits/app/Messenger.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
+build $BUILDROOT/os/libbe/interface/Point.o: cxx system/os/kits/interface/Point.cpp
+build $BUILDROOT/os/libbe/interface/Rect.o: cxx system/os/kits/interface/Rect.cpp
+build $BUILDROOT/os/libbe/interface/Window.o: cxx system/os/kits/interface/Window.cpp
 build $BUILDROOT/os/libbe/support/Archivable.o: cxx system/os/kits/support/Archivable.cpp
 build $BUILDROOT/os/libbe/support/List.o: cxx system/os/kits/support/List.cpp
 build $BUILDROOT/os/libbe/support/Locker.o: cxx system/os/kits/support/Locker.cpp
@@ -54,6 +60,9 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/MessageQueue.o $
   $BUILDROOT/os/libbe/app/Messenger.o $
   $BUILDROOT/os/libbe/app/Roster.o $
+  $BUILDROOT/os/libbe/interface/Point.o $
+  $BUILDROOT/os/libbe/interface/Rect.o $
+  $BUILDROOT/os/libbe/interface/Window.o $
   $BUILDROOT/os/libbe/support/Archivable.o $
   $BUILDROOT/os/libbe/support/List.o $
   $BUILDROOT/os/libbe/support/Locker.o $

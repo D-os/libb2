@@ -1,6 +1,6 @@
 #include "Messenger.h"
 
-#define LOG_TAG "Messenger"
+#define LOG_TAG "BMessenger"
 
 #include <Application.h>
 #include <Handler.h>

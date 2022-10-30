@@ -71,7 +71,7 @@ class BRoster
 
    private:
 	class impl;
-	std::unique_ptr<impl> _impl;
+	pimpl<impl> m;
 };
 
 /// Global be_roster
