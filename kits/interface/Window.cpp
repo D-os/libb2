@@ -14,35 +14,45 @@
 #include <cstring>
 #include <system_error>
 
+#include "xdg-shell-client-protocol.h"
+
 class BWindow::impl
 {
    public:
-	struct wl_display	  *display;
-	struct wl_registry   *registry;
-	struct wl_compositor *compositor;
-	struct wl_surface	  *surface;
-	struct wl_shm		  *shm;
-	struct wl_shell		*shell;
-	struct wl_shm_pool   *shm_pool;
+	/* Globals */
+	struct wl_display	  *wl_display;
+	struct wl_registry   *wl_registry;
+	struct wl_compositor *wl_compositor;
+	struct wl_shm		  *wl_shm;
+	struct xdg_wm_base   *xdg_wm_base;
+	/* Objects */
+	struct wl_surface	  *wl_surface;
+	struct xdg_surface  *xdg_surface;
+	struct xdg_toplevel *xdg_toplevel;
+
+	/* Backing */
+	struct wl_shm_pool   *wl_shm_pool;
 	size_t				  shm_pool_size;
 	int					  pool_fd;
 	uint8_t			  *pool_data;
-	struct wl_buffer	 *buffer;
+	struct wl_buffer	 *wl_buffer;
 
 	bool minimized;
 
 	impl()
-		: display{nullptr},
-		  registry{nullptr},
-		  compositor{nullptr},
-		  surface{nullptr},
-		  shm{nullptr},
-		  shell{nullptr},
-		  shm_pool{nullptr},
+		: wl_display{nullptr},
+		  wl_registry{nullptr},
+		  wl_compositor{nullptr},
+		  wl_shm{nullptr},
+		  xdg_wm_base{nullptr},
+		  wl_surface{nullptr},
+		  xdg_surface{nullptr},
+		  xdg_toplevel{nullptr},
+		  wl_shm_pool{nullptr},
 		  shm_pool_size{0},
 		  pool_fd{-1},
 		  pool_data{nullptr},
-		  buffer{nullptr},
+		  wl_buffer{nullptr},
 
 		  minimized{false},
 
@@ -56,6 +66,15 @@ class BWindow::impl
 		  surface_listener{
 			  .enter = surface_enter_handler,
 			  .leave = surface_leave_handler,
+		  },
+		  wl_buffer_listener{
+			  .release = wl_buffer_release_handler,
+		  },
+		  xdg_surface_listener{
+			  .configure = xdg_surface_configure_handler,
+		  },
+		  xdg_wm_base_listener{
+			  .ping = xdg_wm_base_ping_handler,
 		  }
 	{
 	}
@@ -64,12 +83,18 @@ class BWindow::impl
 	void showWindow(const size_t width, const size_t height);
 	void hideWindow();
 
-   private:
-	std::mutex mutex;
+	struct wl_buffer *draw_frame();
 
-	struct wl_registry_listener registry_listener;
-	struct wl_shm_listener		shm_listener;
-	struct wl_surface_listener	surface_listener;
+   private:
+	std::mutex pool_mutex;
+	void	   resize_pool(size_t size);
+
+	const struct wl_registry_listener registry_listener;
+	const struct wl_shm_listener	  shm_listener;
+	const struct wl_surface_listener  surface_listener;
+	const struct wl_buffer_listener	  wl_buffer_listener;
+	const struct xdg_surface_listener xdg_surface_listener;
+	const struct xdg_wm_base_listener xdg_wm_base_listener;
 
 	static void registry_global_handler(void *this_, struct wl_registry *registry, uint32_t name,
 										const char *interface, uint32_t version);
@@ -77,6 +102,9 @@ class BWindow::impl
 	static void shm_format_handler(void *this_, struct wl_shm *wl_shm, uint32_t format);
 	static void surface_enter_handler(void *this_, struct wl_surface *surface, struct wl_output *output);
 	static void surface_leave_handler(void *this_, struct wl_surface *surface, struct wl_output *output);
+	static void wl_buffer_release_handler(void *this_, struct wl_buffer *wl_buffer);
+	static void xdg_surface_configure_handler(void *this_, struct xdg_surface *xdg_surface, uint32_t serial);
+	static void xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xdg_wm_base, uint32_t serial);
 };
 
 namespace {
@@ -113,80 +141,71 @@ inline window_feel type2feel(window_type type)
 
 bool BWindow::impl::connect()
 {
-	display = wl_display_connect(NULL);
-	if (!display) return false;
+	wl_display = wl_display_connect(NULL);
+	if (!wl_display) return false;
 	ALOGD("connected display");
 
-	registry = wl_display_get_registry(display);
-	if (!registry) return false;
+	wl_registry = wl_display_get_registry(wl_display);
+	if (!wl_registry) return false;
 	ALOGV("connected registry");
-	wl_registry_add_listener(registry, &registry_listener, this);
+	wl_registry_add_listener(wl_registry, &registry_listener, this);
 
 	// wait for the "initial" set of globals to appear
-	wl_display_roundtrip(display);
-	ALOGV("compositor %p, shm %p, shell %p", compositor, shm, shell);
-	if (!compositor || !shm || !shell) return false;
+	wl_display_roundtrip(wl_display);
+	ALOGV("compositor %p, shm %p, xdg_wm_base %p", wl_compositor, wl_shm, xdg_wm_base);
+	if (!wl_compositor || !wl_shm || !xdg_wm_base) return false;
 
-	surface = wl_compositor_create_surface(compositor);
-	if (!surface) return false;
+	wl_surface = wl_compositor_create_surface(wl_compositor);
+	if (!wl_surface) return false;
 	ALOGV("created surface");
-	wl_surface_add_listener(surface, &surface_listener, this);
+	wl_surface_add_listener(wl_surface, &surface_listener, this);
+
+	xdg_surface = xdg_wm_base_get_xdg_surface(xdg_wm_base, wl_surface);
+	xdg_surface_add_listener(xdg_surface, &xdg_surface_listener, this);
+	if (!xdg_surface) return false;
+	ALOGV("created xdg_surface");
 
 	return true;
 }
 
-void BWindow::impl::showWindow(const size_t width, const size_t height)
+void BWindow::impl::resize_pool(size_t new_size)
 {
-	std::lock_guard<std::mutex> guard(mutex);
+	if (new_size == shm_pool_size) return;
 
-	const size_t stride			   = width * 4;
-	const size_t new_shm_pool_size = height * stride * 2;  // *2 double buffer
+	std::lock_guard<std::mutex> guard(pool_mutex);
 
 	if (pool_fd < 0) {
 		pool_fd = syscall(SYS_memfd_create, "wl_shm_buffer", 0);
 	}
 	ALOG_ASSERT(pool_fd >= 0, "Cannot create shared memory buffer file");
 
-	if (new_shm_pool_size > shm_pool_size) {
-		ftruncate(pool_fd, new_shm_pool_size);
+	if (new_size > shm_pool_size) {
+		ftruncate(pool_fd, new_size);
 
 		if (pool_data) {
-			munmap(pool_data, shm_pool_size);
-		}
-		pool_data = (uint8_t *)mmap(NULL, shm_pool_size, PROT_READ | PROT_WRITE, MAP_SHARED, pool_fd, 0);
-
-		if (shm_pool) {
-			wl_shm_pool_resize(shm_pool, new_shm_pool_size);
-		}
-	}
-
-	if (!shm_pool) {
-		shm_pool = wl_shm_create_pool(shm, pool_fd, shm_pool_size);
-	}
-
-	int			 index	= 0;
-	const size_t offset = height * stride * index;
-
-	if (buffer) {
-		wl_buffer_destroy(buffer);
-	}
-	buffer = wl_shm_pool_create_buffer(shm_pool, offset, width, height, stride, WL_SHM_FORMAT_XRGB8888);
-
-	uint32_t *pixels = (uint32_t *)&pool_data[offset];
-	for (int y = 0; y < height; ++y) {
-		for (int x = 0; x < width; ++x) {
-			if ((x + y / 8 * 8) % 16 < 8) {
-				pixels[y * width + x] = 0xFF666666;
-			}
-			else {
-				pixels[y * width + x] = 0xFFEEEEEE;
+			if (munmap(pool_data, shm_pool_size) == -1) {
+				LOG_ALWAYS_FATAL("Failed to unmap memory: %zu bytes @ %p; %d: %s",
+								 shm_pool_size, pool_data, errno, strerror(errno));
 			}
 		}
+		pool_data	  = (uint8_t *)mmap(NULL, new_size, PROT_READ | PROT_WRITE, MAP_SHARED, pool_fd, 0);
+		shm_pool_size = new_size;
+
+		if (wl_shm_pool) {
+			wl_shm_pool_resize(wl_shm_pool, new_size);
+		}
 	}
 
-	wl_surface_attach(surface, buffer, 0, 0);
-	wl_surface_damage(surface, 0, 0, UINT32_MAX, UINT32_MAX);
-	wl_surface_commit(surface);
+	if (!wl_shm_pool) {
+		wl_shm_pool = wl_shm_create_pool(wl_shm, pool_fd, shm_pool_size);
+	}
+}
+
+void BWindow::impl::showWindow(const size_t width, const size_t height)
+{
+	xdg_toplevel = xdg_surface_get_toplevel(xdg_surface);
+	xdg_toplevel_set_title(xdg_toplevel, "Example client");
+	wl_surface_commit(wl_surface);
 }
 
 void BWindow::impl::hideWindow()
@@ -203,17 +222,20 @@ void BWindow::impl::registry_global_handler(
 	ALOGV("%u: %s (v.%u)", name, interface, version);
 
 	if (strcmp(interface, wl_compositor_interface.name) == 0) {
-		static_cast<BWindow::impl *>(this_)->compositor = (struct wl_compositor *)wl_registry_bind(
+		static_cast<BWindow::impl *>(this_)->wl_compositor = (struct wl_compositor *)wl_registry_bind(
 			registry, name, &wl_compositor_interface, 5);
 	}
 	else if (strcmp(interface, wl_shm_interface.name) == 0) {
-		static_cast<BWindow::impl *>(this_)->shm = (struct wl_shm *)wl_registry_bind(
+		static_cast<BWindow::impl *>(this_)->wl_shm = (struct wl_shm *)wl_registry_bind(
 			registry, name, &wl_shm_interface, 1);
-		wl_shm_add_listener(static_cast<BWindow::impl *>(this_)->shm, &static_cast<BWindow::impl *>(this_)->shm_listener, this_);
+		wl_shm_add_listener(static_cast<BWindow::impl *>(this_)->wl_shm,
+							&static_cast<BWindow::impl *>(this_)->shm_listener, this_);
 	}
-	else if (strcmp(interface, "wl_shell") == 0) {
-		static_cast<BWindow::impl *>(this_)->shell = (struct wl_shell *)wl_registry_bind(
-			registry, name, &wl_shell_interface, 1);
+	else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
+		static_cast<BWindow::impl *>(this_)->xdg_wm_base = (struct xdg_wm_base *)wl_registry_bind(
+			registry, name, &xdg_wm_base_interface, 1);
+		xdg_wm_base_add_listener(static_cast<BWindow::impl *>(this_)->xdg_wm_base,
+								 &static_cast<BWindow::impl *>(this_)->xdg_wm_base_listener, this_);
 	}
 }
 void BWindow::impl::registry_global_remove_handler(
@@ -236,6 +258,55 @@ void BWindow::impl::surface_enter_handler(void *this_, struct wl_surface *surfac
 void BWindow::impl::surface_leave_handler(void *this_, struct wl_surface *surface, struct wl_output *output)
 {
 	ALOGV("%p surface leave %p", surface, output);
+}
+
+void BWindow::impl::wl_buffer_release_handler(void *this_, struct wl_buffer *wl_buffer)
+{
+	// Sent by the compositor when it's no longer using this buffer
+	wl_buffer_destroy(wl_buffer);
+}
+
+struct wl_buffer *BWindow::impl::draw_frame()
+{
+	const int width = 640, height = 480;
+	int		  stride = width * 4;
+	int		  size	 = stride * height;
+
+	resize_pool(size);
+
+	int			 index	= 0;
+	const size_t offset = height * stride * index;
+	wl_buffer			= wl_shm_pool_create_buffer(wl_shm_pool,
+													offset, width, height, stride, WL_SHM_FORMAT_XRGB8888);
+
+	/* Draw checkerboxed background */
+	uint32_t *pixels = (uint32_t *)&pool_data[offset];
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			if ((x + y / 8 * 8) % 16 < 8)
+				pixels[y * width + x] = 0xFF666666;
+			else
+				pixels[y * width + x] = 0xFFEEEEEE;
+		}
+	}
+
+	wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, this);
+	return wl_buffer;
+}
+
+void BWindow::impl::xdg_surface_configure_handler(void *this_, struct xdg_surface *xdg_surface, uint32_t serial)
+{
+	xdg_surface_ack_configure(xdg_surface, serial);
+
+	struct wl_buffer *buffer = static_cast<BWindow::impl *>(this_)->draw_frame();
+	wl_surface_attach(static_cast<BWindow::impl *>(this_)->wl_surface, buffer, 0, 0);
+	wl_surface_commit(static_cast<BWindow::impl *>(this_)->wl_surface);
+}
+
+void BWindow::impl::xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xdg_wm_base, uint32_t serial)
+{
+	ALOGV("responding to PING");
+	xdg_wm_base_pong(xdg_wm_base, serial);
 }
 
 #pragma mark - BWindow
@@ -440,7 +511,9 @@ bool BWindow::QuitRequested()
 
 thread_id BWindow::Run()
 {
-	debugger(__PRETTY_FUNCTION__);
+	while (wl_display_dispatch(m->wl_display)) {
+		/* This space deliberately left blank */
+	}
 	return -1;
 }
 

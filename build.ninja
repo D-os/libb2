@@ -14,6 +14,7 @@ includes = $
   -I system/os/headers/interface $
   -I system/os/headers/kernel $
   -I system/os/headers/storage $
+  -I $BUILDROOT/os/libbe/protocol $
   -isystem $BUILDROOT/os/aidl/include $
   -isystem frameworks/native/libs/binder/include $
   -isystem system/core/libcutils/include $
@@ -37,7 +38,7 @@ build $BUILDROOT/os/libbe/app/Messenger.o: cxx system/os/kits/app/Messenger.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
 build $BUILDROOT/os/libbe/interface/Point.o: cxx system/os/kits/interface/Point.cpp
 build $BUILDROOT/os/libbe/interface/Rect.o: cxx system/os/kits/interface/Rect.cpp
-build $BUILDROOT/os/libbe/interface/Window.o: cxx system/os/kits/interface/Window.cpp
+build $BUILDROOT/os/libbe/interface/Window.o: cxx system/os/kits/interface/Window.cpp | $BUILDROOT/os/libbe/protocol/xdg-shell-client-protocol.h
 build $BUILDROOT/os/libbe/support/Archivable.o: cxx system/os/kits/support/Archivable.cpp
 build $BUILDROOT/os/libbe/support/List.o: cxx system/os/kits/support/List.cpp
 build $BUILDROOT/os/libbe/support/Locker.o: cxx system/os/kits/support/Locker.cpp
@@ -51,6 +52,13 @@ build $BUILDROOT/os/libbe/kernel/thread.o: cc system/os/kits/kernel/thread.c
 build $BUILDROOT/os/libbe/kernel/time.o: cc system/os/kits/kernel/time.c
 
 build $BUILDROOT/os/tests/doctest.o: cxx system/os/tests/doctest.cpp
+
+build $BUILDROOT/os/libbe/protocol/xdg-shell-client-protocol.h: wayland-scanner external/wayland-protocols/stable/xdg-shell/xdg-shell.xml | out/host/bin/wayland-scanner
+  type = client-header
+build $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.c: wayland-scanner external/wayland-protocols/stable/xdg-shell/xdg-shell.xml | out/host/bin/wayland-scanner
+  type = private-code
+
+build $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.o: cc $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.c | $BUILDROOT/os/libbe/protocol/xdg-shell-client-protocol.h
 
 build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/Application.o $
@@ -76,6 +84,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/kernel/time.o $
   $BUILDROOT/os/tests/doctest.o $
   $BUILDROOT/os/aidl/${TARGET}/os/services/app/IRegistrarService.o $
+  $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.o $
 | $SYSROOT/lib/libbinder.so
   libs = $libs -lbinder
 
