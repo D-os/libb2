@@ -2,7 +2,10 @@
 
 #define LOG_TAG "BWindow"
 
+#include <Application.h>
+#include <Autolock.h>
 #include <Rect.h>
+#include <View.h>
 #include <log/log.h>
 #include <pimpl.h>
 #include <sys/mman.h>
@@ -98,6 +101,7 @@ class BWindow::impl
 	bool connect();
 	void showWindow(const size_t width, const size_t height);
 	void hideWindow();
+	void minimize(bool minimized);
 
    private:
 	std::mutex pool_mutex;
@@ -240,6 +244,7 @@ void BWindow::impl::resize_buffer()
 
 	wl_surface_attach(wl_surface, wl_buffer, 0, 0);
 
+#ifndef NDEBUG
 	/* Draw checkerboxed background */
 	uint32_t *pixels = (uint32_t *)&pool_data[offset];
 	for (int y = 0; y < height; ++y) {
@@ -250,6 +255,7 @@ void BWindow::impl::resize_buffer()
 				pixels[y * width + x] = 0xFFAAAAAA;
 		}
 	}
+#endif
 }
 
 void BWindow::impl::showWindow(size_t width, size_t height)
@@ -258,6 +264,12 @@ void BWindow::impl::showWindow(size_t width, size_t height)
 
 void BWindow::impl::hideWindow()
 {
+}
+
+void BWindow::impl::minimize(bool minimized)
+{
+	debugger(__PRETTY_FUNCTION__);
+	this->minimized = minimized;
 }
 
 void BWindow::impl::registry_global_handler(
@@ -357,6 +369,9 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 	  fTitle{nullptr},
 	  fShowLevel{1},
 	  fFlags{flags},
+	  fTopView{nullptr},
+	  fFocus{nullptr},
+	  fLastMouseMovedView{nullptr},
 	  fLook{look},
 	  fFeel{feel}
 {
@@ -366,14 +381,21 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 	frame.bottom = roundf(frame.bottom);
 
 	fFrame = frame;
-	m->width  = frame.right - frame.left;
-	m->height = frame.bottom - frame.top;
+
+	// frame coordinates are in the middle of pixels,
+	// so 0<->1 covers 2 pixels, thus we need to add 1
+	m->width  = frame.right - frame.left + 1;
+	m->height = frame.bottom - frame.top + 1;
 
 	SetTitle(title);
 
 	if (!m->connect()) {
 		throw std::system_error(std::error_code(errno, std::system_category()), "Cannot connect display");
 	}
+
+	fTopView = new BView(fFrame.OffsetToCopy(B_ORIGIN), "fTopView", B_FOLLOW_ALL, B_WILL_DRAW);
+
+	fTopView->_attach(this);
 }
 
 BWindow::~BWindow() = default;
@@ -386,7 +408,59 @@ status_t BWindow::Archive(BMessage *data, bool deep) const
 
 void BWindow::Quit()
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!IsLocked()) {
+		ALOGE("You must Lock a looper before calling Quit(), team=%d, looper=%s",
+			  Team(), Name());
+	}
+
+	// Try to lock
+	if (!Lock()) {
+		// We're toast already
+		return;
+	}
+
+	while (!IsHidden()) {
+		Hide();
+	}
+
+	if (fFlags & B_QUIT_ON_WINDOW_CLOSE)
+		be_app->PostMessage(B_QUIT_REQUESTED);
+
+	BLooper::Quit();
+}
+
+void BWindow::AddChild(BView *child, BView *before)
+{
+	BAutolock locker(this);
+	if (locker.IsLocked())
+		fTopView->AddChild(child, before);
+}
+
+bool BWindow::RemoveChild(BView *child)
+{
+	BAutolock locker(this);
+	if (!locker.IsLocked())
+		return false;
+
+	return fTopView->RemoveChild(child);
+}
+
+int32 BWindow::CountChildren() const
+{
+	BAutolock locker(const_cast<BWindow *>(this));
+	if (!locker.IsLocked())
+		return 0;
+
+	return fTopView->CountChildren();
+}
+
+BView *BWindow::ChildAt(int32 index) const
+{
+	BAutolock locker(const_cast<BWindow *>(this));
+	if (!locker.IsLocked())
+		return NULL;
+
+	return fTopView->ChildAt(index);
 }
 
 void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
@@ -421,7 +495,12 @@ void BWindow::FrameResized(float new_width, float new_height)
 
 void BWindow::Minimize(bool minimize)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (IsModal() || IsFloating() || IsHidden() || m->minimized == minimize || !Lock())
+		return;
+
+	m->minimize(minimize);
+
+	Unlock();
 }
 
 void BWindow::Zoom(BPoint rec_position, float rec_width, float rec_height)
@@ -444,9 +523,29 @@ void BWindow::MenusEnded()
 	debugger(__PRETTY_FUNCTION__);
 }
 
-void BWindow::WindowActivated(bool state)
+BView *BWindow::FindView(const char *view_name) const
+{
+	BAutolock locker(const_cast<BWindow *>(this));
+	if (!locker.IsLocked())
+		return nullptr;
+
+	return fTopView->FindView(view_name);
+}
+
+BView *BWindow::FindView(BPoint) const
 {
 	debugger(__PRETTY_FUNCTION__);
+	return nullptr;
+}
+
+BView *BWindow::CurrentFocus() const
+{
+	return fFocus;
+}
+
+void BWindow::WindowActivated(bool state)
+{
+	// the default implementation does nothing
 }
 
 void BWindow::Show()
@@ -525,6 +624,11 @@ void BWindow::SetTitle(const char *title)
 	}
 }
 
+BView *BWindow::LastMouseMovedView() const
+{
+	return fLastMouseMovedView;
+}
+
 BHandler *BWindow::ResolveSpecifier(BMessage *msg, int32 index, BMessage *specifier, int32 form, const char *property)
 {
 	debugger(__PRETTY_FUNCTION__);
@@ -535,6 +639,68 @@ status_t BWindow::GetSupportedSuites(BMessage *data)
 {
 	debugger(__PRETTY_FUNCTION__);
 	return B_ERROR;
+}
+
+status_t BWindow::SetType(window_type type)
+{
+	status_t status = SetLook(type2look(type));
+	if (status == B_OK)
+		status = SetFeel(type2feel(type));
+
+	return status;
+}
+
+window_type BWindow::Type() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_UNTYPED_WINDOW;
+}
+
+status_t BWindow::SetLook(window_look look)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+window_look BWindow::Look() const
+{
+	return fLook;
+}
+
+status_t BWindow::SetFeel(window_feel feel)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+window_feel BWindow::Feel() const
+{
+	return fFeel;
+}
+
+status_t BWindow::SetFlags(uint32)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
+uint32 BWindow::Flags() const
+{
+	return fFlags;
+}
+
+bool BWindow::IsModal() const
+{
+	return fFeel == B_MODAL_SUBSET_WINDOW_FEEL
+		   || fFeel == B_MODAL_APP_WINDOW_FEEL
+		   || fFeel == B_MODAL_ALL_WINDOW_FEEL;
+}
+
+bool BWindow::IsFloating() const
+{
+	return fFeel == B_FLOATING_SUBSET_WINDOW_FEEL
+		   || fFeel == B_FLOATING_APP_WINDOW_FEEL
+		   || fFeel == B_FLOATING_ALL_WINDOW_FEEL;
 }
 
 bool BWindow::QuitRequested()

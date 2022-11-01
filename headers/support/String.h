@@ -254,6 +254,6 @@ int Compare(const BString *, const BString *);
 int ICompare(const BString *, const BString *);
 
 /// C++ standard way of providing string conversions
-std::ostream &operator<<(std::ostream &os, const BString &value);
+std::ostream &operator<<(std::ostream &, const BString &);
 
 #endif /* __BSTRING__ */

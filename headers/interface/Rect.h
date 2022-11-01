@@ -45,16 +45,16 @@ class BRect
 	/// expression transformations
 	BRect &InsetBySelf(BPoint);
 	BRect &InsetBySelf(float dx, float dy);
-	BRect  InsetByCopy(BPoint);
-	BRect  InsetByCopy(float dx, float dy);
+	BRect  InsetByCopy(BPoint) const;
+	BRect  InsetByCopy(float dx, float dy) const;
 	BRect &OffsetBySelf(BPoint);
 	BRect &OffsetBySelf(float dx, float dy);
-	BRect  OffsetByCopy(BPoint);
-	BRect  OffsetByCopy(float dx, float dy);
+	BRect  OffsetByCopy(BPoint) const;
+	BRect  OffsetByCopy(float dx, float dy) const;
 	BRect &OffsetToSelf(BPoint);
 	BRect &OffsetToSelf(float dx, float dy);
-	BRect  OffsetToCopy(BPoint);
-	BRect  OffsetToCopy(float dx, float dy);
+	BRect  OffsetToCopy(BPoint) const;
+	BRect  OffsetToCopy(float dx, float dy) const;
 
 	/// comparison
 	bool operator==(BRect) const;
@@ -74,6 +74,9 @@ class BRect
 	bool  Contains(BPoint) const;
 	bool  Contains(BRect) const;
 };
+
+/// C++ standard way of providing string conversions
+std::ostream &operator<<(std::ostream &, const BRect &);
 
 inline BPoint BRect::LeftTop() const
 {

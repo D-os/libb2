@@ -239,4 +239,7 @@ class BMessage
 	pimpl<impl> m;
 };
 
+/// C++ standard way of providing string conversions
+std::ostream &operator<<(std::ostream &, const BMessage &);
+
 #endif /* _MESSAGE_H */

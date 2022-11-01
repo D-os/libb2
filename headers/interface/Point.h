@@ -20,6 +20,7 @@ class BPoint
 
 	void PrintToStream() const;
 
+	BPoint	operator-() const;
 	BPoint	operator+(const BPoint&) const;
 	BPoint	operator-(const BPoint&) const;
 	BPoint& operator+=(const BPoint&);

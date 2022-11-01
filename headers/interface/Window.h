@@ -241,6 +241,9 @@ class BWindow : public BLooper
 	char		 *fTitle;
 	short		fShowLevel;
 	uint32		fFlags;
+	BView		  *fTopView;
+	BView		  *fFocus;
+	BView		  *fLastMouseMovedView;
 	BRect		fFrame;
 	window_look fLook;
 	window_feel fFeel;

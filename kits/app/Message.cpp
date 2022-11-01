@@ -227,7 +227,7 @@ bool BMessage::IsSystem() const
 
 void BMessage::PrintToStream() const
 {
-	std::cout << *this;
+	std::cout << *this << std::endl;
 }
 
 status_t BMessage::Rename(const char *old_entry, const char *new_entry)
