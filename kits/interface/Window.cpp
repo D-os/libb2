@@ -11,6 +11,7 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
+#include <cstddef>
 #include <cstring>
 #include <system_error>
 
@@ -31,13 +32,19 @@ class BWindow::impl
 	struct xdg_toplevel *xdg_toplevel;
 
 	/* Backing */
+	size_t				  width;
+	size_t				  height;
 	struct wl_shm_pool   *wl_shm_pool;
 	size_t				  shm_pool_size;
 	int					  pool_fd;
 	uint8_t			  *pool_data;
 	struct wl_buffer	 *wl_buffer;
 
+	const char *title;
+
 	bool minimized;
+	bool maximized;
+	bool closed;
 
 	impl()
 		: wl_display{nullptr},
@@ -48,13 +55,18 @@ class BWindow::impl
 		  wl_surface{nullptr},
 		  xdg_surface{nullptr},
 		  xdg_toplevel{nullptr},
+		  width{0},
+		  height{0},
 		  wl_shm_pool{nullptr},
 		  shm_pool_size{0},
 		  pool_fd{-1},
 		  pool_data{nullptr},
 		  wl_buffer{nullptr},
 
+		  title{nullptr},
 		  minimized{false},
+		  maximized{false},
+		  closed{false},
 
 		  registry_listener{
 			  .global		 = registry_global_handler,
@@ -75,6 +87,10 @@ class BWindow::impl
 		  },
 		  xdg_wm_base_listener{
 			  .ping = xdg_wm_base_ping_handler,
+		  },
+		  xdg_toplevel_listener{
+			  .configure = xdg_toplevel_configure_handler,
+			  .close	 = xdg_toplevel_close_handler,
 		  }
 	{
 	}
@@ -83,11 +99,9 @@ class BWindow::impl
 	void showWindow(const size_t width, const size_t height);
 	void hideWindow();
 
-	struct wl_buffer *draw_frame();
-
    private:
 	std::mutex pool_mutex;
-	void	   resize_pool(size_t size);
+	void	   resize_buffer();
 
 	const struct wl_registry_listener registry_listener;
 	const struct wl_shm_listener	  shm_listener;
@@ -95,6 +109,7 @@ class BWindow::impl
 	const struct wl_buffer_listener	  wl_buffer_listener;
 	const struct xdg_surface_listener xdg_surface_listener;
 	const struct xdg_wm_base_listener xdg_wm_base_listener;
+	const struct xdg_toplevel_listener xdg_toplevel_listener;
 
 	static void registry_global_handler(void *this_, struct wl_registry *registry, uint32_t name,
 										const char *interface, uint32_t version);
@@ -105,6 +120,9 @@ class BWindow::impl
 	static void wl_buffer_release_handler(void *this_, struct wl_buffer *wl_buffer);
 	static void xdg_surface_configure_handler(void *this_, struct xdg_surface *xdg_surface, uint32_t serial);
 	static void xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xdg_wm_base, uint32_t serial);
+	static void xdg_toplevel_configure_handler(void *this_, struct xdg_toplevel *xdg_toplevel,
+											   int32_t width, int32_t height, struct wl_array *states);
+	static void xdg_toplevel_close_handler(void *this_, struct xdg_toplevel *toplevel);
 };
 
 namespace {
@@ -165,14 +183,26 @@ bool BWindow::impl::connect()
 	if (!xdg_surface) return false;
 	ALOGV("created xdg_surface");
 
+	xdg_toplevel = xdg_surface_get_toplevel(xdg_surface);
+	if (!xdg_toplevel) return false;
+	ALOGV("created xdg_toplevel");
+	xdg_toplevel_add_listener(xdg_toplevel, &xdg_toplevel_listener, this);
+	xdg_toplevel_set_title(xdg_toplevel, title ? title : "BWindow");
+	wl_surface_commit(wl_surface);
+
 	return true;
 }
 
-void BWindow::impl::resize_pool(size_t new_size)
+void BWindow::impl::resize_buffer()
 {
+	size_t stride	= width * 4;
+	size_t new_size = stride * height;
+
 	if (new_size == shm_pool_size) return;
 
 	std::lock_guard<std::mutex> guard(pool_mutex);
+
+	ALOGV("Resizing BWindow buffer: %zu(%zu@4)x%zu %zu bytes", width, stride, height, new_size);
 
 	if (pool_fd < 0) {
 		pool_fd = syscall(SYS_memfd_create, "wl_shm_buffer", 0);
@@ -199,13 +229,31 @@ void BWindow::impl::resize_pool(size_t new_size)
 	if (!wl_shm_pool) {
 		wl_shm_pool = wl_shm_create_pool(wl_shm, pool_fd, shm_pool_size);
 	}
+
+	int			 index	= 0;
+	const size_t offset = height * stride * index;
+
+	wl_buffer = wl_shm_pool_create_buffer(wl_shm_pool,
+										  offset, width, height, stride, WL_SHM_FORMAT_XRGB8888);
+
+	wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, this);
+
+	wl_surface_attach(wl_surface, wl_buffer, 0, 0);
+
+	/* Draw checkerboxed background */
+	uint32_t *pixels = (uint32_t *)&pool_data[offset];
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			if ((x + y / 8 * 8) % 16 < 8)
+				pixels[y * width + x] = 0xFF555555;
+			else
+				pixels[y * width + x] = 0xFFAAAAAA;
+		}
+	}
 }
 
-void BWindow::impl::showWindow(const size_t width, const size_t height)
+void BWindow::impl::showWindow(size_t width, size_t height)
 {
-	xdg_toplevel = xdg_surface_get_toplevel(xdg_surface);
-	xdg_toplevel_set_title(xdg_toplevel, "Example client");
-	wl_surface_commit(wl_surface);
 }
 
 void BWindow::impl::hideWindow()
@@ -266,40 +314,11 @@ void BWindow::impl::wl_buffer_release_handler(void *this_, struct wl_buffer *wl_
 	wl_buffer_destroy(wl_buffer);
 }
 
-struct wl_buffer *BWindow::impl::draw_frame()
-{
-	const int width = 640, height = 480;
-	int		  stride = width * 4;
-	int		  size	 = stride * height;
-
-	resize_pool(size);
-
-	int			 index	= 0;
-	const size_t offset = height * stride * index;
-	wl_buffer			= wl_shm_pool_create_buffer(wl_shm_pool,
-													offset, width, height, stride, WL_SHM_FORMAT_XRGB8888);
-
-	/* Draw checkerboxed background */
-	uint32_t *pixels = (uint32_t *)&pool_data[offset];
-	for (int y = 0; y < height; ++y) {
-		for (int x = 0; x < width; ++x) {
-			if ((x + y / 8 * 8) % 16 < 8)
-				pixels[y * width + x] = 0xFF666666;
-			else
-				pixels[y * width + x] = 0xFFEEEEEE;
-		}
-	}
-
-	wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, this);
-	return wl_buffer;
-}
-
 void BWindow::impl::xdg_surface_configure_handler(void *this_, struct xdg_surface *xdg_surface, uint32_t serial)
 {
 	xdg_surface_ack_configure(xdg_surface, serial);
 
-	struct wl_buffer *buffer = static_cast<BWindow::impl *>(this_)->draw_frame();
-	wl_surface_attach(static_cast<BWindow::impl *>(this_)->wl_surface, buffer, 0, 0);
+	static_cast<BWindow::impl *>(this_)->resize_buffer();
 	wl_surface_commit(static_cast<BWindow::impl *>(this_)->wl_surface);
 }
 
@@ -307,6 +326,23 @@ void BWindow::impl::xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xd
 {
 	ALOGV("responding to PING");
 	xdg_wm_base_pong(xdg_wm_base, serial);
+}
+
+void BWindow::impl::xdg_toplevel_configure_handler(void *this_, struct xdg_toplevel *xdg_toplevel,
+												   int32_t width, int32_t height, struct wl_array *states)
+{
+	if (width == 0 || height == 0) {
+		/* Compositor is deferring to us */
+		return;
+	}
+
+	static_cast<BWindow::impl *>(this_)->width	= width;
+	static_cast<BWindow::impl *>(this_)->height = height;
+}
+
+void BWindow::impl::xdg_toplevel_close_handler(void *this_, struct xdg_toplevel *toplevel)
+{
+	static_cast<BWindow::impl *>(this_)->closed = true;
 }
 
 #pragma mark - BWindow
@@ -330,6 +366,8 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 	frame.bottom = roundf(frame.bottom);
 
 	fFrame = frame;
+	m->width  = frame.right - frame.left;
+	m->height = frame.bottom - frame.top;
 
 	SetTitle(title);
 
@@ -473,6 +511,7 @@ void BWindow::SetTitle(const char *title)
 	if (fTitle)
 		free(fTitle);
 	fTitle = strdup(title);
+	m->title = fTitle;
 
 	char name[B_OS_NAME_LENGTH];
 	name[0] = 'w';
@@ -498,12 +537,6 @@ status_t BWindow::GetSupportedSuites(BMessage *data)
 	return B_ERROR;
 }
 
-status_t BWindow::Perform(perform_code d, void *arg)
-{
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
-}
-
 bool BWindow::QuitRequested()
 {
 	return BLooper::QuitRequested();
@@ -511,13 +544,26 @@ bool BWindow::QuitRequested()
 
 thread_id BWindow::Run()
 {
-	while (wl_display_dispatch(m->wl_display)) {
-		/* This space deliberately left blank */
-	}
-	return -1;
+	return BLooper::Run();
 }
 
 void BWindow::task_looper()
 {
-	debugger(__PRETTY_FUNCTION__);
+	/* !!! Keep this implementation in sync with BLooper::task_looper */
+
+	ALOGD("BWindow::task_looper()");
+	// Check that looper is locked (should be)
+	AssertLocked();
+	// Unlock the looper
+	Unlock();
+
+	if (IsLocked())
+		debugger("task_looper() cannot unlock Looper");
+
+	// loop: As long as we are not terminating.
+	while (!fTerminating && wl_display_dispatch(m->wl_display)) {
+		/* This space deliberately left blank */
+	}
+
+	ALOGD("BWindow::task_looper() done");
 }

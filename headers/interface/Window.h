@@ -185,8 +185,6 @@ class BWindow : public BLooper
 	status_t AddToSubset(BWindow *window);
 	status_t RemoveFromSubset(BWindow *window);
 
-	virtual status_t Perform(perform_code d, void *arg);
-
 	status_t	SetType(window_type type);
 	window_type Type() const;
 

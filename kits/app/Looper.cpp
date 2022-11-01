@@ -509,18 +509,19 @@ void BLooper::task_looper()
 	ALOGD("BLooper::task_looper() done");
 }
 
-static size_t count_running_threads()
-{
-	size_t		count = 0;
-	thread_info info;
-	int32		cookie = 0;
-	while (get_next_thread_info(0, &cookie, &info) == B_OK) {
-		count += 1;
-	}
-	return count;
-}
 TEST_SUITE("BLooper")
 {
+	static size_t count_running_threads()
+	{
+		size_t		count = 0;
+		thread_info info;
+		int32		cookie = 0;
+		while (get_next_thread_info(0, &cookie, &info) == B_OK) {
+			count += 1;
+		}
+		return count;
+	}
+
 	// Be Book:
 	//     Because they delete themselves when told to quit,
 	//     BLoopers can't be allocated on the stack;
