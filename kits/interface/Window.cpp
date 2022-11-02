@@ -4,6 +4,8 @@
 
 #include <Application.h>
 #include <Autolock.h>
+#include <Message.h>
+#include <MessageQueue.h>
 #include <Rect.h>
 #include <View.h>
 #include <log/log.h>
@@ -97,8 +99,16 @@ class BWindow::impl
 		  }
 	{
 	}
+	void set_size(size_t width, size_t height)
+	{
+		// frame coordinates are in the middle of pixels,
+		// so 0<->1 covers 2 pixels, thus we need to add 1
+		this->width	 = width + 1;
+		this->height = height + 1;
+	}
 
 	bool connect();
+	void resize(size_t width, size_t height);
 	void showWindow(const size_t width, const size_t height);
 	void hideWindow();
 	void minimize(bool minimized);
@@ -272,6 +282,13 @@ void BWindow::impl::minimize(bool minimized)
 	this->minimized = minimized;
 }
 
+void BWindow::impl::resize(size_t width, size_t height)
+{
+	set_size(width, height);
+	resize_buffer();
+	wl_surface_commit(wl_surface);
+}
+
 void BWindow::impl::registry_global_handler(
 	void			   *this_,
 	struct wl_registry *registry,
@@ -382,10 +399,7 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 
 	fFrame = frame;
 
-	// frame coordinates are in the middle of pixels,
-	// so 0<->1 covers 2 pixels, thus we need to add 1
-	m->width  = frame.right - frame.left + 1;
-	m->height = frame.bottom - frame.top + 1;
+	m->set_size(frame.right - frame.left, frame.bottom - frame.top);
 
 	SetTitle(title);
 
@@ -465,7 +479,117 @@ BView *BWindow::ChildAt(int32 index) const
 
 void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!message)
+		return;
+
+	switch (message->what) {
+		case B_ZOOM:
+			Zoom();
+			break;
+
+		case B_MINIMIZE: {
+			bool minimize;
+			if (message->FindBool("minimize", &minimize) == B_OK)
+				Minimize(minimize);
+			break;
+		}
+
+		case B_WINDOW_RESIZED: {
+			int32 width, height;
+			if (message->FindInt32("width", &width) == B_OK
+				&& message->FindInt32("height", &height) == B_OK) {
+				// combine with pending resize notifications
+				BMessage *pendingMessage;
+				while ((pendingMessage = MessageQueue()->FindMessage(B_WINDOW_RESIZED, 0))) {
+					int32 nextWidth;
+					if (pendingMessage->FindInt32("width", &nextWidth) == B_OK)
+						width = nextWidth;
+
+					int32 nextHeight;
+					if (pendingMessage->FindInt32("height", &nextHeight)
+						== B_OK) {
+						height = nextHeight;
+					}
+
+					MessageQueue()->RemoveMessage(pendingMessage);
+					delete pendingMessage;
+					// this deletes the first *additional* message
+					// fCurrentMessage is safe
+				}
+				if (width != fFrame.Width() || height != fFrame.Height()) {
+					fFrame.right  = fFrame.left + width;
+					fFrame.bottom = fFrame.top + height;
+
+					m->resize(fFrame.right - fFrame.left, fFrame.bottom - fFrame.top);
+				}
+
+				FrameResized(width, height);
+			}
+			break;
+		}
+
+		case B_WINDOW_MOVED: {
+			BPoint origin;
+			if (message->FindPoint("where", &origin) == B_OK) {
+				if (fFrame.LeftTop() != origin) {
+					fFrame.OffsetTo(origin);
+				}
+				FrameMoved(origin);
+			}
+			break;
+		}
+
+		case B_WINDOW_ACTIVATED: {
+			debugger("B_WINDOW_ACTIVATED");
+			break;
+		}
+
+		case B_SCREEN_CHANGED: {
+			debugger("B_SCREEN_CHANGED");
+			break;
+		}
+
+		case B_WORKSPACE_ACTIVATED: {
+			debugger("B_WORKSPACE_ACTIVATED");
+			break;
+		}
+
+		case B_WORKSPACES_CHANGED: {
+			debugger("B_WORKSPACES_CHANGED");
+			break;
+		}
+
+		case B_KEY_DOWN: {
+			debugger("B_KEY_DOWN");
+			break;
+		}
+
+		case B_UNMAPPED_KEY_DOWN: {
+			debugger("B_UNMAPPED_KEY_DOWN");
+			break;
+		}
+
+		case B_PULSE:
+			// if (handler == this && fPulseRunner) {
+			// 	fTopView->_Pulse();
+			// }
+			// else
+			handler->MessageReceived(message);
+			break;
+
+		case _UPDATE_: {
+			ALOGV("_UPDATE_ @ %s", Name());
+
+			// TODO: repaint all child views if dirty
+			// if topview is dirty fill it with ViewColor()
+
+			break;
+		}
+
+		default:
+			BLooper::DispatchMessage(message, handler);
+			break;
+	}
 }
 
 void BWindow::MessageReceived(BMessage *message)
@@ -504,6 +628,11 @@ void BWindow::Minimize(bool minimize)
 }
 
 void BWindow::Zoom(BPoint rec_position, float rec_width, float rec_height)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BWindow::Zoom()
 {
 	debugger(__PRETTY_FUNCTION__);
 }
