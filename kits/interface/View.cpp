@@ -4,6 +4,24 @@
 
 #include <Window.h>
 #include <log/log.h>
+#include <pimpl.h>
+
+class BView::impl
+{
+   public:
+	rgb_color view_color;
+	rgb_color high_color;
+	rgb_color low_color;
+
+	impl()
+		: view_color{255, 255, 255, 255},
+		  high_color{0, 0, 0, 255},
+		  low_color{255, 255, 255, 255}
+	{
+	}
+};
+
+#pragma mark - BView
 
 BView::BView(BRect frame, const char *name, uint32 resizeMask, uint32 flags)
 	: BHandler(name),
@@ -116,7 +134,7 @@ BWindow *BView::Window() const
 
 void BView::Draw(BRect updateRect)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook - default implementation does nothing
 }
 
 void BView::MouseDown(BPoint where)
@@ -205,19 +223,34 @@ void BView::SetPenSize(float size)
 	debugger(__PRETTY_FUNCTION__);
 }
 
-void BView::SetViewColor(rgb_color c)
+void BView::SetViewColor(rgb_color color)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fState->view_color = color;
 }
 
-void BView::SetHighColor(rgb_color a_color)
+rgb_color BView::ViewColor() const
 {
-	debugger(__PRETTY_FUNCTION__);
+	return fState->view_color;
 }
 
-void BView::SetLowColor(rgb_color a_color)
+void BView::SetHighColor(rgb_color color)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fState->high_color = color;
+}
+
+rgb_color BView::HighColor() const
+{
+	return fState->high_color;
+}
+
+void BView::SetLowColor(rgb_color color)
+{
+	fState->low_color = color;
+}
+
+rgb_color BView::LowColor() const
+{
+	return fState->low_color;
 }
 
 void BView::SetFont(const BFont *font, uint32 mask)

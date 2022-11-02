@@ -465,6 +465,7 @@ class BView : public BHandler
 	void SetScale(float scale) const;
 
    private:
+	class impl;
 	// friend class BScrollBar;
 	friend class BWindow;
 	// friend class BBitmap;
@@ -477,16 +478,17 @@ class BView : public BHandler
 
 	void _attach(BWindow *);
 
-	uint32	 fFlags;
-	BPoint	 fParentOffset;
-	BWindow *fOwner;
+	uint32		fFlags;
+	BPoint		fParentOffset;
+	BWindow	*fOwner;
 	BView	  *fParent;
 	BView	  *fNextSibling;
 	BView	  *fPrevSibling;
 	BView	  *fFirstChild;
-	int16	 fShowLevel;
-	bool	 fTopLevelView;
-	BRect	 fBounds;
+	int16		fShowLevel;
+	bool		fTopLevelView;
+	pimpl<impl> fState;
+	BRect		fBounds;
 };
 
 // inline definitions
