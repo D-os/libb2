@@ -24,6 +24,7 @@ includes = $
   -isystem external/wayland/src $
   -isystem build/wayland/src $
   -isystem $BUILDROOT/wayland $
+  -isystem external/skia $
   -isystem external/doctest $
 
 libs = -lc++ -lunwind $
@@ -87,8 +88,9 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/tests/doctest.o $
   $BUILDROOT/os/aidl/${TARGET}/os/services/app/IRegistrarService.o $
   $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.o $
-| $SYSROOT/lib/libbinder.so
-  libs = $libs -lbinder
+| $SYSROOT/lib/libbinder.so $
+  $SYSROOT/lib/libskia.so
+  libs = $libs -lbinder -lskia
 
 
 subninja system/os/services/build.ninja

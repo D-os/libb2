@@ -45,10 +45,10 @@ BView::BView(BRect frame, const char *name, uint32 resizeMask, uint32 flags)
 	// fFlags = (resizeMask & _RESIZE_MASK_) | (flags & ~_RESIZE_MASK_);
 	fFlags = resizeMask | flags;
 
-	frame.left	 = roundf(frame.left);
-	frame.top	 = roundf(frame.top);
-	frame.right	 = roundf(frame.right);
-	frame.bottom = roundf(frame.bottom);
+	frame.left	 = floorf(frame.left);
+	frame.top	 = floorf(frame.top);
+	frame.right	 = floorf(frame.right);
+	frame.bottom = floorf(frame.bottom);
 	fParentOffset.Set(frame.left, frame.top);
 	fBounds = frame.OffsetToCopy(B_ORIGIN);
 }
@@ -281,6 +281,20 @@ void BView::SetFlags(uint32 flags)
 void BView::SetResizingMode(uint32 mode)
 {
 	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::ResizeBy(float dh, float dv)
+{
+	ResizeTo(fBounds.Width() + dh, fBounds.Height() + dv);
+}
+
+void BView::ResizeTo(float width, float height)
+{
+	LOG_FATAL_IF(width < 0, "width must be greater than zero");
+	LOG_FATAL_IF(height < 0, "height must be greater than zero");
+
+	fBounds.Set(fBounds.left, fBounds.top, floorf(fBounds.left + width), floorf(fBounds.top + height));
+	if (fParent) fParent->Invalidate();
 }
 
 void BView::ScrollTo(BPoint where)

@@ -238,13 +238,10 @@ class BWindow : public BLooper
 
 	virtual void task_looper();
 
-	char		 *fTitle;
 	short		fShowLevel;
 	uint32		fFlags;
-	BView		  *fTopView;
-	BView		  *fFocus;
-	BView		  *fLastMouseMovedView;
-	BRect		fFrame;
+	BView	  *fFocus;
+	BView	  *fLastMouseMovedView;
 	window_look fLook;
 	window_feel fFeel;
 

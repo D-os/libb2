@@ -6,8 +6,10 @@
 #include <Autolock.h>
 #include <Message.h>
 #include <MessageQueue.h>
+#include <Point.h>
 #include <Rect.h>
 #include <View.h>
+#include <include/core/SkSurface.h>
 #include <log/log.h>
 #include <pimpl.h>
 #include <sys/mman.h>
@@ -45,6 +47,12 @@ class BWindow::impl
 	uint8_t			  *pool_data;
 	struct wl_buffer	 *wl_buffer;
 
+	/* Drawing */
+	SkImageInfo		 info;
+	sk_sp<SkSurface> surface;
+
+	/* State */
+	BView		top_view;
 	const char *title;
 
 	bool minimized;
@@ -68,6 +76,7 @@ class BWindow::impl
 		  pool_data{nullptr},
 		  wl_buffer{nullptr},
 
+		  top_view(BRect(B_ORIGIN, B_ORIGIN), "TopView", B_FOLLOW_ALL, B_WILL_DRAW),
 		  title{nullptr},
 		  minimized{false},
 		  maximized{false},
@@ -105,6 +114,8 @@ class BWindow::impl
 		// so 0<->1 covers 2 pixels, thus we need to add 1
 		this->width	 = width + 1;
 		this->height = height + 1;
+
+		top_view.ResizeTo(width, height);
 	}
 
 	bool connect();
@@ -209,8 +220,9 @@ bool BWindow::impl::connect()
 
 void BWindow::impl::resize_buffer()
 {
-	size_t stride	= width * 4;
-	size_t new_size = stride * height;
+	info			= SkImageInfo::MakeN32Premul(width, height);
+	size_t stride	= info.minRowBytes();
+	size_t new_size = info.computeByteSize(stride);
 
 	if (new_size == shm_pool_size) return;
 
@@ -266,6 +278,8 @@ void BWindow::impl::resize_buffer()
 		}
 	}
 #endif
+
+	surface = SkSurface::MakeRasterDirect(info, pool_data, stride);
 }
 
 void BWindow::impl::showWindow(size_t width, size_t height)
@@ -383,10 +397,8 @@ BWindow::BWindow(BRect frame, const char *title, window_type type, uint32 flags,
 
 BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel feel, uint32 flags, uint32 workspace)
 	: BLooper("w>", B_DISPLAY_PRIORITY),
-	  fTitle{nullptr},
 	  fShowLevel{1},
 	  fFlags{flags},
-	  fTopView{nullptr},
 	  fFocus{nullptr},
 	  fLastMouseMovedView{nullptr},
 	  fLook{look},
@@ -397,9 +409,9 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 	frame.right	 = roundf(frame.right);
 	frame.bottom = roundf(frame.bottom);
 
-	fFrame = frame;
-
-	m->set_size(frame.right - frame.left, frame.bottom - frame.top);
+	const size_t width	= frame.right - frame.left;
+	const size_t height = frame.bottom - frame.top;
+	m->set_size(width, height);
 
 	SetTitle(title);
 
@@ -407,9 +419,7 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 		throw std::system_error(std::error_code(errno, std::system_category()), "Cannot connect display");
 	}
 
-	fTopView = new BView(fFrame.OffsetToCopy(B_ORIGIN), "fTopView", B_FOLLOW_ALL, B_WILL_DRAW);
-
-	fTopView->_attach(this);
+	m->top_view._attach(this);
 }
 
 BWindow::~BWindow() = default;
@@ -447,7 +457,7 @@ void BWindow::AddChild(BView *child, BView *before)
 {
 	BAutolock locker(this);
 	if (locker.IsLocked())
-		fTopView->AddChild(child, before);
+		m->top_view.AddChild(child, before);
 }
 
 bool BWindow::RemoveChild(BView *child)
@@ -456,7 +466,7 @@ bool BWindow::RemoveChild(BView *child)
 	if (!locker.IsLocked())
 		return false;
 
-	return fTopView->RemoveChild(child);
+	return m->top_view.RemoveChild(child);
 }
 
 int32 BWindow::CountChildren() const
@@ -465,7 +475,7 @@ int32 BWindow::CountChildren() const
 	if (!locker.IsLocked())
 		return 0;
 
-	return fTopView->CountChildren();
+	return m->top_view.CountChildren();
 }
 
 BView *BWindow::ChildAt(int32 index) const
@@ -474,7 +484,7 @@ BView *BWindow::ChildAt(int32 index) const
 	if (!locker.IsLocked())
 		return NULL;
 
-	return fTopView->ChildAt(index);
+	return m->top_view.ChildAt(index);
 }
 
 void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
@@ -516,11 +526,9 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 					// this deletes the first *additional* message
 					// fCurrentMessage is safe
 				}
-				if (width != fFrame.Width() || height != fFrame.Height()) {
-					fFrame.right  = fFrame.left + width;
-					fFrame.bottom = fFrame.top + height;
-
-					m->resize(fFrame.right - fFrame.left, fFrame.bottom - fFrame.top);
+				const auto bounds = Bounds();
+				if (width != bounds.Width() || height != bounds.Height()) {
+					m->resize(width, height);
 				}
 
 				FrameResized(width, height);
@@ -529,13 +537,8 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 		}
 
 		case B_WINDOW_MOVED: {
-			BPoint origin;
-			if (message->FindPoint("where", &origin) == B_OK) {
-				if (fFrame.LeftTop() != origin) {
-					fFrame.OffsetTo(origin);
-				}
-				FrameMoved(origin);
-			}
+			// Wayland does not provide window position information
+			ALOGW("Window '%s' received B_WINDOW_MOVED message", Name());
 			break;
 		}
 
@@ -571,7 +574,7 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 
 		case B_PULSE:
 			// if (handler == this && fPulseRunner) {
-			// 	fTopView->_Pulse();
+			// 	m->top_view._Pulse();
 			// }
 			// else
 			handler->MessageReceived(message);
@@ -658,7 +661,7 @@ BView *BWindow::FindView(const char *view_name) const
 	if (!locker.IsLocked())
 		return nullptr;
 
-	return fTopView->FindView(view_name);
+	return m->top_view.FindView(view_name);
 }
 
 BView *BWindow::FindView(BPoint) const
@@ -721,14 +724,20 @@ bool BWindow::IsMinimized() const
 	return m->minimized;
 }
 
+BRect BWindow::Bounds() const
+{
+	return BRect(B_ORIGIN, BPoint(m->info.width(), m->info.height()));
+}
+
 BRect BWindow::Frame() const
 {
-	return fFrame;
+	// On Wayland we have our dedicated surface
+	return Bounds();
 }
 
 const char *BWindow::Title() const
 {
-	return fTitle;
+	return m->title;
 }
 
 void BWindow::SetTitle(const char *title)
@@ -736,15 +745,14 @@ void BWindow::SetTitle(const char *title)
 	if (!title)
 		title = "";
 
-	if (fTitle)
-		free(fTitle);
-	fTitle = strdup(title);
-	m->title = fTitle;
+	if (m->title)
+		free(const_cast<char *>(m->title));
+	m->title = strdup(title);
 
 	char name[B_OS_NAME_LENGTH];
 	name[0] = 'w';
 	name[1] = '>';
-	strncpy(name + 2, fTitle, B_OS_NAME_LENGTH - 2);
+	strncpy(name + 2, m->title, B_OS_NAME_LENGTH - 2);
 	name[B_OS_NAME_LENGTH - 1] = '\0';
 
 	SetName(name);
