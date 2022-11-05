@@ -2,6 +2,7 @@
 
 #define LOG_TAG "BView"
 
+#include <Message.h>
 #include <Window.h>
 #include <log/log.h>
 #include <pimpl.h>
@@ -81,9 +82,19 @@ void BView::AllDetached()
 	// The default version of this functions is empty.
 }
 
-void BView::MessageReceived(BMessage *msg)
+void BView::MessageReceived(BMessage *message)
 {
-	debugger(__PRETTY_FUNCTION__);
+	ALOGV("BView::MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
+	switch (message->what) {
+		case _UPDATE_: {
+			// if WANTS_DRAW:
+			// 1. fill current view with ViewColor() (unless transparent)
+			// 2. this->Draw()
+			break;
+		}
+		default:
+			BHandler::MessageReceived(message);
+	}
 }
 
 void BView::AddChild(BView *child, BView *before)
@@ -260,7 +271,15 @@ void BView::SetFont(const BFont *font, uint32 mask)
 
 void BView::Invalidate(BRect invalRect)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (fFlags & B_WILL_DRAW) {
+		BMessage message(_UPDATE_);
+		message.AddRect("updateRect", invalRect);
+		Looper()->PostMessage(&message, this);
+	}
+
+	// TODO: foreach children:
+	// 1. compute child intersection with invalRect
+	// 2. if non-empty: child->Invalidate(intersectRect);
 }
 
 void BView::Invalidate(const BRegion *invalRegion)
@@ -270,7 +289,7 @@ void BView::Invalidate(const BRegion *invalRegion)
 
 void BView::Invalidate()
 {
-	debugger(__PRETTY_FUNCTION__);
+	Invalidate(Bounds());
 }
 
 void BView::SetFlags(uint32 flags)

@@ -120,7 +120,7 @@ class BWindow::impl
 
 	bool connect();
 	void resize(size_t width, size_t height);
-	void showWindow(const size_t width, const size_t height);
+	void showWindow();
 	void hideWindow();
 	void minimize(bool minimized);
 
@@ -282,8 +282,9 @@ void BWindow::impl::resize_buffer()
 	surface = SkSurface::MakeRasterDirect(info, pool_data, stride);
 }
 
-void BWindow::impl::showWindow(size_t width, size_t height)
+void BWindow::impl::showWindow()
 {
+	top_view.Invalidate();
 }
 
 void BWindow::impl::hideWindow()
@@ -580,14 +581,17 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 			handler->MessageReceived(message);
 			break;
 
-		case _UPDATE_: {
-			ALOGV("_UPDATE_ @ %s", Name());
+		case _UPDATE_:
+			ALOGV("_UPDATE_ @ %s, handler: %s",
+				  Name(), handler ? handler->Name() : "(null)");
 
-			// TODO: repaint all child views if dirty
-			// if topview is dirty fill it with ViewColor()
+			if (!handler) {
+				ALOGE("%s: Dropping _UPDATE_ with no handler", Name());
+				break;
+			}
 
+			handler->MessageReceived(message);
 			break;
-		}
 
 		default:
 			BLooper::DispatchMessage(message, handler);
@@ -597,7 +601,15 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 
 void BWindow::MessageReceived(BMessage *message)
 {
-	debugger(__PRETTY_FUNCTION__);
+	ALOGV("BWindow::MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
+	switch (message->what) {
+		case _UPDATE_:
+			PostMessage(_UPDATE_, &m->top_view);
+			break;
+
+		default:
+			BLooper::MessageReceived(message);
+	}
 }
 
 void BWindow::FrameMoved(BPoint new_position)
@@ -655,6 +667,22 @@ void BWindow::MenusEnded()
 	debugger(__PRETTY_FUNCTION__);
 }
 
+bool BWindow::NeedsUpdate() const
+{
+	// TODO: comb through MessageQueue looking for:
+	// _UPDATE_ messages with "updateRect" Rect
+	debugger(__PRETTY_FUNCTION__);
+	return false;
+}
+
+void BWindow::UpdateIfNeeded()
+{
+	// TODO: pull from MessageQueue
+	// _UPDATE_ messages with "updateRect" Rect
+	// and immediately handler->DispatchMessage() them
+	debugger(__PRETTY_FUNCTION__);
+}
+
 BView *BWindow::FindView(const char *view_name) const
 {
 	BAutolock locker(const_cast<BWindow *>(this));
@@ -687,8 +715,9 @@ void BWindow::Show()
 		runCalled = fRunCalled;
 
 		fShowLevel -= 1;
-		if (fShowLevel <= 0)
-			m->showWindow(150, 100);
+		if (fShowLevel <= 0) {
+			m->showWindow();
+		}
 
 		Unlock();
 	}
