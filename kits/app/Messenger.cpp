@@ -91,6 +91,17 @@ status_t BMessenger::SendMessage(uint32 command, BHandler *reply_to) const
 
 status_t BMessenger::SendMessage(BMessage *message, BHandler *reply_to, bigtime_t timeout) const
 {
+	status_t result = message != NULL ? B_OK : B_BAD_VALUE;
+	if (result == B_OK) {
+		BMessenger replyMessenger(reply_to);
+		result = SendMessage(message, replyMessenger, timeout);
+	}
+
+	return result;
+}
+
+status_t BMessenger::SendMessage(BMessage *message, BMessenger reply_to, bigtime_t timeout) const
+{
 	if (fStatus != B_OK)
 		return fStatus;
 
@@ -107,8 +118,9 @@ status_t BMessenger::SendMessage(BMessage *message, BHandler *reply_to, bigtime_
 		}
 		else if (looper) {
 			ALOGV("looper delivery");
-			BHandler *reply_handler = reply_to ? reply_to : be_app_messenger.Target(nullptr);
-			ALOGV("BMessenger::SendMessage %p %p %p", reply_to, reply_handler, looper);
+			BHandler *reply_handler = reply_to.Target(nullptr);
+			if (!reply_handler) reply_handler = be_app_messenger.Target(nullptr);
+			ALOGV("BMessenger::SendMessage %p %p", reply_handler, looper);
 			return looper->PostMessage(message, nullptr, reply_handler);
 		}
 		else {
@@ -119,12 +131,6 @@ status_t BMessenger::SendMessage(BMessage *message, BHandler *reply_to, bigtime_
 		debugger(__PRETTY_FUNCTION__);
 		return B_ERROR;
 	}
-}
-
-status_t BMessenger::SendMessage(BMessage *message, BMessenger reply_to, bigtime_t timeout) const
-{
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
 }
 
 status_t BMessenger::SendMessage(uint32 command, BMessage *reply) const

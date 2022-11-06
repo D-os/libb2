@@ -403,11 +403,8 @@ bool BLooper::AssertLocked() const
 
 status_t BLooper::_PostMessage(BMessage *msg, BHandler *handler, BHandler *reply_to)
 {
-	if ((handler && handler != this) || reply_to) {
-		// FIXME: add handler and reply support
-		debugger(__PRETTY_FUNCTION__);
-	}
-
+	msg->_set_handler(handler);
+	msg->_set_reply_handler(reply_to);
 	fQueue->AddMessage(msg);
 
 	if (fThread != B_ERROR && !has_data(fThread))
@@ -460,12 +457,8 @@ void BLooper::task_looper()
 			ALOGV("fLastMessage: 0x%x: %.4s", fLastMessage->what, (char *)&fLastMessage->what);
 			INFO(*fLastMessage);
 
-			// Get the target handler
-			BHandler *handler = nullptr;
-			// BMessage::Private messagePrivate(fLastMessage);
-			bool usePreferred = true;  // messagePrivate.UsePreferredTarget();
-
-			if (usePreferred) {
+			BHandler *handler = fLastMessage->_get_handler();
+			if (handler == nullptr) {
 				ALOGV("use preferred target");
 				handler = fPreferred;
 				if (handler == nullptr)
@@ -557,5 +550,15 @@ TEST_SUITE("BLooper")
 		loop->PostMessage(B_QUIT_REQUESTED);
 		snooze(1000);
 		CHECK(count_running_threads() == 1);
+	}
+
+	TEST_CASE("Handlers")
+	{
+		BLooper *loop = new BLooper();
+		BHandler handler;
+
+		loop->PostMessage('TST_', &handler);
+
+		delete loop;
 	}
 }

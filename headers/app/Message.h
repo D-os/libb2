@@ -237,6 +237,11 @@ class BMessage
 
 	class impl;
 	pimpl<impl> m;
+	friend class BLooper;
+	void	  _set_handler(BHandler *);
+	BHandler *_get_handler() const;
+	void	  _set_reply_handler(BHandler *);
+	BHandler *_get_reply_handler() const;
 };
 
 /// C++ standard way of providing string conversions

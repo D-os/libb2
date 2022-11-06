@@ -51,7 +51,10 @@ class BMessage::impl
 	std::list<Node> *m_nodes;
 
    public:
-	impl() : m_nodes{nullptr} {}
+	BHandler *handler;
+	BHandler *reply_to;
+
+	impl() : m_nodes{nullptr}, handler{nullptr}, reply_to{nullptr} {}
 
 	~impl()
 	{
@@ -166,23 +169,30 @@ status_t BMessage::impl::findData(const char *name, type_code type, int32 index,
 	return B_NAME_NOT_FOUND;
 }
 
+void	  BMessage::_set_handler(BHandler *handler) { m->handler = handler; }
+BHandler *BMessage::_get_handler() const { return m->handler; }
+void	  BMessage::_set_reply_handler(BHandler *reply_to) { m->reply_to = reply_to; }
+BHandler *BMessage::_get_reply_handler() const { return m->reply_to; }
+
+#pragma mark - BMessage
+
 BMessage::BMessage()
+	: BMessage(0)
 {
 }
 
-BMessage::BMessage(uint32 what) : what(what)
+BMessage::BMessage(uint32 what)
+	: what{what}
 {
 }
 
-BMessage::BMessage(const BMessage &msg) : what(msg.what)
+BMessage::BMessage(const BMessage &msg)
+	: what{msg.what}
 {
 	*m = *msg.m;
 }
 
-BMessage::~BMessage()
-{
-	// FIXME: free() all data in node_list.data.1
-}
+BMessage::~BMessage() {}
 
 BMessage &BMessage::operator=(const BMessage &msg)
 {
