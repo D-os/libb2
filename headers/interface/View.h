@@ -477,6 +477,7 @@ class BView : public BHandler
 	BView &operator=(const BView &);
 
 	void _attach(BWindow *);
+	void _detach();
 
 	uint32		fFlags;
 	BPoint		fParentOffset;

@@ -4,6 +4,7 @@
 
 #include <Message.h>
 #include <Window.h>
+#include <doctest/doctest.h>
 #include <log/log.h>
 #include <pimpl.h>
 
@@ -99,13 +100,109 @@ void BView::MessageReceived(BMessage *message)
 
 void BView::AddChild(BView *child, BView *before)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!child)
+		return;
+
+	if (child->fParent) {
+		debugger("View already has a parent");
+		return;
+	}
+
+	if (child == this) {
+		debugger("Cannot add a view to itself");
+		return;
+	}
+
+	if (before && before->fParent != this) {
+		debugger("Invalid 'before' view");
+		return;
+	}
+
+	bool lockedOwner = false;
+	if (fOwner && !fOwner->IsLocked()) {
+		fOwner->Lock();
+		lockedOwner = true;
+	}
+
+	// AddChildToList
+	if (before) {
+		// add view before this one
+		child->fNextSibling = before;
+		child->fPrevSibling = before->fPrevSibling;
+		if (child->fPrevSibling)
+			child->fPrevSibling->fNextSibling = child;
+
+		before->fPrevSibling = child;
+		if (fFirstChild == before)
+			fFirstChild = child;
+	}
+	else {
+		// add view to the end of the list
+		BView *last = fFirstChild;
+		while (last && last->fNextSibling) {
+			last = last->fNextSibling;
+		}
+
+		if (last) {
+			last->fNextSibling	= child;
+			child->fPrevSibling = last;
+		}
+		else {
+			fFirstChild			= child;
+			child->fPrevSibling = nullptr;
+		}
+
+		child->fNextSibling = nullptr;
+	}
+
+	child->fParent = this;
+
+	if (fOwner) {
+		child->_attach(fOwner);
+
+		if (lockedOwner)
+			fOwner->Unlock();
+	}
 }
 
 bool BView::RemoveChild(BView *child)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return false;
+	if (!child)
+		return false;
+
+	if (child->fParent != this)
+		return false;
+
+	ALOGE_IF(child->fOwner != fOwner, "Removing child '%s' of different owner %p than ours ('%s' %p)",
+			 child->Name(), child->fOwner, Name(), fOwner);
+
+	if (fOwner) {
+		child->_detach();
+	}
+
+	BView *parent = fParent;
+	if (!parent) {
+		if (child->fParent != this)
+			return false;
+
+		if (fFirstChild == child) {
+			// it's the first view in the list
+			fFirstChild = child->fNextSibling;
+		}
+		else {
+			// there must be a previous sibling
+			child->fPrevSibling->fNextSibling = child->fNextSibling;
+		}
+
+		if (child->fNextSibling)
+			child->fNextSibling->fPrevSibling = child->fPrevSibling;
+
+		child->fParent		= nullptr;
+		child->fNextSibling = nullptr;
+		child->fPrevSibling = nullptr;
+	}
+
+	return true;
 }
 
 int32 BView::CountChildren() const
@@ -274,11 +371,16 @@ void BView::Invalidate(BRect invalRect)
 	if (fFlags & B_WILL_DRAW) {
 		BMessage message(_UPDATE_);
 		message.AddRect("updateRect", invalRect);
-		Looper()->PostMessage(&message, this);
+		if (Looper()) {
+			Looper()->PostMessage(&message, this);
+		}
+		else {
+			ALOGE("Tried invalidating not-attached View: '%s' %p", Name(), this);
+		}
 	}
 
 	// TODO: foreach children:
-	// 1. compute child intersection with invalRect
+	// 1. compute child intersection with invalRect: invalRect.Intersects(child.Frame())
 	// 2. if non-empty: child->Invalidate(intersectRect);
 }
 
@@ -363,11 +465,12 @@ void BView::_attach(BWindow *window)
 	LOG_FATAL_IF(!window, "Tried attaching '%s' to NULL window", Name());
 
 	if (fOwner) {
-		ALOGE("Window '%s' already has an owner %p: '%s'", Name(), fOwner, fOwner->Name());
-		debugger("Window already has an owner");
+		ALOGE("View '%s' already has an owner %p: '%s'", Name(), fOwner, fOwner->Name());
+		debugger("View already has an owner");
 	}
 
 	fOwner		  = window;
+	fOwner->AddHandler(this);
 	fTopLevelView = true;
 
 	AttachedToWindow();
@@ -375,7 +478,7 @@ void BView::_attach(BWindow *window)
 	if (!fOwner->IsHidden())
 		Invalidate();
 
-	for (BView *child = fFirstChild; child != nullptr; child = child->fNextSibling) {
+	for (BView *child = fFirstChild; child; child = child->fNextSibling) {
 		// we need to check for fAttached as new views could have been
 		// added in AttachedToWindow() - and those are already attached
 		if (!child->fOwner)
@@ -383,4 +486,73 @@ void BView::_attach(BWindow *window)
 	}
 
 	AllAttached();
+}
+
+void BView::_detach()
+{
+	if (!fOwner) {
+		ALOGE("Cannot detach not attached view '%s'", Name());
+		debugger("Cannot detach not attached view");
+	}
+
+	DetachedFromWindow();
+
+	for (BView *child = fFirstChild; child; child = child->fNextSibling) {
+		child->_detach();
+	}
+
+	AllDetached();
+
+	if (!fOwner->IsHidden())
+		Invalidate();
+
+	// make sure our owner doesn't need us anymore
+	{
+		if (fOwner->CurrentFocus() == this) {
+			MakeFocus(false);
+			// MakeFocus() is virtual and might not be
+			// passing through to the BView version,
+			// but we need to make sure at this point
+			// that we are not the focus view anymore.
+			// FIXME:
+			// if (fOwner->CurrentFocus() == this)
+			// 	fOwner->_SetFocus(NULL, true);
+		}
+
+		// if (fOwner->fDefaultButton == this)
+		// 	fOwner->SetDefaultButton(NULL);
+
+		// if (fOwner->fKeyMenuBar == this)
+		// 	fOwner->fKeyMenuBar = NULL;
+	}
+
+	if (fOwner->fLastMouseMovedView == this)
+		fOwner->fLastMouseMovedView = NULL;
+
+	fOwner->RemoveHandler(this);
+	fOwner = nullptr;
+}
+
+TEST_SUITE("BView")
+{
+	TEST_CASE("Children")
+	{
+		BView main(BRect(0, 0, 100, 100), "main", 0, 0);
+		BView child1(BRect(0, 0, 20, 20), "child1", 0, 0);
+		BView child11(BRect(0, 0, 10, 10), "child11", 0, 0);
+		BView child2(BRect(50, 50, 20, 20), "child2", 0, 0);
+		BView child21(BRect(10, 10, 100, 100), "child21", 0, 0);
+
+		main.AddChild(&child1);
+		child1.AddChild(&child11);
+		child2.AddChild(&child21);
+		main.AddChild(&child2, &child1);
+
+		CHECK(main.RemoveChild(&child2));
+		CHECK_FALSE(main.RemoveChild(&child21));
+		CHECK(child2.RemoveChild(&child21));
+		CHECK(child1.RemoveChild(&child11));
+		CHECK(main.RemoveChild(&child1));
+		CHECK_FALSE(main.RemoveChild(&child1));
+	}
 }
