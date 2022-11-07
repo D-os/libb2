@@ -379,9 +379,11 @@ void BView::Invalidate(BRect invalRect)
 		}
 	}
 
-	// TODO: foreach children:
-	// 1. compute child intersection with invalRect: invalRect.Intersects(child.Frame())
-	// 2. if non-empty: child->Invalidate(intersectRect);
+	for (BView *child = fFirstChild; child; child = child->fNextSibling) {
+		if (invalRect.Intersects(child->Frame())) {
+			child->Invalidate(invalRect.OffsetByCopy(-child->fParentOffset) & child->Bounds());
+		}
+	}
 }
 
 void BView::Invalidate(const BRegion *invalRegion)
@@ -540,13 +542,18 @@ TEST_SUITE("BView")
 		BView main(BRect(0, 0, 100, 100), "main", 0, 0);
 		BView child1(BRect(0, 0, 20, 20), "child1", 0, 0);
 		BView child11(BRect(0, 0, 10, 10), "child11", 0, 0);
-		BView child2(BRect(50, 50, 20, 20), "child2", 0, 0);
+		BView child2(BRect(50, 50, 70, 70), "child2", 0, 0);
 		BView child21(BRect(10, 10, 100, 100), "child21", 0, 0);
 
 		main.AddChild(&child1);
 		child1.AddChild(&child11);
 		child2.AddChild(&child21);
 		main.AddChild(&child2, &child1);
+
+		SUBCASE("Invalidate")
+		{
+			main.Invalidate(BRect(10, 10, 80, 60));
+		}
 
 		CHECK(main.RemoveChild(&child2));
 		CHECK_FALSE(main.RemoveChild(&child21));

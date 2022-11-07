@@ -308,6 +308,7 @@ status_t BMessage::SendReply(uint32 command, BMessage *reply_to_reply)
 status_t BMessage::SendReply(BMessage *the_reply, BMessage *reply_to_reply,
 							 bigtime_t send_timeout, bigtime_t reply_timeout)
 {
+	debugger(__PRETTY_FUNCTION__);
 	return B_BAD_REPLY;
 }
 

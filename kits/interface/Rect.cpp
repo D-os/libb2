@@ -5,11 +5,11 @@
 
 std::ostream& operator<<(std::ostream& os, const BRect& value)
 {
-	os << "BRect(" << std::setprecision(1);
+	os << "BRect(" << std::fixed << std::setprecision(1);
 	os << "l:" << value.left;
-	os << ", t:" << value.left;
-	os << ", r:" << value.left;
-	os << ", b:" << value.left;
+	os << ", t:" << value.top;
+	os << ", r:" << value.right;
+	os << ", b:" << value.bottom;
 	os << ")";
 	return os;
 }
