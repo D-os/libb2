@@ -37,6 +37,7 @@ build $BUILDROOT/os/libbe/app/Message.o: cxx system/os/kits/app/Message.cpp
 build $BUILDROOT/os/libbe/app/MessageQueue.o: cxx system/os/kits/app/MessageQueue.cpp
 build $BUILDROOT/os/libbe/app/Messenger.o: cxx system/os/kits/app/Messenger.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
+build $BUILDROOT/os/libbe/interface/GraphicsDefs.o: cxx system/os/kits/interface/GraphicsDefs.cpp
 build $BUILDROOT/os/libbe/interface/Point.o: cxx system/os/kits/interface/Point.cpp
 build $BUILDROOT/os/libbe/interface/Rect.o: cxx system/os/kits/interface/Rect.cpp
 build $BUILDROOT/os/libbe/interface/View.o: cxx system/os/kits/interface/View.cpp
@@ -70,6 +71,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/MessageQueue.o $
   $BUILDROOT/os/libbe/app/Messenger.o $
   $BUILDROOT/os/libbe/app/Roster.o $
+  $BUILDROOT/os/libbe/interface/GraphicsDefs.o $
   $BUILDROOT/os/libbe/interface/Point.o $
   $BUILDROOT/os/libbe/interface/Rect.o $
   $BUILDROOT/os/libbe/interface/View.o $

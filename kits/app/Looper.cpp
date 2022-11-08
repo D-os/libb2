@@ -479,7 +479,6 @@ void BLooper::task_looper()
 			// }
 
 			if (handler) {
-				ALOGV("handler %p, %p, %p", this, handler, handler->Looper());
 				// Do filtering
 				// handler = _TopLevelFilter(fLastMessage, handler);
 				// ALOGV("_TopLevelFilter(): %p", handler);

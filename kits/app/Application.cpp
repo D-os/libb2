@@ -169,7 +169,7 @@ bool BApplication::IsLaunching() const
 
 void BApplication::DispatchMessage(BMessage *message, BHandler *handler)
 {
-	ALOGV("BApplication::DispatchMessage %p %p", message, handler);
+	ALOGV("BApplication::DispatchMessage 0x%x: %.4s -> %s", message->what, (char *)&message->what, handler ? handler->Name() : "(null)");
 	if (handler != this) {
 		// it's not ours to dispatch
 		BLooper::DispatchMessage(message, handler);

@@ -8,6 +8,20 @@ typedef struct pattern
 	uint8 data[8];
 } pattern;
 
+#ifdef __cplusplus
+inline bool operator==(const pattern& a, const pattern& b)
+{
+	uint64* pa = (uint64*)a.data;
+	uint64* pb = (uint64*)b.data;
+	return (*pa == *pb);
+}
+
+inline bool operator!=(const pattern& a, const pattern& b)
+{
+	return !(a == b);
+}
+#endif	// __cplusplus
+
 extern const pattern B_SOLID_HIGH;
 extern const pattern B_MIXED_COLORS;
 extern const pattern B_SOLID_LOW;
@@ -18,6 +32,33 @@ typedef struct rgb_color
 	uint8 green;
 	uint8 blue;
 	uint8 alpha;
+
+#if defined(__cplusplus)
+	// some convenient additions
+	inline rgb_color& set_to(uint8 r, uint8 g, uint8 b, uint8 a = 255)
+	{
+		red	  = r;
+		green = g;
+		blue  = b;
+		alpha = a;
+		return *this;
+	}
+
+	inline bool operator==(const rgb_color& other) const
+	{
+		return *(const uint32*)this == *(const uint32*)&other;
+	}
+
+	inline bool operator!=(const rgb_color& other) const
+	{
+		return *(const uint32*)this != *(const uint32*)&other;
+	}
+
+	inline rgb_color& operator=(const rgb_color& other)
+	{
+		return set_to(other.red, other.green, other.blue, other.alpha);
+	}
+#endif
 } rgb_color;
 
 extern const rgb_color B_TRANSPARENT_COLOR;

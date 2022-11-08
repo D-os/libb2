@@ -247,6 +247,7 @@ class BWindow : public BLooper
 
 	class impl;
 	pimpl<impl> m;
+	void		 *_get_canvas();
 };
 
 inline void BWindow::Close()

@@ -2,9 +2,12 @@
 
 #define LOG_TAG "BView"
 
+#include <GraphicsDefs.h>
 #include <Message.h>
 #include <Window.h>
 #include <doctest/doctest.h>
+#include <include/core/SkCanvas.h>
+#include <include/core/SkPaint.h>
 #include <log/log.h>
 #include <pimpl.h>
 
@@ -88,9 +91,23 @@ void BView::MessageReceived(BMessage *message)
 	ALOGV("BView::MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
 	switch (message->what) {
 		case _UPDATE_: {
-			// if WANTS_DRAW:
-			// 1. fill current view with ViewColor() (unless transparent)
-			// 2. this->Draw()
+			const rgb_color view_color(ViewColor());
+
+			// The Application Server paints the view with this color before any view-specific drawing functions are called.
+			// If you set the view color to B_TRANSPARENT_COLOR, the Application Server won't erase the view's clipping region before an update.
+			if ((fFlags & B_WILL_DRAW) && (view_color != B_TRANSPARENT_COLOR)) {
+				BRect updateRect;
+				if (message->FindRect("updateRect", &updateRect) == B_OK && updateRect.IsValid()) {
+					SkPaint paint;
+					paint.setARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue);
+					SkCanvas	 *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
+					const auto &bounds = Bounds();
+					canvas->drawRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom), paint);
+
+					// Call hook function to Draw content
+					Draw(updateRect);
+				}
+			}
 			break;
 		}
 		default:
@@ -368,6 +385,7 @@ void BView::SetFont(const BFont *font, uint32 mask)
 
 void BView::Invalidate(BRect invalRect)
 {
+	ALOGV("Invalidating %s", Name());
 	if (fFlags & B_WILL_DRAW) {
 		BMessage message(_UPDATE_);
 		message.AddRect("updateRect", invalRect);

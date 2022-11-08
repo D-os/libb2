@@ -389,6 +389,11 @@ void BWindow::impl::xdg_toplevel_close_handler(void *this_, struct xdg_toplevel 
 	static_cast<BWindow::impl *>(this_)->closed = true;
 }
 
+void *BWindow::_get_canvas()
+{
+	return m->surface->getCanvas();
+}
+
 #pragma mark - BWindow
 
 BWindow::BWindow(BRect frame, const char *title, window_type type, uint32 flags, uint32 workspace)
@@ -603,9 +608,12 @@ void BWindow::MessageReceived(BMessage *message)
 {
 	ALOGV("BWindow::MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
 	switch (message->what) {
-		case _UPDATE_:
-			PostMessage(_UPDATE_, &m->top_view);
+		case _UPDATE_: {
+			BMessage message(_UPDATE_);
+			message.AddRect("updateRect", Bounds());
+			PostMessage(&message, &m->top_view);
 			break;
+		}
 
 		default:
 			BLooper::MessageReceived(message);
@@ -894,6 +902,7 @@ void BWindow::task_looper()
 
 	// loop: As long as we are not terminating.
 	while (!fTerminating && wl_display_dispatch(m->wl_display)) {
+		// FIXME: process messages like BLooper
 		/* This space deliberately left blank */
 	}
 
