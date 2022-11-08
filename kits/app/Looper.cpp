@@ -446,51 +446,14 @@ void BLooper::task_looper()
 		if (fQueue->IsEmpty()) {
 			ALOGV("waiting for data");
 			thread_id sender;
-			uint32	  code = receive_data(&sender, NULL, 0);
+			uint32	  code = receive_data(&sender, nullptr, 0);
 			ALOGD("received data from %d: %.4s", sender, (char *)&code);
 		}
 
 		Lock();
 
 		// loop: As long as there are messages in the queue
-		while ((fLastMessage = fQueue->NextMessage())) {
-			ALOGV("fLastMessage: 0x%x: %.4s", fLastMessage->what, (char *)&fLastMessage->what);
-			INFO(*fLastMessage);
-
-			BHandler *handler = fLastMessage->_get_handler();
-			if (handler == nullptr) {
-				ALOGV("use preferred target");
-				handler = fPreferred;
-				if (handler == nullptr)
-					handler = this;
-			}
-			else {
-				// if this handler doesn't belong to us, we drop the message
-				if (handler != nullptr && handler->Looper() != this)
-					handler = nullptr;
-			}
-
-			// // Is this a scripting message? (BMessage::HasSpecifiers())
-			// if (handler != nullptr && fLastMessage->HasSpecifiers()) {
-			// 	int32 index = 0;
-			// 	// Make sure the current specifier is kosher
-			// 	if (fLastMessage->GetCurrentSpecifier(&index) == B_OK)
-			// 		handler = resolve_specifier(handler, fLastMessage);
-			// }
-
-			if (handler) {
-				// Do filtering
-				// handler = _TopLevelFilter(fLastMessage, handler);
-				// ALOGV("_TopLevelFilter(): %p", handler);
-				if (handler && handler->Looper() == this)
-					DispatchMessage(fLastMessage, handler);
-			}
-
-			// Delete the current message (fLastMessage)
-			BMessage *message = fLastMessage;
-			fLastMessage	  = nullptr;
-			delete message;
-		}
+		_drain_message_queue();
 
 		// we leave the looper locked when we quit
 		if (!fTerminating) {
@@ -499,6 +462,48 @@ void BLooper::task_looper()
 	}
 
 	ALOGD("BLooper::task_looper() done");
+}
+
+void BLooper::_drain_message_queue()
+{
+	while ((fLastMessage = fQueue->NextMessage())) {
+		ALOGV("fLastMessage: 0x%x: %.4s", fLastMessage->what, (char *)&fLastMessage->what);
+		INFO(*fLastMessage);
+
+		BHandler *handler = fLastMessage->_get_handler();
+		if (handler == nullptr) {
+			ALOGV("use preferred target");
+			handler = fPreferred;
+			if (handler == nullptr)
+				handler = this;
+		}
+		else {
+			// if this handler doesn't belong to us, we drop the message
+			if (handler != nullptr && handler->Looper() != this)
+				handler = nullptr;
+		}
+
+		// // Is this a scripting message? (BMessage::HasSpecifiers())
+		// if (handler != nullptr && fLastMessage->HasSpecifiers()) {
+		// 	int32 index = 0;
+		// 	// Make sure the current specifier is kosher
+		// 	if (fLastMessage->GetCurrentSpecifier(&index) == B_OK)
+		// 		handler = resolve_specifier(handler, fLastMessage);
+		// }
+
+		if (handler) {
+			// Do filtering
+			// handler = _TopLevelFilter(fLastMessage, handler);
+			// ALOGV("_TopLevelFilter(): %p", handler);
+			if (handler && handler->Looper() == this)
+				DispatchMessage(fLastMessage, handler);
+		}
+
+		// Delete the current message (fLastMessage)
+		BMessage *message = fLastMessage;
+		fLastMessage	  = nullptr;
+		delete message;
+	}
 }
 
 TEST_SUITE("BLooper")

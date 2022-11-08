@@ -224,10 +224,6 @@ typedef struct
 
 typedef int32 (*thread_func)(void *);
 
-/// thread_entry is obsolete ("entry" is reserved by the file system)
-/// use thread_func instead.
-#define thread_entry thread_func
-
 extern thread_id spawn_thread(
 	thread_func function_name,
 	const char *thread_name,
@@ -248,6 +244,8 @@ extern status_t on_exit_thread(void (*callback)(void *), void *data);
 extern status_t _get_thread_info(thread_id thread, thread_info *info, size_t size);
 extern status_t _get_next_thread_info(team_id tmid, int32 *cookie, thread_info *info, size_t size);
 extern status_t _get_team_usage_info(team_id tmid, int32 who, team_usage_info *ti, size_t size);
+extern int		_get_thread_data_read_fd();
+extern int		_get_thread_data_write_fd(thread_id thread);
 
 extern thread_id find_thread(const char *name);
 

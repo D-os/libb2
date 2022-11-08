@@ -395,16 +395,9 @@ status_t send_data(thread_id thread, int32 code, const void *buffer, size_t buff
 	if (bufferSize > PIPE_BUF - sizeof(thread_id) - sizeof(int32))
 		return B_BAD_VALUE;
 
-	_threads_rlock();
-	_thread_info *info = _find_thread_info(thread);
-
-	if (!info) {
-		_threads_unlock();
-		return B_BAD_THREAD_ID;
-	}
-
-	int write_end = info->data_pipe[1];
-	_threads_unlock();
+	int write_end = _get_thread_data_write_fd(thread);
+	if (write_end < 0)
+		return write_end;
 
 	size_t data_size   = sizeof(thread_id) + sizeof(int32) + bufferSize;
 	void	 *data_buffer = malloc(data_size);
@@ -477,6 +470,27 @@ int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
 	_info->state = 0;
 
 	return code;
+}
+
+int _get_thread_data_read_fd()
+{
+	return _info->data_pipe[1];
+}
+
+int _get_thread_data_write_fd(thread_id thread)
+{
+	_threads_rlock();
+	_thread_info *info = _find_thread_info(thread);
+
+	if (!info) {
+		_threads_unlock();
+		return B_BAD_THREAD_ID;
+	}
+
+	int write_end = info->data_pipe[1];
+	_threads_unlock();
+
+	return write_end;
 }
 
 /** WARNING! you need to lock _threads in caller function! */

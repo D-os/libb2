@@ -101,6 +101,7 @@ class BLooper : public BHandler
 	static status_t _task0_(void *arg);
 	virtual void	task_looper();
 	bool			AssertLocked() const;
+	void			_drain_message_queue();
 
 	BMessageQueue *fQueue;
 	BMessage		 *fLastMessage;

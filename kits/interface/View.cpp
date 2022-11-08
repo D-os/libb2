@@ -101,6 +101,10 @@ void BView::MessageReceived(BMessage *message)
 					SkPaint paint;
 					paint.setARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue);
 					SkCanvas	 *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
+					if (!canvas) {
+						// FIXME: what now?
+						break;
+					}
 					const auto &bounds = Bounds();
 					canvas->drawRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom), paint);
 

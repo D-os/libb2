@@ -392,7 +392,7 @@ void BWindow::impl::xdg_toplevel_close_handler(void *this_, struct xdg_toplevel 
 
 void *BWindow::_get_canvas()
 {
-	return m->surface->getCanvas();
+	return m->surface ? m->surface->getCanvas() : nullptr;
 }
 
 #pragma mark - BWindow
@@ -915,6 +915,10 @@ void BWindow::task_looper()
 		debugger("epoll_ctl wl_fd");
 	}
 
+	int msg_fd = _get_thread_data_read_fd();
+	ev.events  = EPOLLIN;
+	ev.data.fd = wl_fd;
+
 #define MAX_EVENTS 4
 	struct epoll_event events[MAX_EVENTS];
 	int				   nfds;
@@ -946,12 +950,29 @@ void BWindow::task_looper()
 					wl_display_read_events(m->wl_display);
 				}
 			}
+
+			if (events[n].data.fd == msg_fd) {
+				if (events[n].events & EPOLLERR) {
+					debugger("failed waiting for data");
+				}
+
+				if (events[n].events & EPOLLIN) {
+					thread_id sender;
+					uint32	  code = receive_data(&sender, nullptr, 0);
+					ALOGD("received data from %d: %.4s", sender, (char *)&code);
+				}
+			}
 		}
 
 		// process incoming events (if any)
 		wl_display_dispatch_pending(m->wl_display);
 
-		// FIXME: process messages like BLooper
+		// process messages like BLooper
+		Lock();
+		_drain_message_queue();
+		if (!fTerminating) {
+			Unlock();
+		}
 	}
 
 	ALOGD("BWindow::task_looper() done");
