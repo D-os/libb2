@@ -2,24 +2,26 @@
 
 #define _GNU_SOURCE
 
-#include <pthread.h>
+#include <assert.h>
 #include <errno.h>
-#include <string.h>
-#include <unistd.h>
+#include <limits.h>
+#include <linux/futex.h>
+#include <pthread.h>
+#include <signal.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <sys/resource.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/wait.h>
-#include <signal.h>
-#include <linux/futex.h>
-#include <assert.h>
+#include <unistd.h>
 
 #include "private.h"
-#include "utlist.h"
 #include "rwlock.h"
+#include "utlist.h"
 
 /* current thread info */
 __thread _thread_info *_info = NULL;
@@ -118,8 +120,8 @@ static void* _thread_wrapper(void *arg)
 
     _threads_wlock();
 
-	// release anyone sending to us
-	syscall(SYS_futex, &_info->has_data, FUTEX_WAKE_PRIVATE, INT_MAX, NULL, NULL, 0);
+	// close read end to release anyone sending to us
+	close(_info->data_pipe[0]);
 
 	DL_DELETE(_threads, _info);
 	_threads_unlock();
@@ -178,38 +180,41 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
     info->func = func;
     info->data = data;
 
-    info->has_data = 0;
+	if (pipe2(info->data_pipe, 0) != 0) {
+		ret = B_FROM_POSIX_ERROR(errno);
+		goto error2;
+	}
 
-    /* finally actually kick the thread */
-    int s = pthread_create(&info->pthread, &attr, _thread_wrapper, info);
-    if (s != 0) {
-        info->pthread = 0;
-        switch (s) {
-        case EAGAIN:
-            ret = B_NO_MORE_THREADS;
-            goto error2;
-        case ENOMEM:
-            ret = B_NO_MEMORY;
-            goto error2;
-        case EPERM:
-            ret = B_PERMISSION_DENIED;
-            goto error2;
-        default:
-            ret = B_FROM_POSIX_ERROR(s);
-            goto error2;
-        }
-    }
+	/* finally actually kick the thread */
+	int s = pthread_create(&info->pthread, &attr, _thread_wrapper, info);
+	if (s != 0) {
+		info->pthread = 0;
+		switch (s) {
+			case EAGAIN:
+				ret = B_NO_MORE_THREADS;
+				goto error2;
+			case ENOMEM:
+				ret = B_NO_MEMORY;
+				goto error2;
+			case EPERM:
+				ret = B_PERMISSION_DENIED;
+				goto error2;
+			default:
+				ret = B_FROM_POSIX_ERROR(s);
+				goto error2;
+		}
+	}
 
-    pthread_attr_destroy(&attr);
+	pthread_attr_destroy(&attr);
 
-    /* wait for new thread initialisation function */
-    syscall(SYS_futex, &info->tid, FUTEX_WAIT_PRIVATE, 0, NULL, NULL, 0);
+	/* wait for new thread initialisation function */
+	syscall(SYS_futex, &info->tid, FUTEX_WAIT_PRIVATE, 0, NULL, NULL, 0);
 
-    _threads_wlock();
-    DL_APPEND(_threads, info);
-    _threads_unlock();
+	_threads_wlock();
+	DL_APPEND(_threads, info);
+	_threads_unlock();
 
-    return info->tid;
+	return info->tid;
 error2:
     pthread_attr_destroy(&attr);
 error1:
@@ -378,113 +383,100 @@ status_t rename_thread(thread_id thread, const char *new_name)
 bool has_data(thread_id thread)
 {
     _thread_info *info = _find_thread_info(thread);
-    return info && info->has_data;
+	if (!info) return false;
+
+	int nbytes = 0;
+	ioctl(info->data_pipe[0], FIONREAD, &nbytes);
+	return nbytes > 0;
 }
 
 status_t send_data(thread_id thread, int32 code, const void *buffer, size_t bufferSize)
 {
-    int c;
-    status_t status = B_OK;
+	if (bufferSize > PIPE_BUF - sizeof(thread_id) - sizeof(int32))
+		return B_BAD_VALUE;
 
-    _threads_rlock();
-    _thread_info *info = _find_thread_info(thread);
+	_threads_rlock();
+	_thread_info *info = _find_thread_info(thread);
 
-    if (info == NULL) {
-        status = B_BAD_THREAD_ID;
-        goto exit;
-    }
+	if (!info) {
+		_threads_unlock();
+		return B_BAD_THREAD_ID;
+	}
 
+	int write_end = info->data_pipe[1];
+	_threads_unlock();
 
-    while ((c = cmpxchg(&info->has_data, 0, 1))) {
-        if (syscall(SYS_futex, &info->has_data, FUTEX_WAIT_PRIVATE, c, NULL, NULL, 0) != 0) {
-            switch (errno) {
-            case EINTR:
-                status = B_INTERRUPTED;
-                goto exit;
-            default:
-                status = B_FROM_POSIX_ERROR(errno);
-                goto exit;
-            }
-        }
+	size_t data_size   = sizeof(thread_id) + sizeof(int32) + bufferSize;
+	void	 *data_buffer = malloc(data_size);
+	if (!data_buffer)
+		return B_NO_MEMORY;
 
-		if (_info->task_state == TASK_EXITED) {
-			status = B_BAD_THREAD_ID;
-			goto exit;
+	void *write_ptr			  = data_buffer;
+	(*(thread_id *)write_ptr) = _info->tid;
+	write_ptr += sizeof(pid_t);
+	(*(int32 *)write_ptr) = code;
+	write_ptr += sizeof(int32);
+	if (buffer && bufferSize)
+		memcpy(write_ptr, buffer, bufferSize);
+
+	if (write(write_end, data_buffer, data_size) < 0) {
+		free(data_buffer);
+
+		switch (errno) {
+			case EINTR:
+				return B_INTERRUPTED;
+			case EPIPE:
+				return B_BAD_THREAD_ID;
+			default:
+				return B_FROM_POSIX_ERROR(errno);
 		}
 	}
 
-	/* at this point c (info->has_data) is 1, meaning someone is either consuming or producing message */
-	/* let's produce */
-	if (buffer && bufferSize) {
-		info->data_buffer = mmap(NULL, bufferSize,
-                                 PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
-                                 -1, 0);
-        if (info->data_buffer == MAP_FAILED) {
-            switch (errno) {
-            case EAGAIN:
-            case EINVAL:
-            case ENFILE:
-            case ENOMEM:
-                status = B_NO_MEMORY;
-                goto exit;
-            default:
-                status = B_FROM_POSIX_ERROR(errno);
-                goto exit;
-            }
-        }
-        memcpy(info->data_buffer, buffer, bufferSize);
-	}
-	else {
-        info->data_buffer = NULL;
-    }
-    info->data_buffer_size = bufferSize;
-    info->data_code = code;
-    info->data_sender = _info->tid;
-    c = cmpxchg(&info->has_data, 1, 2); /* mark as ready to read */
-    assert(c == 1);
-    if (syscall(SYS_futex, &info->has_data, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0) != 0) {
-        switch (errno) {
-        case EINTR:
-            status = B_INTERRUPTED;
-            goto exit;
-        default:
-            status = B_FROM_POSIX_ERROR(errno);
-            goto exit;
-        }
-    }
-exit:
-    _threads_unlock();
-    return status;
+	free(data_buffer);
+	return B_OK;
 }
 
 int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
 {
-    int c;
+	_info->state = B_THREAD_RECEIVING;
 
-    _info->state = B_THREAD_RECEIVING;
+	size_t head_size   = sizeof(thread_id) + sizeof(int32);
+	size_t data_size   = head_size + bufferSize;
+	void	 *data_buffer = malloc(data_size);
+	if (!data_buffer)
+		return B_NO_MEMORY;
 
-    while ((c = cmpxchg(&_info->has_data, 2, 1)) != 2) {
-        if (syscall(SYS_futex, &_info->has_data, FUTEX_WAIT_PRIVATE, c, NULL, NULL, 0) != 0) {
-            return B_INTERRUPTED;
-        }
-    }
+	int bytes_read = read(_info->data_pipe[0], data_buffer, data_size);
+	if (bytes_read < head_size) {
+		free(data_buffer);
 
-    assert(sender != NULL);
-    *sender = _info->data_sender;
-    if (buffer && bufferSize) {
-        memcpy(buffer, _info->data_buffer, min_c(bufferSize, _info->data_buffer_size));
-    }
-    if (_info->data_buffer && _info->data_buffer_size) {
-        munmap(_info->data_buffer, _info->data_buffer_size);
-    }
+		if (bytes_read < 0) {
+			switch (errno) {
+				case EINTR:
+					return B_INTERRUPTED;
+				case EPIPE:
+					return B_BUSTED_PIPE;
+				default:
+					return B_FROM_POSIX_ERROR(errno);
+			}
+		}
 
-	_info->has_data			= 0;
-	_info->data_buffer		= NULL;
-	_info->data_buffer_size = 0;
-	_info->state			= 0;
-	syscall(SYS_futex, &_info->has_data, FUTEX_WAKE_PRIVATE, INT_MAX, NULL, NULL, 0);
+		return B_BUSTED_PIPE;
+	}
 
-	return _info->data_code;
+	if (sender) {
+		*sender = *((thread_id *)data_buffer);
+	}
+	int32 code = *((int32 *)(data_buffer + sizeof(thread_id)));
+	if (buffer && bufferSize) {
+		memcpy(buffer, data_buffer + head_size, min_c(bufferSize, bytes_read - head_size));
+	}
+
+	free(data_buffer);
+
+	_info->state = 0;
+
+	return code;
 }
 
 /** WARNING! you need to lock _threads in caller function! */

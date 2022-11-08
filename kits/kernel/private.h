@@ -20,7 +20,7 @@ typedef enum {
 } _task_state;
 
 typedef struct _thread_info_struct {
-    pid_t           tid; // futex
+    thread_id       tid; // futex
     pthread_t       pthread;
     team_id         team;
     char			name[B_OS_NAME_LENGTH];
@@ -32,11 +32,7 @@ typedef struct _thread_info_struct {
     thread_func		func;
     void			*data;
     _task_state     task_state;
-    int             has_data;
-    thread_id       data_sender;
-    int32           data_code;
-    void            *data_buffer;
-    size_t          data_buffer_size;
+    int             data_pipe[2];
     _task_state     *task_state_copy;
     struct _thread_info_struct *next;
     struct _thread_info_struct *prev;
