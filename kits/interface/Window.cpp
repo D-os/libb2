@@ -12,6 +12,7 @@
 #include <include/core/SkSurface.h>
 #include <log/log.h>
 #include <pimpl.h>
+#include <sys/epoll.h>
 #include <sys/mman.h>
 #include <syscall.h>
 #include <unistd.h>
@@ -900,10 +901,57 @@ void BWindow::task_looper()
 	if (IsLocked())
 		debugger("task_looper() cannot unlock Looper");
 
+	// create epoll instance for monitoring incoming events
+	int epollfd = epoll_create1(0);
+	if (epollfd == -1) {
+		debugger("epoll_create1");
+	}
+
+	int				   wl_fd = wl_display_get_fd(m->wl_display);
+	struct epoll_event ev;
+	ev.events  = EPOLLIN | EPOLLOUT | EPOLLET;
+	ev.data.fd = wl_fd;
+	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, wl_fd, &ev) == -1) {
+		debugger("epoll_ctl wl_fd");
+	}
+
+#define MAX_EVENTS 4
+	struct epoll_event events[MAX_EVENTS];
+	int				   nfds;
+
 	// loop: As long as we are not terminating.
-	while (!fTerminating && wl_display_dispatch(m->wl_display)) {
+	while (!fTerminating) {
+		// process all pending events before waiting
+		while (wl_display_prepare_read(m->wl_display) != 0)
+			wl_display_dispatch_pending(m->wl_display);
+		// send all outgoing messages (if any)
+		wl_display_flush(m->wl_display);
+
+		// wait until something happens
+		nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
+		if (nfds == -1) {
+			debugger("epoll_wait");
+		}
+
+		for (auto n = 0; n < nfds; ++n) {
+			if (events[n].data.fd == wl_fd) {
+				if (events[n].events & EPOLLHUP) {
+					debugger("connection to display terminated");
+				}
+
+				if (events[n].events & EPOLLERR) {
+					wl_display_cancel_read(m->wl_display);
+				}
+				else {
+					wl_display_read_events(m->wl_display);
+				}
+			}
+		}
+
+		// process incoming events (if any)
+		wl_display_dispatch_pending(m->wl_display);
+
 		// FIXME: process messages like BLooper
-		/* This space deliberately left blank */
 	}
 
 	ALOGD("BWindow::task_looper() done");
