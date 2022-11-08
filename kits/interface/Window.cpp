@@ -56,6 +56,7 @@ class BWindow::impl
 	BView		top_view;
 	const char *title;
 
+	bool hidden;
 	bool minimized;
 	bool maximized;
 	bool closed;
@@ -79,6 +80,7 @@ class BWindow::impl
 
 		  top_view(BRect(B_ORIGIN, B_ORIGIN), "TopView", B_FOLLOW_ALL, B_WILL_DRAW),
 		  title{nullptr},
+		  hidden{true},
 		  minimized{false},
 		  maximized{false},
 		  closed{false},
@@ -273,23 +275,27 @@ void BWindow::impl::resize_buffer()
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
 			if ((x + y / 8 * 8) % 16 < 8)
-				pixels[y * width + x] = 0xFF555555;
+				pixels[y * width + x] = 0xFFFF5555;
 			else
-				pixels[y * width + x] = 0xFFAAAAAA;
+				pixels[y * width + x] = 0xFFAAAAFF;
 		}
 	}
 #endif
 
 	surface = SkSurface::MakeRasterDirect(info, pool_data, stride);
+
+	if (!hidden)
+		top_view.Invalidate();
 }
 
 void BWindow::impl::showWindow()
 {
-	top_view.Invalidate();
+	hidden = false;
 }
 
 void BWindow::impl::hideWindow()
 {
+	hidden = true;
 }
 
 void BWindow::impl::minimize(bool minimized)
