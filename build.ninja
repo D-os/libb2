@@ -1,5 +1,6 @@
 cflags = -O0 -ggdb -Wall -Werror $
   -Wno-multichar $
+  -Wno-c99-designator $
   -DNDEBUG $
   $system_os_build_flags
 

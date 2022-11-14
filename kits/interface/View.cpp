@@ -46,39 +46,46 @@ class BView::impl
 
 void BView::impl::fill_pattern(rgb_color pixels[8 * 8], pattern &p)
 {
+	const rgb_color low = (drawing_mode == B_OP_OVER
+						   || drawing_mode == B_OP_ERASE
+						   || drawing_mode == B_OP_INVERT
+						   || drawing_mode == B_OP_SELECT)
+							  ? B_TRANSPARENT_COLOR
+							  : low_color;
+
 	for (int row = 0; row < 8; ++row) {
 		if (p.data[row] & 0b10000000)
 			pixels[0 + row * 8] = high_color;
 		else
-			pixels[0 + row * 8] = low_color;
+			pixels[0 + row * 8] = low;
 		if (p.data[row] & 0b01000000)
 			pixels[1 + row * 8] = high_color;
 		else
-			pixels[1 + row * 8] = low_color;
+			pixels[1 + row * 8] = low;
 		if (p.data[row] & 0b00100000)
 			pixels[2 + row * 8] = high_color;
 		else
-			pixels[2 + row * 8] = low_color;
+			pixels[2 + row * 8] = low;
 		if (p.data[row] & 0b00010000)
 			pixels[3 + row * 8] = high_color;
 		else
-			pixels[3 + row * 8] = low_color;
+			pixels[3 + row * 8] = low;
 		if (p.data[row] & 0b00001000)
 			pixels[4 + row * 8] = high_color;
 		else
-			pixels[4 + row * 8] = low_color;
+			pixels[4 + row * 8] = low;
 		if (p.data[row] & 0b00000100)
 			pixels[5 + row * 8] = high_color;
 		else
-			pixels[5 + row * 8] = low_color;
+			pixels[5 + row * 8] = low;
 		if (p.data[row] & 0b00000010)
 			pixels[6 + row * 8] = high_color;
 		else
-			pixels[6 + row * 8] = low_color;
+			pixels[6 + row * 8] = low;
 		if (p.data[row] & 0b00000001)
 			pixels[7 + row * 8] = high_color;
 		else
-			pixels[7 + row * 8] = low_color;
+			pixels[7 + row * 8] = low;
 	}
 }
 
@@ -477,22 +484,38 @@ BPoint BView::PenLocation() const
 	return BPoint(fState->pen_location.x(), fState->pen_location.y());
 }
 
-#define DRAW_PRELUDE                                                                      \
-	if (!fOwner) return;                                                                  \
-	SkCanvas *canvas = fOwner->_get_canvas();                                             \
-	if (!canvas) return;                                                                  \
-                                                                                          \
-	SkPaint paint;                                                                        \
-	paint.setStrokeWidth(fState->pen_size > 0.0 ? /* scale * */ fState->pen_size : 1.0);  \
-                                                                                          \
-	SkBitmap bitmap;                                                                      \
-	bitmap.setInfo(SkImageInfo::Make(8, 8, kRGBA_8888_SkColorType, kOpaque_SkAlphaType)); \
-	rgb_color pixels[8 * 8];                                                              \
-	fState->fill_pattern(pixels, p);                                                      \
-	bitmap.setPixels(pixels);                                                             \
-	bitmap.setImmutable();                                                                \
-	paint.setShader(                                                                      \
-		bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, SkSamplingOptions(), nullptr));
+static SkBlendMode blend_modes[] = {
+	[B_OP_COPY]		= SkBlendMode::kSrc,
+	[B_OP_OVER]		= SkBlendMode::kSrcOver,
+	[B_OP_ERASE]	= SkBlendMode::kDstOut,
+	[B_OP_INVERT]	= SkBlendMode::kSrcATop,
+	[B_OP_ADD]		= SkBlendMode::kPlus,
+	[B_OP_SUBTRACT] = SkBlendMode::kScreen,
+	[B_OP_BLEND]	= SkBlendMode::kMultiply,
+	[B_OP_MIN]		= SkBlendMode::kDarken,
+	[B_OP_MAX]		= SkBlendMode::kLighten,
+	[B_OP_SELECT]	= SkBlendMode::kModulate,
+};
+
+#define DRAW_PRELUDE                                                                                \
+	if (!fOwner) return;                                                                            \
+	SkCanvas *canvas = fOwner->_get_canvas();                                                       \
+	if (!canvas) return;                                                                            \
+                                                                                                    \
+	SkPaint paint;                                                                                  \
+	paint.setStrokeWidth(fState->pen_size > 0.0 ? /* scale * */ fState->pen_size : 1.0);            \
+                                                                                                    \
+	SkBitmap bitmap;                                                                                \
+	bitmap.setInfo(SkImageInfo::Make(8, 8, kRGBA_8888_SkColorType, kOpaque_SkAlphaType));           \
+	rgb_color pixels[8 * 8];                                                                        \
+	fState->fill_pattern(pixels, p);                                                                \
+	bitmap.setPixels(pixels);                                                                       \
+	bitmap.setImmutable();                                                                          \
+	paint.setShader(                                                                                \
+		bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, SkSamplingOptions(), nullptr)); \
+                                                                                                    \
+	if (fState->drawing_mode < (sizeof(blend_modes) / sizeof(blend_modes[0])))                      \
+		paint.setBlendMode(blend_modes[fState->drawing_mode]);
 
 void BView::StrokePoint(BPoint pt, pattern p)
 {
