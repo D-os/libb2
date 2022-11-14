@@ -41,7 +41,7 @@
 #define TEST_LINE 1
 #define TEST_POLYGON 1
 #define TEST_RECT_AND_REGION 1
-#define TEST_ARC 0
+#define TEST_ARC 1
 
 #define TEST_FONT 0
 #define TEST_FONT_STRING "Jump over the dog, 跳过那只狗."
@@ -265,7 +265,7 @@ void TView::Draw(BRect updateRect)
 		StrokeRect(r);
 		SetHighColor(0, 0, 255);
 		StrokeArc(r, 0, 360);
-		SetDrawingMode(B_OP_XOR);
+		SetDrawingMode(B_OP_BLEND);
 		SetHighColor(255, 0, 0);
 		FillArc(r, 30, 240);
 

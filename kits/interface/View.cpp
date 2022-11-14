@@ -608,6 +608,54 @@ void BView::FillRoundRect(BRect r, float xRadius, float yRadius, pattern p)
 	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), xRadius, yRadius, paint);
 }
 
+void BView::StrokeEllipse(BPoint center, float xRadius, float yRadius, pattern p)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::StrokeEllipse(BRect r, pattern p)
+{
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::kStroke_Style);
+	canvas->drawOval(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+}
+
+void BView::FillEllipse(BPoint center, float xRadius, float yRadius, pattern p)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::FillEllipse(BRect r, pattern p)
+{
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::kFill_Style);
+	canvas->drawOval(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+}
+
+void BView::StrokeArc(BPoint center, float xRadius, float yRadius, float start_angle, float arc_angle, pattern p)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::StrokeArc(BRect r, float start_angle, float arc_angle, pattern p)
+{
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::kStroke_Style);
+	canvas->drawArc(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), -start_angle, -arc_angle, false, paint);
+}
+
+void BView::FillArc(BPoint center, float xRadius, float yRadius, float start_angle, float arc_angle, pattern p)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::FillArc(BRect r, float start_angle, float arc_angle, pattern p)
+{
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::kFill_Style);
+	canvas->drawArc(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), -start_angle, -arc_angle, true, paint);
+}
+
 #undef DRAW_PRELUDE
 
 void BView::SetFont(const BFont *font, uint32 mask)
