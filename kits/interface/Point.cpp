@@ -7,15 +7,6 @@
 
 const BPoint B_ORIGIN(0, 0);
 
-std::ostream& operator<<(std::ostream& os, const BPoint& value)
-{
-	os << "BPoint(" << std::fixed << std::setprecision(1);
-	os << "x:" << value.x;
-	os << ", y:" << value.y;
-	os << ")";
-	return os;
-}
-
 void BPoint::ConstrainTo(BRect rect)
 {
 	x = std::max(std::min(x, rect.right), rect.left);
@@ -66,4 +57,13 @@ bool BPoint::operator!=(const BPoint& other) const
 bool BPoint::operator==(const BPoint& other) const
 {
 	return x == other.x && y == other.y;
+}
+
+std::ostream& operator<<(std::ostream& os, const BPoint& value)
+{
+	os << "BPoint(" << std::fixed << std::setprecision(1);
+	os << "x:" << value.x;
+	os << ", y:" << value.y;
+	os << ")";
+	return os;
 }

@@ -29,6 +29,7 @@
 
 #include <app/Application.h>
 #include <interface/Polygon.h>
+#include <interface/Region.h>
 #include <interface/View.h>
 #include <interface/Window.h>
 
@@ -39,7 +40,7 @@
 #define TEST_SQUARE_POINT 0
 #define TEST_LINE 1
 #define TEST_POLYGON 1
-#define TEST_RECT_AND_REGION 0
+#define TEST_RECT_AND_REGION 1
 #define TEST_ARC 0
 
 #define TEST_FONT 0
@@ -224,7 +225,7 @@ void TView::Draw(BRect updateRect)
 		StrokeRect(r3);
 		StrokeRect(r4);
 		SetHighColor(255, 0, 0);
-		SetDrawingMode(B_OP_XOR);
+		SetDrawingMode(B_OP_BLEND);
 		FillRoundRect(r, 10, 10);
 		SetDrawingMode(B_OP_COPY);
 		StrokeRoundRect(r, 10, 10);
@@ -233,13 +234,18 @@ void TView::Draw(BRect updateRect)
 		BRegion region;
 		for (int8 i = 0; i < 3; ++i) region.Include(rects[i]);
 		region.OffsetBy(200, 0);
+		region.PrintToStream();
 
 		SetHighColor(0, 0, 0);
 		SetPenSize(0);
-		StrokeRects(rects, 3);
-		SetDrawingMode(B_OP_XOR);
+		for (auto &rect : rects) {
+			StrokeRect(rect);
+		}
+		SetDrawingMode(B_OP_BLEND);
 		SetHighColor(0, 0, 255);
-		FillRects(rects, 3);
+		for (auto &rect : rects) {
+			FillRect(rect);
+		}
 
 		SetHighColor(0, 255, 0);
 		FillRegion(&region, apat);

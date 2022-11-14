@@ -5,6 +5,7 @@
 #include <GraphicsDefs.h>
 #include <Message.h>
 #include <Polygon.h>
+#include <Region.h>
 #include <Window.h>
 #include <doctest/doctest.h>
 #include <include/core/SkBitmap.h>
@@ -15,6 +16,7 @@
 #include <include/core/SkPaint.h>
 #include <include/core/SkPath.h>
 #include <include/core/SkPoint.h>
+#include <include/core/SkRegion.h>
 #include <log/log.h>
 #include <pimpl.h>
 
@@ -549,7 +551,7 @@ void BView::FillPolygon(const BPoint *ptArray, int32 numPts, pattern p)
 {
 	if (!ptArray || numPts < 2) return;
 	DRAW_PRELUDE
-	paint.setStyle(SkPaint::Style::kFill_Style);
+	paint.setStyle(SkPaint::kFill_Style);
 	SkPath path;
 	path.moveTo(ptArray->x, ptArray->y);
 	ptArray += 1;
@@ -563,6 +565,47 @@ void BView::FillPolygon(const BPoint *ptArray, int32 numPts, pattern p)
 void BView::FillPolygon(const BPoint *ptArray, int32 numPts, BRect bounds, pattern p)
 {
 	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::StrokeRect(BRect r, pattern p)
+{
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::kStroke_Style);
+	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+}
+
+void BView::FillRect(BRect r, pattern p)
+{
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::kFill_Style);
+	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+}
+
+void BView::FillRegion(BRegion *a_region, pattern p)
+{
+	if (!a_region) return;
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::kFill_Style);
+	canvas->drawRegion(*(a_region->_get_region()), paint);
+}
+
+void BView::InvertRect(BRect r)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::StrokeRoundRect(BRect r, float xRadius, float yRadius, pattern p)
+{
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::kStroke_Style);
+	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), xRadius, yRadius, paint);
+}
+
+void BView::FillRoundRect(BRect r, float xRadius, float yRadius, pattern p)
+{
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::kFill_Style);
+	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), xRadius, yRadius, paint);
 }
 
 #undef DRAW_PRELUDE

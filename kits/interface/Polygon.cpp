@@ -55,6 +55,11 @@ const BPoint *BPolygon::Points() const
 	return m->data();
 }
 
+void BPolygon::PrintToStream() const
+{
+	std::cout << *this << std::endl;
+}
+
 std::ostream &operator<<(std::ostream &os, const BPolygon &value)
 {
 	os << "BPolygon(";
@@ -69,9 +74,4 @@ std::ostream &operator<<(std::ostream &os, const BPolygon &value)
 
 	os << ")";
 	return os;
-}
-
-void BPolygon::PrintToStream() const
-{
-	std::cout << *this << std::endl;
 }
