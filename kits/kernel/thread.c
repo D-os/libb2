@@ -454,7 +454,7 @@ int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
 			}
 		}
 
-		return B_BUSTED_PIPE;
+		return B_RESULT_NOT_REPRESENTABLE;
 	}
 
 	if (sender) {

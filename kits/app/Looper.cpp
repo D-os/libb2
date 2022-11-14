@@ -446,8 +446,13 @@ void BLooper::task_looper()
 		if (fQueue->IsEmpty()) {
 			ALOGV("waiting for data");
 			thread_id sender;
-			uint32	  code = receive_data(&sender, nullptr, 0);
-			ALOGD("received data from %d: %.4s", sender, (char *)&code);
+			int32	  code = receive_data(&sender, nullptr, 0);
+			if (code < B_OK) {
+				ALOGE("receive_data error 0x%x: %s", code, strerror(-code));
+			}
+			else {
+				ALOGD("received data from %d: 0x%x '%.4s'", sender, code, (char *)&code);
+			}
 		}
 
 		Lock();
