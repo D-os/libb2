@@ -396,7 +396,7 @@ void BWindow::impl::xdg_toplevel_close_handler(void *this_, struct xdg_toplevel 
 	static_cast<BWindow::impl *>(this_)->closed = true;
 }
 
-void *BWindow::_get_canvas()
+SkCanvas *BWindow::_get_canvas()
 {
 	return m->surface ? m->surface->getCanvas() : nullptr;
 }

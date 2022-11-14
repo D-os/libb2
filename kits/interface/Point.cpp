@@ -9,7 +9,7 @@ const BPoint B_ORIGIN(0, 0);
 
 std::ostream& operator<<(std::ostream& os, const BPoint& value)
 {
-	os << "BPoint(" << std::setprecision(0);
+	os << "BPoint(" << std::fixed << std::setprecision(1);
 	os << "x:" << value.x;
 	os << ", y:" << value.y;
 	os << ")";

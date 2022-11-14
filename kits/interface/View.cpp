@@ -4,6 +4,7 @@
 
 #include <GraphicsDefs.h>
 #include <Message.h>
+#include <Polygon.h>
 #include <Window.h>
 #include <doctest/doctest.h>
 #include <include/core/SkBitmap.h>
@@ -11,6 +12,8 @@
 #include <include/core/SkColor.h>
 #include <include/core/SkData.h>
 #include <include/core/SkImage.h>
+#include <include/core/SkPaint.h>
+#include <include/core/SkPath.h>
 #include <include/core/SkPoint.h>
 #include <log/log.h>
 #include <pimpl.h>
@@ -474,7 +477,7 @@ BPoint BView::PenLocation() const
 
 #define DRAW_PRELUDE                                                                      \
 	if (!fOwner) return;                                                                  \
-	SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());                    \
+	SkCanvas *canvas = fOwner->_get_canvas();                                             \
 	if (!canvas) return;                                                                  \
                                                                                           \
 	SkPaint paint;                                                                        \
@@ -503,6 +506,61 @@ void BView::StrokeLine(BPoint toPt, pattern p)
 }
 
 void BView::StrokeLine(BPoint pt0, BPoint pt1, pattern p)
+{
+	DRAW_PRELUDE
+	canvas->drawLine(pt0.x, pt0.y, pt1.x, pt1.y, paint);
+	fState->pen_location.set(pt1.x, pt1.y);
+}
+
+void BView::StrokePolygon(const BPolygon *aPolygon, bool closed, pattern p)
+{
+	if (!aPolygon) return;
+	StrokePolygon(aPolygon->Points(), aPolygon->CountPoints(), closed, p);
+}
+
+void BView::StrokePolygon(const BPoint *ptArray, int32 numPts, bool closed, pattern p)
+{
+	if (!ptArray || numPts < 2) return;
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::Style::kStroke_Style);
+	SkPath path;
+	path.moveTo(ptArray->x, ptArray->y);
+	ptArray += 1;
+	for (int32 i = 1; i < numPts; ++i) {
+		path.lineTo(ptArray->x, ptArray->y);
+		ptArray += 1;
+	}
+	if (closed) path.close();
+	canvas->drawPath(path, paint);
+}
+
+void BView::StrokePolygon(const BPoint *ptArray, int32 numPts, BRect bounds, bool closed, pattern p)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::FillPolygon(const BPolygon *aPolygon, pattern p)
+{
+	if (!aPolygon) return;
+	FillPolygon(aPolygon->Points(), aPolygon->CountPoints(), p);
+}
+
+void BView::FillPolygon(const BPoint *ptArray, int32 numPts, pattern p)
+{
+	if (!ptArray || numPts < 2) return;
+	DRAW_PRELUDE
+	paint.setStyle(SkPaint::Style::kFill_Style);
+	SkPath path;
+	path.moveTo(ptArray->x, ptArray->y);
+	ptArray += 1;
+	for (int32 i = 1; i < numPts; ++i) {
+		path.lineTo(ptArray->x, ptArray->y);
+		ptArray += 1;
+	}
+	canvas->drawPath(path, paint);
+}
+
+void BView::FillPolygon(const BPoint *ptArray, int32 numPts, BRect bounds, pattern p)
 {
 	debugger(__PRETTY_FUNCTION__);
 }

@@ -39,6 +39,7 @@ build $BUILDROOT/os/libbe/app/Messenger.o: cxx system/os/kits/app/Messenger.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
 build $BUILDROOT/os/libbe/interface/GraphicsDefs.o: cxx system/os/kits/interface/GraphicsDefs.cpp
 build $BUILDROOT/os/libbe/interface/Point.o: cxx system/os/kits/interface/Point.cpp
+build $BUILDROOT/os/libbe/interface/Polygon.o: cxx system/os/kits/interface/Polygon.cpp
 build $BUILDROOT/os/libbe/interface/Rect.o: cxx system/os/kits/interface/Rect.cpp
 build $BUILDROOT/os/libbe/interface/View.o: cxx system/os/kits/interface/View.cpp
 build $BUILDROOT/os/libbe/interface/Window.o: cxx system/os/kits/interface/Window.cpp | $BUILDROOT/os/libbe/protocol/xdg-shell-client-protocol.h
@@ -73,6 +74,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/Roster.o $
   $BUILDROOT/os/libbe/interface/GraphicsDefs.o $
   $BUILDROOT/os/libbe/interface/Point.o $
+  $BUILDROOT/os/libbe/interface/Polygon.o $
   $BUILDROOT/os/libbe/interface/Rect.o $
   $BUILDROOT/os/libbe/interface/View.o $
   $BUILDROOT/os/libbe/interface/Window.o $

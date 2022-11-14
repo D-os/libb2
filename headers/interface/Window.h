@@ -64,6 +64,8 @@ class BButton;
 class BMenuBar;
 class BView;
 
+class SkCanvas;
+
 class BWindow : public BLooper
 {
    public:
@@ -247,7 +249,7 @@ class BWindow : public BLooper
 
 	class impl;
 	pimpl<impl> m;
-	void		 *_get_canvas();
+	SkCanvas	 *_get_canvas();
 };
 
 inline void BWindow::Close()

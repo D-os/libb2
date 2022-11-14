@@ -28,6 +28,7 @@
  * --------------------------------------------------------------------------*/
 
 #include <app/Application.h>
+#include <interface/Polygon.h>
 #include <interface/View.h>
 #include <interface/Window.h>
 
@@ -37,7 +38,7 @@
 #define TEST_POINT 0
 #define TEST_SQUARE_POINT 0
 #define TEST_LINE 1
-#define TEST_POLYGON 0
+#define TEST_POLYGON 1
 #define TEST_RECT_AND_REGION 0
 #define TEST_ARC 0
 
@@ -93,13 +94,13 @@ void TView::Draw(BRect updateRect)
 		PushState();
 		SetDrawingMode(B_OP_COPY);
 		float point_test_x = 0;
-		for (int32 i = 0; i < 26; i++) {
+		for (int32 i = 0; i < 26; ++i) {
 			SetHighColor(200, 50, 200);
 			SetPenSize(i);
 			StrokePoint(BPoint(point_test_x, (float)i / 2.f), i < 13 ? B_SOLID_HIGH : pat);
 
 			SetHighColor(0, 0, 0);
-			SetPenSize(0);
+			SetPenSize(3);
 			StrokePoint(BPoint(point_test_x, (float)i / 2.f));
 
 			point_test_x += (float)(2 * i + 1) / 2.f + 2.f;
@@ -118,13 +119,13 @@ void TView::Draw(BRect updateRect)
 		StrokePoints(pts, 4, NULL, pat);
 
 		SetHighColor(0, 0, 0);
-		SetPenSize(0);
+		SetPenSize(3);
 		StrokePoints(pts, 4);
 
 		SetDrawingMode(B_OP_COPY);
 		SetHighColor(255, 0, 0);
 		SetPenSize(17);
-		for (int32 i = 0; i < 4; i++) pts[i].x += 100;
+		for (int32 i = 0; i < 4; ++i) pts[i].x += 100;
 		StrokePoints(pts, 4, alpha, pat);
 
 		PopState();
@@ -140,20 +141,20 @@ void TView::Draw(BRect updateRect)
 		SetPenSize(7);
 		BPoint pt(0, 50);
 		MovePenTo(pt);
-		for (int32 i = 0; i < 6; i++) StrokeLine(pt += BPoint(30, (i % 2 == 0 ? 30 : -30)), pat);
+		for (int32 i = 0; i < 6; ++i) StrokeLine(pt += BPoint(30, (i % 2 == 0 ? 30 : -30)), pat);
 
 		SetHighColor(0, 0, 0);
 		SetPenSize(0);
 		pt.x = 0;
 		pt.y = 50;
 		MovePenTo(pt);
-		for (int32 i = 0; i < 6; i++) StrokeLine(pt += BPoint(30, (i % 2 == 0 ? 30 : -30)));
+		for (int32 i = 0; i < 6; ++i) StrokeLine(pt += BPoint(30, (i % 2 == 0 ? 30 : -30)));
 
-		SetHighColor(0, 255, 0);
+		SetHighColor(255, 255, 0);
 		SetPenSize(3);
 		pt.x = 0;
 		pt.y = 50;
-		for (int32 i = -1; i < 6; i++) StrokePoint(i < 0 ? pt : pt += BPoint(30, (i % 2 == 0 ? 30 : -30)));
+		for (int32 i = -1; i < 6; ++i) StrokePoint(i < 0 ? pt : pt += BPoint(30, (i % 2 == 0 ? 30 : -30)));
 
 		PopState();
 	}
@@ -162,10 +163,11 @@ void TView::Draw(BRect updateRect)
 	{
 		BPolygon poly;
 		BPoint	 pt(220, 50);
-		for (int32 i = -1; i < 6; i++) {
+		for (int32 i = -1; i < 6; ++i) {
 			if (i >= 0) pt += BPoint(30, (i % 2 == 0 ? 30 : -30));
 			poly.AddPoints(&pt, 1);
 		}
+		poly.PrintToStream();
 
 		PushState();
 
@@ -180,9 +182,9 @@ void TView::Draw(BRect updateRect)
 		StrokePolygon(&poly, true);
 
 		SetHighColor(255, 255, 0);
-		SetPenSize(0);
+		SetPenSize(3);
 		const BPoint *polyPts = poly.Points();
-		for (int32 i = 0; i < poly.CountPoints(); i++) StrokePoint(*polyPts++);
+		for (int32 i = 0; i < poly.CountPoints(); ++i) StrokePoint(*polyPts++);
 
 		BPolygon aPoly(poly.Points(), 3);
 		SetHighColor(0, 255, 0);
@@ -229,7 +231,7 @@ void TView::Draw(BRect updateRect)
 
 		BRect	rects[3] = {BRect(20, 130, 70, 180), BRect(50, 160, 150, 210), BRect(85, 195, 170, 240)};
 		BRegion region;
-		for (int8 i = 0; i < 3; i++) region.Include(rects[i]);
+		for (int8 i = 0; i < 3; ++i) region.Include(rects[i]);
 		region.OffsetBy(200, 0);
 
 		SetHighColor(0, 0, 0);
@@ -378,7 +380,7 @@ void TApplication::ReadyToRun()
 	win->Show();
 
 #if TEST_FONT == 1
-	for (int32 i = 0; i < count_font_families(); i++) {
+	for (int32 i = 0; i < count_font_families(); ++i) {
 		const char *family = NULL;
 		if (!(get_font_family(i, &family) != B_OK || family == NULL)) {
 			ETK_OUTPUT("Font[%d]:(%s)", i, family);

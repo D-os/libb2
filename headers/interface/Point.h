@@ -1,6 +1,8 @@
 #ifndef _POINT_H
 #define _POINT_H
 
+#include <ostream>
+
 class BRect;
 
 class BPoint
@@ -29,6 +31,9 @@ class BPoint
 	bool operator!=(const BPoint&) const;
 	bool operator==(const BPoint&) const;
 };
+
+/// C++ standard way of providing string conversions
+std::ostream& operator<<(std::ostream&, const BPoint&);
 
 extern const BPoint B_ORIGIN;
 
