@@ -256,6 +256,8 @@ class BView : public BHandler
 	void   MovePenTo(float x, float y);
 	void   MovePenBy(float x, float y);
 	BPoint PenLocation() const;
+	void   StrokePoint(BPoint  pt,
+					   pattern p = B_SOLID_HIGH);
 	void   StrokeLine(BPoint  toPt,
 					  pattern p = B_SOLID_HIGH);
 	void   StrokeLine(BPoint  pt0,

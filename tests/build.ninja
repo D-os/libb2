@@ -56,3 +56,8 @@ build $BUILDROOT/os/tests/interface/window.o: cxx system/os/tests/interface/wind
 build $BUILDROOT/os/tests/interface_window: link $
   $BUILDROOT/os/tests/interface/window.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/view-drawing.o: cxx system/os/tests/interface/view-drawing.cpp
+build $BUILDROOT/os/tests/interface_drawing: link $
+  $BUILDROOT/os/tests/interface/view-drawing.o $
+| $SYSROOT/lib/libbe.so

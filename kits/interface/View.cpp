@@ -6,8 +6,12 @@
 #include <Message.h>
 #include <Window.h>
 #include <doctest/doctest.h>
+#include <include/core/SkBitmap.h>
 #include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
+#include <include/core/SkColor.h>
+#include <include/core/SkData.h>
+#include <include/core/SkImage.h>
+#include <include/core/SkPoint.h>
 #include <log/log.h>
 #include <pimpl.h>
 
@@ -18,13 +22,60 @@ class BView::impl
 	rgb_color high_color;
 	rgb_color low_color;
 
+	drawing_mode drawing_mode;
+	float		 pen_size;
+	SkPoint		 pen_location;
+
 	impl()
 		: view_color{255, 255, 255, 255},
 		  high_color{0, 0, 0, 255},
-		  low_color{255, 255, 255, 255}
+		  low_color{255, 255, 255, 255},
+		  drawing_mode{B_OP_COPY},
+		  pen_size{1.0},
+		  pen_location{0.0, 0.0}
 	{
 	}
+
+	void fill_pattern(rgb_color pixels[8 * 8], pattern &p);
 };
+
+void BView::impl::fill_pattern(rgb_color pixels[8 * 8], pattern &p)
+{
+	for (int row = 0; row < 8; ++row) {
+		if (p.data[row] & 0b10000000)
+			pixels[0 + row * 8] = high_color;
+		else
+			pixels[0 + row * 8] = low_color;
+		if (p.data[row] & 0b01000000)
+			pixels[1 + row * 8] = high_color;
+		else
+			pixels[1 + row * 8] = low_color;
+		if (p.data[row] & 0b00100000)
+			pixels[2 + row * 8] = high_color;
+		else
+			pixels[2 + row * 8] = low_color;
+		if (p.data[row] & 0b00010000)
+			pixels[3 + row * 8] = high_color;
+		else
+			pixels[3 + row * 8] = low_color;
+		if (p.data[row] & 0b00001000)
+			pixels[4 + row * 8] = high_color;
+		else
+			pixels[4 + row * 8] = low_color;
+		if (p.data[row] & 0b00000100)
+			pixels[5 + row * 8] = high_color;
+		else
+			pixels[5 + row * 8] = low_color;
+		if (p.data[row] & 0b00000010)
+			pixels[6 + row * 8] = high_color;
+		else
+			pixels[6 + row * 8] = low_color;
+		if (p.data[row] & 0b00000001)
+			pixels[7 + row * 8] = high_color;
+		else
+			pixels[7 + row * 8] = low_color;
+	}
+}
 
 #pragma mark - BView
 
@@ -98,17 +149,14 @@ void BView::MessageReceived(BMessage *message)
 			if ((fFlags & B_WILL_DRAW) && (view_color != B_TRANSPARENT_COLOR)) {
 				BRect updateRect;
 				if (message->FindRect("updateRect", &updateRect) == B_OK && updateRect.IsValid()) {
-					SkPaint paint;
-					paint.setARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue);
 					SkCanvas	 *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
 					if (!canvas) {
 						// FIXME: now what? ¯\_(ツ)_/¯
 						break;
 					}
 					const auto &bounds = Bounds();
-					canvas->drawRect(
-						SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1),
-						paint);
+					canvas->clipRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1));
+					canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
 
 					// Call hook function to Draw content
 					Draw(updateRect);
@@ -346,12 +394,14 @@ void BView::ConstrainClippingRegion(BRegion *region)
 
 void BView::SetDrawingMode(drawing_mode mode)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fState->drawing_mode = mode;
 }
 
 void BView::SetPenSize(float size)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (size < 0.0) return;
+
+	fState->pen_size = size;
 }
 
 void BView::SetViewColor(rgb_color color)
@@ -383,6 +433,81 @@ rgb_color BView::LowColor() const
 {
 	return fState->low_color;
 }
+
+void BView::PushState()
+{
+	if (!fOwner) return;
+	SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
+	if (!canvas) return;
+
+	canvas->save();
+}
+
+void BView::PopState()
+{
+	if (!fOwner) return;
+	SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
+	if (!canvas) return;
+
+	canvas->restore();
+}
+
+void BView::MovePenTo(BPoint pt)
+{
+	fState->pen_location.set(pt.x, pt.y);
+}
+
+void BView::MovePenTo(float x, float y)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::MovePenBy(float x, float y)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+BPoint BView::PenLocation() const
+{
+	return BPoint(fState->pen_location.x(), fState->pen_location.y());
+}
+
+#define DRAW_PRELUDE                                                                      \
+	if (!fOwner) return;                                                                  \
+	SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());                    \
+	if (!canvas) return;                                                                  \
+                                                                                          \
+	SkPaint paint;                                                                        \
+	paint.setStrokeWidth(fState->pen_size > 0.0 ? /* scale * */ fState->pen_size : 1.0);  \
+                                                                                          \
+	SkBitmap bitmap;                                                                      \
+	bitmap.setInfo(SkImageInfo::Make(8, 8, kRGBA_8888_SkColorType, kOpaque_SkAlphaType)); \
+	rgb_color pixels[8 * 8];                                                              \
+	fState->fill_pattern(pixels, p);                                                      \
+	bitmap.setPixels(pixels);                                                             \
+	bitmap.setImmutable();                                                                \
+	paint.setShader(                                                                      \
+		bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, SkSamplingOptions(), nullptr));
+
+void BView::StrokePoint(BPoint pt, pattern p)
+{
+	DRAW_PRELUDE
+	canvas->drawPoint(pt.x, pt.y, paint);
+}
+
+void BView::StrokeLine(BPoint toPt, pattern p)
+{
+	DRAW_PRELUDE
+	canvas->drawLine(fState->pen_location.x(), fState->pen_location.y(), toPt.x, toPt.y, paint);
+	fState->pen_location.set(toPt.x, toPt.y);
+}
+
+void BView::StrokeLine(BPoint pt0, BPoint pt1, pattern p)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+#undef DRAW_PRELUDE
 
 void BView::SetFont(const BFont *font, uint32 mask)
 {

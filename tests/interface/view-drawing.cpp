@@ -28,75 +28,67 @@
  * --------------------------------------------------------------------------*/
 
 #include <app/Application.h>
-#include <interface/Window.h>
 #include <interface/View.h>
-#include <add-ons/font/FontEngine.h>
+#include <interface/Window.h>
 
-#define TEST_VIEW_FOLLOW	0
+#define TEST_VIEW_FOLLOW 0
 
 #if TEST_VIEW_FOLLOW == 0
-#define TEST_POINT		1
-#define TEST_SQUARB_POINT	0
-#define TEST_LINE		1
-#define TEST_POLYGON		1
-#define TEST_RECT_AND_REGION	1
-#define TEST_ARC		1
+#define TEST_POINT 0
+#define TEST_SQUARE_POINT 0
+#define TEST_LINE 1
+#define TEST_POLYGON 0
+#define TEST_RECT_AND_REGION 0
+#define TEST_ARC 0
 
-#define TEST_FONT		1
-#define TEST_FONT_STRING	"Jump over the dog, 跳过那只狗."
-#define TEST_FONT_FAMILY	"AR PL KaitiM GB"
-#define TEST_FONT_STYLE		"Regular"
-#define TEST_FONT_SIZE		24
-#endif // TEST_VIEW_FOLLOW
-
+#define TEST_FONT 0
+#define TEST_FONT_STRING "Jump over the dog, 跳过那只狗."
+#define TEST_FONT_FAMILY "AR PL KaitiM GB"
+#define TEST_FONT_STYLE "Regular"
+#define TEST_FONT_SIZE 24
+#endif	// TEST_VIEW_FOLLOW
 
 class TView : public BView
 {
-	public:
-		TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags);
-		virtual ~TView();
+   public:
+	TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags);
+	virtual ~TView();
 
-		virtual void Draw(BRect updateRect);
+	virtual void Draw(BRect updateRect);
 };
-
 
 class TWindow : public BWindow
 {
-	public:
-		TWindow(BRect frame, const char *title, window_type type, uint32 flags, uint32 workspace = B_CURRENT_WORKSPACE);
-		virtual ~TWindow();
+   public:
+	TWindow(BRect frame, const char *title, window_type type, uint32 flags, uint32 workspace = B_CURRENT_WORKSPACE);
+	virtual ~TWindow();
 
-		virtual bool QuitRequested();
+	virtual bool QuitRequested();
 };
-
 
 class TApplication : public BApplication
 {
-	public:
-		TApplication();
-		virtual ~TApplication();
+   public:
+	TApplication();
+	virtual ~TApplication();
 
-		virtual void ReadyToRun();
+	virtual void ReadyToRun();
 };
 
-
 TView::TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags)
-		: BView(frame, name, resizingMode, flags)
+	: BView(frame, name, resizingMode, flags)
 {
 }
-
 
 TView::~TView()
 {
 }
 
-
-void
-TView::Draw(BRect updateRect)
+void TView::Draw(BRect updateRect)
 {
 	pattern pat = B_MIXED_COLORS;
 
-#if TEST_POINT == 1 // Test Point
+#if TEST_POINT == 1	 // Test Point
 	{
 		PushState();
 		SetDrawingMode(B_OP_COPY);
@@ -113,10 +105,10 @@ TView::Draw(BRect updateRect)
 			point_test_x += (float)(2 * i + 1) / 2.f + 2.f;
 		}
 
-		BPoint pts[4] = { BPoint(20, 30), BPoint(40, 30), BPoint(60, 30), BPoint(80, 30) };
-		uint8 alpha[4] = {255, 150, 100, 50};
+		BPoint pts[4]	= {BPoint(20, 30), BPoint(40, 30), BPoint(60, 30), BPoint(80, 30)};
+		uint8  alpha[4] = {255, 150, 100, 50};
 
-#if TEST_SQUARB_POINT == 1
+#if TEST_SQUARE_POINT == 1
 		SetSquarePointStyle(true);
 #endif
 
@@ -137,7 +129,7 @@ TView::Draw(BRect updateRect)
 
 		PopState();
 	}
-#endif // TEST_POINT
+#endif	// TEST_POINT
 #if TEST_LINE == 1
 	{
 		PushState();
@@ -157,19 +149,19 @@ TView::Draw(BRect updateRect)
 		MovePenTo(pt);
 		for (int32 i = 0; i < 6; i++) StrokeLine(pt += BPoint(30, (i % 2 == 0 ? 30 : -30)));
 
-		SetHighColor(255, 255, 0);
-		SetPenSize(0);
+		SetHighColor(0, 255, 0);
+		SetPenSize(3);
 		pt.x = 0;
 		pt.y = 50;
 		for (int32 i = -1; i < 6; i++) StrokePoint(i < 0 ? pt : pt += BPoint(30, (i % 2 == 0 ? 30 : -30)));
 
 		PopState();
 	}
-#endif // TEST_LINE
+#endif	// TEST_LINE
 #if TEST_POLYGON == 1
 	{
 		BPolygon poly;
-		BPoint pt(220, 50);
+		BPoint	 pt(220, 50);
 		for (int32 i = -1; i < 6; i++) {
 			if (i >= 0) pt += BPoint(30, (i % 2 == 0 ? 30 : -30));
 			poly.AddPoints(&pt, 1);
@@ -198,7 +190,7 @@ TView::Draw(BRect updateRect)
 
 		PopState();
 	}
-#endif // TEST_POLYGON
+#endif	// TEST_POLYGON
 #if TEST_RECT_AND_REGION == 1
 	{
 		PushState();
@@ -235,7 +227,7 @@ TView::Draw(BRect updateRect)
 		SetDrawingMode(B_OP_COPY);
 		StrokeRoundRect(r, 10, 10);
 
-		BRect rects[3] = {BRect(20, 130, 70, 180), BRect(50, 160, 150, 210), BRect(85, 195, 170, 240)};
+		BRect	rects[3] = {BRect(20, 130, 70, 180), BRect(50, 160, 150, 210), BRect(85, 195, 170, 240)};
 		BRegion region;
 		for (int8 i = 0; i < 3; i++) region.Include(rects[i]);
 		region.OffsetBy(200, 0);
@@ -252,7 +244,7 @@ TView::Draw(BRect updateRect)
 
 		PopState();
 	}
-#endif // TEST_RECT_AND_REGION
+#endif	// TEST_RECT_AND_REGION
 #if TEST_ARC == 1
 	{
 		PushState();
@@ -295,7 +287,7 @@ TView::Draw(BRect updateRect)
 
 		PopState();
 	}
-#endif // TEST_ARC
+#endif	// TEST_ARC
 #if TEST_FONT == 1
 	{
 		PushState();
@@ -320,7 +312,7 @@ TView::Draw(BRect updateRect)
 		font_height fontHeight;
 		font.GetHeight(&fontHeight);
 		float strHeight = fontHeight.ascent + fontHeight.descent;
-		float strWidth = font.StringWidth(TEST_FONT_STRING);
+		float strWidth	= font.StringWidth(TEST_FONT_STRING);
 
 		pt += BPoint(0, 20);
 
@@ -329,20 +321,19 @@ TView::Draw(BRect updateRect)
 		StrokeRect(BRect(pt, pt + BPoint(strWidth, strHeight)));
 
 		StrokeLine(pt + BPoint(0, fontHeight.leading),
-		           pt + BPoint(strWidth, fontHeight.leading));
+				   pt + BPoint(strWidth, fontHeight.leading));
 		StrokeLine(pt + BPoint(0, fontHeight.ascent),
-		           pt + BPoint(strWidth, fontHeight.ascent));
+				   pt + BPoint(strWidth, fontHeight.ascent));
 
 		DrawString(TEST_FONT_STRING, pt + BPoint(0, fontHeight.ascent + 1));
 
 		PopState();
 	}
-#endif // TEST_FONT
+#endif	// TEST_FONT
 }
 
-
 TWindow::TWindow(BRect frame, const char *title, window_type type, uint32 flags, uint32 workspace)
-		: BWindow(frame, title, type, flags, workspace)
+	: BWindow(frame, title, type, flags, workspace)
 {
 	BView *view_top = new TView(frame.OffsetToCopy(B_ORIGIN), NULL, B_FOLLOW_ALL, B_WILL_DRAW);
 	AddChild(view_top);
@@ -356,39 +347,32 @@ TWindow::TWindow(BRect frame, const char *title, window_type type, uint32 flags,
 	view->SetViewColor(0, 255, 0);
 	view_top->AddChild(view);
 
-	view = new BView(BRect(150, 250, 200, 300), NULL, B_FOLLOW_H_CENTER |B_FOLLOW_RIGHT, 0);
+	view = new BView(BRect(150, 250, 200, 300), NULL, B_FOLLOW_H_CENTER | B_FOLLOW_RIGHT, 0);
 	view->SetViewColor(0, 0, 155);
 	view_top->AddChild(view);
-#endif // TEST_VIEW_FOLLOW
+#endif	// TEST_VIEW_FOLLOW
 }
-
 
 TWindow::~TWindow()
 {
 }
 
-
-bool
-TWindow::QuitRequested()
+bool TWindow::QuitRequested()
 {
-	app->PostMessage(B_QUIT_REQUESTED);
+	be_app->PostMessage(B_QUIT_REQUESTED);
 	return true;
 }
 
-
 TApplication::TApplication()
-		: BApplication("application/x-vnd.lee-example-app")
+	: BApplication("application/x-vnd.lee-example-app")
 {
 }
-
 
 TApplication::~TApplication()
 {
 }
 
-
-void
-TApplication::ReadyToRun()
+void TApplication::ReadyToRun()
 {
 	TWindow *win = new TWindow(BRect(100, 100, 550, 500), "View Example: Drawing", B_TITLED_WINDOW, 0);
 	win->Show();
@@ -424,9 +408,8 @@ TApplication::ReadyToRun()
 	if (be_plain_font) be_plain_font->PrintToStream();
 	if (be_bold_font) be_bold_font->PrintToStream();
 	if (be_fixed_font) be_fixed_font->PrintToStream();
-#endif // TEST_FONT
+#endif	// TEST_FONT
 }
-
 
 int main(int argc, char **argv)
 {
@@ -436,12 +419,10 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-
 #if defined(_WIN32) && !(defined(_MSC_VER) && defined(_DEBUG))
 #include <windows.h>
 int _stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	return main(__argc, __argv);
 }
-#endif // defined(_WIN32) && !(defined(_MSC_VER) && defined(_DEBUG))
-
+#endif	// defined(_WIN32) && !(defined(_MSC_VER) && defined(_DEBUG))
