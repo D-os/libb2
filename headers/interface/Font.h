@@ -257,6 +257,9 @@ class BFont
 	// friend class BView;
 };
 
+/// C++ standard way of providing string conversions
+std::ostream &operator<<(std::ostream &, const BFont &);
+
 // BFont related declarations
 extern const BFont *be_plain_font;
 extern const BFont *be_bold_font;
@@ -265,18 +268,18 @@ extern const BFont *be_fixed_font;
 int32	 count_font_families();
 status_t get_font_family(int32		  index,
 						 font_family *name,
-						 uint32		*flags = NULL);
+						 uint32		*flags = nullptr);
 
 int32	 count_font_styles(font_family name);
 status_t get_font_style(font_family family,
 						int32		index,
 						font_style *name,
-						uint32	   *flags = NULL);
+						uint32	   *flags = nullptr);
 status_t get_font_style(font_family family,
 						int32		index,
 						font_style *name,
 						uint16	   *face,
-						uint32	   *flags = NULL);
+						uint32	   *flags = nullptr);
 
 bool update_font_families(bool check_only);
 

@@ -5,6 +5,7 @@
 #include <Message.h>
 #include <Roster.h>
 #include <binder/IPCThreadState.h>
+#include <fontconfig/fontconfig.h>
 #include <log/log.h>
 
 #include <cstdio>
@@ -28,6 +29,9 @@ BApplication::BApplication(const char *signature)
 
 	be_roster = new BRoster();
 
+	FcBool fc_init = FcInit();
+	ALOGE_IF(fc_init != FcTrue, "Failed to initialize fontconfig");
+
 	PostMessage(B_READY_TO_RUN, this);
 
 	fInitError = B_NO_ERROR;
@@ -46,6 +50,8 @@ BApplication::~BApplication()
 	be_roster		 = nullptr;
 	be_app_messenger = BMessenger();
 	be_app			 = nullptr;
+
+	FcFini();
 }
 
 status_t BApplication::Archive(BMessage *data, bool deep) const

@@ -26,10 +26,11 @@ includes = $
   -isystem build/wayland/src $
   -isystem $BUILDROOT/wayland $
   -isystem external/skia $
+  -isystem external/fontconfig $
   -isystem external/doctest $
 
 libs = -lc++ -lunwind $
-  -lbinder -lutils -lcutils -llog -lwayland-client
+  -lbinder -lutils -lcutils -llog -lwayland-client -lfontconfig
 
 build $BUILDROOT/os/libbe/app/Application.o: cxx system/os/kits/app/Application.cpp
 build $BUILDROOT/os/libbe/app/Handler.o: cxx system/os/kits/app/Handler.cpp
@@ -38,6 +39,7 @@ build $BUILDROOT/os/libbe/app/Message.o: cxx system/os/kits/app/Message.cpp
 build $BUILDROOT/os/libbe/app/MessageQueue.o: cxx system/os/kits/app/MessageQueue.cpp
 build $BUILDROOT/os/libbe/app/Messenger.o: cxx system/os/kits/app/Messenger.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
+build $BUILDROOT/os/libbe/interface/Font.o: cxx system/os/kits/interface/Font.cpp
 build $BUILDROOT/os/libbe/interface/GraphicsDefs.o: cxx system/os/kits/interface/GraphicsDefs.cpp
 build $BUILDROOT/os/libbe/interface/Point.o: cxx system/os/kits/interface/Point.cpp
 build $BUILDROOT/os/libbe/interface/Polygon.o: cxx system/os/kits/interface/Polygon.cpp
@@ -74,6 +76,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/MessageQueue.o $
   $BUILDROOT/os/libbe/app/Messenger.o $
   $BUILDROOT/os/libbe/app/Roster.o $
+  $BUILDROOT/os/libbe/interface/Font.o $
   $BUILDROOT/os/libbe/interface/GraphicsDefs.o $
   $BUILDROOT/os/libbe/interface/Point.o $
   $BUILDROOT/os/libbe/interface/Polygon.o $

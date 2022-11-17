@@ -679,9 +679,81 @@ void BView::FillArc(BRect r, float start_angle, float arc_angle, pattern p)
 	canvas->drawArc(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), -start_angle, -arc_angle, true, paint);
 }
 
+void BView::DrawChar(char aChar)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::DrawChar(char aChar, BPoint location)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::DrawString(const char *aString, escapement_delta *delta)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::DrawString(const char *aString, BPoint location, escapement_delta *delta)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::DrawString(const char *aString, int32 length, escapement_delta *delta)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::DrawString(const char *aString, int32 length, BPoint location, escapement_delta *delta)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
 #undef DRAW_PRELUDE
 
 void BView::SetFont(const BFont *font, uint32 mask)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::GetFont(BFont *font) const
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::TruncateString(BString *in_out, uint32 mode, float width) const
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+float BView::StringWidth(const char *string) const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return 0.0;
+}
+
+float BView::StringWidth(const char *string, int32 length) const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return 0.0;
+}
+
+void BView::GetStringWidths(char *stringArray[], int32 lengthArray[], int32 numStrings, float widthArray[]) const
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::SetFontSize(float size)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::ForceFontAliasing(bool enable)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::GetFontHeight(font_height *height) const
 {
 	debugger(__PRETTY_FUNCTION__);
 }

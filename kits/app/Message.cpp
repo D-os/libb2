@@ -134,8 +134,7 @@ status_t BMessage::impl::pushNode(int32 count, const char *const name, type_code
 		}
 	}
 	if (!node) {
-		const auto name_length = strlen(name);
-		Node	   new_node{std::string(name, min_c(B_FIELD_NAME_LENGTH, name_length)), type};
+		Node new_node{std::string(name, strnlen(name, B_FIELD_NAME_LENGTH)), type};
 		new_node.data.reserve(count);
 		nodes.push_back(std::move(new_node));
 		node = &nodes.back();

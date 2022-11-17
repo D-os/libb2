@@ -3,17 +3,6 @@
 #include <iomanip>
 #include <iostream>
 
-std::ostream& operator<<(std::ostream& os, const BRect& value)
-{
-	os << "BRect(" << std::fixed << std::setprecision(1);
-	os << "l:" << value.left;
-	os << ", t:" << value.top;
-	os << ", r:" << value.right;
-	os << ", b:" << value.bottom;
-	os << ")";
-	return os;
-}
-
 void BRect::PrintToStream() const
 {
 	std::cout << *this << std::endl;
@@ -210,4 +199,15 @@ bool BRect::Contains(BRect rect) const
 {
 	return rect.left >= left && rect.right <= right
 		   && rect.top >= top && rect.bottom <= bottom;
+}
+
+std::ostream& operator<<(std::ostream& os, const BRect& value)
+{
+	os << "BRect(" << std::fixed << std::setprecision(1);
+	os << "l:" << value.left;
+	os << ", t:" << value.top;
+	os << ", r:" << value.right;
+	os << ", b:" << value.bottom;
+	os << ")";
+	return os;
 }

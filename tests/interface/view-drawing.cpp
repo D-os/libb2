@@ -32,6 +32,7 @@
 #include <interface/Region.h>
 #include <interface/View.h>
 #include <interface/Window.h>
+#include <log/log.h>
 
 #define TEST_VIEW_FOLLOW 0
 
@@ -43,7 +44,7 @@
 #define TEST_RECT_AND_REGION 1
 #define TEST_ARC 1
 
-#define TEST_FONT 0
+#define TEST_FONT 1
 #define TEST_FONT_STRING "Jump over the dog, 跳过那只狗."
 #define TEST_FONT_FAMILY "AR PL KaitiM GB"
 #define TEST_FONT_STYLE "Regular"
@@ -88,7 +89,9 @@ TView::~TView()
 
 void TView::Draw(BRect updateRect)
 {
+#if TEST_VIEW_FOLLOW == 0
 	pattern pat = B_MIXED_COLORS;
+#endif
 
 #if TEST_POINT == 1	 // Test Point
 	{
@@ -386,30 +389,21 @@ void TApplication::ReadyToRun()
 	win->Show();
 
 #if TEST_FONT == 1
-	for (int32 i = 0; i < count_font_families(); ++i) {
-		const char *family = NULL;
-		if (!(get_font_family(i, &family) != B_OK || family == NULL)) {
-			ETK_OUTPUT("Font[%d]:(%s)", i, family);
-			for (int32 j = 0; j < count_font_styles(i); j++) {
-				const char *style = NULL;
-				if (get_font_style(family, j, &style) == B_OK) {
-					BFontEngine *engine = get_font_engine(i, j);
-					if (engine) {
-						ETK_OUTPUT(" (%s[%s]", style, engine->IsScalable() ? "Scalable" : "Not Scalable");
-						int32 fixedCount = 0;
-						if (engine->HasFixedSize(&fixedCount)) {
-							ETK_OUTPUT(":");
-							float size = 0;
-							for (int32 k = 0; k < fixedCount; k++) {
-								engine->GetFixedSize(&size, k);
-								ETK_OUTPUT("%s%g", (k == 0 ? "" : "/"), size);
-							}
-						}
-						ETK_OUTPUT(")");
-					}
+	int32 numFamilies = count_font_families();
+	for (int32 i = 0; i < numFamilies; ++i) {
+		font_family family;
+		uint32		flags;
+		if (get_font_family(i, &family, &flags) == B_OK) {
+			dprintf(2, "Font[%d]:(%s)(0x%x)", i, family, flags);
+			int32 numStyles = count_font_styles(family);
+			for (int32 j = 0; j < numStyles; ++j) {
+				font_style style;
+				if (get_font_style(family, j, &style, &flags) == B_OK) {
+					dprintf(2, " (%s[%s]", style, flags & B_IS_FIXED ? "fixed-width" : "proportional");
+					dprintf(2, ")");
 				}
 			}
-			ETK_OUTPUT("\n");
+			dprintf(2, "\n");
 		}
 	}
 
