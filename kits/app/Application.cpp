@@ -2,6 +2,9 @@
 
 #define LOG_TAG "BApplication"
 
+#define DEFAULT_FONT_FAMILY "Inter"
+
+#include <Font.h>
 #include <Message.h>
 #include <Roster.h>
 #include <binder/IPCThreadState.h>
@@ -30,7 +33,27 @@ BApplication::BApplication(const char *signature)
 	be_roster = new BRoster();
 
 	FcBool fc_init = FcInit();
-	ALOGE_IF(fc_init != FcTrue, "Failed to initialize fontconfig");
+	if (fc_init == FcTrue) {
+		font_family family{DEFAULT_FONT_FAMILY};
+		font_style	plain_style{"Regular"};
+		font_style	bold_style{"Bold"};
+		font_style	fixed_style{"Thin Italic"};	 // FIXME: this should be fixed-width font
+		status_t	ret;
+		ret = const_cast<BFont *>(be_plain_font)->SetFamilyAndStyle(family, plain_style);
+		if (ret != B_OK) {
+			ALOGE("Failed to initialize plain font");
+		}
+		ret = const_cast<BFont *>(be_bold_font)->SetFamilyAndStyle(family, bold_style);
+		if (ret != B_OK) {
+			ALOGE("Failed to initialize bold font");
+		}
+		ret = const_cast<BFont *>(be_fixed_font)->SetFamilyAndStyle(family, fixed_style);
+		if (ret != B_OK) {
+			ALOGE("Failed to initialize fixed font");
+		}
+	}
+	else
+		ALOGE("Failed to initialize fontconfig");
 
 	PostMessage(B_READY_TO_RUN, this);
 

@@ -4,120 +4,264 @@
 #include <fontconfig/fontconfig.h>
 
 #include <cstring>
+#include <format>
 #include <iostream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
-BFont::BFont() {}
+BFont::BFont() : BFont(be_plain_font) {}
 
-BFont::BFont(const BFont &font) {}
+BFont::BFont(const BFont &font) : BFont(&font) {}
 
-BFont::BFont(const BFont *font) {}
+BFont::BFont(const BFont *font)
+	: fFamilyID{0},
+	  fStyleID{0},
+	  fSize{10.0},
+	  fShear{90.0},
+	  fRotation{0.0},
+	  fSpacing{B_BITMAP_SPACING},
+	  fEncoding{B_UNICODE_UTF8},
+	  fFace{0},
+	  fFlags{0},
+	  fHeight{7.0, 2.0, 13.0}
+{
+	if (font)
+		*this = *font;
+	else
+		*this = *be_plain_font;
+}
+
+BFont &BFont::operator=(const BFont &font)
+{
+	fFamilyID = font.fFamilyID;
+	fStyleID  = font.fStyleID;
+	fSize	  = font.fSize;
+	fShear	  = font.fShear;
+	fRotation = font.fRotation;
+	fSpacing  = font.fSpacing;
+	fEncoding = font.fEncoding;
+	fFace	  = font.fFace;
+	fHeight	  = font.fHeight;
+	fFlags	  = font.fFlags;
+	// fExtraFlags = font.fExtraFlags;
+
+	return *this;
+}
+
+bool BFont::operator==(const BFont &font) const
+{
+	return fFamilyID == font.fFamilyID
+		   && fStyleID == font.fStyleID
+		   && fSize == font.fSize
+		   && fShear == font.fShear
+		   && fRotation == font.fRotation
+		   && fSpacing == font.fSpacing
+		   && fEncoding == font.fEncoding
+		   && fFace == font.fFace;
+}
+
+bool BFont::operator!=(const BFont &font) const
+{
+	return fFamilyID != font.fFamilyID
+		   || fStyleID != font.fStyleID
+		   || fSize != font.fSize
+		   || fShear != font.fShear
+		   || fRotation != font.fRotation
+		   || fSpacing != font.fSpacing
+		   || fEncoding != font.fEncoding
+		   || fFace != font.fFace;
+}
+
+namespace {
+inline uint16 hash16(uint64 val)
+{
+	uint16 hash = (uint16)(val & 0xFFFF);
+	hash ^= (uint16)((val >> 16) & 0xFFFF);
+	hash ^= (uint16)((val >> 32) & 0xFFFF);
+	hash ^= (uint16)((val >> 48) & 0xFFFF);
+
+	return hash;
+}
+
+static std::unordered_map<std::string, std::unordered_set<std::string>> sInstalledFonts;
+
+static void _update_installed_fonts()
+{
+	if (sInstalledFonts.empty()) {
+		FcPattern	  *pat = FcPatternCreate();
+		FcObjectSet *os	 = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_LANG, FC_FILE, nullptr);
+		FcFontSet	  *fs	 = FcFontList(nullptr, pat, os);
+		// FcFontSetPrint(fs);
+
+		if (fs) {
+			for (int i = 0; i < fs->nfont; ++i) {
+				FcPattern *font = fs->fonts[i];
+				FcChar8	*file, *style, *family;  // FIXME: is file needed?
+				if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch
+					&& FcPatternGetString(font, FC_FAMILY, 0, &family) == FcResultMatch
+					&& FcPatternGetString(font, FC_STYLE, 0, &style) == FcResultMatch) {
+					// dprintf(2, "Filename: %s (family %s, style %s)\n", file, family, style);
+					auto s_family = std::string(reinterpret_cast<const char *>(family),
+												strnlen(reinterpret_cast<const char *>(family), B_FONT_FAMILY_LENGTH));
+					auto s_style  = std::string(reinterpret_cast<const char *>(style),
+												strnlen(reinterpret_cast<const char *>(style), B_FONT_STYLE_LENGTH));
+					sInstalledFonts[s_family].insert(s_style);
+				}
+			}
+
+			FcFontSetDestroy(fs);
+		}
+
+		if (os) FcObjectSetDestroy(os);
+		if (pat) FcPatternDestroy(pat);
+	}
+}
+}  // namespace
 
 status_t BFont::SetFamilyAndStyle(const font_family family, const font_style style)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	_update_installed_fonts();
+
+	font_family current_family;
+	font_style	current_style;
+	GetFamilyAndStyle(&current_family, &current_style);
+
+	auto s_family = std::string(reinterpret_cast<const char *>(family ? family : current_family));
+	auto s_style  = std::string(reinterpret_cast<const char *>(style ? style : current_style));
+
+	if (sInstalledFonts.contains(s_family) && sInstalledFonts[s_family].contains(s_style)) {
+		const std::hash<std::string> hash;
+		fFamilyID = hash16(hash(s_family));
+		fStyleID  = hash16(hash(s_style));
+
+		return B_OK;
+	}
+
+	return B_BAD_VALUE;
 }
 
 void BFont::SetFamilyAndStyle(uint32 code)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fStyleID  = code & 0xFFFF;
+	fFamilyID = (code >> 16) & 0xFFFF;
 }
 
 status_t BFont::SetFamilyAndFace(const font_family family, uint16 face)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	_update_installed_fonts();
+
+	status_t ret = SetFamilyAndStyle(family, nullptr);
+	if (ret != B_OK) return ret;
+	SetFace(face);
+	return B_OK;
 }
 
 void BFont::SetSize(float size)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fSize = size;
 }
 
 void BFont::SetShear(float shear)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fShear = shear;
 }
 
 void BFont::SetRotation(float rotation)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fRotation = rotation;
 }
 
 void BFont::SetSpacing(uint8 spacing)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fSpacing = spacing;
 }
 
 void BFont::SetEncoding(uint8 encoding)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fEncoding = encoding;
 }
 
 void BFont::SetFace(uint16 face)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fFace = face;
 }
 
 void BFont::SetFlags(uint32 flags)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fFlags = flags;
 }
 
 void BFont::GetFamilyAndStyle(font_family *family, font_style *style) const
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!family || !style) return;
+
+	*family[0] = '\0';
+	*style[0]  = '\0';
+
+	const std::hash<std::string> hash;
+
+	_update_installed_fonts();
+
+	for (const auto &font_family : sInstalledFonts) {
+		const uint16 familyId = hash16(hash(font_family.first));
+		if (familyId == fFamilyID) {
+			strncpy(reinterpret_cast<char *>(family), font_family.first.c_str(), B_FONT_FAMILY_LENGTH);
+			(*family)[B_FONT_FAMILY_LENGTH] = '\0';
+
+			for (const auto &font_style : font_family.second) {
+				const uint16 styleId = hash16(hash(font_style));
+				if (styleId == fStyleID) {
+					strncpy(reinterpret_cast<char *>(style), font_style.c_str(), B_FONT_STYLE_LENGTH);
+					(*style)[B_FONT_STYLE_LENGTH] = '\0';
+
+					return;
+				}
+			}
+
+			return;
+		}
+	}
 }
 
 uint32 BFont::FamilyAndStyle() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0;
+	return (fFamilyID << 16) & fStyleID;
 }
 
 float BFont::Size() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0.0;
+	return fSize;
 }
 
 float BFont::Shear() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0.0;
+	return fShear;
 }
 
 float BFont::Rotation() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0.0;
+	return fRotation;
 }
 
 uint8 BFont::Spacing() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0;
+	return fSpacing;
 }
 
 uint8 BFont::Encoding() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0;
+	return fEncoding;
 }
 
 uint16 BFont::Face() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0;
+	return fFace;
 }
 
 uint32 BFont::Flags() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0;
+	return fFlags;
 }
 
 font_direction BFont::Direction() const
@@ -173,24 +317,6 @@ void BFont::GetHeight(font_height *height) const
 	debugger(__PRETTY_FUNCTION__);
 }
 
-BFont &BFont::operator=(const BFont &font)
-{
-	debugger(__PRETTY_FUNCTION__);
-	return *this;
-}
-
-bool BFont::operator==(const BFont &font) const
-{
-	debugger(__PRETTY_FUNCTION__);
-	return false;
-}
-
-bool BFont::operator!=(const BFont &font) const
-{
-	debugger(__PRETTY_FUNCTION__);
-	return false;
-}
-
 void BFont::PrintToStream() const
 {
 	std::cout << *this << std::endl;
@@ -200,24 +326,16 @@ void BFont::PrintToStream() const
 
 std::ostream &operator<<(std::ostream &os, const BFont &value)
 {
-	// font_family family;
-	// font_style	style;
-	// GetFamilyAndStyle(&family, &style);
+	_update_installed_fonts();
 
-	// printf("BFont { %s (%d), %s (%d) 0x%x %f/%f %fpt (%f %f %f), %d }\n",
-	// 	   family, fFamilyID, style, fStyleID, fFace, fShear, fRotation, fSize,
-	// 	   fHeight.ascent, fHeight.descent, fHeight.leading, fEncoding);
+	font_family family;
+	font_style	style;
+	value.GetFamilyAndStyle(&family, &style);
 
-	os << "BFont { ";
-	// family
-	// style
-	// size (in points)
-	// shear (in degrees)
-	// rotation (in degrees)
-	// ascent
-	// descent
-	// leading
-	os << " }";
+	os << std::format("BFont('{}' ({}), '{}' ({}) {:#x} {:.1f}deg/{:.1f}deg {:.1f}pt ({:.1f} {:.1f} {:.1f}) {:#x})",
+					  reinterpret_cast<const char *>(family), value.fFamilyID, reinterpret_cast<const char *>(style), value.fStyleID,
+					  value.fFace, value.fShear, value.fRotation, value.fSize,
+					  value.fHeight.ascent, value.fHeight.descent, value.fHeight.leading, value.fEncoding);
 	return os;
 }
 
@@ -228,42 +346,6 @@ static BFont sFixedFont;
 const BFont *be_plain_font = &sPlainFont;
 const BFont *be_bold_font  = &sBoldFont;
 const BFont *be_fixed_font = &sFixedFont;
-
-namespace {
-static std::unordered_map<std::string, std::unordered_set<std::string>> sInstalledFonts;
-
-static void _update_installed_fonts()
-{
-	if (sInstalledFonts.empty()) {
-		FcPattern	  *pat = FcPatternCreate();
-		FcObjectSet *os	 = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_LANG, FC_FILE, nullptr);
-		FcFontSet	  *fs	 = FcFontList(nullptr, pat, os);
-		FcFontSetPrint(fs);
-
-		if (fs) {
-			for (int i = 0; i < fs->nfont; ++i) {
-				FcPattern *font = fs->fonts[i];
-				FcChar8	*file, *style, *family;  // FIXME: is file needed?
-				if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch
-					&& FcPatternGetString(font, FC_FAMILY, 0, &family) == FcResultMatch
-					&& FcPatternGetString(font, FC_STYLE, 0, &style) == FcResultMatch) {
-					// dprintf(2, "Filename: %s (family %s, style %s)\n", file, family, style);
-					auto s_family = std::string(reinterpret_cast<const char *>(family),
-												strnlen(reinterpret_cast<const char *>(family), B_FONT_FAMILY_LENGTH));
-					auto s_style  = std::string(reinterpret_cast<const char *>(style),
-												strnlen(reinterpret_cast<const char *>(style), B_FONT_STYLE_LENGTH));
-					sInstalledFonts[s_family].insert(s_style);
-				}
-			}
-
-			FcFontSetDestroy(fs);
-		}
-
-		if (os) FcObjectSetDestroy(os);
-		if (pat) FcPatternDestroy(pat);
-	}
-}
-}  // namespace
 
 int32 count_font_families()
 {
@@ -276,10 +358,10 @@ status_t get_font_family(int32 index, font_family *name, uint32 *flags)
 {
 	_update_installed_fonts();
 
-	for (auto &font : sInstalledFonts) {
+	for (auto &font_family : sInstalledFonts) {
 		if (index == 0) {
-			strncpy(name[0], font.first.c_str(), B_FONT_FAMILY_LENGTH);
-			*(name[B_FONT_FAMILY_LENGTH]) = '\0';
+			strncpy(reinterpret_cast<char *>(name), font_family.first.c_str(), B_FONT_FAMILY_LENGTH);
+			(*name)[B_FONT_FAMILY_LENGTH] = '\0';
 			*flags						  = 0;	// FIXME: compute real flags
 
 			return B_OK;
@@ -310,10 +392,10 @@ status_t get_font_style(font_family family, int32 index, font_style *name, uint3
 	auto s_family = std::string(reinterpret_cast<const char *>(family),
 								strnlen(reinterpret_cast<const char *>(family), B_FONT_FAMILY_LENGTH));
 	if (sInstalledFonts.contains(s_family)) {
-		for (auto &style : sInstalledFonts.at(s_family)) {
+		for (auto &font_style : sInstalledFonts.at(s_family)) {
 			if (index == 0) {
-				strncpy(name[0], style.c_str(), B_FONT_STYLE_LENGTH);
-				*(name[B_FONT_STYLE_LENGTH]) = '\0';
+				strncpy(reinterpret_cast<char *>(name), font_style.c_str(), B_FONT_STYLE_LENGTH);
+				(*name)[B_FONT_STYLE_LENGTH] = '\0';
 				*flags						 = 0;  // FIXME: compute real flags
 
 				return B_OK;

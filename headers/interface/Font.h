@@ -255,6 +255,19 @@ class BFont
    private:
 	// friend class BApplication;
 	// friend class BView;
+	friend std::ostream &operator<<(std::ostream &, const BFont &);
+
+	uint16		fFamilyID;
+	uint16		fStyleID;
+	float		fSize;
+	float		fShear;
+	float		fRotation;
+	uint8		fSpacing;
+	uint8		fEncoding;
+	uint16		fFace;
+	uint32		fFlags;
+	font_height fHeight;
+	// int32		fPrivateFlags;
 };
 
 /// C++ standard way of providing string conversions

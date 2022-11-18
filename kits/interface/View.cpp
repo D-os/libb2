@@ -31,13 +31,16 @@ class BView::impl
 	float		 pen_size;
 	SkPoint		 pen_location;
 
+	BFont font;
+
 	impl()
 		: view_color{255, 255, 255, 255},
 		  high_color{0, 0, 0, 255},
 		  low_color{255, 255, 255, 255},
 		  drawing_mode{B_OP_COPY},
 		  pen_size{1.0},
-		  pen_location{0.0, 0.0}
+		  pen_location{0.0, 0.0},
+		  font(be_plain_font)
 	{
 	}
 
@@ -745,7 +748,7 @@ void BView::GetStringWidths(char *stringArray[], int32 lengthArray[], int32 numS
 
 void BView::SetFontSize(float size)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fState->font.SetSize(size);
 }
 
 void BView::ForceFontAliasing(bool enable)
