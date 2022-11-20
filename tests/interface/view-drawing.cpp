@@ -303,7 +303,7 @@ void TView::Draw(BRect updateRect)
 	{
 		PushState();
 
-		BPoint pt(10, 370);
+		BPoint pt(10, 350);
 
 		SetDrawingMode(B_OP_COPY);
 		SetHighColor(0, 0, 0);
@@ -323,7 +323,7 @@ void TView::Draw(BRect updateRect)
 		font.GetHeight(&fontHeight);
 		float strWidth	= font.StringWidth(TEST_FONT_STRING);
 
-		pt += BPoint(0, 20);
+		pt += BPoint(0, fontHeight.leading);
 
 		SetPenSize(0);
 		// draw bounding rectangle
@@ -338,7 +338,7 @@ void TView::Draw(BRect updateRect)
 				   pt + BPoint(strWidth, -fontHeight.ascent + fontHeight.leading));
 
 		SetHighColor(0, 0, 0);
-		DrawString(TEST_FONT_STRING, pt + BPoint(0, fontHeight.ascent + 1));
+		DrawString(TEST_FONT_STRING, pt);
 
 		PopState();
 	}

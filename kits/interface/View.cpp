@@ -737,7 +737,7 @@ void BView::DrawString(const char *aString, int32 length, BPoint location, escap
 	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(aString, length, font);
 	canvas->drawTextBlob(blob, location.x, location.y, paint);
 
-	MovePenBy(blob->bounds().width(), 0.0f);
+	MovePenTo(location.x + blob->bounds().width(), location.y);
 }
 
 #undef DRAW_PRELUDE
