@@ -770,12 +770,16 @@ bool BWindow::IsMinimized() const
 
 BRect BWindow::Bounds() const
 {
-	return BRect(B_ORIGIN, BPoint(m->info.width(), m->info.height()));
+	BPoint dim(m->width, m->height);
+	if (!m->info.isEmpty())
+		dim.Set(m->info.width(), m->info.height());
+
+	return BRect(B_ORIGIN, dim - BPoint{1, 1});
 }
 
 BRect BWindow::Frame() const
 {
-	// On Wayland we have our dedicated surface
+	// On Wayland we do not know the position ow the window on screen
 	return Bounds();
 }
 

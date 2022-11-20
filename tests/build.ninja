@@ -61,3 +61,8 @@ build $BUILDROOT/os/tests/interface/view-drawing.o: cxx system/os/tests/interfac
 build $BUILDROOT/os/tests/interface_drawing: link $
   $BUILDROOT/os/tests/interface/view-drawing.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/hello.o: cxx system/os/tests/interface/hello.cpp
+build $BUILDROOT/os/tests/interface_hello: link $
+  $BUILDROOT/os/tests/interface/hello.o $
+| $SYSROOT/lib/libbe.so

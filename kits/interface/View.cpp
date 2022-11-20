@@ -157,7 +157,7 @@ void BView::AllDetached()
 
 void BView::MessageReceived(BMessage *message)
 {
-	ALOGV("BView::MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
+	ALOGV("BView::MessageReceived @%s 0x%x: %.4s", Name(), message->what, (char *)&message->what);
 	switch (message->what) {
 		case _UPDATE_: {
 			const rgb_color view_color(ViewColor());
@@ -172,12 +172,17 @@ void BView::MessageReceived(BMessage *message)
 						// FIXME: now what? ¯\_(ツ)_/¯
 						break;
 					}
+
+					int checkpoint = canvas->save();
+
 					const auto &bounds = Bounds();
 					canvas->clipRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1));
 					canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
 
 					// Call hook function to Draw content
 					Draw(updateRect);
+
+					canvas->restoreToCount(checkpoint);
 				}
 			}
 			break;
@@ -707,35 +712,32 @@ void BView::DrawChar(char aChar, BPoint location)
 
 void BView::DrawString(const char *aString, escapement_delta *delta)
 {
-	debugger(__PRETTY_FUNCTION__);
+	DrawString(aString, PenLocation(), delta);
 }
 
 void BView::DrawString(const char *aString, BPoint location, escapement_delta *delta)
 {
 	if (!aString) return;
-	DRAW_PRELUDE_WITH_COLOR
 
-	SkFont font;
-	fState->font._get_font(&font);
-
-	SkFontMetrics metrics;
-	font.getMetrics(&metrics);
-
-	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromString(aString, font);
-
-	canvas->drawTextBlob(blob, location.x, location.y - (-metrics.fAscent) - 1.0f, paint);
-
-	MovePenBy(blob->bounds().width(), 0.0f);
+	DrawString(aString, strlen(aString), location, delta);
 }
 
 void BView::DrawString(const char *aString, int32 length, escapement_delta *delta)
 {
-	debugger(__PRETTY_FUNCTION__);
+	DrawString(aString, length, PenLocation(), delta);
 }
 
 void BView::DrawString(const char *aString, int32 length, BPoint location, escapement_delta *delta)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!aString || length <= 0) return;
+	DRAW_PRELUDE_WITH_COLOR
+
+	SkFont font;
+	fState->font._get_font(&font);
+	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(aString, length, font);
+	canvas->drawTextBlob(blob, location.x, location.y, paint);
+
+	MovePenBy(blob->bounds().width(), 0.0f);
 }
 
 #undef DRAW_PRELUDE
