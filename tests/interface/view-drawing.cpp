@@ -303,7 +303,7 @@ void TView::Draw(BRect updateRect)
 	{
 		PushState();
 
-		BPoint pt(10, 350);
+		BPoint pt(10, 370);
 
 		SetDrawingMode(B_OP_COPY);
 		SetHighColor(0, 0, 0);
@@ -312,7 +312,6 @@ void TView::Draw(BRect updateRect)
 		DrawString(TEST_FONT_STRING, pt);
 
 		SetDrawingMode(B_OP_COPY);
-		SetHighColor(0, 0, 0);
 		SetLowColor(ViewColor());
 		// ForceFontAliasing(false);
 		BFont font;
@@ -322,20 +321,23 @@ void TView::Draw(BRect updateRect)
 		SetFont(&font);
 		font_height fontHeight;
 		font.GetHeight(&fontHeight);
-		float strHeight = fontHeight.ascent + fontHeight.descent;
 		float strWidth	= font.StringWidth(TEST_FONT_STRING);
 
 		pt += BPoint(0, 20);
 
-		SetHighColor(0, 0, 0);
 		SetPenSize(0);
-		StrokeRect(BRect(pt, pt + BPoint(strWidth, strHeight)));
+		// draw bounding rectangle
+		SetHighColor(40, 40, 255);
+		StrokeRect(BRect(pt + BPoint(0, -fontHeight.ascent), pt + BPoint(strWidth - 1, fontHeight.descent)));
+		// draw baseline
+		SetHighColor(255, 40, 40);
+		StrokeLine(pt, pt + BPoint(strWidth, 0));
+		// draw leading
+		SetHighColor(40, 255, 40);
+		StrokeLine(pt + BPoint(0, -fontHeight.ascent + fontHeight.leading),
+				   pt + BPoint(strWidth, -fontHeight.ascent + fontHeight.leading));
 
-		StrokeLine(pt + BPoint(0, fontHeight.leading),
-				   pt + BPoint(strWidth, fontHeight.leading));
-		StrokeLine(pt + BPoint(0, fontHeight.ascent),
-				   pt + BPoint(strWidth, fontHeight.ascent));
-
+		SetHighColor(0, 0, 0);
 		DrawString(TEST_FONT_STRING, pt + BPoint(0, fontHeight.ascent + 1));
 
 		PopState();

@@ -2,6 +2,7 @@
 
 #define LOG_TAG "BView"
 
+#include <Font.h>
 #include <GraphicsDefs.h>
 #include <Message.h>
 #include <Polygon.h>
@@ -12,11 +13,13 @@
 #include <include/core/SkCanvas.h>
 #include <include/core/SkColor.h>
 #include <include/core/SkData.h>
+#include <include/core/SkFontMetrics.h>
 #include <include/core/SkImage.h>
 #include <include/core/SkPaint.h>
 #include <include/core/SkPath.h>
 #include <include/core/SkPoint.h>
 #include <include/core/SkRegion.h>
+#include <include/core/SkTextBlob.h>
 #include <log/log.h>
 #include <pimpl.h>
 
@@ -469,17 +472,17 @@ void BView::PopState()
 
 void BView::MovePenTo(BPoint pt)
 {
-	fState->pen_location.set(pt.x, pt.y);
+	MovePenTo(pt.x, pt.y);
 }
 
 void BView::MovePenTo(float x, float y)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fState->pen_location.set(x, y);
 }
 
 void BView::MovePenBy(float x, float y)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fState->pen_location.offset(x, y);
 }
 
 BPoint BView::PenLocation() const
@@ -500,42 +503,52 @@ static SkBlendMode blend_modes[] = {
 	[B_OP_SELECT]	= SkBlendMode::kModulate,
 };
 
-#define DRAW_PRELUDE                                                                                \
-	if (!fOwner) return;                                                                            \
-	SkCanvas *canvas = fOwner->_get_canvas();                                                       \
-	if (!canvas) return;                                                                            \
-                                                                                                    \
-	SkPaint paint;                                                                                  \
-	paint.setStrokeWidth(fState->pen_size > 0.0 ? /* scale * */ fState->pen_size : 1.0);            \
-                                                                                                    \
-	SkBitmap bitmap;                                                                                \
-	bitmap.setInfo(SkImageInfo::Make(8, 8, kRGBA_8888_SkColorType, kOpaque_SkAlphaType));           \
-	rgb_color pixels[8 * 8];                                                                        \
-	fState->fill_pattern(pixels, p);                                                                \
-	bitmap.setPixels(pixels);                                                                       \
-	bitmap.setImmutable();                                                                          \
-	paint.setShader(                                                                                \
-		bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, SkSamplingOptions(), nullptr)); \
-                                                                                                    \
-	if (fState->drawing_mode < (sizeof(blend_modes) / sizeof(blend_modes[0])))                      \
+#define DRAW_PRELUDE                                                                     \
+	if (!fOwner) return;                                                                 \
+	SkCanvas *canvas = fOwner->_get_canvas();                                            \
+	if (!canvas) return;                                                                 \
+                                                                                         \
+	SkPaint paint;                                                                       \
+	paint.setStrokeWidth(fState->pen_size > 0.0 ? /* scale * */ fState->pen_size : 1.0); \
+                                                                                         \
+	if (fState->drawing_mode < (sizeof(blend_modes) / sizeof(blend_modes[0])))           \
 		paint.setBlendMode(blend_modes[fState->drawing_mode]);
+
+#define DRAW_PRELUDE_WITH_COLOR    \
+	DRAW_PRELUDE                   \
+	paint.setColor(SkColorSetARGB( \
+		fState->high_color.alpha,  \
+		fState->high_color.red,    \
+		fState->high_color.green,  \
+		fState->high_color.blue));
+
+#define DRAW_PRELUDE_WITH_PATTERN                                                         \
+	DRAW_PRELUDE                                                                          \
+	SkBitmap bitmap;                                                                      \
+	bitmap.setInfo(SkImageInfo::Make(8, 8, kRGBA_8888_SkColorType, kOpaque_SkAlphaType)); \
+	rgb_color pixels[8 * 8];                                                              \
+	fState->fill_pattern(pixels, p);                                                      \
+	bitmap.setPixels(pixels);                                                             \
+	bitmap.setImmutable();                                                                \
+	paint.setShader(                                                                      \
+		bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, SkSamplingOptions(), nullptr));
 
 void BView::StrokePoint(BPoint pt, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	canvas->drawPoint(pt.x, pt.y, paint);
 }
 
 void BView::StrokeLine(BPoint toPt, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	canvas->drawLine(fState->pen_location.x(), fState->pen_location.y(), toPt.x, toPt.y, paint);
 	fState->pen_location.set(toPt.x, toPt.y);
 }
 
 void BView::StrokeLine(BPoint pt0, BPoint pt1, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	canvas->drawLine(pt0.x, pt0.y, pt1.x, pt1.y, paint);
 	fState->pen_location.set(pt1.x, pt1.y);
 }
@@ -549,7 +562,7 @@ void BView::StrokePolygon(const BPolygon *aPolygon, bool closed, pattern p)
 void BView::StrokePolygon(const BPoint *ptArray, int32 numPts, bool closed, pattern p)
 {
 	if (!ptArray || numPts < 2) return;
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::Style::kStroke_Style);
 	SkPath path;
 	path.moveTo(ptArray->x, ptArray->y);
@@ -576,7 +589,7 @@ void BView::FillPolygon(const BPolygon *aPolygon, pattern p)
 void BView::FillPolygon(const BPoint *ptArray, int32 numPts, pattern p)
 {
 	if (!ptArray || numPts < 2) return;
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
 	SkPath path;
 	path.moveTo(ptArray->x, ptArray->y);
@@ -595,14 +608,14 @@ void BView::FillPolygon(const BPoint *ptArray, int32 numPts, BRect bounds, patte
 
 void BView::StrokeRect(BRect r, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
 	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
 }
 
 void BView::FillRect(BRect r, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
 	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
 }
@@ -610,7 +623,7 @@ void BView::FillRect(BRect r, pattern p)
 void BView::FillRegion(BRegion *a_region, pattern p)
 {
 	if (!a_region) return;
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
 	canvas->drawRegion(*(a_region->_get_region()), paint);
 }
@@ -622,14 +635,14 @@ void BView::InvertRect(BRect r)
 
 void BView::StrokeRoundRect(BRect r, float xRadius, float yRadius, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
 	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), xRadius, yRadius, paint);
 }
 
 void BView::FillRoundRect(BRect r, float xRadius, float yRadius, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
 	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), xRadius, yRadius, paint);
 }
@@ -641,7 +654,7 @@ void BView::StrokeEllipse(BPoint center, float xRadius, float yRadius, pattern p
 
 void BView::StrokeEllipse(BRect r, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
 	canvas->drawOval(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
 }
@@ -653,7 +666,7 @@ void BView::FillEllipse(BPoint center, float xRadius, float yRadius, pattern p)
 
 void BView::FillEllipse(BRect r, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
 	canvas->drawOval(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
 }
@@ -665,7 +678,7 @@ void BView::StrokeArc(BPoint center, float xRadius, float yRadius, float start_a
 
 void BView::StrokeArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
 	canvas->drawArc(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), -start_angle, -arc_angle, false, paint);
 }
@@ -677,7 +690,7 @@ void BView::FillArc(BPoint center, float xRadius, float yRadius, float start_ang
 
 void BView::FillArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
 	canvas->drawArc(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), -start_angle, -arc_angle, true, paint);
 }
@@ -699,7 +712,20 @@ void BView::DrawString(const char *aString, escapement_delta *delta)
 
 void BView::DrawString(const char *aString, BPoint location, escapement_delta *delta)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!aString) return;
+	DRAW_PRELUDE_WITH_COLOR
+
+	SkFont font;
+	fState->font._get_font(&font);
+
+	SkFontMetrics metrics;
+	font.getMetrics(&metrics);
+
+	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromString(aString, font);
+
+	canvas->drawTextBlob(blob, location.x, location.y - (-metrics.fAscent) - 1.0f, paint);
+
+	MovePenBy(blob->bounds().width(), 0.0f);
 }
 
 void BView::DrawString(const char *aString, int32 length, escapement_delta *delta)
@@ -716,12 +742,39 @@ void BView::DrawString(const char *aString, int32 length, BPoint location, escap
 
 void BView::SetFont(const BFont *font, uint32 mask)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!font) return;
+
+	if (mask & B_FONT_FAMILY_AND_STYLE) {
+		fState->font.fFamilyID = font->fFamilyID;
+		fState->font.fStyleID  = font->fStyleID;
+	}
+	if (mask & B_FONT_SIZE) {
+		fState->font.fSize = font->fSize;
+	}
+	if (mask & B_FONT_SHEAR) {
+		fState->font.fShear = font->fShear;
+	}
+	if (mask & B_FONT_ROTATION) {
+		fState->font.fRotation = font->fRotation;
+	}
+	if (mask & B_FONT_SPACING) {
+		fState->font.fSpacing = font->fSpacing;
+	}
+	if (mask & B_FONT_ENCODING) {
+		fState->font.fEncoding = font->fEncoding;
+	}
+	if (mask & B_FONT_FACE) {
+		fState->font.fFace = font->fFace;
+	}
+	if (mask & B_FONT_FLAGS) {
+		fState->font.fFlags = font->fFlags;
+	}
 }
 
 void BView::GetFont(BFont *font) const
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!font) return;
+	*font = fState->font;
 }
 
 void BView::TruncateString(BString *in_out, uint32 mode, float width) const

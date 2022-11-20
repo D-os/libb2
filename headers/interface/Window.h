@@ -249,7 +249,7 @@ class BWindow : public BLooper
 
 	class impl;
 	pimpl<impl> m;
-	SkCanvas	 *_get_canvas();
+	SkCanvas	 *_get_canvas() const;
 };
 
 inline void BWindow::Close()

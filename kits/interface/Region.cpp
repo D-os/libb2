@@ -11,7 +11,7 @@ class BRegion::impl : public SkRegion
 {
 };
 
-SkRegion *BRegion::_get_region()
+SkRegion *BRegion::_get_region() const
 {
 	return &*m;
 }

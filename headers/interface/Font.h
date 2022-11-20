@@ -139,12 +139,15 @@ class BShape;
 class BString;
 class BPoint;
 
+class SkFont;
+
 class BFont
 {
    public:
 	BFont();
 	BFont(const BFont &font);
 	BFont(const BFont *font);
+	~BFont();
 
 	status_t SetFamilyAndStyle(const font_family family,
 							   const font_style	 style);
@@ -254,7 +257,7 @@ class BFont
 
    private:
 	// friend class BApplication;
-	// friend class BView;
+	friend class BView;
 	friend std::ostream &operator<<(std::ostream &, const BFont &);
 
 	uint16		fFamilyID;
@@ -266,8 +269,13 @@ class BFont
 	uint8		fEncoding;
 	uint16		fFace;
 	uint32		fFlags;
-	font_height fHeight;
+	// font_height fHeight;
 	// int32		fPrivateFlags;
+
+	class impl;
+	impl *m;
+	void  _get_font(SkFont *) const;
+	void  _get_font_info(font_family *family, font_style *style, const char **filename, int *index) const;
 };
 
 /// C++ standard way of providing string conversions

@@ -51,7 +51,7 @@ class BRegion
 
 	class impl;
 	pimpl<impl> m;
-	SkRegion	 *_get_region();
+	SkRegion	 *_get_region() const;
 };
 
 /// C++ standard way of providing string conversions
