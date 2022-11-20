@@ -37,7 +37,7 @@
 #define TEST_VIEW_FOLLOW 0
 
 #if TEST_VIEW_FOLLOW == 0
-#define TEST_POINT 0
+#define TEST_POINT 1
 #define TEST_SQUARE_POINT 0
 #define TEST_LINE 1
 #define TEST_POLYGON 1
@@ -111,7 +111,7 @@ void TView::Draw(BRect updateRect)
 		}
 
 		BPoint pts[4]	= {BPoint(20, 30), BPoint(40, 30), BPoint(60, 30), BPoint(80, 30)};
-		uint8  alpha[4] = {255, 150, 100, 50};
+		// uint8  alpha[4] = {255, 150, 100, 50};
 
 #if TEST_SQUARE_POINT == 1
 		SetSquarePointStyle(true);
@@ -120,17 +120,17 @@ void TView::Draw(BRect updateRect)
 		SetDrawingMode(B_OP_COPY);
 		SetHighColor(255, 0, 0);
 		SetPenSize(17);
-		StrokePoints(pts, 4, NULL, pat);
+		for (auto &point : pts) StrokePoint(point, pat);
 
 		SetHighColor(0, 0, 0);
 		SetPenSize(3);
-		StrokePoints(pts, 4);
+		for (auto &point : pts) StrokePoint(point);
 
-		SetDrawingMode(B_OP_COPY);
-		SetHighColor(255, 0, 0);
-		SetPenSize(17);
-		for (int32 i = 0; i < 4; ++i) pts[i].x += 100;
-		StrokePoints(pts, 4, alpha, pat);
+		// SetDrawingMode(B_OP_COPY);
+		// SetHighColor(255, 0, 0);
+		// SetPenSize(17);
+		// for (int32 i = 0; i < 4; ++i) pts[i].x += 100;
+		// StrokePoints(pts, 4, alpha, pat);
 
 		PopState();
 	}
