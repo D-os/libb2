@@ -8,10 +8,12 @@
 #include <include/core/SkTextBlob.h>
 #include <log/log.h>
 
+#include <algorithm>
 #include <cstring>
 #include <format>
 #include <iostream>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 
 class BFont::impl
@@ -98,24 +100,24 @@ inline uint16 hash16(uint64 val)
 	return hash;
 }
 
-static std::unordered_map<std::string,										// family
-						  std::unordered_map<std::string,					// style
-											 std::pair<std::string, int>>>	// file_path, file_index
+static std::unordered_map<std::string,												 // family
+						  std::unordered_map<std::string,							 // style
+											 std::tuple<std::string, int, uint32>>>	 // file_path, file_index, flags
 	sInstalledFonts;
 
 static void _update_installed_fonts()
 {
 	if (sInstalledFonts.empty()) {
 		FcPattern	  *pat = FcPatternCreate();
-		FcObjectSet	*os	 = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_LANG, FC_FILE, FC_INDEX, nullptr);
+		FcObjectSet	*os	 = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_INDEX, FC_SPACING, nullptr);
 		FcFontSet	  *fs	 = FcFontList(nullptr, pat, os);
-		FcFontSetPrint(fs);
+		// FcFontSetPrint(fs);
 
 		if (fs) {
 			for (int i = 0; i < fs->nfont; ++i) {
 				FcPattern *font = fs->fonts[i];
 				FcChar8	*file, *family, *style;
-				int		   index;
+				int		   index, spacing;
 				if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch
 					&& FcPatternGetString(font, FC_FAMILY, 0, &family) == FcResultMatch
 					&& FcPatternGetString(font, FC_STYLE, 0, &style) == FcResultMatch
@@ -124,7 +126,15 @@ static void _update_installed_fonts()
 																	 strnlen(reinterpret_cast<char *>(family), B_FONT_FAMILY_LENGTH));
 					auto s_style					   = std::string(reinterpret_cast<char *>(style),
 																	 strnlen(reinterpret_cast<char *>(style), B_FONT_STYLE_LENGTH));
-					sInstalledFonts[s_family][s_style] = std::pair(std::string(reinterpret_cast<char *>(file)), index);
+					uint32 flags						 = 0;
+					if (FcPatternGetInteger(font, FC_SPACING, 0, &spacing) == FcResultMatch) {
+						// monospace fonts have spacing: 100
+						if (spacing == 100) {
+							flags |= B_IS_FIXED;
+						}
+					}
+					sInstalledFonts[s_family][s_style] = std::make_tuple(
+						std::string(reinterpret_cast<char *>(file)), index, flags);
 				}
 			}
 
@@ -152,6 +162,15 @@ status_t BFont::SetFamilyAndStyle(const font_family family, const font_style sty
 		const std::hash<std::string> hash;
 		fFamilyID = hash16(hash(s_family));
 		fStyleID  = hash16(hash(s_style));
+
+		uint32 flags = fFlags;
+		_get_font_info(nullptr, nullptr, nullptr, nullptr, &flags);
+		if (flags & B_IS_FIXED) {
+			fFlags |= B_IS_FIXED;
+		}
+		else {
+			fFlags &= !B_IS_FIXED;
+		}
 
 		return B_OK;
 	}
@@ -218,7 +237,7 @@ void BFont::GetFamilyAndStyle(font_family *family, font_style *style) const
 	*style[0]  = '\0';
 
 	_update_installed_fonts();
-	_get_font_info(family, style, nullptr, nullptr);
+	_get_font_info(family, style, nullptr, nullptr, nullptr);
 }
 
 uint32 BFont::FamilyAndStyle() const
@@ -329,7 +348,7 @@ void BFont::PrintToStream() const
 	std::cout << *this << std::endl;
 }
 
-void BFont::_get_font_info(font_family *family, font_style *style, const char **filename, int *index) const
+void BFont::_get_font_info(font_family *family, font_style *style, const char **filename, int *index, uint32 *flags) const
 {
 	const std::hash<std::string> hash;
 
@@ -349,10 +368,13 @@ void BFont::_get_font_info(font_family *family, font_style *style, const char **
 						(*style)[B_FONT_STYLE_LENGTH] = '\0';
 					}
 					if (filename) {
-						*filename = font_style.second.first.c_str();
+						*filename = std::get<0>(font_style.second).c_str();
 					}
 					if (index) {
-						*index = font_style.second.second;
+						*index = std::get<1>(font_style.second);
+					}
+					if (flags) {
+						*flags = std::get<2>(font_style.second);
 					}
 
 					return;
@@ -372,7 +394,7 @@ void BFont::_get_font(SkFont *font) const
 		const char *filename;
 		int			index;
 		_update_installed_fonts();
-		_get_font_info(nullptr, nullptr, &filename, &index);
+		_get_font_info(nullptr, nullptr, &filename, &index, nullptr);
 
 		m->typeface = SkTypeface::MakeFromFile(filename, index);
 	}
@@ -399,9 +421,10 @@ std::ostream &operator<<(std::ostream &os, const BFont &value)
 	font_height height;
 	value.GetHeight(&height);
 
-	os << std::format("BFont('{}' ({}), '{}' ({}) {:#x} {:.1f}deg/{:.1f}deg {:.1f}pt ({:.1f} {:.1f} {:.1f}) {:#x})",
-					  reinterpret_cast<const char *>(family), value.fFamilyID, reinterpret_cast<const char *>(style), value.fStyleID,
-					  value.fFace, value.fShear, value.fRotation, value.fSize,
+	os << std::format("BFont('{}' ({}), '{}' ({}) {:#x}/{:#b} {:.1f}deg/{:.1f}deg {:.1f}pt ({:.1f} {:.1f} {:.1f}) {:#x})",
+					  reinterpret_cast<const char *>(family), value.fFamilyID,
+					  reinterpret_cast<const char *>(style), value.fStyleID,
+					  value.fFace, value.fFlags, value.fShear, value.fRotation, value.fSize,
 					  height.ascent, height.descent, height.leading, value.fEncoding);
 	return os;
 }
@@ -427,9 +450,18 @@ status_t get_font_family(int32 index, font_family *name, uint32 *flags)
 
 	for (auto &font_family : sInstalledFonts) {
 		if (index == 0) {
-			strncpy(reinterpret_cast<char *>(name), font_family.first.c_str(), B_FONT_FAMILY_LENGTH);
-			(*name)[B_FONT_FAMILY_LENGTH] = '\0';
-			*flags						  = 0;	// FIXME: compute real flags
+			if (name) {
+				strncpy(reinterpret_cast<char *>(name), font_family.first.c_str(), B_FONT_FAMILY_LENGTH);
+				(*name)[B_FONT_FAMILY_LENGTH] = '\0';
+			}
+			if (flags) {
+				*flags = 0;
+				if (std::all_of(font_family.second.begin(), font_family.second.end(), [](auto style) {
+						return std::get<2>(style.second) & B_IS_FIXED;
+					})) {
+					*flags |= B_IS_FIXED;
+				}
+			}
 
 			return B_OK;
 		}
@@ -461,9 +493,13 @@ status_t get_font_style(font_family family, int32 index, font_style *name, uint3
 	if (sInstalledFonts.contains(s_family)) {
 		for (auto &font_style : sInstalledFonts.at(s_family)) {
 			if (index == 0) {
-				strncpy(reinterpret_cast<char *>(name), font_style.first.c_str(), B_FONT_STYLE_LENGTH);
-				(*name)[B_FONT_STYLE_LENGTH] = '\0';
-				*flags						 = 0;  // FIXME: compute real flags
+				if (name) {
+					strncpy(reinterpret_cast<char *>(name), font_style.first.c_str(), B_FONT_STYLE_LENGTH);
+					(*name)[B_FONT_STYLE_LENGTH] = '\0';
+				}
+				if (flags) {
+					*flags = std::get<2>(font_style.second);
+				}
 
 				return B_OK;
 			}

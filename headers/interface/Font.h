@@ -275,7 +275,8 @@ class BFont
 	class impl;
 	impl *m;
 	void  _get_font(SkFont *) const;
-	void  _get_font_info(font_family *family, font_style *style, const char **filename, int *index) const;
+	void  _get_font_info(font_family *family, font_style *style,
+						 const char **filename, int *index, uint32 *flags) const;
 };
 
 /// C++ standard way of providing string conversions

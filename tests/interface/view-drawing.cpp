@@ -396,7 +396,7 @@ void TApplication::ReadyToRun()
 		font_family family;
 		uint32		flags;
 		if (get_font_family(i, &family, &flags) == B_OK) {
-			dprintf(2, "Font[%d]:(%s)(0x%x)", i, family, flags);
+			dprintf(2, "Font[%d]:(%s)[%s]", i, family, flags & B_IS_FIXED ? "fixed-width" : "proportional");
 			int32 numStyles = count_font_styles(family);
 			for (int32 j = 0; j < numStyles; ++j) {
 				font_style style;
