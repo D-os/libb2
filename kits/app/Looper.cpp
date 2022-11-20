@@ -212,7 +212,7 @@ thread_id BLooper::Run()
 void BLooper::Quit()
 {
 	if (!IsLocked()) {
-		dprintf(2, "Quit called on not locked Looper: \"%s\" %p, team=%d", Name(), this, Team());
+		ALOGE("Quit called on not locked Looper: \"%s\" %p, team=%d", Name(), this, Team());
 		return;
 	}
 
