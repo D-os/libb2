@@ -62,7 +62,7 @@ int _debuggerAssert(const char *file, int line, const char *message)
 
 static struct sigaction old_sa[NSIG];
 
-static void _abort_handler(int sig, siginfo_t *siginfo, void *ctx)
+static void _crash_handler(int sig, siginfo_t *siginfo, void *ctx)
 {
 	dprintf(2, "💥 SIGNAL %d @ %p: %s \n", sig, siginfo->si_addr, strsignal(sig));
 
@@ -72,12 +72,9 @@ static void _abort_handler(int sig, siginfo_t *siginfo, void *ctx)
 
 	// TODO: print backtrace
 
-	if (old_sa[sig].sa_flags & SA_SIGINFO && old_sa[sig].sa_sigaction) {
-		old_sa[sig].sa_sigaction(sig, siginfo, ctx);
-	}
-	else if (old_sa[sig].sa_handler) {
-		old_sa[sig].sa_handler(sig);
-	}
+	// restore original handler and raise again
+	sigaction(sig, &old_sa[sig], NULL);
+	raise(sig);
 }
 
 static void _register_crash_handlers(void)
@@ -86,7 +83,7 @@ static void _register_crash_handlers(void)
 
 	memset(&handler, 0, sizeof(handler));
 	handler.sa_flags	 = SA_SIGINFO;
-	handler.sa_sigaction = &_abort_handler;
+	handler.sa_sigaction = &_crash_handler;
 	if (sigfillset(&handler.sa_mask) != 0) {
 		perror("sigfillset");
 		exit(EXIT_FAILURE);
