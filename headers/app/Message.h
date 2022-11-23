@@ -233,6 +233,7 @@ class BMessage
 	friend class BMessageQueue;
 	friend class BMessenger;
 	friend class BApplication;
+	friend class BView;
 	friend std::ostream &operator<<(std::ostream &, const BMessage &);
 
 	class impl;

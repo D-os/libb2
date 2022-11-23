@@ -5,6 +5,7 @@
 #include <Font.h>
 #include <GraphicsDefs.h>
 #include <Message.h>
+#include <MessageQueue.h>
 #include <Polygon.h>
 #include <Region.h>
 #include <Window.h>
@@ -158,6 +159,7 @@ void BView::AllDetached()
 void BView::MessageReceived(BMessage *message)
 {
 	ALOGV("BView::MessageReceived @%s 0x%x: %.4s", Name(), message->what, (char *)&message->what);
+	if (!message->HasSpecifiers()) {
 	switch (message->what) {
 		case _UPDATE_: {
 			const rgb_color view_color(ViewColor());
@@ -167,7 +169,27 @@ void BView::MessageReceived(BMessage *message)
 			if ((fFlags & B_WILL_DRAW) && (view_color != B_TRANSPARENT_COLOR)) {
 				BRect updateRect;
 				if (message->FindRect("updateRect", &updateRect) == B_OK && updateRect.IsValid()) {
-					SkCanvas	 *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
+						// combine with pending updates
+						BMessage *pendingMessage;
+						int32	  index = 0;
+						while ((pendingMessage = Looper()->MessageQueue()->FindMessage(_UPDATE_, index))) {
+							if (pendingMessage->_get_handler() == this) {
+								BRect pendingRect;
+								ALOGV("---------------------------- Merging");
+								if (message->FindRect("updateRect", &pendingRect) == B_OK && pendingRect.IsValid()) {
+									updateRect = updateRect | pendingRect;
+								}
+
+								Looper()->MessageQueue()->RemoveMessage(pendingMessage);
+								delete pendingMessage;
+							}
+							else {
+								// move to next
+								index += 1;
+							}
+						}
+
+						SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
 					if (!canvas) {
 						// FIXME: now what? ¯\_(ツ)_/¯
 						break;
@@ -187,9 +209,105 @@ void BView::MessageReceived(BMessage *message)
 			}
 			break;
 		}
+
+			case B_KEY_DOWN: {
+				// TODO: cannot use "string" here if we support having different
+				// font encoding per view (it's supposed to be converted by
+				// BWindow::_HandleKeyDown() one day)
+				const char *string;
+				ssize_t		bytes;
+				if (message->FindData("bytes", B_STRING_TYPE, (const void **)&string, &bytes) == B_OK)
+					KeyDown(string, bytes - 1);
+				break;
+			}
+
+			case B_KEY_UP: {
+				// TODO: same as above
+				const char *string;
+				ssize_t		bytes;
+				if (message->FindData("bytes", B_STRING_TYPE, (const void **)&string, &bytes) == B_OK)
+					KeyUp(string, bytes - 1);
+				break;
+			}
+
+			case B_VIEW_MOVED:
+				FrameMoved(fParentOffset);
+				break;
+
+			case B_MOUSE_DOWN: {
+				BPoint where;
+				message->FindPoint("be:view_where", &where);
+				MouseDown(where);
+				break;
+			}
+
+			case B_MOUSE_MOVED: {
+				// MouseMoved(where, transit, dragMessage);
+				// delete dragMessage;
+				debugger("B_MOUSE_MOVED");
+				break;
+			}
+
+			case B_MOUSE_UP: {
+				// MouseUp(where);
+				debugger("B_MOUSE_UP");
+				break;
+			}
+
+			case B_MOUSE_WHEEL_CHANGED: {
+				// BScrollBar *horizontal = ScrollBar(B_HORIZONTAL);
+				// BScrollBar *vertical   = ScrollBar(B_VERTICAL);
+				// if (horizontal == NULL && vertical == NULL) {
+				// 	// Pass the message to the next handler
+				// 	BHandler::MessageReceived(message);
+				// 	break;
+				// }
+
+				// float deltaX = 0.0f;
+				// float deltaY = 0.0f;
+
+				// if (horizontal != NULL)
+				// 	message->FindFloat("be:wheel_delta_x", &deltaX);
+
+				// if (vertical != NULL)
+				// 	message->FindFloat("be:wheel_delta_y", &deltaY);
+
+				// if (deltaX == 0.0f && deltaY == 0.0f)
+				// 	break;
+
+				// if ((modifiers() & B_CONTROL_KEY) != 0)
+				// 	std::swap(horizontal, vertical);
+
+				// if (horizontal != NULL && deltaX != 0.0f)
+				// 	ScrollWithMouseWheelDelta(horizontal, deltaX);
+
+				// if (vertical != NULL && deltaY != 0.0f)
+				// 	ScrollWithMouseWheelDelta(vertical, deltaY);
+
+				break;
+			}
+
+			case B_SCREEN_CHANGED:
+			case B_WORKSPACE_ACTIVATED:
+			case B_WORKSPACES_CHANGED: {
+				BWindow *window = Window();
+				if (window == NULL)
+					break;
+
+				// propagate message to child views
+				int32 childCount = CountChildren();
+				for (int32 i = 0; i < childCount; i++) {
+					BView *view = ChildAt(i);
+					if (view != NULL)
+						window->PostMessage(message, view);
+				}
+				break;
+			}
+
 		default:
 			BHandler::MessageReceived(message);
 	}
+}
 }
 
 void BView::AddChild(BView *child, BView *before)
@@ -818,15 +936,12 @@ void BView::GetFontHeight(font_height *height) const
 
 void BView::Invalidate(BRect invalRect)
 {
-	ALOGV("Invalidating %s", Name());
+	ALOGV("Invalidating %p %s", this, Name());
 	if (fFlags & B_WILL_DRAW) {
 		BMessage message(_UPDATE_);
 		message.AddRect("updateRect", invalRect);
 		if (Looper()) {
 			Looper()->PostMessage(&message, this);
-		}
-		else {
-			ALOGE("Tried invalidating not-attached View: '%s' %p", Name(), this);
 		}
 	}
 

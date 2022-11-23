@@ -450,6 +450,11 @@ status_t BMessage::Unflatten(BDataIO *stream)
 	return B_ERROR;
 }
 
+bool BMessage::HasSpecifiers() const
+{
+	return false;
+}
+
 status_t BMessage::AddData(const char *name, type_code type, const void *data,
 						   ssize_t num_bytes, bool is_fixed_size, int32 count)
 {
@@ -524,7 +529,7 @@ status_t BMessage::ReplaceData(const char *name, type_code type, int32 index, co
 	return B_OK;
 }
 
-// #pragma mark - Macro definitions for data access methods
+#pragma mark - Macro definitions for data access methods
 
 /* Relay functions from here on (Add... -> AddData, Find... -> FindData) */
 
