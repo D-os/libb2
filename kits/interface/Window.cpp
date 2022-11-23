@@ -987,3 +987,16 @@ void BWindow::task_looper()
 
 	ALOGD("BWindow::task_looper() done");
 }
+
+void BWindow::set_focus(BView *focusView, bool notifyInputServer)
+{
+	if (fFocus == focusView)
+		return;
+
+	// we notify the input server if we are passing focus
+	// from a view which has the B_INPUT_METHOD_AWARE to a one
+	// which does not, or vice-versa
+
+	fFocus = focusView;
+	SetPreferredHandler(focusView);
+}

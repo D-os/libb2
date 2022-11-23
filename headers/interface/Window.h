@@ -239,6 +239,7 @@ class BWindow : public BLooper
 	BWindow &operator=(BWindow &);
 
 	virtual void task_looper();
+	void		 set_focus(BView *focus, bool notify_input_server);
 
 	short		fShowLevel;
 	uint32		fFlags;

@@ -878,7 +878,26 @@ void BView::ScrollTo(BPoint where)
 
 void BView::MakeFocus(bool focusState)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (fOwner == NULL)
+		return;
+
+	// TODO: If this view has focus and focus == false,
+	// will there really be no other view with focus? No
+	// cycling to the next one?
+	BView *focusView = fOwner->CurrentFocus();
+	if (focusState) {
+		// Unfocus a previous focus view
+		if (focusView && focusView != this)
+			focusView->MakeFocus(false);
+
+		// if we want to make this view the current focus view
+		fOwner->set_focus(this, true);
+	}
+	else {
+		// we want to unfocus this view, but only if it actually has focus
+		if (focusView == this)
+			fOwner->set_focus(NULL, true);
+	}
 }
 
 void BView::Show()
