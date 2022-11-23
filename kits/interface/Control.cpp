@@ -1,5 +1,7 @@
 #include "Control.h"
 
+#include <Window.h>
+
 BControl::BControl(BRect frame, const char *name, const char *label, BMessage *message, uint32 resizeMask, uint32 flags)
 	: BView(frame, name, resizeMask, flags | B_NAVIGABLE),
 	  BInvoker(message, this),
@@ -28,11 +30,20 @@ status_t BControl::Archive(BMessage *data, bool deep) const
 void BControl::WindowActivated(bool state)
 {
 	BView::WindowActivated(state);
+	if (Window()->CurrentFocus() == this) {
+		Invalidate();
+	}
 }
 
 void BControl::AttachedToWindow()
 {
 	BView::AttachedToWindow();
+	SetLowColor(Parent()->ViewColor());
+	SetViewColor(Parent()->ViewColor());
+
+	if (!Target()) {
+		SetTarget(Window());
+	}
 }
 
 void BControl::MessageReceived(BMessage *msg)

@@ -36,6 +36,9 @@ class BView::impl
 	SkPoint		 pen_location;
 
 	BFont font;
+	/// causes subsequent printing to be done without antialiasing printed characters
+	/// does not affect characters or strings drawn to the screen
+	bool font_aliasing;
 
 	impl()
 		: view_color{255, 255, 255, 255},
@@ -44,7 +47,8 @@ class BView::impl
 		  drawing_mode{B_OP_COPY},
 		  pen_size{1.0},
 		  pen_location{0.0, 0.0},
-		  font(be_plain_font)
+		  font(be_plain_font),
+		  font_aliasing{false}
 	{
 	}
 
@@ -130,6 +134,17 @@ BView::BView(BRect frame, const char *name, uint32 resizeMask, uint32 flags)
 
 BView::~BView() {}
 
+BView::BView(BMessage *data)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+BArchivable *BView::Instantiate(BMessage *data)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return nullptr;
+}
+
 status_t BView::Archive(BMessage *data, bool deep) const
 {
 	debugger(__PRETTY_FUNCTION__);
@@ -160,15 +175,15 @@ void BView::MessageReceived(BMessage *message)
 {
 	ALOGV("BView::MessageReceived @%s 0x%x: %.4s", Name(), message->what, (char *)&message->what);
 	if (!message->HasSpecifiers()) {
-	switch (message->what) {
-		case _UPDATE_: {
-			const rgb_color view_color(ViewColor());
+		switch (message->what) {
+			case _UPDATE_: {
+				const rgb_color view_color(ViewColor());
 
-			// The Application Server paints the view with this color before any view-specific drawing functions are called.
-			// If you set the view color to B_TRANSPARENT_COLOR, the Application Server won't erase the view's clipping region before an update.
-			if ((fFlags & B_WILL_DRAW) && (view_color != B_TRANSPARENT_COLOR)) {
-				BRect updateRect;
-				if (message->FindRect("updateRect", &updateRect) == B_OK && updateRect.IsValid()) {
+				// The Application Server paints the view with this color before any view-specific drawing functions are called.
+				// If you set the view color to B_TRANSPARENT_COLOR, the Application Server won't erase the view's clipping region before an update.
+				if ((fFlags & B_WILL_DRAW) && (view_color != B_TRANSPARENT_COLOR)) {
+					BRect updateRect;
+					if (message->FindRect("updateRect", &updateRect) == B_OK && updateRect.IsValid()) {
 						// combine with pending updates
 						BMessage *pendingMessage;
 						int32	  index = 0;
@@ -190,25 +205,25 @@ void BView::MessageReceived(BMessage *message)
 						}
 
 						SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
-					if (!canvas) {
-						// FIXME: now what? ¯\_(ツ)_/¯
-						break;
+						if (!canvas) {
+							// FIXME: now what? ¯\_(ツ)_/¯
+							break;
+						}
+
+						int checkpoint = canvas->save();
+
+						const auto &bounds = Bounds();
+						canvas->clipRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1));
+						canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
+
+						// Call hook function to Draw content
+						Draw(updateRect);
+
+						canvas->restoreToCount(checkpoint);
 					}
-
-					int checkpoint = canvas->save();
-
-					const auto &bounds = Bounds();
-					canvas->clipRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1));
-					canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
-
-					// Call hook function to Draw content
-					Draw(updateRect);
-
-					canvas->restoreToCount(checkpoint);
 				}
+				break;
 			}
-			break;
-		}
 
 			case B_KEY_DOWN: {
 				// TODO: cannot use "string" here if we support having different
@@ -304,10 +319,10 @@ void BView::MessageReceived(BMessage *message)
 				break;
 			}
 
-		default:
-			BHandler::MessageReceived(message);
+			default:
+				BHandler::MessageReceived(message);
+		}
 	}
-}
 }
 
 void BView::AddChild(BView *child, BView *before)
@@ -474,7 +489,7 @@ void BView::MouseMoved(BPoint where, uint32 code, const BMessage *a_message)
 
 void BView::WindowActivated(bool state)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook function
 }
 
 void BView::KeyDown(const char *bytes, int32 numBytes)
@@ -494,12 +509,12 @@ void BView::Pulse()
 
 void BView::FrameMoved(BPoint new_position)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook function
 }
 
 void BView::FrameResized(float new_width, float new_height)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook function
 }
 
 void BView::TargetedByScrollView(BScrollView *scroll_view)
@@ -926,12 +941,12 @@ void BView::SetFontSize(float size)
 
 void BView::ForceFontAliasing(bool enable)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fState->font_aliasing = enable;
 }
 
 void BView::GetFontHeight(font_height *height) const
 {
-	debugger(__PRETTY_FUNCTION__);
+	fState->font.GetHeight(height);
 }
 
 void BView::Invalidate(BRect invalRect)
@@ -964,7 +979,12 @@ void BView::Invalidate()
 
 void BView::SetFlags(uint32 flags)
 {
-	debugger(__PRETTY_FUNCTION__);
+	fFlags = flags;
+}
+
+uint32 BView::Flags() const
+{
+	return fFlags;
 }
 
 void BView::SetResizingMode(uint32 mode)
@@ -1027,12 +1047,19 @@ void BView::Hide()
 
 void BView::GetPreferredSize(float *width, float *height)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (width)
+		*width = fBounds.Width();
+	if (height)
+		*height = fBounds.Height();
 }
 
 void BView::ResizeToPreferred()
 {
-	debugger(__PRETTY_FUNCTION__);
+	float width;
+	float height;
+	GetPreferredSize(&width, &height);
+
+	ResizeTo(width, height);
 }
 
 BHandler *BView::ResolveSpecifier(BMessage *msg, int32 index, BMessage *specifier, int32 form, const char *property)

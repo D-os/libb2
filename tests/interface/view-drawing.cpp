@@ -307,13 +307,13 @@ void TView::Draw(BRect updateRect)
 
 		SetDrawingMode(B_OP_COPY);
 		SetHighColor(0, 0, 0);
-		// ForceFontAliasing(true);
+		ForceFontAliasing(true);
 		SetFontSize(TEST_FONT_SIZE);
 		DrawString(TEST_FONT_STRING, pt);
 
 		SetDrawingMode(B_OP_COPY);
 		SetLowColor(ViewColor());
-		// ForceFontAliasing(false);
+		ForceFontAliasing(false);
 		BFont font;
 		GetFont(&font);
 		font.SetFamilyAndStyle(TEST_FONT_FAMILY, TEST_FONT_STYLE);

@@ -4,6 +4,7 @@
 
 #include <Application.h>
 #include <Autolock.h>
+#include <Button.h>
 #include <Message.h>
 #include <MessageQueue.h>
 #include <Point.h>
@@ -670,6 +671,29 @@ void BWindow::Zoom()
 void BWindow::ScreenChanged(BRect screen_size, color_space depth)
 {
 	debugger(__PRETTY_FUNCTION__);
+}
+
+void BWindow::SetDefaultButton(BButton *button)
+{
+	if (fDefaultButton == button) return;
+
+	const auto current_default = fDefaultButton;
+
+	if (current_default) {
+		fDefaultButton = nullptr;
+		current_default->MakeDefault(false);
+		current_default->Invalidate();
+	}
+	fDefaultButton = button;
+	if (button) {
+		button->MakeDefault(true);
+		button->Invalidate();
+	}
+}
+
+BButton *BWindow::DefaultButton() const
+{
+	return fDefaultButton;
 }
 
 void BWindow::MenusBeginning()

@@ -27,29 +27,26 @@
  *
  * --------------------------------------------------------------------------*/
 
+#include <app/Application.h>
+#include <app/Message.h>
+#include <interface/Button.h>
+#include <interface/Window.h>
 #include <stdio.h>
 
-#include <app/Application.h>
-#include <interface/Window.h>
-#include <interface/Button.h>
-
-#include <kernel/Debug.h>
-
-#define BTN_HELLO_WORLD_EN_MSG	'btn1'
-#define BTN_HELLO_WORLD_IT_MSG	'btn2'
-#define BTN_NOT_ENABLED_MSG	'btn3'
-#define BTN_FOCUS_MSG		'btn4'
+#define BTN_HELLO_WORLD_EN_MSG 'btn1'
+#define BTN_HELLO_WORLD_IT_MSG 'btn2'
+#define BTN_NOT_ENABLED_MSG 'btn3'
+#define BTN_FOCUS_MSG 'btn4'
 
 class TView : public BView
 {
-	public:
-		TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags);
-		virtual ~TView();
+   public:
+	TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags);
+	virtual ~TView();
 };
 
-
 TView::TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags)
-		: BView(frame, name, resizingMode, flags)
+	: BView(frame, name, resizingMode, flags)
 {
 	BFont font;
 
@@ -74,79 +71,74 @@ TView::TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags)
 	btn->ResizeToPreferred();
 }
 
-
 TView::~TView()
 {
 }
 
-
 class TWindow : public BWindow
 {
-	public:
-		TWindow(BRect frame,
-		        const char *title,
-		        window_type type,
-		        uint32 flags,
-		        uint32 workspace = B_CURRENT_WORKSPACE);
-		virtual ~TWindow();
+   public:
+	TWindow(BRect		frame,
+			const char *title,
+			window_type type,
+			uint32		flags,
+			uint32		workspace = B_CURRENT_WORKSPACE);
+	virtual ~TWindow();
 
-		virtual void WindowActivated(bool state);
-		virtual bool QuitRequested();
+	virtual void WindowActivated(bool state);
+	virtual bool QuitRequested();
 
-		virtual void MessageReceived(BMessage *msg);
+	virtual void MessageReceived(BMessage *msg);
 
-	private:
-		bool quited;
+   private:
+	bool quited;
 };
-
 
 class TApplication : public BApplication
 {
-	public:
-		TApplication();
-		virtual ~TApplication();
+   public:
+	TApplication();
+	virtual ~TApplication();
 
-		virtual void ReadyToRun();
+	virtual void ReadyToRun();
 };
 
 TWindow::TWindow(BRect frame, const char *title, window_type type, uint32 flags, uint32 workspace)
-		: BWindow(frame, title, type, flags, workspace), quited(false)
+	: BWindow(frame, title, type, flags, workspace), quited(false)
 {
-//	SetBackgroundColor(0, 255, 255);
+	//	SetBackgroundColor(0, 255, 255);
 
 	BButton *btn = new BButton(BRect(10, 200, 40, 230), NULL, "Focus Button", new BMessage(BTN_FOCUS_MSG));
 	AddChild(btn);
 	btn->ResizeToPreferred();
 	btn->MakeFocus(true);
 
-	BView *view = new TView(frame.OffsetToCopy(B_ORIGIN), NULL, B_FOLLOW_ALL, B_WILL_DRAW |B_FRAME_EVENTS);
+	BView *view = new TView(frame.OffsetToCopy(B_ORIGIN), NULL, B_FOLLOW_ALL, B_WILL_DRAW | B_FRAME_EVENTS);
 	AddChild(view);
 }
-
 
 TWindow::~TWindow()
 {
 }
 
-void
-TWindow::MessageReceived(BMessage *msg)
+void TWindow::MessageReceived(BMessage *msg)
 {
 	switch (msg->what) {
 		case BTN_HELLO_WORLD_EN_MSG:
-			ETK_OUTPUT("Hello world button is pressed.\n");
+			dprintf(2, "Hello world button is pressed.\n");
 			break;
 
 		case BTN_HELLO_WORLD_IT_MSG:
-			ETK_OUTPUT("Ciao mondo button is pressed.\n");
+			dprintf(2, "Ciao mondo button is pressed.\n");
 			break;
 
 		case BTN_NOT_ENABLED_MSG:
-			ETK_OUTPUT("Not enabled button is pressed, it must be something error!\n");
+			dprintf(2, "Not enabled button is pressed, it must be something error!\n");
 			break;
 
 		case BTN_FOCUS_MSG:
-			ETK_OUTPUT("Focus button is pressed.\n");
-			SetFlags((Flags() & B_AVOID_FOCUS) ? Flags() & ~B_AVOID_FOCUS : Flags() |B_AVOID_FOCUS);
+			dprintf(2, "Focus button is pressed.\n");
+			SetFlags((Flags() & B_AVOID_FOCUS) ? Flags() & ~B_AVOID_FOCUS : Flags() | B_AVOID_FOCUS);
 			break;
 
 		default:
@@ -154,42 +146,33 @@ TWindow::MessageReceived(BMessage *msg)
 	}
 }
 
-
-void
-TWindow::WindowActivated(bool state)
+void TWindow::WindowActivated(bool state)
 {
-	ETK_OUTPUT("Window activated %s.\n", state ? "true" : "false");
+	dprintf(2, "Window activated %s.\n", state ? "true" : "false");
 }
 
-
-bool
-TWindow::QuitRequested()
+bool TWindow::QuitRequested()
 {
 	if (quited) return true;
-	app->PostMessage(B_QUIT_REQUESTED);
+	be_app->PostMessage(B_QUIT_REQUESTED);
 	quited = true;
 	return false;
 }
 
-
 TApplication::TApplication()
-		: BApplication("application/x-vnd.lee-test-app")
+	: BApplication("application/x-vnd.lee-test-app")
 {
 }
-
 
 TApplication::~TApplication()
 {
 }
 
-
-void
-TApplication::ReadyToRun()
+void TApplication::ReadyToRun()
 {
 	TWindow *win = new TWindow(BRect(100, 100, 500, 500), "Button Test", B_TITLED_WINDOW, 0);
 	win->Show();
 }
-
 
 int main(int argc, char **argv)
 {
@@ -198,4 +181,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-

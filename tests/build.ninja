@@ -66,3 +66,8 @@ build $BUILDROOT/os/tests/interface/hello.o: cxx system/os/tests/interface/hello
 build $BUILDROOT/os/tests/interface_hello: link $
   $BUILDROOT/os/tests/interface/hello.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/button-test.o: cxx system/os/tests/interface/button-test.cpp
+build $BUILDROOT/os/tests/interface_button: link $
+  $BUILDROOT/os/tests/interface/button-test.o $
+| $SYSROOT/lib/libbe.so

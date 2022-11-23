@@ -245,6 +245,7 @@ class BWindow : public BLooper
 	uint32		fFlags;
 	BView	  *fFocus;
 	BView	  *fLastMouseMovedView;
+	BButton	*fDefaultButton;
 	window_look fLook;
 	window_feel fFeel;
 

@@ -56,7 +56,7 @@ alignment BStringView::Alignment() const
 void BStringView::AttachedToWindow()
 {
 	BView::AttachedToWindow();
-	SetLowColor(Parent()->LowColor());
+	SetLowColor(Parent()->ViewColor());
 	SetViewColor(Parent()->ViewColor());
 }
 
