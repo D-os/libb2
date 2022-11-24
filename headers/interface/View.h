@@ -483,6 +483,7 @@ class BView : public BHandler
 
 	uint32		fFlags;
 	BPoint		fParentOffset;
+	BRect		fBounds;
 	BWindow	*fOwner;
 	BView	  *fParent;
 	BView	  *fNextSibling;
@@ -491,7 +492,6 @@ class BView : public BHandler
 	int16		fShowLevel;
 	bool		fTopLevelView;
 	pimpl<impl> fState;
-	BRect		fBounds;
 };
 
 // inline definitions

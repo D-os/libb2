@@ -212,7 +212,8 @@ void BView::MessageReceived(BMessage *message)
 
 						int checkpoint = canvas->save();
 
-						const auto &bounds = Bounds();
+						auto bounds = Bounds();
+						ConvertToScreen(&bounds);
 						canvas->clipRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1));
 						canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
 
@@ -220,6 +221,18 @@ void BView::MessageReceived(BMessage *message)
 						Draw(updateRect);
 
 						canvas->restoreToCount(checkpoint);
+
+#ifndef NDEBUG
+						// Draw green rectangles around views
+						SkPaint paint;
+						paint.setARGB(48, 0, 200, 0);
+						paint.setStyle(SkPaint::kStroke_Style);
+						canvas->drawRect(
+							SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom),
+							paint);
+#endif
+
+						canvas->flush();
 					}
 				}
 				break;
@@ -764,6 +777,10 @@ static SkBlendMode blend_modes[] = {
 	if (!fOwner) return;                                                                 \
 	SkCanvas *canvas = fOwner->_get_canvas();                                            \
 	if (!canvas) return;                                                                 \
+                                                                                         \
+	BPoint translation{LeftTop()};                                                       \
+	ConvertToScreen(&translation);                                                       \
+	canvas->translate(translation.x, translation.y);                                     \
                                                                                          \
 	SkPaint paint;                                                                       \
 	paint.setStrokeWidth(fState->pen_size > 0.0 ? /* scale * */ fState->pen_size : 1.0); \

@@ -71,3 +71,8 @@ build $BUILDROOT/os/tests/interface/button-test.o: cxx system/os/tests/interface
 build $BUILDROOT/os/tests/interface_button: link $
   $BUILDROOT/os/tests/interface/button-test.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/views.o: cxx system/os/tests/interface/views.cpp
+build $BUILDROOT/os/tests/interface_views: link $
+  $BUILDROOT/os/tests/interface/views.o $
+| $SYSROOT/lib/libbe.so
