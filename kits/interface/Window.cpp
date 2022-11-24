@@ -747,6 +747,35 @@ void BWindow::WindowActivated(bool state)
 	// the default implementation does nothing
 }
 
+void BWindow::ConvertToScreen(BPoint *pt) const
+{
+}
+BPoint BWindow::ConvertToScreen(BPoint pt) const
+{
+	return pt;
+}
+void BWindow::ConvertFromScreen(BPoint *pt) const
+{
+}
+BPoint BWindow::ConvertFromScreen(BPoint pt) const
+{
+	return pt;
+}
+void BWindow::ConvertToScreen(BRect *rect) const
+{
+}
+BRect BWindow::ConvertToScreen(BRect rect) const
+{
+	return rect;
+}
+void BWindow::ConvertFromScreen(BRect *rect) const
+{
+}
+BRect BWindow::ConvertFromScreen(BRect rect) const
+{
+	return rect;
+}
+
 void BWindow::Show()
 {
 	bool runCalled = true;

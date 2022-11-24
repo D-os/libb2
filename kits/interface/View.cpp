@@ -543,6 +543,125 @@ BRect BView::Frame() const
 	return Bounds().OffsetToCopy(fParentOffset.x, fParentOffset.y);
 }
 
+void BView::ConvertToScreen(BPoint *pt) const
+{
+	if (!pt) return;
+
+	ConvertToParent(pt);
+
+	if (fParent)
+		fParent->ConvertToScreen(pt);
+	else if (fOwner)
+		fOwner->ConvertToScreen(pt);
+}
+
+BPoint BView::ConvertToScreen(BPoint pt) const
+{
+	ConvertToScreen(&pt);
+	return pt;
+}
+
+void BView::ConvertFromScreen(BPoint *pt) const
+{
+	if (!pt) return;
+
+	ConvertFromParent(pt);
+
+	if (fParent)
+		fParent->ConvertFromScreen(pt);
+	else if (fOwner)
+		fOwner->ConvertFromScreen(pt);
+}
+
+BPoint BView::ConvertFromScreen(BPoint pt) const
+{
+	ConvertFromScreen(&pt);
+	return pt;
+}
+
+void BView::ConvertToScreen(BRect *r) const
+{
+	if (!r) return;
+
+	BPoint lt(r->LeftTop());
+	ConvertToScreen(&lt);
+	r->OffsetTo(lt);
+}
+
+BRect BView::ConvertToScreen(BRect r) const
+{
+	ConvertToScreen(&r);
+	return r;
+}
+
+void BView::ConvertFromScreen(BRect *r) const
+{
+	if (!r) return;
+
+	BPoint lt(r->LeftTop());
+	ConvertFromScreen(&lt);
+	r->OffsetTo(lt);
+}
+
+BRect BView::ConvertFromScreen(BRect r) const
+{
+	ConvertFromScreen(&r);
+	return r;
+}
+
+void BView::ConvertToParent(BPoint *pt) const
+{
+	if (!pt) return;
+	*pt += fParentOffset;
+}
+
+BPoint BView::ConvertToParent(BPoint pt) const
+{
+	ConvertToParent(&pt);
+	return pt;
+}
+
+void BView::ConvertFromParent(BPoint *pt) const
+{
+	if (!pt) return;
+	*pt -= fParentOffset;
+}
+
+BPoint BView::ConvertFromParent(BPoint pt) const
+{
+	ConvertFromParent(&pt);
+	return pt;
+}
+
+void BView::ConvertToParent(BRect *r) const
+{
+	if (!r) return;
+	r->OffsetBy(fParentOffset);
+}
+
+BRect BView::ConvertToParent(BRect r) const
+{
+	ConvertToParent(&r);
+	return r;
+}
+
+void BView::ConvertFromParent(BRect *r) const
+{
+	if (!r) return;
+	r->OffsetBy(-fParentOffset);
+}
+
+BRect BView::ConvertFromParent(BRect r) const
+{
+	ConvertFromParent(&r);
+	return r;
+}
+
+BPoint BView::LeftTop() const
+{
+	return fBounds.LeftTop();
+}
+
 void BView::ConstrainClippingRegion(BRegion *region)
 {
 	debugger(__PRETTY_FUNCTION__);
@@ -1173,5 +1292,114 @@ TEST_SUITE("BView")
 		CHECK(child1.RemoveChild(&child11));
 		CHECK(main.RemoveChild(&child1));
 		CHECK_FALSE(main.RemoveChild(&child1));
+	}
+
+	TEST_CASE("Conversions")
+	{
+		BView view1{{20, 10, 120, 110}, "view1", 0, 0};
+		BView view2{{0, 0, 10, 10}, "view2", 0, 0};
+		BView view3{{50, 60, 100, 100}, "view3", 0, 0};
+		BView view4{{10, 10, 20, 20}, "view4", 0, 0};
+
+		view1.AddChild(&view2);
+		view1.AddChild(&view3);
+		view3.AddChild(&view4);
+
+		//   10
+		// 20+--------------------------------------------+
+		//   |+--------+  v1                              |
+		//   || v2     |                                  |
+		//   ||  10x10 |               100x100            |
+		//   ||        |                                  |
+		//   |+--------+                                  |
+		//   |                 60                         |
+		//   |               50+----------------+100      |
+		//   |                 |   10     v3    |         |
+		//   |                 | 10+---+        |         |
+		//   |                 |   | v4|        |         |
+		//   |                 |   +---+20      |         |
+		//   |                 |      20        |         |
+		//   |                 |                |         |
+		//   |                 |     50x40      |         |
+		//   |                 +----------------+100      |
+		//   |                                100         |
+		//   |                                            |
+		//   +--------------------------------------------+120
+		//                                              120
+
+		SUBCASE("ToParent")
+		{
+			CHECK(view1.ConvertToParent(BPoint{11, 12}) == BPoint{31, 22});
+			CHECK(view2.ConvertToParent(BPoint{0, 0}) == BPoint{0, 0});
+			CHECK(view2.ConvertToParent(BPoint{15.5, 5.5}) == BPoint{15.5, 5.5});
+			CHECK(view3.ConvertToParent(BPoint{0, 0}) == BPoint{50, 60});
+			CHECK(view4.ConvertToParent(BPoint{10, 10}) == BPoint{20, 20});
+
+			BPoint point{5, 10};
+			view3.ConvertToParent(&point);
+			CHECK(point == BPoint{55, 70});
+
+			CHECK(view1.ConvertToParent(BRect{10, 11, 20, 21}) == BRect{30, 21, 40, 31});
+			CHECK(view4.ConvertToParent(BRect{0, 0, 20.5, 20.5}) == BRect{10, 10, 30.5, 30.5});
+
+			BRect rect{10, 20, 30, 40};
+			view3.ConvertToParent(&rect);
+			CHECK(rect == BRect{60, 80, 80, 100});
+		}
+
+		SUBCASE("FromParent")
+		{
+			CHECK(view1.ConvertFromParent(BPoint{20, 30}) == BPoint{0, 20});
+			CHECK(view2.ConvertFromParent(BPoint{20, 30}) == BPoint{20, 30});
+			CHECK(view3.ConvertFromParent(BPoint{100, 100}) == BPoint{50, 40});
+			CHECK(view4.ConvertFromParent(BPoint{15, 10}) == BPoint{5, 0});
+
+			BPoint point{25, 30};
+			view1.ConvertFromParent(&point);
+			CHECK(point == BPoint{5, 20});
+
+			CHECK(view1.ConvertFromParent(BRect{20, 11, 40, 21}) == BRect{0, 1, 20, 11});
+			CHECK(view3.ConvertFromParent(BRect{60, 60, 70.5, 70.5}) == BRect{10, 0, 20.5, 10.5});
+
+			BRect rect{10, 20, 30, 40};
+			view4.ConvertFromParent(&rect);
+			CHECK(rect == BRect{0, 10, 20, 30});
+		}
+
+		SUBCASE("ToScreen")
+		{
+			CHECK(view1.ConvertToScreen(BPoint{0, 0}) == BPoint{20, 10});
+			CHECK(view2.ConvertToScreen(BPoint{10, 10}) == BPoint{30, 20});
+			CHECK(view3.ConvertToScreen(BPoint{50, 50}) == BPoint{120, 120});
+			CHECK(view4.ConvertToScreen(BPoint{11.1, 12.3}) == BPoint{91.1, 92.3});
+
+			BPoint point{5, 10};
+			view3.ConvertToScreen(&point);
+			CHECK(point == BPoint{75, 80});
+
+			CHECK(view1.ConvertToScreen(BRect{10, 11, 20, 21}) == BRect{30, 21, 40, 31});
+			CHECK(view4.ConvertToScreen(BRect{1, 2, 5.5, 5.5}) == BRect{81, 82, 85.5, 85.5});
+
+			BRect rect{10, 20, 30, 40};
+			view3.ConvertToScreen(&rect);
+			CHECK(rect == BRect{80, 90, 100, 110});
+		}
+
+		SUBCASE("FromScreen")
+		{
+			CHECK(view1.ConvertFromScreen(BPoint{120, 120}) == BPoint{100, 110});
+			CHECK(view4.ConvertFromScreen(BPoint{100.5, 99.5}) == BPoint{20.5, 19.5});
+
+			BPoint point{5, 10};
+			view3.ConvertFromScreen(&point);
+			CHECK(point == BPoint{-65, -60});
+
+			CHECK(view1.ConvertFromScreen(BRect{20, 11, 40, 21}) == BRect{0, 1, 20, 11});
+			CHECK(view3.ConvertFromScreen(BRect{60, 60, 70.5, 70.5}) == BRect{-10, -10, 0.5, 0.5});
+
+			BRect rect{90, 90, 100, 100};
+			view4.ConvertFromScreen(&rect);
+			CHECK(rect == BRect{10, 10, 20, 20});
+		}
 	}
 }
