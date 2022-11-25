@@ -34,6 +34,9 @@
 #include <interface/Window.h>
 #include <log/log.h>
 
+#include <format>
+#include <iostream>
+
 #define TEST_VIEW_FOLLOW 0
 
 #if TEST_VIEW_FOLLOW == 0
@@ -396,16 +399,16 @@ void TApplication::ReadyToRun()
 		font_family family;
 		uint32		flags;
 		if (get_font_family(i, &family, &flags) == B_OK) {
-			dprintf(2, "Font[%d]:(%s)[%s]", i, family, flags & B_IS_FIXED ? "fixed-width" : "proportional");
+			std::string description = std::format("Font[{}]:({})", i, family);
 			int32 numStyles = count_font_styles(family);
 			for (int32 j = 0; j < numStyles; ++j) {
 				font_style style;
 				if (get_font_style(family, j, &style, &flags) == B_OK) {
-					dprintf(2, " (%s[%s]", style, flags & B_IS_FIXED ? "fixed-width" : "proportional");
-					dprintf(2, ")");
+					description += std::format(" ({}[{}])",
+											   style, flags & B_IS_FIXED ? "fixed-width" : "proportional");
 				}
 			}
-			dprintf(2, "\n");
+			std::cerr << description << std::endl;
 		}
 	}
 

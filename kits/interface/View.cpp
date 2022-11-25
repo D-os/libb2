@@ -1016,8 +1016,7 @@ void BView::SetFont(const BFont *font, uint32 mask)
 	if (!font) return;
 
 	if (mask & B_FONT_FAMILY_AND_STYLE) {
-		fState->font.fFamilyID = font->fFamilyID;
-		fState->font.fStyleID  = font->fStyleID;
+		fState->font.fID = font->fID;
 	}
 	if (mask & B_FONT_SIZE) {
 		fState->font.fSize = font->fSize;

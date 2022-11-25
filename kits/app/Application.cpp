@@ -9,7 +9,6 @@
 #include <Message.h>
 #include <Roster.h>
 #include <binder/IPCThreadState.h>
-#include <fontconfig/fontconfig.h>
 #include <log/log.h>
 
 #include <cstdio>
@@ -33,28 +32,17 @@ BApplication::BApplication(const char *signature)
 
 	be_roster = new BRoster();
 
-	FcBool fc_init = FcInit();
-	if (fc_init == FcTrue) {
-		status_t	ret;
-		font_family default_family{DEFAULT_FONT_FAMILY};
-		font_family fixed_family{FIXED_FONT_FAMILY};
-		font_style	regular_style{"Regular"};
-		font_style	bold_style{"Bold"};
-		ret = const_cast<BFont *>(be_plain_font)->SetFamilyAndStyle(default_family, regular_style);
-		if (ret != B_OK) {
-			ALOGE("Failed to initialize plain font");
-		}
-		ret = const_cast<BFont *>(be_bold_font)->SetFamilyAndStyle(default_family, bold_style);
-		if (ret != B_OK) {
-			ALOGE("Failed to initialize bold font");
-		}
-		ret = const_cast<BFont *>(be_fixed_font)->SetFamilyAndStyle(fixed_family, regular_style);
-		if (ret != B_OK) {
-			ALOGE("Failed to initialize fixed font");
-		}
-	}
-	else
-		ALOGE("Failed to initialize fontconfig");
+	status_t	ret;
+	font_family default_family{DEFAULT_FONT_FAMILY};
+	font_family fixed_family{FIXED_FONT_FAMILY};
+	font_style	regular_style{"Regular"};
+	font_style	bold_style{"Bold"};
+	ret = const_cast<BFont *>(be_plain_font)->SetFamilyAndStyle(default_family, regular_style);
+	ALOGE_IF(ret != B_OK, "Failed to initialize plain font");
+	ret = const_cast<BFont *>(be_bold_font)->SetFamilyAndStyle(default_family, bold_style);
+	ALOGE_IF(ret != B_OK, "Failed to initialize bold font");
+	ret = const_cast<BFont *>(be_fixed_font)->SetFamilyAndStyle(fixed_family, regular_style);
+	ALOGE_IF(ret != B_OK, "Failed to initialize fixed font");
 
 	PostMessage(B_READY_TO_RUN, this);
 
@@ -74,8 +62,6 @@ BApplication::~BApplication()
 	be_roster		 = nullptr;
 	be_app_messenger = BMessenger();
 	be_app			 = nullptr;
-
-	FcFini();
 }
 
 status_t BApplication::Archive(BMessage *data, bool deep) const

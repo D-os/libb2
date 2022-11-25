@@ -1,11 +1,13 @@
 #include "Font.h"
 
+#define LOG_TAG "BFont"
+
 #include <Rect.h>
-#include <fontconfig/fontconfig.h>
 #include <include/core/SkFont.h>
 #include <include/core/SkFontMetrics.h>
 #include <include/core/SkFontMgr.h>
 #include <include/core/SkTextBlob.h>
+#include <include/core/SkTypeface.h>
 #include <log/log.h>
 
 #include <algorithm>
@@ -22,13 +24,53 @@ class BFont::impl
 	sk_sp<SkTypeface> typeface;
 };
 
+static void _get_font_info(uint32 id, font_family *family, font_style *style, sk_sp<SkTypeface> *face, uint32 *flags)
+{
+	auto mgr = SkFontMgr::RefDefault();
+
+	for (auto i = 0; i < mgr->countFamilies(); ++i) {
+		SkString familyName;
+		mgr->getFamilyName(i, &familyName);
+		SkFontStyleSet *styleSet = mgr->matchFamily(familyName.c_str());
+		for (auto j = 0; j < styleSet->count(); ++j) {
+			SkFontStyle fontStyle;
+			SkString	styleName;
+			styleSet->getStyle(j, &fontStyle, &styleName);
+			SkTypeface *typeface = mgr->matchFamilyStyle(familyName.c_str(), fontStyle);
+			if (SkTypeface::UniqueID(typeface) == id) {
+				if (family) {
+					strncpy(reinterpret_cast<char *>(family), familyName.c_str(), B_FONT_FAMILY_LENGTH);
+					(*family)[B_FONT_FAMILY_LENGTH] = '\0';
+				}
+				if (style) {
+					strncpy(reinterpret_cast<char *>(style), styleName.c_str(), B_FONT_STYLE_LENGTH);
+					(*style)[B_FONT_STYLE_LENGTH] = '\0';
+				}
+				if (face) {
+					face->reset(typeface);
+					typeface = nullptr;
+				}
+				if (flags) {
+					*flags = 0;
+					if (typeface && typeface->isFixedPitch()) {
+						*flags |= B_IS_FIXED;
+					}
+				}
+			}
+			if (typeface) {
+				typeface->unref();
+			}
+		}
+		styleSet->unref();
+	}
+}
+
 BFont::BFont() : BFont(be_plain_font) {}
 
 BFont::BFont(const BFont &font) : BFont(&font) {}
 
 BFont::BFont(const BFont *font)
-	: fFamilyID{0},
-	  fStyleID{0},
+	: fID{0},
 	  fSize{10.0},
 	  fShear{90.0},
 	  fRotation{0.0},
@@ -51,8 +93,7 @@ BFont::~BFont()
 
 BFont &BFont::operator=(const BFont &font)
 {
-	fFamilyID = font.fFamilyID;
-	fStyleID  = font.fStyleID;
+	fID		  = font.fID;
 	fSize	  = font.fSize;
 	fShear	  = font.fShear;
 	fRotation = font.fRotation;
@@ -67,8 +108,7 @@ BFont &BFont::operator=(const BFont &font)
 
 bool BFont::operator==(const BFont &font) const
 {
-	return fFamilyID == font.fFamilyID
-		   && fStyleID == font.fStyleID
+	return fID == font.fID
 		   && fSize == font.fSize
 		   && fShear == font.fShear
 		   && fRotation == font.fRotation
@@ -79,8 +119,7 @@ bool BFont::operator==(const BFont &font) const
 
 bool BFont::operator!=(const BFont &font) const
 {
-	return fFamilyID != font.fFamilyID
-		   || fStyleID != font.fStyleID
+	return fID != font.fID
 		   || fSize != font.fSize
 		   || fShear != font.fShear
 		   || fRotation != font.fRotation
@@ -89,109 +128,35 @@ bool BFont::operator!=(const BFont &font) const
 		   || fFace != font.fFace;
 }
 
-namespace {
-inline uint16 hash16(uint64 val)
-{
-	uint16 hash = (uint16)(val & 0xFFFF);
-	hash ^= (uint16)((val >> 16) & 0xFFFF);
-	hash ^= (uint16)((val >> 32) & 0xFFFF);
-	hash ^= (uint16)((val >> 48) & 0xFFFF);
-
-	return hash;
-}
-
-static std::unordered_map<std::string,												 // family
-						  std::unordered_map<std::string,							 // style
-											 std::tuple<std::string, int, uint32>>>	 // file_path, file_index, flags
-	sInstalledFonts;
-
-static void _update_installed_fonts()
-{
-	if (sInstalledFonts.empty()) {
-		FcPattern	  *pat = FcPatternCreate();
-		FcObjectSet	*os	 = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_INDEX, FC_SPACING, nullptr);
-		FcFontSet	  *fs	 = FcFontList(nullptr, pat, os);
-		// FcFontSetPrint(fs);
-
-		if (fs) {
-			for (int i = 0; i < fs->nfont; ++i) {
-				FcPattern *font = fs->fonts[i];
-				FcChar8	*file, *family, *style;
-				int		   index, spacing;
-				if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch
-					&& FcPatternGetString(font, FC_FAMILY, 0, &family) == FcResultMatch
-					&& FcPatternGetString(font, FC_STYLE, 0, &style) == FcResultMatch
-					&& FcPatternGetInteger(font, FC_INDEX, 0, &index) == FcResultMatch) {
-					auto s_family					   = std::string(reinterpret_cast<char *>(family),
-																	 strnlen(reinterpret_cast<char *>(family), B_FONT_FAMILY_LENGTH));
-					auto s_style					   = std::string(reinterpret_cast<char *>(style),
-																	 strnlen(reinterpret_cast<char *>(style), B_FONT_STYLE_LENGTH));
-					uint32 flags						 = 0;
-					if (FcPatternGetInteger(font, FC_SPACING, 0, &spacing) == FcResultMatch) {
-						// monospace fonts have spacing: 100
-						if (spacing == 100) {
-							flags |= B_IS_FIXED;
-						}
-					}
-					sInstalledFonts[s_family][s_style] = std::make_tuple(
-						std::string(reinterpret_cast<char *>(file)), index, flags);
-				}
-			}
-
-			FcFontSetDestroy(fs);
-		}
-
-		if (os) FcObjectSetDestroy(os);
-		if (pat) FcPatternDestroy(pat);
-	}
-}
-}  // namespace
-
 status_t BFont::SetFamilyAndStyle(const font_family family, const font_style style)
 {
-	_update_installed_fonts();
-
 	font_family current_family;
 	font_style	current_style;
 	GetFamilyAndStyle(&current_family, &current_style);
 
-	auto s_family = std::string(reinterpret_cast<const char *>(family ? family : current_family));
-	auto s_style  = std::string(reinterpret_cast<const char *>(style ? style : current_style));
+	auto mgr = SkFontMgr::RefDefault();
 
-	if (sInstalledFonts.contains(s_family) && sInstalledFonts[s_family].contains(s_style)) {
-		const std::hash<std::string> hash;
-		fFamilyID = hash16(hash(s_family));
-		fStyleID  = hash16(hash(s_style));
-
-		uint32 flags = fFlags;
-		_get_font_info(nullptr, nullptr, nullptr, nullptr, &flags);
-		if (flags & B_IS_FIXED) {
-			fFlags |= B_IS_FIXED;
+	const char	   *familyName = family ? family : current_family;
+	SkFontStyleSet *styleSet   = mgr->matchFamily(familyName);
+	for (auto i = 0; i < styleSet->count(); ++i) {
+		SkFontStyle fontStyle;
+		SkString	styleName;
+		styleSet->getStyle(i, &fontStyle, &styleName);
+		if (styleName.equals(style ? style : current_style)) {
+			SkTypeface *typeface = mgr->matchFamilyStyle(familyName, fontStyle);
+			SetFamilyAndStyle(SkTypeface::UniqueID(typeface));
+			if (typeface) typeface->unref();
+			return B_OK;
 		}
-		else {
-			fFlags &= !B_IS_FIXED;
-		}
-
-		return B_OK;
 	}
+	styleSet->unref();
 
 	return B_BAD_VALUE;
 }
 
 void BFont::SetFamilyAndStyle(uint32 code)
 {
-	fStyleID  = code & 0xFFFF;
-	fFamilyID = (code >> 16) & 0xFFFF;
-}
-
-status_t BFont::SetFamilyAndFace(const font_family family, uint16 face)
-{
-	_update_installed_fonts();
-
-	status_t ret = SetFamilyAndStyle(family, nullptr);
-	if (ret != B_OK) return ret;
-	SetFace(face);
-	return B_OK;
+	fID = code;
 }
 
 void BFont::SetSize(float size)
@@ -235,14 +200,12 @@ void BFont::GetFamilyAndStyle(font_family *family, font_style *style) const
 
 	*family[0] = '\0';
 	*style[0]  = '\0';
-
-	_update_installed_fonts();
-	_get_font_info(family, style, nullptr, nullptr, nullptr);
+	_get_font_info(FamilyAndStyle(), family, style, nullptr, nullptr);
 }
 
 uint32 BFont::FamilyAndStyle() const
 {
-	return (fFamilyID << 16) & fStyleID;
+	return fID;
 }
 
 float BFont::Size() const
@@ -348,55 +311,12 @@ void BFont::PrintToStream() const
 	std::cout << *this << std::endl;
 }
 
-void BFont::_get_font_info(font_family *family, font_style *style, const char **filename, int *index, uint32 *flags) const
-{
-	const std::hash<std::string> hash;
-
-	for (const auto &font_family : sInstalledFonts) {
-		const uint16 familyId = hash16(hash(font_family.first));
-		if (familyId == fFamilyID) {
-			if (family) {
-				strncpy(reinterpret_cast<char *>(family), font_family.first.c_str(), B_FONT_FAMILY_LENGTH);
-				(*family)[B_FONT_FAMILY_LENGTH] = '\0';
-			}
-
-			for (const auto &font_style : font_family.second) {
-				const uint16 styleId = hash16(hash(font_style.first));
-				if (styleId == fStyleID) {
-					if (style) {
-						strncpy(reinterpret_cast<char *>(style), font_style.first.c_str(), B_FONT_STYLE_LENGTH);
-						(*style)[B_FONT_STYLE_LENGTH] = '\0';
-					}
-					if (filename) {
-						*filename = std::get<0>(font_style.second).c_str();
-					}
-					if (index) {
-						*index = std::get<1>(font_style.second);
-					}
-					if (flags) {
-						*flags = std::get<2>(font_style.second);
-					}
-
-					return;
-				}
-			}
-
-			return;
-		}
-	}
-}
-
 void BFont::_get_font(SkFont *font) const
 {
 	LOG_FATAL_IF(!font, "_getFont called with nullptr");
 
 	if (!m->typeface) {
-		const char *filename;
-		int			index;
-		_update_installed_fonts();
-		_get_font_info(nullptr, nullptr, &filename, &index, nullptr);
-
-		m->typeface = SkTypeface::MakeFromFile(filename, index);
+		_get_font_info(FamilyAndStyle(), nullptr, nullptr, &m->typeface, nullptr);
 	}
 
 	font->setTypeface(m->typeface);
@@ -413,17 +333,14 @@ void BFont::_get_font(SkFont *font) const
 
 std::ostream &operator<<(std::ostream &os, const BFont &value)
 {
-	_update_installed_fonts();
-
 	font_family family;
 	font_style	style;
 	value.GetFamilyAndStyle(&family, &style);
 	font_height height;
 	value.GetHeight(&height);
 
-	os << std::format("BFont('{}' ({}), '{}' ({}) {:#x}/{:#b} {:.1f}deg/{:.1f}deg {:.1f}pt ({:.1f} {:.1f} {:.1f}) {:#x})",
-					  reinterpret_cast<const char *>(family), value.fFamilyID,
-					  reinterpret_cast<const char *>(style), value.fStyleID,
+	os << std::format("BFont('{}', '{}' ({}) {:#x}/{:#b} {:.1f}deg/{:.1f}deg {:.1f}pt ({:.1f} {:.1f} {:.1f}) {:#x})",
+					  reinterpret_cast<const char *>(family), reinterpret_cast<const char *>(style), value.fID,
 					  value.fFace, value.fFlags, value.fShear, value.fRotation, value.fSize,
 					  height.ascent, height.descent, height.leading, value.fEncoding);
 	return os;
@@ -439,94 +356,91 @@ const BFont *be_fixed_font = &sFixedFont;
 
 int32 count_font_families()
 {
-	_update_installed_fonts();
-
-	return sInstalledFonts.size();
+	return SkFontMgr::RefDefault()->countFamilies();
 }
 
 status_t get_font_family(int32 index, font_family *name, uint32 *flags)
 {
-	_update_installed_fonts();
+	auto	 mgr = SkFontMgr::RefDefault();
+	SkString familyName;
+	mgr->getFamilyName(index, &familyName);
 
-	for (auto &font_family : sInstalledFonts) {
-		if (index == 0) {
-			if (name) {
-				strncpy(reinterpret_cast<char *>(name), font_family.first.c_str(), B_FONT_FAMILY_LENGTH);
-				(*name)[B_FONT_FAMILY_LENGTH] = '\0';
-			}
-			if (flags) {
-				*flags = 0;
-				if (std::all_of(font_family.second.begin(), font_family.second.end(), [](auto style) {
-						return std::get<2>(style.second) & B_IS_FIXED;
-					})) {
-					*flags |= B_IS_FIXED;
-				}
-			}
+	if (familyName.isEmpty())
+		return B_BAD_INDEX;
 
-			return B_OK;
-		}
-		index -= 1;
+	if (name) {
+		strncpy(reinterpret_cast<char *>(name), familyName.c_str(), B_FONT_FAMILY_LENGTH);
+		(*name)[B_FONT_FAMILY_LENGTH] = '\0';
 	}
 
-	return B_BAD_INDEX;
+	if (flags) {
+		*flags = 0;
+		// if (std::all_of(font_family.begin(), font_family.end(), [](auto style) {
+		// 		return style & B_IS_FIXED;
+		// 	})) {
+		// 	*flags |= B_IS_FIXED;
+		// }
+	}
+
+	return B_OK;
 }
 
 int32 count_font_styles(font_family name)
 {
-	_update_installed_fonts();
+	auto mgr = SkFontMgr::RefDefault();
 
-	auto s_family = std::string(reinterpret_cast<const char *>(name),
-								strnlen(reinterpret_cast<const char *>(name), B_FONT_FAMILY_LENGTH));
-	if (sInstalledFonts.contains(s_family)) {
-		return sInstalledFonts.at(s_family).size();
-	}
+	SkFontStyleSet *styles = mgr->matchFamily(name);
+	auto			count  = styles->count();
 
-	return B_BAD_VALUE;
+	styles->unref();
+	return count;
 }
 
 status_t get_font_style(font_family family, int32 index, font_style *name, uint32 *flags)
 {
-	_update_installed_fonts();
+	auto mgr = SkFontMgr::RefDefault();
 
-	auto s_family = std::string(reinterpret_cast<const char *>(family),
-								strnlen(reinterpret_cast<const char *>(family), B_FONT_FAMILY_LENGTH));
-	if (sInstalledFonts.contains(s_family)) {
-		for (auto &font_style : sInstalledFonts.at(s_family)) {
-			if (index == 0) {
-				if (name) {
-					strncpy(reinterpret_cast<char *>(name), font_style.first.c_str(), B_FONT_STYLE_LENGTH);
-					(*name)[B_FONT_STYLE_LENGTH] = '\0';
-				}
-				if (flags) {
-					*flags = std::get<2>(font_style.second);
-				}
+	SkFontStyleSet *styles = mgr->matchFamily(family);
 
-				return B_OK;
-			}
-			index -= 1;
-		}
+	SkFontStyle style;
+	SkString	styleName;
+	styles->getStyle(index, &style, &styleName);
+	styles->unref();
 
+	if (styleName.isEmpty())
 		return B_BAD_INDEX;
+
+	if (name) {
+		strncpy(reinterpret_cast<char *>(name), styleName.c_str(), B_FONT_STYLE_LENGTH);
+		(*name)[B_FONT_STYLE_LENGTH] = '\0';
 	}
 
-	return B_BAD_VALUE;
+	if (flags) {
+		*flags = 0;
+
+		SkTypeface *typeface = mgr->matchFamilyStyle(family, style);
+		if (typeface) {
+			if (typeface->isFixedPitch()) {
+				*flags |= B_IS_FIXED;
+			}
+
+			typeface->unref();
+		}
+	}
+
+	return B_OK;
 }
 
 status_t get_font_style(font_family family, int32 index, font_style *name, uint16 *face, uint32 *flags)
 {
-	_update_installed_fonts();
-
 	debugger(__PRETTY_FUNCTION__);
 	return B_ERROR;
 }
 
 bool update_font_families(bool check_only)
 {
-	const auto size = sInstalledFonts.size();
-	sInstalledFonts.clear();
-	FcInitBringUptoDate();
-	_update_installed_fonts();
-	return sInstalledFonts.size() != size;
+	// SkFontMgr is stand alone, so this is a no-op
+	return false;
 }
 
 status_t get_font_cache_info(uint32 id, void *set)

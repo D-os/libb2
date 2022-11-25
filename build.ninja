@@ -30,7 +30,7 @@ includes = $
   -isystem external/doctest $
 
 libs = -lc++ -lunwind $
-  -lbinder -lutils -lcutils -llog -lwayland-client -lfontconfig
+  -lbinder -lutils -lcutils -llog -lwayland-client
 
 build $BUILDROOT/os/libbe/app/Application.o: cxx system/os/kits/app/Application.cpp
 build $BUILDROOT/os/libbe/app/Handler.o: cxx system/os/kits/app/Handler.cpp
@@ -108,7 +108,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.o $
 | $SYSROOT/lib/libbinder.so $
   $SYSROOT/lib/libskia.so
-  libs = $libs -lbinder -lskia
+  libs = $libs -lskia
 
 
 subninja system/os/services/build.ninja
