@@ -1,6 +1,10 @@
 #include "Button.h"
 
+#define LOG_TAG "BButton"
+
+#include <Font.h>
 #include <Window.h>
+#include <log/log.h>
 
 BButton::BButton(BRect frame, const char *name, const char *label, BMessage *message, uint32 resizeMask, uint32 flags)
 	: BControl(frame, name, label, message, resizeMask, flags) {}
@@ -21,9 +25,42 @@ status_t BButton::Archive(BMessage *data, bool deep) const
 	return B_ERROR;
 }
 
+/// Draws the button and labels it.
+/// If the BButton's value is anything but 0, the button is highlighted.
+/// If it's disabled, it drawn in muted shades of gray.
+/// Otherwise, it's drawn in its ordinary, enabled, unhighlighted state.
 void BButton::Draw(BRect updateRect)
 {
-	debugger(__PRETTY_FUNCTION__);
+	BView::Draw(updateRect);
+
+	const auto label = Label();
+	if (label) {
+		BFont font;
+		GetFont(&font);
+		font_height metrics;
+		font.GetHeight(&metrics);
+
+		auto bounds = Bounds();
+
+		PushState();
+
+		if (Value()) {
+			FillRect(bounds, B_SOLID_HIGH);
+		}
+		else if (!IsEnabled()) {
+			FillRect(bounds, B_MIXED_COLORS);
+		}
+
+		float x = bounds.right - font.StringWidth(label);
+		x -= (x - bounds.left) / 2;
+		BPoint pos{x, bounds.bottom - metrics.descent};
+		DrawString(label, pos);
+
+		SetPenSize(IsFocus() ? 2 : 1);
+		StrokeRect(bounds);
+
+		PopState();
+	}
 }
 
 void BButton::MouseDown(BPoint where)
@@ -34,9 +71,17 @@ void BButton::MouseDown(BPoint where)
 void BButton::AttachedToWindow()
 {
 	BControl::AttachedToWindow();
+
+	// FIXME: this code does not work. Defaulting a default button is a no-op.
+	// The default state should be stored by MakeDefault() call and triggered here.
 	if (IsDefault()) {
 		Window()->SetDefaultButton(this);
 	}
+
+	// A button is automatically resized to its preferred height (but not to its preferred width)
+	float preferredHeight;
+	GetPreferredSize(nullptr, &preferredHeight);
+	ResizeTo(Bounds().Width(), preferredHeight);
 }
 
 void BButton::KeyDown(const char *bytes, int32 numBytes)
@@ -97,7 +142,16 @@ void BButton::SetValue(int32 value)
 
 void BButton::GetPreferredSize(float *width, float *height)
 {
-	BView::GetPreferredSize(width, height);
+	BFont font;
+	GetFont(&font);
+	if (width) {
+		*width = font.StringWidth(Label());
+	}
+	if (height) {
+		font_height fh;
+		font.GetHeight(&fh);
+		*height = fh.leading;
+	}
 }
 
 void BButton::ResizeToPreferred()

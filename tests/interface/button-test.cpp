@@ -113,7 +113,7 @@ TWindow::TWindow(BRect frame, const char *title, window_type type, uint32 flags,
 	btn->ResizeToPreferred();
 	btn->MakeFocus(true);
 
-	BView *view = new TView(frame.OffsetToCopy(B_ORIGIN), NULL, B_FOLLOW_ALL, B_WILL_DRAW | B_FRAME_EVENTS);
+	BView *view = new TView(frame.OffsetToCopy(B_ORIGIN), NULL, B_FOLLOW_ALL, B_FRAME_EVENTS);
 	AddChild(view);
 }
 

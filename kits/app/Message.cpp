@@ -1,10 +1,13 @@
 #include "Message.h"
 
+#define LOG_TAG "BMessage"
+
 #include <Messenger.h>
 #include <Point.h>
 #include <Rect.h>
 #include <String.h>
 #include <doctest/doctest.h>
+#include <log/log.h>
 #include <pimpl.h>
 
 #include <cstring>

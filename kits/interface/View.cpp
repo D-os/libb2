@@ -190,7 +190,6 @@ void BView::MessageReceived(BMessage *message)
 						while ((pendingMessage = Looper()->MessageQueue()->FindMessage(_UPDATE_, index))) {
 							if (pendingMessage->_get_handler() == this) {
 								BRect pendingRect;
-								ALOGV("---------------------------- Merging");
 								if (message->FindRect("updateRect", &pendingRect) == B_OK && pendingRect.IsValid()) {
 									updateRect = updateRect | pendingRect;
 								}
@@ -780,7 +779,7 @@ static SkBlendMode blend_modes[] = {
                                                                                          \
 	BPoint translation{LeftTop()};                                                       \
 	ConvertToScreen(&translation);                                                       \
-	canvas->translate(translation.x, translation.y);                                     \
+	canvas->setMatrix(SkMatrix::Translate(translation.x, translation.y));                \
                                                                                          \
 	SkPaint paint;                                                                       \
 	paint.setStrokeWidth(fState->pen_size > 0.0 ? /* scale * */ fState->pen_size : 1.0); \
@@ -1168,6 +1167,11 @@ void BView::MakeFocus(bool focusState)
 		if (focusView == this)
 			fOwner->set_focus(NULL, true);
 	}
+}
+
+bool BView::IsFocus() const
+{
+	return fOwner && fOwner->CurrentFocus() == this;
 }
 
 void BView::Show()

@@ -1,6 +1,9 @@
 #include "Control.h"
 
+#define LOG_TAG "BControl"
+
 #include <Window.h>
+#include <log/log.h>
 
 BControl::BControl(BRect frame, const char *name, const char *label, BMessage *message, uint32 resizeMask, uint32 flags)
 	: BView(frame, name, resizeMask, flags | B_NAVIGABLE),
@@ -122,7 +125,7 @@ void BControl::SetEnabled(bool on)
 	if (on)
 		SetFlags(Flags() | B_NAVIGABLE);
 	else
-		SetFlags(Flags() & !B_NAVIGABLE);
+		SetFlags(Flags() & ~B_NAVIGABLE);
 
 	Invalidate();
 }
