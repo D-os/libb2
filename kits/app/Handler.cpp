@@ -43,8 +43,9 @@ void BHandler::MessageReceived(BMessage *message)
 	}
 	else if (message->what != B_MESSAGE_NOT_UNDERSTOOD
 			 /*&& (message->WasDropped() || message->HasSpecifiers())*/) {
-		ALOGW("BHandler %s: MessageReceived() couldn't understand the message:\n", Name());
-		message->PrintToStream();
+		std::cerr << "BHandler " << Name()
+				  << ": MessageReceived() couldn't understand the message:\n"
+				  << *message;
 		message->SendReply(B_MESSAGE_NOT_UNDERSTOOD);
 	}
 }

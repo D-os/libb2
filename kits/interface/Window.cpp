@@ -431,6 +431,7 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 
 	if (!m->connect()) {
 		throw std::system_error(std::error_code(errno, std::system_category()), "Cannot connect display");
+		abort();
 	}
 
 	m->top_view._attach(this);
@@ -1003,7 +1004,8 @@ void BWindow::task_looper()
 		for (auto n = 0; n < nfds; ++n) {
 			if (events[n].data.fd == wl_fd) {
 				if (events[n].events & EPOLLHUP) {
-					debugger("connection to display terminated");
+					throw std::system_error(std::error_code(errno, std::system_category()), "Connection to display terminated");
+					abort();
 				}
 
 				if (events[n].events & EPOLLERR) {

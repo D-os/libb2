@@ -174,7 +174,6 @@ void TView::Draw(BRect updateRect)
 			if (i >= 0) pt += BPoint(30, (i % 2 == 0 ? 30 : -30));
 			poly.AddPoints(&pt, 1);
 		}
-		poly.PrintToStream();
 
 		PushState();
 
@@ -240,7 +239,6 @@ void TView::Draw(BRect updateRect)
 		BRegion region;
 		for (int8 i = 0; i < 3; ++i) region.Include(rects[i]);
 		region.OffsetBy(200, 0);
-		region.PrintToStream();
 
 		SetHighColor(0, 0, 0);
 		SetPenSize(0);
