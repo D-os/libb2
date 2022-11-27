@@ -25,6 +25,7 @@ includes = $
   -isystem external/wayland/src $
   -isystem build/wayland/src $
   -isystem $BUILDROOT/wayland $
+  -isystem external/wayland/cursor $
   -isystem external/skia $
   -isystem external/fontconfig $
   -isystem external/doctest $
@@ -107,8 +108,10 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/aidl/${TARGET}/os/services/app/IRegistrarService.o $
   $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.o $
 | $SYSROOT/lib/libbinder.so $
-  $SYSROOT/lib/libskia.so
-  libs = $libs -lskia
+  $SYSROOT/lib/libskia.so $
+  $SYSROOT/lib/libwayland-client.so $
+  $SYSROOT/lib/libwayland-cursor.so
+  libs = $libs -lskia -lwayland-cursor
 
 
 subninja system/os/services/build.ninja

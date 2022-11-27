@@ -19,12 +19,16 @@
 #include <unistd.h>
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
+#include <wayland-cursor.h>
 
 #include <cstddef>
 #include <cstring>
 #include <system_error>
 
 #include "xdg-shell-client-protocol.h"
+
+#define DEFAULT_CURSOR_SIZE 24
+#define DEFAULT_CURSOR_NAME "left_ptr"
 
 class BWindow::impl
 {
@@ -34,11 +38,15 @@ class BWindow::impl
 	struct wl_registry   *wl_registry;
 	struct wl_compositor *wl_compositor;
 	struct wl_shm		  *wl_shm;
-	struct xdg_wm_base   *xdg_wm_base;
+	struct xdg_wm_base	   *xdg_wm_base;
+	struct wl_seat		   *wl_seat;
 	/* Objects */
 	struct wl_surface	  *wl_surface;
-	struct xdg_surface  *xdg_surface;
-	struct xdg_toplevel *xdg_toplevel;
+	struct xdg_surface	   *xdg_surface;
+	struct xdg_toplevel	*xdg_toplevel;
+	struct wl_pointer	  *wl_pointer;
+	struct wl_surface	  *cursor_surface;
+	struct wl_cursor_image *cursor_image;
 
 	/* Backing */
 	size_t				  width;
@@ -68,9 +76,13 @@ class BWindow::impl
 		  wl_compositor{nullptr},
 		  wl_shm{nullptr},
 		  xdg_wm_base{nullptr},
+		  wl_seat{nullptr},
 		  wl_surface{nullptr},
 		  xdg_surface{nullptr},
 		  xdg_toplevel{nullptr},
+		  wl_pointer{nullptr},
+		  cursor_surface{nullptr},
+		  cursor_image{nullptr},
 		  width{0},
 		  height{0},
 		  wl_shm_pool{nullptr},
@@ -86,16 +98,16 @@ class BWindow::impl
 		  maximized{false},
 		  closed{false},
 
-		  registry_listener{
-			  .global		 = registry_global_handler,
-			  .global_remove = registry_global_remove_handler,
+		  wl_registry_listener{
+			  .global		 = wl_registry_global_handler,
+			  .global_remove = wl_registry_global_remove_handler,
 		  },
-		  shm_listener{
-			  .format = shm_format_handler,
+		  wl_shm_listener{
+			  .format = wl_shm_format_handler,
 		  },
-		  surface_listener{
-			  .enter = surface_enter_handler,
-			  .leave = surface_leave_handler,
+		  wl_surface_listener{
+			  .enter = wl_surface_enter_handler,
+			  .leave = wl_surface_leave_handler,
 		  },
 		  wl_buffer_listener{
 			  .release = wl_buffer_release_handler,
@@ -109,6 +121,16 @@ class BWindow::impl
 		  xdg_toplevel_listener{
 			  .configure = xdg_toplevel_configure_handler,
 			  .close	 = xdg_toplevel_close_handler,
+		  },
+		  wl_seat_listener{
+			  .capabilities = wl_seat_capabilities_handler,
+		  },
+		  wl_pointer_listener{
+			  .enter  = wl_pointer_enter_handler,
+			  .leave  = wl_pointer_leave_handler,
+			  .motion = wl_pointer_motion_handler,
+			  .button = wl_pointer_button_handler,
+			  .axis	  = wl_pointer_axis_handler,
 		  }
 	{
 	}
@@ -132,26 +154,39 @@ class BWindow::impl
 	std::mutex pool_mutex;
 	void	   resize_buffer();
 
-	const struct wl_registry_listener registry_listener;
-	const struct wl_shm_listener	  shm_listener;
-	const struct wl_surface_listener  surface_listener;
-	const struct wl_buffer_listener	  wl_buffer_listener;
-	const struct xdg_surface_listener xdg_surface_listener;
-	const struct xdg_wm_base_listener xdg_wm_base_listener;
+	const struct wl_registry_listener  wl_registry_listener;
+	const struct wl_shm_listener	   wl_shm_listener;
+	const struct wl_surface_listener   wl_surface_listener;
+	const struct wl_buffer_listener	   wl_buffer_listener;
+	const struct xdg_surface_listener  xdg_surface_listener;
+	const struct xdg_wm_base_listener  xdg_wm_base_listener;
 	const struct xdg_toplevel_listener xdg_toplevel_listener;
+	const struct wl_seat_listener	   wl_seat_listener;
+	const struct wl_pointer_listener   wl_pointer_listener;
 
-	static void registry_global_handler(void *this_, struct wl_registry *registry, uint32_t name,
-										const char *interface, uint32_t version);
-	static void registry_global_remove_handler(void *this_, struct wl_registry *registry, uint32_t name);
-	static void shm_format_handler(void *this_, struct wl_shm *wl_shm, uint32_t format);
-	static void surface_enter_handler(void *this_, struct wl_surface *surface, struct wl_output *output);
-	static void surface_leave_handler(void *this_, struct wl_surface *surface, struct wl_output *output);
+	static void wl_registry_global_handler(void *this_, struct wl_registry *registry, uint32_t name,
+										   const char *interface, uint32_t version);
+	static void wl_registry_global_remove_handler(void *this_, struct wl_registry *registry, uint32_t name);
+	static void wl_shm_format_handler(void *this_, struct wl_shm *wl_shm, uint32_t format);
+	static void wl_surface_enter_handler(void *this_, struct wl_surface *surface, struct wl_output *output);
+	static void wl_surface_leave_handler(void *this_, struct wl_surface *surface, struct wl_output *output);
 	static void wl_buffer_release_handler(void *this_, struct wl_buffer *wl_buffer);
 	static void xdg_surface_configure_handler(void *this_, struct xdg_surface *xdg_surface, uint32_t serial);
 	static void xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xdg_wm_base, uint32_t serial);
 	static void xdg_toplevel_configure_handler(void *this_, struct xdg_toplevel *xdg_toplevel,
 											   int32_t width, int32_t height, struct wl_array *states);
 	static void xdg_toplevel_close_handler(void *this_, struct xdg_toplevel *toplevel);
+	static void wl_seat_capabilities_handler(void *this_, struct wl_seat *wl_seat, uint32_t capabilities);
+	static void wl_pointer_enter_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
+										 struct wl_surface *surface, wl_fixed_t surface_x, wl_fixed_t surface_y);
+	static void wl_pointer_leave_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
+										 struct wl_surface *surface);
+	static void wl_pointer_motion_handler(void *this_, struct wl_pointer *wl_pointer,
+										  uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y);
+	static void wl_pointer_button_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
+										  uint32_t time, uint32_t button, uint32_t state);
+	static void wl_pointer_axis_handler(void *this_, struct wl_pointer *wl_pointer,
+										uint32_t time, uint32_t axis, wl_fixed_t value);
 };
 
 namespace {
@@ -195,17 +230,17 @@ bool BWindow::impl::connect()
 	wl_registry = wl_display_get_registry(wl_display);
 	if (!wl_registry) return false;
 	ALOGV("connected registry");
-	wl_registry_add_listener(wl_registry, &registry_listener, this);
+	wl_registry_add_listener(wl_registry, &wl_registry_listener, this);
 
 	// wait for the "initial" set of globals to appear
 	wl_display_roundtrip(wl_display);
-	ALOGV("compositor %p, shm %p, xdg_wm_base %p", wl_compositor, wl_shm, xdg_wm_base);
-	if (!wl_compositor || !wl_shm || !xdg_wm_base) return false;
+	ALOGV("wl_compositor %p, wl_shm %p, xdg_wm_base %p, wl_seat %p", wl_compositor, wl_shm, xdg_wm_base, wl_seat);
+	if (!wl_compositor || !wl_shm || !xdg_wm_base || !wl_seat) return false;
 
 	wl_surface = wl_compositor_create_surface(wl_compositor);
 	if (!wl_surface) return false;
 	ALOGV("created surface");
-	wl_surface_add_listener(wl_surface, &surface_listener, this);
+	wl_surface_add_listener(wl_surface, &wl_surface_listener, this);
 
 	xdg_surface = xdg_wm_base_get_xdg_surface(xdg_wm_base, wl_surface);
 	xdg_surface_add_listener(xdg_surface, &xdg_surface_listener, this);
@@ -312,7 +347,7 @@ void BWindow::impl::resize(size_t width, size_t height)
 	wl_surface_commit(wl_surface);
 }
 
-void BWindow::impl::registry_global_handler(
+void BWindow::impl::wl_registry_global_handler(
 	void			   *this_,
 	struct wl_registry *registry,
 	uint32_t			name,
@@ -323,13 +358,13 @@ void BWindow::impl::registry_global_handler(
 
 	if (strcmp(interface, wl_compositor_interface.name) == 0) {
 		static_cast<BWindow::impl *>(this_)->wl_compositor = (struct wl_compositor *)wl_registry_bind(
-			registry, name, &wl_compositor_interface, 5);
+			registry, name, &wl_compositor_interface, 4);
 	}
 	else if (strcmp(interface, wl_shm_interface.name) == 0) {
 		static_cast<BWindow::impl *>(this_)->wl_shm = (struct wl_shm *)wl_registry_bind(
 			registry, name, &wl_shm_interface, 1);
 		wl_shm_add_listener(static_cast<BWindow::impl *>(this_)->wl_shm,
-							&static_cast<BWindow::impl *>(this_)->shm_listener, this_);
+							&static_cast<BWindow::impl *>(this_)->wl_shm_listener, this_);
 	}
 	else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
 		static_cast<BWindow::impl *>(this_)->xdg_wm_base = (struct xdg_wm_base *)wl_registry_bind(
@@ -337,13 +372,19 @@ void BWindow::impl::registry_global_handler(
 		xdg_wm_base_add_listener(static_cast<BWindow::impl *>(this_)->xdg_wm_base,
 								 &static_cast<BWindow::impl *>(this_)->xdg_wm_base_listener, this_);
 	}
+	else if (strcmp(interface, wl_seat_interface.name) == 0) {
+		static_cast<BWindow::impl *>(this_)->wl_seat = (struct wl_seat *)wl_registry_bind(
+			registry, name, &wl_seat_interface, 1);
+		wl_seat_add_listener(static_cast<BWindow::impl *>(this_)->wl_seat,
+							 &static_cast<BWindow::impl *>(this_)->wl_seat_listener, this_);
+	}
 }
-void BWindow::impl::registry_global_remove_handler(
+void BWindow::impl::wl_registry_global_remove_handler(
 	void			   *this_,
 	struct wl_registry *registry,
 	uint32_t			name) {}
 
-void BWindow::impl::shm_format_handler(void *this_, struct wl_shm *wl_shm, uint32_t format)
+void BWindow::impl::wl_shm_format_handler(void *this_, struct wl_shm *wl_shm, uint32_t format)
 {
 	ALOGV("SHM format: 0x%x: %.4s", format,
 		  format == 0 ? "ARG8"
@@ -351,11 +392,11 @@ void BWindow::impl::shm_format_handler(void *this_, struct wl_shm *wl_shm, uint3
 									 : (char *)&format));
 }
 
-void BWindow::impl::surface_enter_handler(void *this_, struct wl_surface *surface, struct wl_output *output)
+void BWindow::impl::wl_surface_enter_handler(void *this_, struct wl_surface *surface, struct wl_output *output)
 {
 	ALOGV("%p surface enter %p", surface, output);
 }
-void BWindow::impl::surface_leave_handler(void *this_, struct wl_surface *surface, struct wl_output *output)
+void BWindow::impl::wl_surface_leave_handler(void *this_, struct wl_surface *surface, struct wl_output *output)
 {
 	ALOGV("%p surface leave %p", surface, output);
 }
@@ -376,7 +417,7 @@ void BWindow::impl::xdg_surface_configure_handler(void *this_, struct xdg_surfac
 
 void BWindow::impl::xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xdg_wm_base, uint32_t serial)
 {
-	ALOGV("responding to PING");
+	ALOGV("xdg_wm_base responding to PING");
 	xdg_wm_base_pong(xdg_wm_base, serial);
 }
 
@@ -395,6 +436,63 @@ void BWindow::impl::xdg_toplevel_configure_handler(void *this_, struct xdg_tople
 void BWindow::impl::xdg_toplevel_close_handler(void *this_, struct xdg_toplevel *toplevel)
 {
 	static_cast<BWindow::impl *>(this_)->closed = true;
+}
+
+void BWindow::impl::wl_seat_capabilities_handler(void *this_, struct wl_seat *wl_seat, uint32_t capabilities)
+{
+	// this is only going to work if computer has a pointing device
+	if (capabilities & WL_SEAT_CAPABILITY_POINTER) do {
+			static_cast<BWindow::impl *>(this_)->wl_pointer = wl_seat_get_pointer(wl_seat);
+			if (!static_cast<BWindow::impl *>(this_)->wl_pointer) break;
+			wl_pointer_add_listener(static_cast<BWindow::impl *>(this_)->wl_pointer, &static_cast<BWindow::impl *>(this_)->wl_pointer_listener, this_);
+			ALOGV("created wl_pointer");
+
+			struct wl_cursor_theme *cursor_theme = wl_cursor_theme_load(nullptr, DEFAULT_CURSOR_SIZE, static_cast<BWindow::impl *>(this_)->wl_shm);
+			if (!cursor_theme) break;
+			ALOGV("created cursor_theme");
+
+			struct wl_cursor *cursor = wl_cursor_theme_get_cursor(cursor_theme, DEFAULT_CURSOR_NAME);
+			if (!cursor) break;
+			ALOGV("created wl_cursor");
+
+			if (cursor->image_count == 0) break;
+			static_cast<BWindow::impl *>(this_)->cursor_image = cursor->images[0];
+			struct wl_buffer *cursor_buffer					  = wl_cursor_image_get_buffer(static_cast<BWindow::impl *>(this_)->cursor_image);
+			ALOGV("created cursor_buffer");
+
+			static_cast<BWindow::impl *>(this_)->cursor_surface = wl_compositor_create_surface(static_cast<BWindow::impl *>(this_)->wl_compositor);
+			wl_surface_attach(static_cast<BWindow::impl *>(this_)->cursor_surface, cursor_buffer, 0, 0);
+			wl_surface_commit(static_cast<BWindow::impl *>(this_)->cursor_surface);
+			ALOGV("created cursor_surface");
+		} while (false);
+}
+
+void BWindow::impl::wl_pointer_enter_handler(void *this_, struct wl_pointer *pointer, uint32_t serial,
+											 struct wl_surface *surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
+{
+	ALOGV("wl_pointer enter %p @%p", pointer, surface);
+	wl_pointer_set_cursor(pointer, serial, static_cast<BWindow::impl *>(this_)->cursor_surface,
+						  static_cast<BWindow::impl *>(this_)->cursor_image->hotspot_x, static_cast<BWindow::impl *>(this_)->cursor_image->hotspot_y);
+}
+
+void BWindow::impl::wl_pointer_leave_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
+											 struct wl_surface *surface)
+{
+}
+
+void BWindow::impl::wl_pointer_motion_handler(void *this_, struct wl_pointer *wl_pointer,
+											  uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y)
+{
+}
+
+void BWindow::impl::wl_pointer_button_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
+											  uint32_t time, uint32_t button, uint32_t state)
+{
+}
+
+void BWindow::impl::wl_pointer_axis_handler(void *this_, struct wl_pointer *wl_pointer,
+											uint32_t time, uint32_t axis, wl_fixed_t value)
+{
 }
 
 SkCanvas *BWindow::_get_canvas() const
