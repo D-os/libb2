@@ -65,6 +65,9 @@ class BWindow::impl
 	BView		top_view;
 	const char *title;
 
+	float pointer_x;
+	float pointer_y;
+
 	bool hidden;
 	bool minimized;
 	bool maximized;
@@ -93,6 +96,8 @@ class BWindow::impl
 
 		  top_view(BRect(B_ORIGIN, B_ORIGIN), "TopView", B_FOLLOW_ALL, B_WILL_DRAW),
 		  title{nullptr},
+		  pointer_x{-1.0},
+		  pointer_y{-1.0},
 		  hidden{true},
 		  minimized{false},
 		  maximized{false},
@@ -134,6 +139,7 @@ class BWindow::impl
 		  }
 	{
 	}
+
 	void set_size(size_t width, size_t height)
 	{
 		// frame coordinates are in the middle of pixels,
@@ -149,6 +155,8 @@ class BWindow::impl
 	void showWindow();
 	void hideWindow();
 	void minimize(bool minimized);
+
+	void pointer_motion(float x, float y);
 
    private:
 	std::mutex pool_mutex;
@@ -347,6 +355,18 @@ void BWindow::impl::resize(size_t width, size_t height)
 	wl_surface_commit(wl_surface);
 }
 
+void BWindow::impl::pointer_motion(float x, float y)
+{
+	this->pointer_x = x;
+	this->pointer_y = y;
+
+	BMessage mouseMoveMessage(B_MOUSE_MOVED);
+	mouseMoveMessage.AddPoint("screen_where", BPoint(x, y));
+	if (top_view.Window()) {
+		top_view.Window()->PostMessage(&mouseMoveMessage);
+	}
+}
+
 void BWindow::impl::wl_registry_global_handler(
 	void			   *this_,
 	struct wl_registry *registry,
@@ -440,49 +460,64 @@ void BWindow::impl::xdg_toplevel_close_handler(void *this_, struct xdg_toplevel 
 
 void BWindow::impl::wl_seat_capabilities_handler(void *this_, struct wl_seat *wl_seat, uint32_t capabilities)
 {
-	// this is only going to work if computer has a pointing device
-	if (capabilities & WL_SEAT_CAPABILITY_POINTER) do {
+	bool have_pointer = capabilities & WL_SEAT_CAPABILITY_POINTER;
+
+	if (have_pointer && !static_cast<BWindow::impl *>(this_)->wl_pointer) do {
 			static_cast<BWindow::impl *>(this_)->wl_pointer = wl_seat_get_pointer(wl_seat);
 			if (!static_cast<BWindow::impl *>(this_)->wl_pointer) break;
 			wl_pointer_add_listener(static_cast<BWindow::impl *>(this_)->wl_pointer, &static_cast<BWindow::impl *>(this_)->wl_pointer_listener, this_);
-			ALOGV("created wl_pointer");
+			ALOGV("got wl_pointer");
 
-			struct wl_cursor_theme *cursor_theme = wl_cursor_theme_load(nullptr, DEFAULT_CURSOR_SIZE, static_cast<BWindow::impl *>(this_)->wl_shm);
-			if (!cursor_theme) break;
-			ALOGV("created cursor_theme");
+			if (!static_cast<BWindow::impl *>(this_)->cursor_image) {
+				struct wl_cursor_theme *cursor_theme = wl_cursor_theme_load(nullptr, DEFAULT_CURSOR_SIZE, static_cast<BWindow::impl *>(this_)->wl_shm);
+				if (!cursor_theme) break;
+				ALOGV("loaded cursor_theme");
 
-			struct wl_cursor *cursor = wl_cursor_theme_get_cursor(cursor_theme, DEFAULT_CURSOR_NAME);
-			if (!cursor) break;
-			ALOGV("created wl_cursor");
+				struct wl_cursor *cursor = wl_cursor_theme_get_cursor(cursor_theme, DEFAULT_CURSOR_NAME);
+				if (!cursor) break;
+				ALOGV("got wl_cursor");
 
-			if (cursor->image_count == 0) break;
-			static_cast<BWindow::impl *>(this_)->cursor_image = cursor->images[0];
-			struct wl_buffer *cursor_buffer					  = wl_cursor_image_get_buffer(static_cast<BWindow::impl *>(this_)->cursor_image);
-			ALOGV("created cursor_buffer");
+				if (cursor->image_count == 0) break;
+				static_cast<BWindow::impl *>(this_)->cursor_image = cursor->images[0];
+				ALOGV("have cursor_image");
+			}
+
+			struct wl_buffer *cursor_buffer = wl_cursor_image_get_buffer(static_cast<BWindow::impl *>(this_)->cursor_image);
+			ALOGV("got cursor_buffer");
 
 			static_cast<BWindow::impl *>(this_)->cursor_surface = wl_compositor_create_surface(static_cast<BWindow::impl *>(this_)->wl_compositor);
 			wl_surface_attach(static_cast<BWindow::impl *>(this_)->cursor_surface, cursor_buffer, 0, 0);
 			wl_surface_commit(static_cast<BWindow::impl *>(this_)->cursor_surface);
 			ALOGV("created cursor_surface");
 		} while (false);
+	else if (!have_pointer && static_cast<BWindow::impl *>(this_)->wl_pointer) {
+		wl_pointer_release(static_cast<BWindow::impl *>(this_)->wl_pointer);
+		static_cast<BWindow::impl *>(this_)->wl_pointer = nullptr;
+	}
 }
 
 void BWindow::impl::wl_pointer_enter_handler(void *this_, struct wl_pointer *pointer, uint32_t serial,
 											 struct wl_surface *surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
 	ALOGV("wl_pointer enter %p @%p", pointer, surface);
-	wl_pointer_set_cursor(pointer, serial, static_cast<BWindow::impl *>(this_)->cursor_surface,
-						  static_cast<BWindow::impl *>(this_)->cursor_image->hotspot_x, static_cast<BWindow::impl *>(this_)->cursor_image->hotspot_y);
+	wl_pointer_set_cursor(pointer, serial,
+						  static_cast<BWindow::impl *>(this_)->cursor_surface,
+						  static_cast<BWindow::impl *>(this_)->cursor_image->hotspot_x,
+						  static_cast<BWindow::impl *>(this_)->cursor_image->hotspot_y);
+
+	static_cast<BWindow::impl *>(this_)->pointer_motion(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
 }
 
-void BWindow::impl::wl_pointer_leave_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
+void BWindow::impl::wl_pointer_leave_handler(void *this_, struct wl_pointer *pointer, uint32_t serial,
 											 struct wl_surface *surface)
 {
+	ALOGV("wl_pointer leave %p @%p", pointer, surface);
 }
 
 void BWindow::impl::wl_pointer_motion_handler(void *this_, struct wl_pointer *wl_pointer,
 											  uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
+	static_cast<BWindow::impl *>(this_)->pointer_motion(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
 }
 
 void BWindow::impl::wl_pointer_button_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
@@ -685,6 +720,55 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 			break;
 		}
 
+		case B_MOUSE_MOVED:
+		case B_MOUSE_DOWN:
+		case B_MOUSE_UP: {
+			BPoint screen_where;
+			if (message->FindPoint("screen_where", 0, &screen_where) != B_OK)
+				break;
+
+			BPoint view_where{screen_where};
+			ConvertFromScreen(&view_where);
+			BView *viewUnderPointer = &m->top_view;
+			bool   stop				= false;
+			while (!stop) {
+				stop = true;
+				for (BView *child = viewUnderPointer->fFirstChild; child; child = child->fNextSibling) {
+					if (child->Frame().Contains(view_where)) {
+						viewUnderPointer = child;
+						child->ConvertFromParent(&view_where);
+						stop = false;
+						break;
+					}
+				}
+			}
+			ALOGV("found viewUnderPointer %p %s", viewUnderPointer, viewUnderPointer->Name());
+
+			if (message->what == B_MOUSE_MOVED) {
+				if (fLastMouseMovedView != viewUnderPointer) {
+					if (fLastMouseMovedView) {
+						BMessage message_copy(*message);
+						message_copy.AddUInt32("be:transit", B_EXITED_VIEW);
+						message->AddPoint("be:view_where", fLastMouseMovedView->ConvertFromScreen(screen_where));
+						fLastMouseMovedView->MessageReceived(&message_copy);
+					}
+					message->AddUInt32("be:transit", B_ENTERED_VIEW);
+				}
+				else {
+					message->AddUInt32("be:transit", B_INSIDE_VIEW);
+				}
+			}
+			else {
+				message->AddPoint("where", view_where);
+			}
+
+			message->AddPoint("be:view_where", view_where);
+			viewUnderPointer->MessageReceived(message);
+
+			fLastMouseMovedView = viewUnderPointer;
+			break;
+		}
+
 		case B_PULSE:
 			// if (handler == this && fPulseRunner) {
 			// 	m->top_view._Pulse();
@@ -713,7 +797,7 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 
 void BWindow::MessageReceived(BMessage *message)
 {
-	ALOGV("BWindow::MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
+	ALOGV("MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
 	switch (message->what) {
 		case _UPDATE_: {
 			BMessage message(_UPDATE_);

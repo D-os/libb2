@@ -95,7 +95,7 @@ status_t BLooper::PostMessage(BMessage *message, BHandler *handler, BHandler *re
 
 void BLooper::DispatchMessage(BMessage *message, BHandler *target)
 {
-	ALOGV("BLooper::DispatchMessage %p %p", message, target);
+	ALOGV("DispatchMessage %p %p", message, target);
 	if (!message || !target) return;
 
 	if (message->what == B_QUIT_REQUESTED && target == this) {
@@ -108,7 +108,7 @@ void BLooper::DispatchMessage(BMessage *message, BHandler *target)
 
 void BLooper::MessageReceived(BMessage *message)
 {
-	ALOGV("BLooper::MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
+	ALOGV("MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
 	return BHandler::MessageReceived(message);
 }
 

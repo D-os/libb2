@@ -30,7 +30,7 @@ class BButton : public BControl
 	virtual void	 MessageReceived(BMessage *msg);
 	virtual void	 WindowActivated(bool state);
 	virtual void	 MouseUp(BPoint pt);
-	virtual void	 MouseMoved(BPoint pt, uint32 code, const BMessage *msg);
+	virtual void	 MouseMoved(BPoint pt, uint32 transit, const BMessage *msg);
 	virtual void	 DetachedFromWindow();
 	virtual void	 SetValue(int32 value);
 	virtual void	 GetPreferredSize(float *width, float *height);

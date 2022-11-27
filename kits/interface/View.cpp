@@ -173,7 +173,7 @@ void BView::AllDetached()
 
 void BView::MessageReceived(BMessage *message)
 {
-	ALOGV("BView::MessageReceived @%s 0x%x: %.4s", Name(), message->what, (char *)&message->what);
+	ALOGV("MessageReceived @%s 0x%x: %.4s", Name(), message->what, (char *)&message->what);
 	if (!message->HasSpecifiers()) {
 		switch (message->what) {
 			case _UPDATE_: {
@@ -261,6 +261,18 @@ void BView::MessageReceived(BMessage *message)
 				FrameMoved(fParentOffset);
 				break;
 
+			case B_MOUSE_MOVED: {
+				BPoint where;
+				message->FindPoint("be:view_where", &where);
+				uint32 transit = 0;
+				message->FindUInt32("be:transit", &transit);
+				BMessage *dragMessage = nullptr;  // TODO: implement D'n'D
+
+				MouseMoved(where, transit, dragMessage);
+				// delete dragMessage;
+				break;
+			}
+
 			case B_MOUSE_DOWN: {
 				BPoint where;
 				message->FindPoint("be:view_where", &where);
@@ -268,16 +280,10 @@ void BView::MessageReceived(BMessage *message)
 				break;
 			}
 
-			case B_MOUSE_MOVED: {
-				// MouseMoved(where, transit, dragMessage);
-				// delete dragMessage;
-				debugger("B_MOUSE_MOVED");
-				break;
-			}
-
 			case B_MOUSE_UP: {
-				// MouseUp(where);
-				debugger("B_MOUSE_UP");
+				BPoint where;
+				message->FindPoint("be:view_where", &where);
+				MouseUp(where);
 				break;
 			}
 
@@ -486,22 +492,22 @@ void BView::Draw(BRect updateRect)
 
 void BView::MouseDown(BPoint where)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook - default implementation does nothing
 }
 
 void BView::MouseUp(BPoint where)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook - default implementation does nothing
 }
 
-void BView::MouseMoved(BPoint where, uint32 code, const BMessage *a_message)
+void BView::MouseMoved(BPoint where, uint32 transit, const BMessage *a_message)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook - default implementation does nothing
 }
 
 void BView::WindowActivated(bool state)
 {
-	// Hook function
+	// Hook - default implementation does nothing
 }
 
 void BView::KeyDown(const char *bytes, int32 numBytes)
@@ -532,6 +538,19 @@ void BView::FrameResized(float new_width, float new_height)
 void BView::TargetedByScrollView(BScrollView *scroll_view)
 {
 	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::GetMouse(BPoint *location, uint32 *buttons, bool checkMessageQueue)
+{
+	if (location) {
+		debugger(__PRETTY_FUNCTION__);
+	}
+	if (buttons) {
+		debugger(__PRETTY_FUNCTION__);
+	}
+	if (checkMessageQueue) {
+		debugger(__PRETTY_FUNCTION__);
+	}
 }
 
 BView *BView::FindView(const char *name) const
@@ -1269,18 +1288,18 @@ void BView::_detach()
 			// that we are not the focus view anymore.
 			// FIXME:
 			// if (fOwner->CurrentFocus() == this)
-			// 	fOwner->_SetFocus(NULL, true);
+			// 	fOwner->_SetFocus(nullptr, true);
 		}
 
 		// if (fOwner->fDefaultButton == this)
-		// 	fOwner->SetDefaultButton(NULL);
+		// 	fOwner->SetDefaultButton(nullptr);
 
 		// if (fOwner->fKeyMenuBar == this)
-		// 	fOwner->fKeyMenuBar = NULL;
+		// 	fOwner->fKeyMenuBar = nullptr;
 	}
 
 	if (fOwner->fLastMouseMovedView == this)
-		fOwner->fLastMouseMovedView = NULL;
+		fOwner->fLastMouseMovedView = nullptr;
 
 	fOwner->RemoveHandler(this);
 	fOwner = nullptr;

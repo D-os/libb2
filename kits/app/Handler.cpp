@@ -11,8 +11,9 @@
 
 BHandler::BHandler(const char *name)
 	: BArchivable(),
-	  fName(nullptr),
-	  fLooper(nullptr)
+	  fName{nullptr},
+	  fLooper{nullptr},
+	  fNextHandler{nullptr}
 {
 	SetName(name);
 }

@@ -50,13 +50,13 @@ TView::TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags)
 {
 	BFont font;
 
-	BButton *btn = new BButton(BRect(10, 10, 150, 50), NULL, "Hello World", new BMessage(BTN_HELLO_WORLD_EN_MSG));
+	BButton *btn = new BButton(BRect(10, 10, 150, 50), "b>hello", "Hello World", new BMessage(BTN_HELLO_WORLD_EN_MSG));
 	btn->ForceFontAliasing(true);
 	if (font.SetFamilyAndStyle("SimSun", "Regular") == B_OK) btn->SetFont(&font, B_FONT_FAMILY_AND_STYLE);
 	btn->SetFontSize(20);
 	AddChild(btn);
 
-	btn = new BButton(BRect(10, 100, 50, 120), NULL, "Ciao Mondo", new BMessage(BTN_HELLO_WORLD_IT_MSG));
+	btn = new BButton(BRect(10, 100, 50, 120), "b>ciao", "Ciao Mondo", new BMessage(BTN_HELLO_WORLD_IT_MSG));
 	btn->ForceFontAliasing(true);
 	if (font.SetFamilyAndStyle("SimHei", "Regular") == B_OK) {
 		btn->SetFont(&font, B_FONT_FAMILY_AND_STYLE);
@@ -65,7 +65,7 @@ TView::TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags)
 	AddChild(btn);
 	btn->ResizeToPreferred();
 
-	btn = new BButton(BRect(10, 150, 40, 180), NULL, "Disabled", new BMessage(BTN_NOT_ENABLED_MSG));
+	btn = new BButton(BRect(10, 150, 40, 180), "b>disabled", "Disabled", new BMessage(BTN_NOT_ENABLED_MSG));
 	btn->SetEnabled(false);
 	AddChild(btn);
 	btn->ResizeToPreferred();
@@ -108,12 +108,12 @@ TWindow::TWindow(BRect frame, const char *title, window_type type, uint32 flags,
 {
 	//	SetBackgroundColor(0, 255, 255);
 
-	BButton *btn = new BButton(BRect(10, 200, 40, 230), NULL, "Focus Button", new BMessage(BTN_FOCUS_MSG));
+	BButton *btn = new BButton(BRect(10, 200, 40, 230), "b>focus", "Focus Button", new BMessage(BTN_FOCUS_MSG));
 	AddChild(btn);
 	btn->ResizeToPreferred();
 	btn->MakeFocus(true);
 
-	BView *view = new TView(frame.OffsetToCopy(B_ORIGIN), NULL, B_FOLLOW_ALL, B_FRAME_EVENTS);
+	BView *view = new TView(frame.OffsetToCopy(B_ORIGIN), "v>wrapper", B_FOLLOW_ALL, B_FRAME_EVENTS);
 	AddChild(view);
 }
 

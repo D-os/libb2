@@ -134,7 +134,7 @@ class BView : public BHandler
 	virtual void MouseDown(BPoint where);
 	virtual void MouseUp(BPoint where);
 	virtual void MouseMoved(BPoint			where,
-							uint32			code,
+							uint32			transit,
 							const BMessage *a_message);
 	virtual void WindowActivated(bool state);
 	virtual void KeyDown(const char *bytes, int32 numBytes);
