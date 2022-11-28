@@ -2,6 +2,7 @@
 #define _CONTROL_H
 
 #include <Invoker.h>
+#include <Message.h>  // For convenience
 #include <View.h>
 
 enum {

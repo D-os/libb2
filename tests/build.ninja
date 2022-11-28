@@ -76,3 +76,8 @@ build $BUILDROOT/os/tests/interface/views.o: cxx system/os/tests/interface/views
 build $BUILDROOT/os/tests/interface_views: link $
   $BUILDROOT/os/tests/interface/views.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/minimal-app.o: cxx system/os/tests/interface/minimal-app.cpp
+build $BUILDROOT/os/tests/interface_minimal-app: link $
+  $BUILDROOT/os/tests/interface/minimal-app.o $
+| $SYSROOT/lib/libbe.so
