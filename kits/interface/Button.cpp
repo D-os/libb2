@@ -43,18 +43,23 @@ void BButton::Draw(BRect updateRect)
 		auto bounds = Bounds();
 
 		PushState();
+		auto currentHighColor = HighColor();
+		bool negate			  = false;
 
-		if (Value()) {
-			FillRect(bounds, B_SOLID_HIGH);
-		}
-		else if (!IsEnabled()) {
+		if (!IsEnabled()) {
 			FillRect(bounds, B_MIXED_COLORS);
+		}
+		else if (Value()) {
+			FillRect(bounds, B_SOLID_HIGH);
+			negate = true;
 		}
 
 		float x = bounds.right - font.StringWidth(label);
 		x -= (x - bounds.left) / 2;
 		BPoint pos{x, bounds.bottom - metrics.descent};
+		if (negate) SetHighColor(LowColor());  // negate color
 		DrawString(label, pos);
+		SetHighColor(currentHighColor);
 
 		SetPenSize(IsFocus() ? 2 : 1);
 		StrokeRect(bounds);
@@ -65,23 +70,19 @@ void BButton::Draw(BRect updateRect)
 
 void BButton::MouseDown(BPoint where)
 {
-	debugger(__PRETTY_FUNCTION__);
+	BControl::MouseDown(where);
+	SetValue(B_CONTROL_ON);
 }
 
-void BButton::AttachedToWindow()
+void BButton::MouseUp(BPoint where)
 {
-	BControl::AttachedToWindow();
+	BControl::MouseUp(where);
+	SetValue(B_CONTROL_OFF);
+}
 
-	// FIXME: this code does not work. Defaulting a default button is a no-op.
-	// The default state should be stored by MakeDefault() call and triggered here.
-	if (IsDefault()) {
-		Window()->SetDefaultButton(this);
-	}
-
-	// A button is automatically resized to its preferred height (but not to its preferred width)
-	float preferredHeight;
-	GetPreferredSize(nullptr, &preferredHeight);
-	ResizeTo(Bounds().Width(), preferredHeight);
+void BButton::MouseMoved(BPoint pt, uint32 code, const BMessage *msg)
+{
+	BControl::MouseMoved(pt, code, msg);
 }
 
 void BButton::KeyDown(const char *bytes, int32 numBytes)
@@ -120,14 +121,20 @@ void BButton::WindowActivated(bool state)
 	debugger(__PRETTY_FUNCTION__);
 }
 
-void BButton::MouseUp(BPoint pt)
+void BButton::AttachedToWindow()
 {
-	debugger(__PRETTY_FUNCTION__);
-}
+	BControl::AttachedToWindow();
 
-void BButton::MouseMoved(BPoint pt, uint32 code, const BMessage *msg)
-{
-	debugger(__PRETTY_FUNCTION__);
+	// FIXME: this code does not work. Defaulting a default button is a no-op.
+	// The default state should be stored by MakeDefault() call and triggered here.
+	if (IsDefault()) {
+		Window()->SetDefaultButton(this);
+	}
+
+	// A button is automatically resized to its preferred height (but not to its preferred width)
+	float preferredHeight;
+	GetPreferredSize(nullptr, &preferredHeight);
+	ResizeTo(Bounds().Width(), preferredHeight);
 }
 
 void BButton::DetachedFromWindow()
@@ -137,7 +144,7 @@ void BButton::DetachedFromWindow()
 
 void BButton::SetValue(int32 value)
 {
-	debugger(__PRETTY_FUNCTION__);
+	BControl::SetValue(value);
 }
 
 void BButton::GetPreferredSize(float *width, float *height)

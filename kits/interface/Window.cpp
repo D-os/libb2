@@ -67,6 +67,7 @@ class BWindow::impl
 
 	float pointer_x;
 	float pointer_y;
+	uint32 pointer_buttons;
 
 	bool hidden;
 	bool minimized;
@@ -98,6 +99,7 @@ class BWindow::impl
 		  title{nullptr},
 		  pointer_x{-1.0},
 		  pointer_y{-1.0},
+		  pointer_buttons{0},
 		  hidden{true},
 		  minimized{false},
 		  maximized{false},
@@ -157,6 +159,7 @@ class BWindow::impl
 	void minimize(bool minimized);
 
 	void pointer_motion(float x, float y);
+	void pointer_button(uint32_t button, uint32_t state);
 
    private:
 	std::mutex pool_mutex;
@@ -259,6 +262,7 @@ bool BWindow::impl::connect()
 	if (!xdg_toplevel) return false;
 	ALOGV("created xdg_toplevel");
 	xdg_toplevel_add_listener(xdg_toplevel, &xdg_toplevel_listener, this);
+	xdg_toplevel_set_app_id(xdg_toplevel, be_app->Name());
 	xdg_toplevel_set_title(xdg_toplevel, title ? title : "BWindow");
 	wl_surface_commit(wl_surface);
 
@@ -312,9 +316,10 @@ void BWindow::impl::resize_buffer()
 	wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, this);
 
 	wl_surface_attach(wl_surface, wl_buffer, 0, 0);
+	wl_surface_damage_buffer(wl_surface, 0, 0, INT32_MAX, INT32_MAX);
 
 #ifndef NDEBUG
-	/* Draw checkerboxed background */
+	/* Draw checkerboxed background to see drawing artifacts */
 	uint32_t *pixels = (uint32_t *)&pool_data[offset];
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
@@ -362,6 +367,25 @@ void BWindow::impl::pointer_motion(float x, float y)
 
 	BMessage mouseMoveMessage(B_MOUSE_MOVED);
 	mouseMoveMessage.AddPoint("screen_where", BPoint(x, y));
+	mouseMoveMessage.AddUInt32("buttons", this->pointer_buttons);
+	if (top_view.Window()) {
+		top_view.Window()->PostMessage(&mouseMoveMessage);
+	}
+}
+
+void BWindow::impl::pointer_button(uint32_t button, uint32_t state)
+{
+	uint32 button_mask = (1 << button);
+	if (state == WL_POINTER_BUTTON_STATE_RELEASED) {
+		this->pointer_buttons &= ~button_mask;
+	}
+	else {
+		this->pointer_buttons |= button_mask;
+	}
+
+	BMessage mouseMoveMessage(state == WL_POINTER_BUTTON_STATE_RELEASED ? B_MOUSE_UP : B_MOUSE_DOWN);
+	mouseMoveMessage.AddPoint("screen_where", BPoint(this->pointer_x, this->pointer_y));
+	mouseMoveMessage.AddUInt32("buttons", this->pointer_buttons);
 	if (top_view.Window()) {
 		top_view.Window()->PostMessage(&mouseMoveMessage);
 	}
@@ -424,15 +448,19 @@ void BWindow::impl::wl_surface_leave_handler(void *this_, struct wl_surface *sur
 void BWindow::impl::wl_buffer_release_handler(void *this_, struct wl_buffer *wl_buffer)
 {
 	// Sent by the compositor when it's no longer using this buffer
-	wl_buffer_destroy(wl_buffer);
+	if (wl_buffer == static_cast<BWindow::impl *>(this_)->wl_buffer) {
+		// if this is our surface buffer, we immediately reattach it as pending buffer
+		wl_surface_attach(static_cast<BWindow::impl *>(this_)->wl_surface, static_cast<BWindow::impl *>(this_)->wl_buffer, 0, 0);
+	}
+	else {
+		wl_buffer_destroy(wl_buffer);
+	}
 }
 
 void BWindow::impl::xdg_surface_configure_handler(void *this_, struct xdg_surface *xdg_surface, uint32_t serial)
 {
 	xdg_surface_ack_configure(xdg_surface, serial);
-
 	static_cast<BWindow::impl *>(this_)->resize_buffer();
-	wl_surface_commit(static_cast<BWindow::impl *>(this_)->wl_surface);
 }
 
 void BWindow::impl::xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xdg_wm_base, uint32_t serial)
@@ -523,6 +551,7 @@ void BWindow::impl::wl_pointer_motion_handler(void *this_, struct wl_pointer *wl
 void BWindow::impl::wl_pointer_button_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
 											  uint32_t time, uint32_t button, uint32_t state)
 {
+	static_cast<BWindow::impl *>(this_)->pointer_button(button, state);
 }
 
 void BWindow::impl::wl_pointer_axis_handler(void *this_, struct wl_pointer *wl_pointer,
@@ -533,6 +562,12 @@ void BWindow::impl::wl_pointer_axis_handler(void *this_, struct wl_pointer *wl_p
 SkCanvas *BWindow::_get_canvas() const
 {
 	return m->surface ? m->surface->getCanvas() : nullptr;
+}
+
+void BWindow::_damage_window(int32 x, int32 y, int32 width, int32 height)
+{
+	wl_surface_damage_buffer(m->wl_surface, x, y, width, height);
+	wl_surface_commit(m->wl_surface);
 }
 
 #pragma mark - BWindow
@@ -723,6 +758,12 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 		case B_MOUSE_MOVED:
 		case B_MOUSE_DOWN:
 		case B_MOUSE_UP: {
+			if (handler && handler != this) {
+				// pass on
+				handler->MessageReceived(message);
+				break;
+			}
+
 			BPoint screen_where;
 			if (message->FindPoint("screen_where", 0, &screen_where) != B_OK)
 				break;

@@ -180,8 +180,7 @@ void BView::MessageReceived(BMessage *message)
 				const rgb_color view_color(ViewColor());
 
 				// The Application Server paints the view with this color before any view-specific drawing functions are called.
-				// If you set the view color to B_TRANSPARENT_COLOR, the Application Server won't erase the view's clipping region before an update.
-				if ((fFlags & B_WILL_DRAW) && (view_color != B_TRANSPARENT_COLOR)) {
+				if (fFlags & B_WILL_DRAW) {
 					BRect updateRect;
 					if (message->FindRect("updateRect", &updateRect) == B_OK && updateRect.IsValid()) {
 						// combine with pending updates
@@ -214,24 +213,25 @@ void BView::MessageReceived(BMessage *message)
 						auto bounds = Bounds();
 						ConvertToScreen(&bounds);
 						canvas->clipRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1));
-						canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
+						// If you set the view color to B_TRANSPARENT_COLOR, the Application Server won't erase the view's clipping region before an update.
+						if (view_color != B_TRANSPARENT_COLOR)
+							canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
 
 						// Call hook function to Draw content
 						Draw(updateRect);
 
 						canvas->restoreToCount(checkpoint);
 
+						const auto damage{SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom)};
 #ifndef NDEBUG
 						// Draw green rectangles around views
 						SkPaint paint;
 						paint.setARGB(48, 0, 200, 0);
 						paint.setStyle(SkPaint::kStroke_Style);
-						canvas->drawRect(
-							SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom),
-							paint);
+						canvas->drawRect(damage, paint);
 #endif
 
-						canvas->flush();
+						fOwner->_damage_window(damage.left(), damage.top(), damage.width(), damage.height());
 					}
 				}
 				break;
@@ -266,10 +266,14 @@ void BView::MessageReceived(BMessage *message)
 				message->FindPoint("be:view_where", &where);
 				uint32 transit = 0;
 				message->FindUInt32("be:transit", &transit);
-				BMessage *dragMessage = nullptr;  // TODO: implement D'n'D
+				BMessage *dragMessage = new BMessage();
+				if (message->FindMessage("be:drag_message", dragMessage) != B_OK) {
+					delete dragMessage;
+					dragMessage = nullptr;
+				}
 
 				MouseMoved(where, transit, dragMessage);
-				// delete dragMessage;
+				delete dragMessage;
 				break;
 			}
 
@@ -542,6 +546,15 @@ void BView::TargetedByScrollView(BScrollView *scroll_view)
 
 void BView::GetMouse(BPoint *location, uint32 *buttons, bool checkMessageQueue)
 {
+	// uint32 eventOptions = fEventOptions | fMouseEventOptions;
+	// bool   noHistory	= eventOptions & B_NO_POINTER_HISTORY;
+	// bool   fullHistory	= eventOptions & B_FULL_POINTER_HISTORY;
+	if (checkMessageQueue /*&& !noHistory*/) {
+		// comb through window message queue for mouse move/button messages
+		debugger(__PRETTY_FUNCTION__);
+	}
+
+	// if not found read BWindow::impl cached ones
 	if (location) {
 		debugger(__PRETTY_FUNCTION__);
 	}
@@ -549,7 +562,6 @@ void BView::GetMouse(BPoint *location, uint32 *buttons, bool checkMessageQueue)
 		debugger(__PRETTY_FUNCTION__);
 	}
 	if (checkMessageQueue) {
-		debugger(__PRETTY_FUNCTION__);
 	}
 }
 

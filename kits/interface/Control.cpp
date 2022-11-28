@@ -9,7 +9,7 @@ BControl::BControl(BRect frame, const char *name, const char *label, BMessage *m
 	: BView(frame, name, resizeMask, flags | B_NAVIGABLE),
 	  BInvoker(message, this),
 	  fLabel(label ? strdup(label) : nullptr),
-	  fValue{0},
+	  fValue{B_CONTROL_OFF},
 	  fEnabled{true}
 {
 }
