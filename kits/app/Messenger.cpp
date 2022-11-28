@@ -91,7 +91,7 @@ status_t BMessenger::SendMessage(uint32 command, BHandler *reply_to) const
 
 status_t BMessenger::SendMessage(BMessage *message, BHandler *reply_to, bigtime_t timeout) const
 {
-	status_t result = message != NULL ? B_OK : B_BAD_VALUE;
+	status_t result = message != nullptr ? B_OK : B_BAD_VALUE;
 	if (result == B_OK) {
 		BMessenger replyMessenger(reply_to);
 		result = SendMessage(message, replyMessenger, timeout);

@@ -2,6 +2,7 @@
 
 #define LOG_TAG "BControl"
 
+#include <Message.h>
 #include <Window.h>
 #include <log/log.h>
 
@@ -147,8 +148,15 @@ void BControl::ResizeToPreferred()
 
 status_t BControl::Invoke(BMessage *msg)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	if (!msg) msg = Message();
+	if (!msg) return B_BAD_VALUE;
+
+	BMessage clone(*msg);
+	clone.AddInt64("when", system_time());
+	clone.AddPointer("source", this);
+	clone.AddInt32("be:value", fValue);
+
+	return BInvoker::Invoke(&clone);
 }
 
 BHandler *BControl::ResolveSpecifier(BMessage *msg, int32 index, BMessage *specifier, int32 form, const char *property)

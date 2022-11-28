@@ -91,5 +91,8 @@ BHandler *BInvoker::HandlerForReply() const
 
 status_t BInvoker::Invoke(BMessage *msg)
 {
-	return fMessenger.SendMessage(msg ? msg : fMessage, fReplyTo);
+	if (!msg) msg = fMessage;
+	if (!msg) return B_BAD_VALUE;
+
+	return fMessenger.SendMessage(fMessage, fReplyTo);
 }

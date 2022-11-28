@@ -125,19 +125,19 @@ void TWindow::MessageReceived(BMessage *msg)
 {
 	switch (msg->what) {
 		case BTN_HELLO_WORLD_EN_MSG:
-			dprintf(2, "Hello world button is pressed.\n");
+			dprintf(2, "=== Hello world button is pressed.\n");
 			break;
 
 		case BTN_HELLO_WORLD_IT_MSG:
-			dprintf(2, "Ciao mondo button is pressed.\n");
+			dprintf(2, "=== Ciao mondo button is pressed.\n");
 			break;
 
 		case BTN_NOT_ENABLED_MSG:
-			dprintf(2, "Not enabled button is pressed, it must be something error!\n");
+			dprintf(2, "=== Not enabled button is pressed, it must be some error!\n");
 			break;
 
 		case BTN_FOCUS_MSG:
-			dprintf(2, "Focus button is pressed.\n");
+			dprintf(2, "=== Focus button is pressed.\n");
 			SetFlags((Flags() & B_AVOID_FOCUS) ? Flags() & ~B_AVOID_FOCUS : Flags() | B_AVOID_FOCUS);
 			break;
 

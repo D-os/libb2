@@ -1140,10 +1140,10 @@ window_feel BWindow::Feel() const
 	return fFeel;
 }
 
-status_t BWindow::SetFlags(uint32)
+status_t BWindow::SetFlags(uint32 flags)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	fFlags = flags;
+	return B_OK;
 }
 
 uint32 BWindow::Flags() const

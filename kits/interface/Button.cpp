@@ -78,6 +78,7 @@ void BButton::MouseUp(BPoint where)
 {
 	BControl::MouseUp(where);
 	SetValue(B_CONTROL_OFF);
+	if (IsEnabled()) Invoke();
 }
 
 void BButton::MouseMoved(BPoint pt, uint32 code, const BMessage *msg)
@@ -168,8 +169,7 @@ void BButton::ResizeToPreferred()
 
 status_t BButton::Invoke(BMessage *msg)
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	return BControl::Invoke(msg);
 }
 
 void BButton::FrameMoved(BPoint new_position)
