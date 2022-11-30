@@ -74,6 +74,9 @@ class BWindow::impl
 	bool maximized;
 	bool closed;
 
+	bool surface_pending;	 /// surface has pending changes needing commit
+	bool surface_committed;	 /// surface is comitted, pending a reattach
+
 	impl()
 		: wl_display{nullptr},
 		  wl_registry{nullptr},
@@ -104,6 +107,9 @@ class BWindow::impl
 		  minimized{false},
 		  maximized{false},
 		  closed{false},
+
+		  surface_pending{false},
+		  surface_committed{false},
 
 		  wl_registry_listener{
 			  .global		 = wl_registry_global_handler,
@@ -142,6 +148,14 @@ class BWindow::impl
 	{
 	}
 
+	~impl()
+	{
+		// FIXME: _destroy all in proper order
+		if (wl_surface)
+			wl_surface_destroy(wl_surface);
+		// FIXME: _disconnect() gracefully
+	}
+
 	void set_size(size_t width, size_t height)
 	{
 		// frame coordinates are in the middle of pixels,
@@ -160,6 +174,8 @@ class BWindow::impl
 
 	void pointer_motion(float x, float y);
 	void pointer_button(uint32_t button, uint32_t state);
+
+	void damage(int32 x, int32 y, int32 width, int32 height);
 
    private:
 	std::mutex pool_mutex;
@@ -316,7 +332,9 @@ void BWindow::impl::resize_buffer()
 	wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, this);
 
 	wl_surface_attach(wl_surface, wl_buffer, 0, 0);
+	surface_committed = false;
 	wl_surface_damage_buffer(wl_surface, 0, 0, INT32_MAX, INT32_MAX);
+	surface_pending = true;
 
 #ifndef NDEBUG
 	/* Draw checkerboxed background to see drawing artifacts */
@@ -357,7 +375,7 @@ void BWindow::impl::resize(size_t width, size_t height)
 {
 	set_size(width, height);
 	resize_buffer();
-	wl_surface_commit(wl_surface);
+	surface_pending = true;
 }
 
 void BWindow::impl::pointer_motion(float x, float y)
@@ -389,6 +407,12 @@ void BWindow::impl::pointer_button(uint32_t button, uint32_t state)
 	if (top_view.Window()) {
 		top_view.Window()->PostMessage(&mouseMoveMessage);
 	}
+}
+
+void BWindow::impl::damage(int32 x, int32 y, int32 width, int32 height)
+{
+	wl_surface_damage_buffer(wl_surface, x, y, width, height);
+	surface_pending = true;
 }
 
 void BWindow::impl::wl_registry_global_handler(
@@ -451,6 +475,7 @@ void BWindow::impl::wl_buffer_release_handler(void *this_, struct wl_buffer *wl_
 	if (wl_buffer == static_cast<BWindow::impl *>(this_)->wl_buffer) {
 		// if this is our surface buffer, we immediately reattach it as pending buffer
 		wl_surface_attach(static_cast<BWindow::impl *>(this_)->wl_surface, static_cast<BWindow::impl *>(this_)->wl_buffer, 0, 0);
+		static_cast<BWindow::impl *>(this_)->surface_committed = false;
 	}
 	else {
 		wl_buffer_destroy(wl_buffer);
@@ -566,8 +591,7 @@ SkCanvas *BWindow::_get_canvas() const
 
 void BWindow::_damage_window(int32 x, int32 y, int32 width, int32 height)
 {
-	wl_surface_damage_buffer(m->wl_surface, x, y, width, height);
-	wl_surface_commit(m->wl_surface);
+	m->damage(x, y, width, height);
 }
 
 #pragma mark - BWindow
@@ -1255,11 +1279,20 @@ void BWindow::task_looper()
 		// process incoming events (if any)
 		wl_display_dispatch_pending(m->wl_display);
 
-		// process messages like BLooper
-		Lock();
-		_drain_message_queue();
-		if (!fTerminating) {
-			Unlock();
+		// only when not waiting for surface ready
+		if (!m->surface_committed) {
+			// process messages like BLooper
+			Lock();
+			_drain_message_queue();
+			if (!fTerminating) {
+				Unlock();
+			}
+
+			if (m->surface_pending) {
+				m->surface_pending = false;
+				wl_surface_commit(m->wl_surface);
+				m->surface_committed = true;
+			}
 		}
 	}
 
