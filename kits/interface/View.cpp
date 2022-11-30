@@ -110,7 +110,10 @@ BView::BView(BRect frame, const char *name, uint32 resizeMask, uint32 flags)
 	  fPrevSibling{nullptr},
 	  fFirstChild{nullptr},
 	  fShowLevel{0},
-	  fTopLevelView{false}
+	  fTopLevelView{false},
+	  fEventMask{0},
+	  fEventOptions{0},
+	  fMouseEventOptions{0}
 {
 	ALOGW_IF(((resizeMask & ~_RESIZE_MASK_) || (flags & _RESIZE_MASK_)),
 			 "%s: resizing mode or flags swapped", name);
@@ -263,31 +266,33 @@ void BView::MessageReceived(BMessage *message)
 
 			case B_MOUSE_MOVED: {
 				BPoint where;
-				message->FindPoint("be:view_where", &where);
 				uint32 transit = 0;
-				message->FindUInt32("be:transit", &transit);
-				BMessage *dragMessage = new BMessage();
-				if (message->FindMessage("be:drag_message", dragMessage) != B_OK) {
-					delete dragMessage;
-					dragMessage = nullptr;
-				}
+				if (message->FindPoint("be:view_where", &where) == B_OK
+					&& message->FindUInt32("be:transit", &transit) == B_OK) {
+					BMessage *dragMessage = new BMessage();
+					if (message->FindMessage("be:drag_message", dragMessage) != B_OK) {
+						delete dragMessage;
+						dragMessage = nullptr;
+					}
 
-				MouseMoved(where, transit, dragMessage);
-				delete dragMessage;
+					MouseMoved(where, transit, dragMessage);
+					delete dragMessage;
+				}
 				break;
 			}
 
 			case B_MOUSE_DOWN: {
 				BPoint where;
-				message->FindPoint("be:view_where", &where);
-				MouseDown(where);
+				if (message->FindPoint("be:view_where", &where) == B_OK)
+					MouseDown(where);
 				break;
 			}
 
 			case B_MOUSE_UP: {
 				BPoint where;
-				message->FindPoint("be:view_where", &where);
-				MouseUp(where);
+				if (message->FindPoint("be:view_where", &where) == B_OK)
+					MouseUp(where);
+				fMouseEventOptions = 0;
 				break;
 			}
 
@@ -504,7 +509,7 @@ void BView::MouseUp(BPoint where)
 	// Hook - default implementation does nothing
 }
 
-void BView::MouseMoved(BPoint where, uint32 transit, const BMessage *a_message)
+void BView::MouseMoved(BPoint where, uint32 transit, const BMessage *dnd)
 {
 	// Hook - default implementation does nothing
 }
@@ -1140,6 +1145,38 @@ void BView::Invalidate(const BRegion *invalRegion)
 void BView::Invalidate()
 {
 	Invalidate(Bounds());
+}
+
+status_t BView::SetEventMask(uint32 mask, uint32 options)
+{
+	if (fEventMask == mask && fEventOptions == options)
+		return B_OK;
+
+	// don't change the mask if it's zero and we've got options
+	if (mask != 0 || options == 0)
+		fEventMask = mask | (fEventMask & 0xFFFF0000);
+	fEventOptions = options;
+
+	return B_OK;
+}
+
+uint32 BView::EventMask()
+{
+	return fEventMask;
+}
+
+status_t BView::SetMouseEventMask(uint32 mask, uint32 options)
+{
+	// Just don't do anything if the view is not yet attached
+	// or we were called outside of BView::MouseDown()
+	if (fOwner && fOwner->CurrentMessage()
+		&& fOwner->CurrentMessage()->what == B_MOUSE_DOWN) {
+		fMouseEventOptions = options;
+
+		return B_OK;
+	}
+
+	return B_ERROR;
 }
 
 void BView::SetFlags(uint32 flags)

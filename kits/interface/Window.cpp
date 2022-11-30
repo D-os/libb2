@@ -814,7 +814,7 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 					if (fLastMouseMovedView) {
 						BMessage message_copy(*message);
 						message_copy.AddUInt32("be:transit", B_EXITED_VIEW);
-						message->AddPoint("be:view_where", fLastMouseMovedView->ConvertFromScreen(screen_where));
+						message_copy.AddPoint("be:view_where", fLastMouseMovedView->ConvertFromScreen(screen_where));
 						fLastMouseMovedView->MessageReceived(&message_copy);
 					}
 					message->AddUInt32("be:transit", B_ENTERED_VIEW);

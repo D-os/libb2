@@ -112,6 +112,18 @@ void BLooper::MessageReceived(BMessage *message)
 	return BHandler::MessageReceived(message);
 }
 
+BMessage *BLooper::CurrentMessage() const
+{
+	return fLastMessage;
+}
+
+BMessage *BLooper::DetachCurrentMessage()
+{
+	auto currentMessage = fLastMessage;
+	fLastMessage		= nullptr;
+	return currentMessage;
+}
+
 BMessageQueue *BLooper::MessageQueue() const
 {
 	return fQueue;
@@ -503,6 +515,8 @@ void BLooper::_drain_message_queue()
 			if (handler && handler->Looper() == this)
 				DispatchMessage(fLastMessage, handler);
 		}
+		// NOTE: mind that message might get detached during dispatch
+		// and fLastMessage is already null.
 
 		// Delete the current message (fLastMessage)
 		BMessage *message = fLastMessage;

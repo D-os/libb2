@@ -1154,4 +1154,14 @@ TEST_SUITE("BMessage")
 		CHECK(test.FindString("foo", 0, &value) == B_OK);
 		CHECK(std::string(value, 3) == "baz");
 	}
+	TEST_CASE("restore data")
+	{
+		BMessage test('_TS_');
+
+		BPoint point(50.0, 26.0);
+		test.AddPoint("point", point);
+		BPoint loaded_point;
+		test.FindPoint("point", &loaded_point);
+		CHECK(point == loaded_point);
+	}
 }

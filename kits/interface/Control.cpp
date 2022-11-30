@@ -11,7 +11,8 @@ BControl::BControl(BRect frame, const char *name, const char *label, BMessage *m
 	  BInvoker(message, this),
 	  fLabel(label ? strdup(label) : nullptr),
 	  fValue{B_CONTROL_OFF},
-	  fEnabled{true}
+	  fEnabled{true},
+	  fTracking{false}
 {
 }
 
@@ -75,9 +76,9 @@ void BControl::MouseUp(BPoint pt)
 	BView::MouseUp(pt);
 }
 
-void BControl::MouseMoved(BPoint pt, uint32 code, const BMessage *msg)
+void BControl::MouseMoved(BPoint pt, uint32 transit, const BMessage *dnd)
 {
-	BView::MouseMoved(pt, code, msg);
+	BView::MouseMoved(pt, transit, dnd);
 }
 
 void BControl::DetachedFromWindow()
@@ -178,4 +179,14 @@ void BControl::AllAttached()
 void BControl::AllDetached()
 {
 	BView::AllDetached();
+}
+
+bool BControl::IsTracking() const
+{
+	return fTracking;
+}
+
+void BControl::SetTracking(bool state)
+{
+	fTracking = state;
 }

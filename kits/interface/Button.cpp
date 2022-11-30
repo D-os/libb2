@@ -71,19 +71,44 @@ void BButton::Draw(BRect updateRect)
 void BButton::MouseDown(BPoint where)
 {
 	BControl::MouseDown(where);
+
+	if (!IsEnabled())
+		return;
+
 	SetValue(B_CONTROL_ON);
+
+	SetTracking(true);
+	SetMouseEventMask(B_POINTER_EVENTS, B_LOCK_WINDOW_FOCUS);
 }
 
 void BButton::MouseUp(BPoint where)
 {
 	BControl::MouseUp(where);
-	SetValue(B_CONTROL_OFF);
-	if (IsEnabled()) Invoke();
+
+	if (!IsTracking())
+		return;
+
+	SetTracking(false);
+
+	if (Value() != B_CONTROL_OFF) {
+		SetValue(B_CONTROL_OFF);
+
+		if (IsEnabled()) Invoke();
+	}
 }
 
-void BButton::MouseMoved(BPoint pt, uint32 code, const BMessage *msg)
+void BButton::MouseMoved(BPoint pt, uint32 transit, const BMessage *dnd)
 {
-	BControl::MouseMoved(pt, code, msg);
+	BControl::MouseMoved(pt, transit, dnd);
+
+	if (!IsTracking())
+		return;
+
+	if (transit == B_EXITED_VIEW)
+		SetValue(B_CONTROL_OFF);
+
+	if (transit == B_ENTERED_VIEW)
+		SetValue(B_CONTROL_ON);
 }
 
 void BButton::KeyDown(const char *bytes, int32 numBytes)

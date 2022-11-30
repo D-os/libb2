@@ -32,7 +32,7 @@ class BControl : public BView, public BInvoker
 	virtual void KeyDown(const char *bytes, int32 numBytes);
 	virtual void MouseDown(BPoint pt);
 	virtual void MouseUp(BPoint pt);
-	virtual void MouseMoved(BPoint pt, uint32 code, const BMessage *msg);
+	virtual void MouseMoved(BPoint pt, uint32 transit, const BMessage *dnd);
 	virtual void DetachedFromWindow();
 
 	virtual void SetLabel(const char *text);
@@ -72,7 +72,7 @@ class BControl : public BView, public BInvoker
 	int32		fValue;
 	bool		fEnabled;
 	// bool		fFocusChanging;
-	// bool		fTracking;
+	bool fTracking;
 	// bool		fWantsNav;
 };
 

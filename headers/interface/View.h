@@ -133,9 +133,7 @@ class BView : public BHandler
 	virtual void Draw(BRect updateRect);
 	virtual void MouseDown(BPoint where);
 	virtual void MouseUp(BPoint where);
-	virtual void MouseMoved(BPoint			where,
-							uint32			transit,
-							const BMessage *a_message);
+	virtual void MouseMoved(BPoint where, uint32 transit, const BMessage *dnd);
 	virtual void WindowActivated(bool state);
 	virtual void KeyDown(const char *bytes, int32 numBytes);
 	virtual void KeyUp(const char *bytes, int32 numBytes);
@@ -491,6 +489,10 @@ class BView : public BHandler
 	BView	  *fFirstChild;
 	int16		fShowLevel;
 	bool		fTopLevelView;
+	uint32		fEventMask;
+	uint32		fEventOptions;
+	uint32		fMouseEventOptions;
+
 	pimpl<impl> fState;
 };
 
