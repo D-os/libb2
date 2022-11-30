@@ -249,6 +249,8 @@ class BWindow : public BLooper
 	window_look fLook;
 	window_feel fFeel;
 
+	uint32 fViewsEvents;
+
 	class impl;
 	pimpl<impl> m;
 	SkCanvas	 *_get_canvas() const;

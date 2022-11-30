@@ -491,6 +491,7 @@ class BView : public BHandler
 	bool		fTopLevelView;
 	uint32		fEventMask;
 	uint32		fEventOptions;
+	uint32		fMouseEventMask;
 	uint32		fMouseEventOptions;
 
 	pimpl<impl> fState;

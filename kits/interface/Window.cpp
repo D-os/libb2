@@ -607,8 +607,10 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 	  fFlags{flags},
 	  fFocus{nullptr},
 	  fLastMouseMovedView{nullptr},
+	  fDefaultButton{nullptr},
 	  fLook{look},
-	  fFeel{feel}
+	  fFeel{feel},
+	  fViewsEvents{0}
 {
 	frame.left	 = roundf(frame.left);
 	frame.top	 = roundf(frame.top);
@@ -807,7 +809,38 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 					}
 				}
 			}
-			ALOGV("found viewUnderPointer %p %s", viewUnderPointer, viewUnderPointer->Name());
+			ALOGV("found viewUnderPointer %p %s %x", viewUnderPointer, viewUnderPointer->Name(), fViewsEvents);
+
+			if (fViewsEvents & B_POINTER_EVENTS) {
+				bool still_wanted_pointer_events = false;
+
+				std::function<void(BView *)> send_events = [&](BView *view) {
+					for (BView *child = view->fFirstChild; child; child = child->fNextSibling) {
+						if (child->EventMask() & B_POINTER_EVENTS) {
+							still_wanted_pointer_events = true;
+
+							if (child != viewUnderPointer) {
+								BMessage message_copy(*message);
+								if (message_copy.what == B_MOUSE_MOVED) {
+									message_copy.AddUInt32("be:transit", B_OUTSIDE_VIEW);
+								}
+								else {
+									message_copy.AddPoint("where", child->ConvertFromScreen(screen_where));
+								}
+								message_copy.AddPoint("be:view_where", child->ConvertFromScreen(screen_where));
+								child->MessageReceived(&message_copy);
+							}
+						}
+
+						send_events(child);
+					}
+				};
+
+				send_events(&m->top_view);
+				if (!still_wanted_pointer_events) {
+					fViewsEvents &= ~B_POINTER_EVENTS;
+				}
+			}
 
 			if (message->what == B_MOUSE_MOVED) {
 				if (fLastMouseMovedView != viewUnderPointer) {

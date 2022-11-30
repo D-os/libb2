@@ -113,6 +113,7 @@ BView::BView(BRect frame, const char *name, uint32 resizeMask, uint32 flags)
 	  fTopLevelView{false},
 	  fEventMask{0},
 	  fEventOptions{0},
+	  fMouseEventMask{0},
 	  fMouseEventOptions{0}
 {
 	ALOGW_IF(((resizeMask & ~_RESIZE_MASK_) || (flags & _RESIZE_MASK_)),
@@ -292,6 +293,7 @@ void BView::MessageReceived(BMessage *message)
 				BPoint where;
 				if (message->FindPoint("be:view_where", &where) == B_OK)
 					MouseUp(where);
+				fMouseEventMask	   = 0;
 				fMouseEventOptions = 0;
 				break;
 			}
@@ -1157,12 +1159,16 @@ status_t BView::SetEventMask(uint32 mask, uint32 options)
 		fEventMask = mask | (fEventMask & 0xFFFF0000);
 	fEventOptions = options;
 
+	if (fOwner) {
+		fOwner->fViewsEvents |= mask;
+	}
+
 	return B_OK;
 }
 
 uint32 BView::EventMask()
 {
-	return fEventMask;
+	return fEventMask | fMouseEventMask;
 }
 
 status_t BView::SetMouseEventMask(uint32 mask, uint32 options)
@@ -1171,7 +1177,10 @@ status_t BView::SetMouseEventMask(uint32 mask, uint32 options)
 	// or we were called outside of BView::MouseDown()
 	if (fOwner && fOwner->CurrentMessage()
 		&& fOwner->CurrentMessage()->what == B_MOUSE_DOWN) {
+		fMouseEventMask	   = mask;
 		fMouseEventOptions = options;
+
+		fOwner->fViewsEvents |= mask;
 
 		return B_OK;
 	}
