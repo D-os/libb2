@@ -44,7 +44,8 @@ static void _thread_init(void)
     size_t size;
     pthread_attr_getstack(&attr, &_info->stack_base, &size);
     _info->stack_end = (char*)_info->stack_base + size;
-    /* add it as first thread */
+	pipe2(_info->data_pipe, 0);
+	/* add it as first thread */
     _threads_wlock();
     DL_APPEND(_threads, _info);
     _threads_unlock();
