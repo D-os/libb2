@@ -996,9 +996,10 @@ std::ostream &operator<<(std::ostream &os, const BMessage &value)
 	char buf[11];
 	sprint_code(buf, &value.what);
 
-	os << buf << ")" << std::endl;
+	os << buf << ")";
 
 	if (value.m->hasNodes()) {
+		os << std::endl;
 		size_t index = 0;
 		for (auto &node : value.m->nodes()) {
 			sprint_code(buf, &node.type);

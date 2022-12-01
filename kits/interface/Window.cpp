@@ -809,7 +809,7 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 					}
 				}
 			}
-			ALOGV("found viewUnderPointer %p %s %x", viewUnderPointer, viewUnderPointer->Name(), fViewsEvents);
+			// ALOGV("found viewUnderPointer %p %s %x", viewUnderPointer, viewUnderPointer->Name(), fViewsEvents);
 
 			if (fViewsEvents & B_POINTER_EVENTS) {
 				bool still_wanted_pointer_events = false;

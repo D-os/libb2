@@ -177,7 +177,7 @@ void BView::AllDetached()
 
 void BView::MessageReceived(BMessage *message)
 {
-	ALOGV("MessageReceived @%s 0x%x: %.4s", Name(), message->what, (char *)&message->what);
+	ALOGV_IF(message->what != B_MOUSE_MOVED, "MessageReceived @%s 0x%x: %.4s", Name(), message->what, (char *)&message->what);
 	if (!message->HasSpecifiers()) {
 		switch (message->what) {
 			case _UPDATE_: {

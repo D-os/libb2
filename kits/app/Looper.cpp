@@ -484,7 +484,7 @@ void BLooper::task_looper()
 void BLooper::_drain_message_queue()
 {
 	while ((fLastMessage = fQueue->NextMessage())) {
-		ALOGV("fLastMessage: 0x%x: %.4s", fLastMessage->what, (char *)&fLastMessage->what);
+		ALOGV_IF(fLastMessage->what != B_MOUSE_MOVED, "fLastMessage: 0x%x: %.4s", fLastMessage->what, (char *)&fLastMessage->what);
 		INFO(*fLastMessage);
 
 		BHandler *handler = fLastMessage->_get_handler();

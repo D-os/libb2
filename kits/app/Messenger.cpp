@@ -112,15 +112,14 @@ status_t BMessenger::SendMessage(BMessage *message, BMessenger reply_to, bigtime
 		BLooper	*looper;
 		BHandler *handler = Target(&looper);
 		if (handler) {
-			ALOGV("handler delivery");
+			ALOGV("handler delivery 0x%x: %.4s to '%s'", message->what, (char *)&message->what, handler->Name());
 			handler->MessageReceived(message);
 			return B_OK;
 		}
 		else if (looper) {
-			ALOGV("looper delivery");
 			BHandler *reply_handler = reply_to.Target(nullptr);
 			if (!reply_handler) reply_handler = be_app_messenger.Target(nullptr);
-			ALOGV("BMessenger::SendMessage %p %p", reply_handler, looper);
+			ALOGV("looper delivery 0x%x: %.4s to '%s' (reply: %p)", message->what, (char *)&message->what, looper->Name(), reply_handler);
 			return looper->PostMessage(message, nullptr, reply_handler);
 		}
 		else {
