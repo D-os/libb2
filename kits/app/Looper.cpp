@@ -22,6 +22,7 @@ BLooper::BLooper(const char *name, int32 priority, int32 _port_capacity)
 	  fOwner{B_ERROR},
 	  fThread{B_ERROR},
 	  fInitPriority{priority},
+	  fPreferred{nullptr},
 	  fTerminating{false},
 	  fRunCalled{false}
 {
@@ -489,7 +490,7 @@ void BLooper::_drain_message_queue()
 
 		BHandler *handler = fLastMessage->_get_handler();
 		if (handler == nullptr) {
-			ALOGV("use preferred target");
+			ALOGV("use preferred target: %p:%s", fPreferred, fPreferred ? fPreferred->Name() : nullptr);
 			handler = fPreferred;
 			if (handler == nullptr)
 				handler = this;
@@ -514,6 +515,9 @@ void BLooper::_drain_message_queue()
 			// ALOGV("_TopLevelFilter(): %p", handler);
 			if (handler && handler->Looper() == this)
 				DispatchMessage(fLastMessage, handler);
+		}
+		else {
+			ALOGW("Message 0x%x: %.4s did not get dispatched", fLastMessage->what, (char *)&fLastMessage->what);
 		}
 		// NOTE: mind that message might get detached during dispatch
 		// and fLastMessage is already null.
