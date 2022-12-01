@@ -56,7 +56,7 @@ void BButton::Draw(BRect updateRect)
 
 		float x = bounds.right - font.StringWidth(label);
 		x -= (x - bounds.left) / 2;
-		BPoint pos{x, bounds.bottom - metrics.descent};
+		BPoint pos{x, (bounds.bottom - bounds.top + metrics.ascent) / 2};
 		if (negate) SetHighColor(LowColor());  // negate color
 		DrawString(label, pos);
 		SetHighColor(currentHighColor);
@@ -160,7 +160,7 @@ void BButton::AttachedToWindow()
 	// A button is automatically resized to its preferred height (but not to its preferred width)
 	float preferredHeight;
 	GetPreferredSize(nullptr, &preferredHeight);
-	ResizeTo(Bounds().Width(), preferredHeight);
+	ResizeTo(Bounds().Width(), std::max(preferredHeight, Bounds().Height()));
 }
 
 void BButton::DetachedFromWindow()
