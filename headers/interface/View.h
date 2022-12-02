@@ -488,7 +488,6 @@ class BView : public BHandler
 	BView	  *fPrevSibling;
 	BView	  *fFirstChild;
 	int16		fShowLevel;
-	bool		fTopLevelView;
 	uint32		fEventMask;
 	uint32		fEventOptions;
 	uint32		fMouseEventMask;

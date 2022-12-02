@@ -104,29 +104,21 @@ void BView::impl::fill_pattern(rgb_color pixels[8 * 8], pattern &p)
 
 BView::BView(BRect frame, const char *name, uint32 resizeMask, uint32 flags)
 	: BHandler(name),
+	  fFlags{0},  // updated in constructor
 	  fOwner{nullptr},
 	  fParent{nullptr},
 	  fNextSibling{nullptr},
 	  fPrevSibling{nullptr},
 	  fFirstChild{nullptr},
 	  fShowLevel{0},
-	  fTopLevelView{false},
 	  fEventMask{0},
 	  fEventOptions{0},
 	  fMouseEventMask{0},
 	  fMouseEventOptions{0}
 {
-	ALOGW_IF(((resizeMask & ~_RESIZE_MASK_) || (flags & _RESIZE_MASK_)),
-			 "%s: resizing mode or flags swapped", name);
-
-	// There are applications that swap the resize mask and the flags in the
-	// BView constructor. This does not cause problems under BeOS as it just
-	// ors the two fields to one 32bit flag.
-	// For now we do the same but print the above warning message.
-	// TODO: this should be removed at some point and the original
-	// version restored:
-	// fFlags = (resizeMask & _RESIZE_MASK_) | (flags & ~_RESIZE_MASK_);
-	fFlags = resizeMask | flags;
+	LOG_ALWAYS_FATAL_IF(((resizeMask & ~_RESIZE_MASK_) || (flags & _RESIZE_MASK_)),
+						"%s: resizing mode or flags swapped", name);
+	SetFlags((resizeMask & _RESIZE_MASK_) | (flags & ~_RESIZE_MASK_));
 
 	frame.left	 = floorf(frame.left);
 	frame.top	 = floorf(frame.top);
@@ -148,6 +140,12 @@ BArchivable *BView::Instantiate(BMessage *data)
 	debugger(__PRETTY_FUNCTION__);
 	return nullptr;
 }
+
+#define _CheckLock                                                        \
+	if (fOwner && !fOwner->IsLocked()) {                                  \
+		ALOGW("%s: Window '%s' should be locked when updating View '%s'", \
+			  __PRETTY_FUNCTION__, fOwner->Name(), Name());               \
+	}
 
 status_t BView::Archive(BMessage *data, bool deep) const
 {
@@ -533,17 +531,17 @@ void BView::KeyUp(const char *bytes, int32 numBytes)
 
 void BView::Pulse()
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook - default implementation does nothing
 }
 
 void BView::FrameMoved(BPoint new_position)
 {
-	// Hook function
+	// Hook - default implementation does nothing
 }
 
 void BView::FrameResized(float new_width, float new_height)
 {
-	// Hook function
+	// Hook - default implementation does nothing
 }
 
 void BView::TargetedByScrollView(BScrollView *scroll_view)
@@ -1190,12 +1188,32 @@ status_t BView::SetMouseEventMask(uint32 mask, uint32 options)
 
 void BView::SetFlags(uint32 flags)
 {
-	fFlags = flags;
+	if (Flags() == flags)
+		return;
+
+	/* Some useful info:
+	 * fFlags is a unsigned long (32 bits)
+	 * bits 1-16 are used for BView's flags
+	 * bits 17-32 are used for BView' resize mask
+	 * _RESIZE_MASK_ is used for that. Look into View.h to see how it is defined
+	 */
+	uint32 changes_flags = flags ^ fFlags;
+	fFlags				 = (flags & ~_RESIZE_MASK_) | (fFlags & _RESIZE_MASK_);
+
+	if (fOwner) {
+		_CheckLock;
+		if (changes_flags & B_PULSE_NEEDED) {
+			fOwner->fViewsEvents |= B_PULSE_NEEDED;
+			fOwner->_try_pulse();
+		}
+	}
+
+	// fState->archiving_flags |= B_VIEW_FLAGS_BIT;
 }
 
 uint32 BView::Flags() const
 {
-	return fFlags;
+	return fFlags & ~_RESIZE_MASK_;
 }
 
 void BView::SetResizingMode(uint32 mode)
@@ -1301,7 +1319,7 @@ void BView::_attach(BWindow *window)
 
 	fOwner		  = window;
 	fOwner->AddHandler(this);
-	fTopLevelView = true;
+	fOwner->fViewsEvents |= fFlags & B_PULSE_NEEDED;
 
 	AttachedToWindow();
 

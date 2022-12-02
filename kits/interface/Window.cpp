@@ -594,6 +594,18 @@ void BWindow::_damage_window(int32 x, int32 y, int32 width, int32 height)
 	m->damage(x, y, width, height);
 }
 
+void BWindow::_try_pulse()
+{
+	// generate pulse message if needed
+	if (fViewsEvents & B_PULSE_NEEDED && fPulseRate > 0) {
+		bigtime_t currentTime = system_time();
+		if (currentTime >= fPulsedTime + fPulseRate) {
+			fPulsedTime = currentTime;
+			PostMessage(B_PULSE);
+		}
+	}
+}
+
 #pragma mark - BWindow
 
 BWindow::BWindow(BRect frame, const char *title, window_type type, uint32 flags, uint32 workspace)
@@ -608,9 +620,11 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 	  fFocus{nullptr},
 	  fLastMouseMovedView{nullptr},
 	  fDefaultButton{nullptr},
+	  fPulseRate{500000},
 	  fLook{look},
 	  fFeel{feel},
-	  fViewsEvents{0}
+	  fViewsEvents{0},
+	  fPulsedTime{0}
 {
 	frame.left	 = roundf(frame.left);
 	frame.top	 = roundf(frame.top);
@@ -868,11 +882,27 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 		}
 
 		case B_PULSE:
-			// if (handler == this && fPulseRunner) {
-			// 	m->top_view._Pulse();
-			// }
-			// else
-			handler->MessageReceived(message);
+			if (handler == this) {
+				bool still_wanted_pulses = false;
+
+				std::function<void(BView *)> send_pulse = [&](BView *view) {
+					for (BView *child = view->fFirstChild; child; child = child->fNextSibling) {
+						if (child->Flags() & B_PULSE_NEEDED) {
+							still_wanted_pulses = true;
+							child->Pulse();
+						}
+
+						send_pulse(child);
+					}
+				};
+
+				send_pulse(&m->top_view);
+				if (!still_wanted_pulses) {
+					fViewsEvents &= ~B_PULSE_NEEDED;
+				}
+			}
+			else
+				handler->MessageReceived(message);
 			break;
 
 		case _UPDATE_:
@@ -952,6 +982,19 @@ void BWindow::Zoom()
 void BWindow::ScreenChanged(BRect screen_size, color_space depth)
 {
 	debugger(__PRETTY_FUNCTION__);
+}
+
+void BWindow::SetPulseRate(bigtime_t rate)
+{
+	if (fPulseRate == rate) return;
+
+	fPulseRate = rate;
+	_try_pulse();
+}
+
+bigtime_t BWindow::PulseRate() const
+{
+	return fPulseRate;
 }
 
 void BWindow::SetDefaultButton(BButton *button)
@@ -1266,6 +1309,7 @@ void BWindow::task_looper()
 #define MAX_EVENTS 4
 	struct epoll_event events[MAX_EVENTS];
 	int				   nfds;
+	bool			   wl_did_read = false;
 
 	// loop: As long as we are not terminating.
 	while (!fTerminating) {
@@ -1274,9 +1318,10 @@ void BWindow::task_looper()
 			wl_display_dispatch_pending(m->wl_display);
 		// send all outgoing messages (if any)
 		wl_display_flush(m->wl_display);
+		wl_did_read = false;
 
 		// wait until something happens
-		nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
+		nfds = epoll_wait(epollfd, events, MAX_EVENTS, fPulseRate > 0 ? fPulseRate / 1000 : -1);
 		if (nfds == -1) {
 			debugger("epoll_wait");
 		}
@@ -1288,11 +1333,9 @@ void BWindow::task_looper()
 					abort();
 				}
 
-				if (events[n].events & EPOLLERR) {
-					wl_display_cancel_read(m->wl_display);
-				}
-				else {
+				if (!(events[n].events & EPOLLERR)) {
 					wl_display_read_events(m->wl_display);
+					wl_did_read = true;
 				}
 			}
 
@@ -1309,8 +1352,13 @@ void BWindow::task_looper()
 			}
 		}
 
-		// process incoming events (if any)
-		wl_display_dispatch_pending(m->wl_display);
+		if (wl_did_read)
+			// process incoming events (if any)
+			wl_display_dispatch_pending(m->wl_display);
+		else
+			wl_display_cancel_read(m->wl_display);
+
+		_try_pulse();
 
 		// only when not waiting for surface ready
 		if (!m->surface_committed) {

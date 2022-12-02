@@ -5,7 +5,8 @@
 class HelloWorldView : public BStringView
 {
    public:
-	HelloWorldView(BRect rect, const char *name, const char *text) : BStringView(rect, name, text)
+	HelloWorldView(BRect rect, const char *name, const char *text)
+		: BStringView(rect, name, text, B_FOLLOW_LEFT | B_FOLLOW_BOTTOM, B_WILL_DRAW | B_PULSE_NEEDED)
 	{
 		SetFont(be_bold_font);
 		SetFontSize(24);

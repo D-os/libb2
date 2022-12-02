@@ -246,15 +246,18 @@ class BWindow : public BLooper
 	BView	  *fFocus;
 	BView	  *fLastMouseMovedView;
 	BButton	*fDefaultButton;
+	bigtime_t	fPulseRate;
 	window_look fLook;
 	window_feel fFeel;
 
-	uint32 fViewsEvents;
+	uint32	  fViewsEvents;
+	bigtime_t fPulsedTime;
 
 	class impl;
 	pimpl<impl> m;
 	SkCanvas	 *_get_canvas() const;
 	void		  _damage_window(int32 x, int32 y, int32 width, int32 height);
+	void		  _try_pulse();
 };
 
 inline void BWindow::Close()
