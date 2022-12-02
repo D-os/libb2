@@ -52,6 +52,8 @@ class BButton : public BControl
 
    private:
 	BButton &operator=(const BButton &);
+
+	bool fDrawAsDefault;
 };
 
 #endif /* _BUTTON_H */

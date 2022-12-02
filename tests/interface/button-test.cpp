@@ -37,6 +37,7 @@
 #define BTN_HELLO_WORLD_IT_MSG 'btn2'
 #define BTN_NOT_ENABLED_MSG 'btn3'
 #define BTN_FOCUS_MSG 'btn4'
+#define BTN_DEFAULT_MSG 'btn5'
 
 class TView : public BView
 {
@@ -69,6 +70,10 @@ TView::TView(BRect frame, const char *name, uint32 resizingMode, uint32 flags)
 	btn->SetEnabled(false);
 	AddChild(btn);
 	btn->ResizeToPreferred();
+
+	btn = new BButton(BRect(10, 300, 140, 340), "b>default", "Default button", new BMessage(BTN_DEFAULT_MSG));
+	btn->MakeDefault(true);
+	AddChild(btn);
 }
 
 TView::~TView()
@@ -139,6 +144,10 @@ void TWindow::MessageReceived(BMessage *msg)
 		case BTN_FOCUS_MSG:
 			dprintf(2, "=== Focus button is pressed.\n");
 			SetFlags((Flags() & B_AVOID_FOCUS) ? Flags() & ~B_AVOID_FOCUS : Flags() | B_AVOID_FOCUS);
+			break;
+
+		case BTN_DEFAULT_MSG:
+			dprintf(2, "=== Default button is pressed.\n");
 			break;
 
 		default:

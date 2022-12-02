@@ -7,7 +7,8 @@
 #include <log/log.h>
 
 BButton::BButton(BRect frame, const char *name, const char *label, BMessage *message, uint32 resizeMask, uint32 flags)
-	: BControl(frame, name, label, message, resizeMask, flags) {}
+	: BControl(frame, name, label, message, resizeMask, flags),
+	  fDrawAsDefault{false} {}
 
 BButton::~BButton() {}
 
@@ -54,14 +55,18 @@ void BButton::Draw(BRect updateRect)
 			negate = true;
 		}
 
-		float x = bounds.right - font.StringWidth(label);
-		x -= (x - bounds.left) / 2;
-		BPoint pos{x, (bounds.bottom - bounds.top + metrics.ascent) / 2};
+		float X = bounds.right - font.StringWidth(label);
+		X -= (X - bounds.left) / 2;
+		float Y = bounds.bottom - metrics.descent;
+		if (bounds.Height() > metrics.leading)
+			Y -= (bounds.Height() - metrics.leading) / 2;
+		BPoint pos{X, Y};
+
 		if (negate) SetHighColor(LowColor());  // negate color
 		DrawString(label, pos);
 		SetHighColor(currentHighColor);
 
-		SetPenSize(IsFocus() ? 2 : 1);
+		SetPenSize(IsFocus() ? 2 : (IsDefault() ? 3 : 1));
 		StrokeRect(bounds);
 
 		PopState();
@@ -118,6 +123,7 @@ void BButton::KeyDown(const char *bytes, int32 numBytes)
 
 void BButton::MakeDefault(bool state)
 {
+	fDrawAsDefault = state;
 	if (IsDefault() == state) return;
 
 	Window()->SetDefaultButton(state ? this : nullptr);
@@ -132,6 +138,9 @@ bool BButton::IsDefault() const
 {
 	if (Window()) {
 		return Window()->DefaultButton() == this;
+	}
+	else {
+		return fDrawAsDefault;
 	}
 
 	return false;
@@ -151,9 +160,7 @@ void BButton::AttachedToWindow()
 {
 	BControl::AttachedToWindow();
 
-	// FIXME: this code does not work. Defaulting a default button is a no-op.
-	// The default state should be stored by MakeDefault() call and triggered here.
-	if (IsDefault()) {
+	if (fDrawAsDefault) {
 		Window()->SetDefaultButton(this);
 	}
 
