@@ -18,7 +18,7 @@ bool _setDebugFlag(bool);
 int _debugPrintf(const char *, ...);
 int _sPrintf(const char *, ...);
 int _xdebugPrintf(const char *, ...);
-int _debuggerAssert(const char *, int, char *);
+int _debuggerAssert(const char *, int, const char *);
 #ifdef __cplusplus
 }
 #endif

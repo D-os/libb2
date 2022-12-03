@@ -5,6 +5,7 @@
 #include <Application.h>
 #include <Autolock.h>
 #include <Button.h>
+#include <Debug.h>
 #include <Message.h>
 #include <MessageQueue.h>
 #include <Point.h>
@@ -20,9 +21,11 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 #include <wayland-cursor.h>
+#include <xkbcommon/xkbcommon.h>
 
 #include <cstddef>
 #include <cstring>
+#include <format>
 #include <system_error>
 
 #include "xdg-shell-client-protocol.h"
@@ -47,6 +50,7 @@ class BWindow::impl
 	struct wl_pointer	  *wl_pointer;
 	struct wl_surface	  *cursor_surface;
 	struct wl_cursor_image *cursor_image;
+	struct wl_keyboard	   *wl_keyboard;
 
 	/* Backing */
 	size_t				  width;
@@ -56,6 +60,11 @@ class BWindow::impl
 	int					  pool_fd;
 	uint8_t			  *pool_data;
 	struct wl_buffer	 *wl_buffer;
+
+	/* XKB */
+	struct xkb_state	 *xkb_state;
+	struct xkb_context *xkb_context;
+	struct xkb_keymap  *xkb_keymap;
 
 	/* Drawing */
 	SkImageInfo		 info;
@@ -90,6 +99,8 @@ class BWindow::impl
 		  wl_pointer{nullptr},
 		  cursor_surface{nullptr},
 		  cursor_image{nullptr},
+		  wl_keyboard{nullptr},
+
 		  width{0},
 		  height{0},
 		  wl_shm_pool{nullptr},
@@ -97,6 +108,10 @@ class BWindow::impl
 		  pool_fd{-1},
 		  pool_data{nullptr},
 		  wl_buffer{nullptr},
+
+		  xkb_state{nullptr},
+		  xkb_context{nullptr},
+		  xkb_keymap{nullptr},
 
 		  top_view(BRect(B_ORIGIN, B_ORIGIN), "TopView", B_FOLLOW_ALL, B_WILL_DRAW),
 		  title{nullptr},
@@ -137,6 +152,7 @@ class BWindow::impl
 		  },
 		  wl_seat_listener{
 			  .capabilities = wl_seat_capabilities_handler,
+			  .name			= wl_seat_name_handler,
 		  },
 		  wl_pointer_listener{
 			  .enter  = wl_pointer_enter_handler,
@@ -144,6 +160,14 @@ class BWindow::impl
 			  .motion = wl_pointer_motion_handler,
 			  .button = wl_pointer_button_handler,
 			  .axis	  = wl_pointer_axis_handler,
+		  },
+		  wl_keyboard_listener{
+			  .keymap	   = wl_keyboard_keymap,
+			  .enter	   = wl_keyboard_enter,
+			  .leave	   = wl_keyboard_leave,
+			  .key		   = wl_keyboard_key,
+			  .modifiers   = wl_keyboard_modifiers,
+			  .repeat_info = wl_keyboard_repeat_info,
 		  }
 	{
 	}
@@ -190,6 +214,7 @@ class BWindow::impl
 	const struct xdg_toplevel_listener xdg_toplevel_listener;
 	const struct wl_seat_listener	   wl_seat_listener;
 	const struct wl_pointer_listener   wl_pointer_listener;
+	const struct wl_keyboard_listener  wl_keyboard_listener;
 
 	static void wl_registry_global_handler(void *this_, struct wl_registry *registry, uint32_t name,
 										   const char *interface, uint32_t version);
@@ -204,6 +229,7 @@ class BWindow::impl
 											   int32_t width, int32_t height, struct wl_array *states);
 	static void xdg_toplevel_close_handler(void *this_, struct xdg_toplevel *toplevel);
 	static void wl_seat_capabilities_handler(void *this_, struct wl_seat *wl_seat, uint32_t capabilities);
+	static void wl_seat_name_handler(void *this_, struct wl_seat *wl_seat, const char *name);
 	static void wl_pointer_enter_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
 										 struct wl_surface *surface, wl_fixed_t surface_x, wl_fixed_t surface_y);
 	static void wl_pointer_leave_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
@@ -214,6 +240,21 @@ class BWindow::impl
 										  uint32_t time, uint32_t button, uint32_t state);
 	static void wl_pointer_axis_handler(void *this_, struct wl_pointer *wl_pointer,
 										uint32_t time, uint32_t axis, wl_fixed_t value);
+	static void wl_keyboard_keymap(void *this_, struct wl_keyboard *wl_keyboard,
+								   uint32_t format, int32_t fd, uint32_t size);
+	static void wl_keyboard_enter(void *this_, struct wl_keyboard *wl_keyboard,
+								  uint32_t serial, struct wl_surface *surface,
+								  struct wl_array *keys);
+	static void wl_keyboard_leave(void *this_, struct wl_keyboard *wl_keyboard,
+								  uint32_t serial, struct wl_surface *surface);
+	static void wl_keyboard_key(void *this_, struct wl_keyboard *wl_keyboard,
+								uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
+	static void wl_keyboard_modifiers(void *this_, struct wl_keyboard *wl_keyboard,
+									  uint32_t serial, uint32_t mods_depressed,
+									  uint32_t mods_latched, uint32_t mods_locked,
+									  uint32_t group);
+	static void wl_keyboard_repeat_info(void *this_, struct wl_keyboard *wl_keyboard,
+										int32_t rate, int32_t delay);
 };
 
 namespace {
@@ -258,6 +299,10 @@ bool BWindow::impl::connect()
 	if (!wl_registry) return false;
 	ALOGV("connected registry");
 	wl_registry_add_listener(wl_registry, &wl_registry_listener, this);
+
+	xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+	if (!xkb_context) return false;
+	ALOGV("created xkb_context");
 
 	// wait for the "initial" set of globals to appear
 	wl_display_roundtrip(wl_display);
@@ -415,6 +460,8 @@ void BWindow::impl::damage(int32 x, int32 y, int32 width, int32 height)
 	surface_pending = true;
 }
 
+#define THIS static_cast<BWindow::impl *>(this_)
+
 void BWindow::impl::wl_registry_global_handler(
 	void			   *this_,
 	struct wl_registry *registry,
@@ -425,26 +472,19 @@ void BWindow::impl::wl_registry_global_handler(
 	ALOGV("%u: %s (v.%u)", name, interface, version);
 
 	if (strcmp(interface, wl_compositor_interface.name) == 0) {
-		static_cast<BWindow::impl *>(this_)->wl_compositor = (struct wl_compositor *)wl_registry_bind(
-			registry, name, &wl_compositor_interface, 4);
+		THIS->wl_compositor = (struct wl_compositor *)wl_registry_bind(registry, name, &wl_compositor_interface, 4);
 	}
 	else if (strcmp(interface, wl_shm_interface.name) == 0) {
-		static_cast<BWindow::impl *>(this_)->wl_shm = (struct wl_shm *)wl_registry_bind(
-			registry, name, &wl_shm_interface, 1);
-		wl_shm_add_listener(static_cast<BWindow::impl *>(this_)->wl_shm,
-							&static_cast<BWindow::impl *>(this_)->wl_shm_listener, this_);
+		THIS->wl_shm = (struct wl_shm *)wl_registry_bind(registry, name, &wl_shm_interface, 1);
+		wl_shm_add_listener(THIS->wl_shm, &THIS->wl_shm_listener, this_);
 	}
 	else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
-		static_cast<BWindow::impl *>(this_)->xdg_wm_base = (struct xdg_wm_base *)wl_registry_bind(
-			registry, name, &xdg_wm_base_interface, 1);
-		xdg_wm_base_add_listener(static_cast<BWindow::impl *>(this_)->xdg_wm_base,
-								 &static_cast<BWindow::impl *>(this_)->xdg_wm_base_listener, this_);
+		THIS->xdg_wm_base = (struct xdg_wm_base *)wl_registry_bind(registry, name, &xdg_wm_base_interface, 1);
+		xdg_wm_base_add_listener(THIS->xdg_wm_base, &THIS->xdg_wm_base_listener, this_);
 	}
 	else if (strcmp(interface, wl_seat_interface.name) == 0) {
-		static_cast<BWindow::impl *>(this_)->wl_seat = (struct wl_seat *)wl_registry_bind(
-			registry, name, &wl_seat_interface, 1);
-		wl_seat_add_listener(static_cast<BWindow::impl *>(this_)->wl_seat,
-							 &static_cast<BWindow::impl *>(this_)->wl_seat_listener, this_);
+		THIS->wl_seat = (struct wl_seat *)wl_registry_bind(registry, name, &wl_seat_interface, 4);
+		wl_seat_add_listener(THIS->wl_seat, &THIS->wl_seat_listener, this_);
 	}
 }
 void BWindow::impl::wl_registry_global_remove_handler(
@@ -472,10 +512,10 @@ void BWindow::impl::wl_surface_leave_handler(void *this_, struct wl_surface *sur
 void BWindow::impl::wl_buffer_release_handler(void *this_, struct wl_buffer *wl_buffer)
 {
 	// Sent by the compositor when it's no longer using this buffer
-	if (wl_buffer == static_cast<BWindow::impl *>(this_)->wl_buffer) {
+	if (wl_buffer == THIS->wl_buffer) {
 		// if this is our surface buffer, we immediately reattach it as pending buffer
-		wl_surface_attach(static_cast<BWindow::impl *>(this_)->wl_surface, static_cast<BWindow::impl *>(this_)->wl_buffer, 0, 0);
-		static_cast<BWindow::impl *>(this_)->surface_committed = false;
+		wl_surface_attach(THIS->wl_surface, THIS->wl_buffer, 0, 0);
+		THIS->surface_committed = false;
 	}
 	else {
 		wl_buffer_destroy(wl_buffer);
@@ -485,7 +525,7 @@ void BWindow::impl::wl_buffer_release_handler(void *this_, struct wl_buffer *wl_
 void BWindow::impl::xdg_surface_configure_handler(void *this_, struct xdg_surface *xdg_surface, uint32_t serial)
 {
 	xdg_surface_ack_configure(xdg_surface, serial);
-	static_cast<BWindow::impl *>(this_)->resize_buffer();
+	THIS->resize_buffer();
 }
 
 void BWindow::impl::xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xdg_wm_base, uint32_t serial)
@@ -502,27 +542,32 @@ void BWindow::impl::xdg_toplevel_configure_handler(void *this_, struct xdg_tople
 		return;
 	}
 
-	static_cast<BWindow::impl *>(this_)->width	= width;
-	static_cast<BWindow::impl *>(this_)->height = height;
+	THIS->width	 = width;
+	THIS->height = height;
 }
 
 void BWindow::impl::xdg_toplevel_close_handler(void *this_, struct xdg_toplevel *toplevel)
 {
-	static_cast<BWindow::impl *>(this_)->closed = true;
+	THIS->closed = true;
+}
+
+void BWindow::impl::wl_seat_name_handler(void *this_, struct wl_seat *wl_seat, const char *name)
+{
+	ALOGD("seat name: %s", name);
 }
 
 void BWindow::impl::wl_seat_capabilities_handler(void *this_, struct wl_seat *wl_seat, uint32_t capabilities)
 {
 	bool have_pointer = capabilities & WL_SEAT_CAPABILITY_POINTER;
 
-	if (have_pointer && !static_cast<BWindow::impl *>(this_)->wl_pointer) do {
-			static_cast<BWindow::impl *>(this_)->wl_pointer = wl_seat_get_pointer(wl_seat);
-			if (!static_cast<BWindow::impl *>(this_)->wl_pointer) break;
-			wl_pointer_add_listener(static_cast<BWindow::impl *>(this_)->wl_pointer, &static_cast<BWindow::impl *>(this_)->wl_pointer_listener, this_);
+	if (have_pointer && !THIS->wl_pointer) do {
+			THIS->wl_pointer = wl_seat_get_pointer(wl_seat);
+			if (!THIS->wl_pointer) break;
+			wl_pointer_add_listener(THIS->wl_pointer, &THIS->wl_pointer_listener, this_);
 			ALOGV("got wl_pointer");
 
-			if (!static_cast<BWindow::impl *>(this_)->cursor_image) {
-				struct wl_cursor_theme *cursor_theme = wl_cursor_theme_load(nullptr, DEFAULT_CURSOR_SIZE, static_cast<BWindow::impl *>(this_)->wl_shm);
+			if (!THIS->cursor_image) {
+				struct wl_cursor_theme *cursor_theme = wl_cursor_theme_load(nullptr, DEFAULT_CURSOR_SIZE, THIS->wl_shm);
 				if (!cursor_theme) break;
 				ALOGV("loaded cursor_theme");
 
@@ -531,21 +576,33 @@ void BWindow::impl::wl_seat_capabilities_handler(void *this_, struct wl_seat *wl
 				ALOGV("got wl_cursor");
 
 				if (cursor->image_count == 0) break;
-				static_cast<BWindow::impl *>(this_)->cursor_image = cursor->images[0];
+				THIS->cursor_image = cursor->images[0];
 				ALOGV("have cursor_image");
 			}
 
-			struct wl_buffer *cursor_buffer = wl_cursor_image_get_buffer(static_cast<BWindow::impl *>(this_)->cursor_image);
+			struct wl_buffer *cursor_buffer = wl_cursor_image_get_buffer(THIS->cursor_image);
 			ALOGV("got cursor_buffer");
 
-			static_cast<BWindow::impl *>(this_)->cursor_surface = wl_compositor_create_surface(static_cast<BWindow::impl *>(this_)->wl_compositor);
-			wl_surface_attach(static_cast<BWindow::impl *>(this_)->cursor_surface, cursor_buffer, 0, 0);
-			wl_surface_commit(static_cast<BWindow::impl *>(this_)->cursor_surface);
+			THIS->cursor_surface = wl_compositor_create_surface(THIS->wl_compositor);
+			wl_surface_attach(THIS->cursor_surface, cursor_buffer, 0, 0);
+			wl_surface_commit(THIS->cursor_surface);
 			ALOGV("created cursor_surface");
 		} while (false);
-	else if (!have_pointer && static_cast<BWindow::impl *>(this_)->wl_pointer) {
-		wl_pointer_release(static_cast<BWindow::impl *>(this_)->wl_pointer);
-		static_cast<BWindow::impl *>(this_)->wl_pointer = nullptr;
+	else if (!have_pointer && THIS->wl_pointer) {
+		wl_pointer_release(THIS->wl_pointer);
+		THIS->wl_pointer = nullptr;
+	}
+
+	bool have_keyboard = capabilities & WL_SEAT_CAPABILITY_KEYBOARD;
+
+	if (have_keyboard && !THIS->wl_keyboard) {
+		THIS->wl_keyboard = wl_seat_get_keyboard(THIS->wl_seat);
+		ALOGV("got wl_keyboard");
+		wl_keyboard_add_listener(THIS->wl_keyboard, &THIS->wl_keyboard_listener, this_);
+	}
+	else if (!have_keyboard && THIS->wl_keyboard) {
+		wl_keyboard_release(THIS->wl_keyboard);
+		THIS->wl_keyboard = nullptr;
 	}
 }
 
@@ -554,11 +611,10 @@ void BWindow::impl::wl_pointer_enter_handler(void *this_, struct wl_pointer *poi
 {
 	ALOGV("wl_pointer enter %p @%p", pointer, surface);
 	wl_pointer_set_cursor(pointer, serial,
-						  static_cast<BWindow::impl *>(this_)->cursor_surface,
-						  static_cast<BWindow::impl *>(this_)->cursor_image->hotspot_x,
-						  static_cast<BWindow::impl *>(this_)->cursor_image->hotspot_y);
+						  THIS->cursor_surface,
+						  THIS->cursor_image->hotspot_x, THIS->cursor_image->hotspot_y);
 
-	static_cast<BWindow::impl *>(this_)->pointer_motion(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
+	THIS->pointer_motion(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
 }
 
 void BWindow::impl::wl_pointer_leave_handler(void *this_, struct wl_pointer *pointer, uint32_t serial,
@@ -570,19 +626,97 @@ void BWindow::impl::wl_pointer_leave_handler(void *this_, struct wl_pointer *poi
 void BWindow::impl::wl_pointer_motion_handler(void *this_, struct wl_pointer *wl_pointer,
 											  uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
-	static_cast<BWindow::impl *>(this_)->pointer_motion(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
+	THIS->pointer_motion(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
 }
 
 void BWindow::impl::wl_pointer_button_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
 											  uint32_t time, uint32_t button, uint32_t state)
 {
-	static_cast<BWindow::impl *>(this_)->pointer_button(button, state);
+	THIS->pointer_button(button, state);
 }
 
 void BWindow::impl::wl_pointer_axis_handler(void *this_, struct wl_pointer *wl_pointer,
 											uint32_t time, uint32_t axis, wl_fixed_t value)
 {
+	ALOGD("pointer axis event; axis: %x, value: %f", axis, wl_fixed_to_double(value));
 }
+
+void BWindow::impl::wl_keyboard_keymap(void *this_, struct wl_keyboard *wl_keyboard,
+									   uint32_t format, int32_t fd, uint32_t size)
+{
+	ASSERT(format == WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1);
+
+	void *map_shm = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+	ASSERT(map_shm != MAP_FAILED);
+
+	struct xkb_keymap *xkb_keymap = xkb_keymap_new_from_string(
+		THIS->xkb_context, static_cast<char *>(map_shm),
+		XKB_KEYMAP_FORMAT_TEXT_V1, XKB_KEYMAP_COMPILE_NO_FLAGS);
+	munmap(map_shm, size);
+	close(fd);
+	ALOGV("created xkb_keymap");
+
+	struct xkb_state *xkb_state = xkb_state_new(xkb_keymap);
+	xkb_keymap_unref(THIS->xkb_keymap);
+	xkb_state_unref(THIS->xkb_state);
+	THIS->xkb_keymap = xkb_keymap;
+	THIS->xkb_state	 = xkb_state;
+}
+
+/// NOTE: the scancode from this event is the Linux evdev scancode.
+/// To translate this to an XKB scancode, you must add 8 to the evdev scancode.
+void BWindow::impl::wl_keyboard_key(void *this_, struct wl_keyboard *wl_keyboard,
+									uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
+{
+	char		 buf[128];
+	uint32_t	 keycode = key + 8;
+	xkb_keysym_t sym	 = xkb_state_key_get_one_sym(THIS->xkb_state, keycode);
+	xkb_keysym_get_name(sym, buf, sizeof(buf));
+	const char *action = state == WL_KEYBOARD_KEY_STATE_PRESSED ? "press  " : "release";
+	std::string log	   = std::format("key: {}: sym: {:12} ({}), ", action, static_cast<char *>(buf), sym);
+	xkb_state_key_get_utf8(THIS->xkb_state, keycode, buf, sizeof(buf));
+	ALOGD("%s", (log + std::format("utf8: '{}'", static_cast<char *>(buf))).c_str());
+}
+
+void BWindow::impl::wl_keyboard_enter(void *this_, struct wl_keyboard *wl_keyboard,
+									  uint32_t serial, struct wl_surface *surface,
+									  struct wl_array *keys)
+{
+	ALOGD("keyboard enter; keys pressed are:");
+	for (uint32_t *key = static_cast<uint32_t *>((keys)->data);	 // wl_array_for_each() converted to C++ compatible
+		 (const char *)key < ((const char *)static_cast<uint32_t *>((keys)->data) + (keys)->size);
+		 (key)++) {
+		char		 buf[128];
+		xkb_keysym_t sym = xkb_state_key_get_one_sym(THIS->xkb_state, *key + 8);
+		xkb_keysym_get_name(sym, buf, sizeof(buf));
+		std::string log = std::format("sym: {:12} ({}), ", static_cast<char *>(buf), sym);
+		xkb_state_key_get_utf8(THIS->xkb_state, *key + 8, buf, sizeof(buf));
+		ALOGD("%s", (log + std::format("utf8: '{}'", static_cast<char *>(buf))).c_str());
+	}
+}
+
+void BWindow::impl::wl_keyboard_leave(void *this_, struct wl_keyboard *wl_keyboard,
+									  uint32_t serial, struct wl_surface *surface)
+{
+	ALOGD("keyboard leave");
+}
+
+void BWindow::impl::wl_keyboard_modifiers(void *this_, struct wl_keyboard *wl_keyboard,
+										  uint32_t serial, uint32_t mods_depressed,
+										  uint32_t mods_latched, uint32_t mods_locked,
+										  uint32_t group)
+{
+	xkb_state_update_mask(THIS->xkb_state,
+						  mods_depressed, mods_latched, mods_locked, 0, 0, group);
+}
+
+void BWindow::impl::wl_keyboard_repeat_info(void *this_, struct wl_keyboard *wl_keyboard,
+											int32_t rate, int32_t delay)
+{
+	ALOGD("keyboard repeat; rate: %d, delay: %d", rate, delay);
+}
+
+#undef THIS
 
 SkCanvas *BWindow::_get_canvas() const
 {

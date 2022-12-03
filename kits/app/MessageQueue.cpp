@@ -41,12 +41,12 @@ void BMessageQueue::RemoveMessage(BMessage *an_event)
 	_impl->remove(an_event);
 
 	// delete an_event;
-	// NOTE: BeOS documentation states:
-	// > RemoveMessage() removes a particular message from the queue and deletes it.
-	// but Haiku implementation does not do it and its documentation states:
-	// > you regain ownership of the message.
-	// For the sake of compatibility with existing Haiku code
-	// we assume BeOS doc is incorrect, until proven otherwise.
+	/// NOTE: BeOS documentation states:
+	/// > RemoveMessage() removes a particular message from the queue and deletes it.
+	/// but Haiku implementation does not do it and its documentation states:
+	/// > you regain ownership of the message.
+	/// For the sake of compatibility with existing Haiku code
+	/// we assume BeOS doc is incorrect, until proven otherwise.
 }
 
 BMessage *BMessageQueue::NextMessage()

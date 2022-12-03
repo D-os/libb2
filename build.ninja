@@ -26,6 +26,7 @@ includes = $
   -isystem build/wayland/src $
   -isystem $BUILDROOT/wayland $
   -isystem external/wayland/cursor $
+  -isystem external/libxkbcommon/include $
   -isystem external/skia $
   -isystem external/fontconfig $
   -isystem external/doctest $
@@ -110,8 +111,9 @@ build $BUILDROOT/os/libbe.so: so $
 | $SYSROOT/lib/libbinder.so $
   $SYSROOT/lib/libskia.so $
   $SYSROOT/lib/libwayland-client.so $
-  $SYSROOT/lib/libwayland-cursor.so
-  libs = $libs -lskia -lwayland-cursor
+  $SYSROOT/lib/libwayland-cursor.so $
+  $SYSROOT/lib/libxkbcommon.so
+  libs = $libs -lskia -lwayland-cursor -lxkbcommon
 
 
 subninja system/os/services/build.ninja

@@ -49,8 +49,8 @@ struct Node
 
 class BMessage::impl
 {
-	// NOTE: This is list, not forward_list to keep adding order
-	// This is list not vector to avoid reallocation when creating new node
+	/// NOTE: This is list, not forward_list to keep adding order
+	/// This is list not vector to avoid reallocation when creating new node
 	std::list<Node> *m_nodes;
 
    public:
