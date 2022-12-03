@@ -78,6 +78,8 @@ class BWindow::impl
 	float pointer_y;
 	uint32 pointer_buttons;
 
+	uint32 modifiers;
+
 	bool hidden;
 	bool minimized;
 	bool maximized;
@@ -118,6 +120,7 @@ class BWindow::impl
 		  pointer_x{-1.0},
 		  pointer_y{-1.0},
 		  pointer_buttons{0},
+		  modifiers{0},
 		  hidden{true},
 		  minimized{false},
 		  maximized{false},
@@ -198,6 +201,12 @@ class BWindow::impl
 
 	void pointer_motion(float x, float y);
 	void pointer_button(uint32_t button, uint32_t state);
+
+	void keyboard_key(uint32_t key, uint32_t state);
+	void update_modifiers(xkb_keysym_t sym, uint32_t state);
+	void keyboard_modifiers(uint32_t mods_depressed,
+							uint32_t mods_latched, uint32_t mods_locked,
+							uint32_t group);
 
 	void damage(int32 x, int32 y, int32 width, int32 height);
 
@@ -454,6 +463,121 @@ void BWindow::impl::pointer_button(uint32_t button, uint32_t state)
 	}
 }
 
+void BWindow::impl::keyboard_key(uint32_t key, uint32_t state)
+{
+	/// NOTE: the scancode from this event is the Linux evdev scancode.
+	/// To translate this to an XKB scancode, you must add 8 to the evdev scancode.
+	uint32_t	 keycode = key + 8;
+	xkb_keysym_t sym	 = xkb_state_key_get_one_sym(xkb_state, keycode);
+
+	int utf8_size = xkb_state_key_get_utf8(xkb_state, keycode, nullptr, 0);
+	utf8_size += 1;	 // NUL character
+	char utf8[utf8_size];
+	xkb_state_key_get_utf8(xkb_state, keycode, utf8, utf8_size);
+
+	ALOGV("keyboard_key %d(0x%x): %d(0x%x) -> %d: '%s'", key, key, keycode, keycode, sym, utf8);
+
+	BMessage keyboardKeyMessage(state == WL_KEYBOARD_KEY_STATE_PRESSED ? B_KEY_DOWN : B_KEY_UP);
+	keyboardKeyMessage.AddInt32("key", key);  // FIXME: need to map XKB_KEY to B_KEY
+	// keyboardKeyMessage.AddUInt8("states", 0);
+
+	utf8_size = strlen(utf8);
+	if (utf8_size > 0) {
+		keyboardKeyMessage.AddString("bytes", utf8);
+		if (utf8_size == 1) {
+			keyboardKeyMessage.AddInt32("raw_char", utf8[0]);
+		}
+	}
+	else {
+		keyboardKeyMessage.what = state == WL_KEYBOARD_KEY_STATE_PRESSED ? B_UNMAPPED_KEY_DOWN : B_UNMAPPED_KEY_UP;
+	}
+
+	update_modifiers(sym, state);
+	keyboardKeyMessage.AddInt32("modifiers", modifiers);
+
+	if (top_view.Window()) {
+		top_view.Window()->PostMessage(&keyboardKeyMessage);
+	}
+}
+
+void BWindow::impl::update_modifiers(xkb_keysym_t sym, uint32_t state)
+{
+#define SET_MODIFIERS_BIT(bit)                  \
+	if (state == WL_KEYBOARD_KEY_STATE_PRESSED) \
+		modifiers |= bit;                       \
+	else                                        \
+		modifiers &= ~bit;
+
+	// Symbol specific handling
+	switch (sym) {
+		case XKB_KEY_Shift_L:
+			SET_MODIFIERS_BIT(B_LEFT_SHIFT_KEY);
+			break;
+		case XKB_KEY_Shift_R:
+			SET_MODIFIERS_BIT(B_RIGHT_SHIFT_KEY);
+			break;
+		case XKB_KEY_Alt_L:
+			SET_MODIFIERS_BIT(B_LEFT_COMMAND_KEY);
+			break;
+		case XKB_KEY_Alt_R:
+			SET_MODIFIERS_BIT(B_RIGHT_COMMAND_KEY);
+			break;
+		case XKB_KEY_Control_L:
+			SET_MODIFIERS_BIT(B_LEFT_CONTROL_KEY);
+			break;
+		case XKB_KEY_Control_R:
+			SET_MODIFIERS_BIT(B_RIGHT_CONTROL_KEY);
+			break;
+		case XKB_KEY_Meta_L:
+			SET_MODIFIERS_BIT(B_LEFT_OPTION_KEY);
+			break;
+		case XKB_KEY_Meta_R:
+			SET_MODIFIERS_BIT(B_RIGHT_OPTION_KEY);
+			break;
+	}
+#undef SET_MODIFIERS_BIT
+}
+
+void BWindow::impl::keyboard_modifiers(uint32_t mods_depressed,
+									   uint32_t mods_latched, uint32_t mods_locked,
+									   uint32_t group)
+{
+	enum xkb_state_component changed = xkb_state_update_mask(xkb_state,
+															 mods_depressed, mods_latched, mods_locked,
+															 0, 0, group);
+
+	if (changed & XKB_STATE_MODS_EFFECTIVE) {
+		int shift_mod = xkb_state_mod_names_are_active(xkb_state, XKB_STATE_MODS_EFFECTIVE, XKB_STATE_MATCH_NON_EXCLUSIVE,
+													   XKB_MOD_NAME_SHIFT, nullptr);
+		int caps_mod  = xkb_state_mod_names_are_active(xkb_state, XKB_STATE_MODS_EFFECTIVE, XKB_STATE_MATCH_NON_EXCLUSIVE,
+													   XKB_MOD_NAME_CAPS, nullptr);
+		int ctrl_mod  = xkb_state_mod_names_are_active(xkb_state, XKB_STATE_MODS_EFFECTIVE, XKB_STATE_MATCH_NON_EXCLUSIVE,
+													   XKB_MOD_NAME_CTRL, nullptr);
+		int alt_mod	  = xkb_state_mod_names_are_active(xkb_state, XKB_STATE_MODS_EFFECTIVE, XKB_STATE_MATCH_NON_EXCLUSIVE,
+													   XKB_MOD_NAME_ALT, nullptr);
+		int num_mod	  = xkb_state_mod_names_are_active(xkb_state, XKB_STATE_MODS_EFFECTIVE, XKB_STATE_MATCH_NON_EXCLUSIVE,
+													   XKB_MOD_NAME_NUM, nullptr);
+		int logo_mod  = xkb_state_mod_names_are_active(xkb_state, XKB_STATE_MODS_EFFECTIVE, XKB_STATE_MATCH_NON_EXCLUSIVE,
+													   XKB_MOD_NAME_LOGO, nullptr);
+#define SET_MODIFIERS_BIT(mod, bit, secondary) \
+	if (mod >= 0) {                            \
+		if (mod)                               \
+			modifiers |= bit;                  \
+		else                                   \
+			modifiers &= ~(bit | secondary);   \
+	}
+		SET_MODIFIERS_BIT(shift_mod, B_SHIFT_KEY, B_LEFT_SHIFT_KEY | B_RIGHT_SHIFT_KEY);
+		SET_MODIFIERS_BIT(alt_mod, B_COMMAND_KEY, B_LEFT_COMMAND_KEY | B_RIGHT_COMMAND_KEY);
+		SET_MODIFIERS_BIT(ctrl_mod, B_CONTROL_KEY, B_LEFT_CONTROL_KEY | B_RIGHT_CONTROL_KEY);
+		SET_MODIFIERS_BIT(caps_mod, B_CAPS_LOCK, 0);
+		// SET_MODIFIERS_BIT(, B_SCROLL_LOCK, 0);
+		SET_MODIFIERS_BIT(num_mod, B_NUM_LOCK, 0);
+		// SET_MODIFIERS_BIT(, B_OPTION_KEY, B_LEFT_OPTION_KEY | B_RIGHT_OPTION_KEY);
+		SET_MODIFIERS_BIT(logo_mod, B_MENU_KEY, 0);
+#undef SET_MODIFIERS_BIT
+	}
+}
+
 void BWindow::impl::damage(int32 x, int32 y, int32 width, int32 height)
 {
 	wl_surface_damage_buffer(wl_surface, x, y, width, height);
@@ -663,42 +787,28 @@ void BWindow::impl::wl_keyboard_keymap(void *this_, struct wl_keyboard *wl_keybo
 	THIS->xkb_state	 = xkb_state;
 }
 
-/// NOTE: the scancode from this event is the Linux evdev scancode.
-/// To translate this to an XKB scancode, you must add 8 to the evdev scancode.
 void BWindow::impl::wl_keyboard_key(void *this_, struct wl_keyboard *wl_keyboard,
 									uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
 {
-	char		 buf[128];
-	uint32_t	 keycode = key + 8;
-	xkb_keysym_t sym	 = xkb_state_key_get_one_sym(THIS->xkb_state, keycode);
-	xkb_keysym_get_name(sym, buf, sizeof(buf));
-	const char *action = state == WL_KEYBOARD_KEY_STATE_PRESSED ? "press  " : "release";
-	std::string log	   = std::format("key: {}: sym: {:12} ({}), ", action, static_cast<char *>(buf), sym);
-	xkb_state_key_get_utf8(THIS->xkb_state, keycode, buf, sizeof(buf));
-	ALOGD("%s", (log + std::format("utf8: '{}'", static_cast<char *>(buf))).c_str());
+	THIS->keyboard_key(key, state);
 }
 
 void BWindow::impl::wl_keyboard_enter(void *this_, struct wl_keyboard *wl_keyboard,
 									  uint32_t serial, struct wl_surface *surface,
 									  struct wl_array *keys)
 {
-	ALOGD("keyboard enter; keys pressed are:");
 	for (uint32_t *key = static_cast<uint32_t *>((keys)->data);	 // wl_array_for_each() converted to C++ compatible
 		 (const char *)key < ((const char *)static_cast<uint32_t *>((keys)->data) + (keys)->size);
 		 (key)++) {
-		char		 buf[128];
 		xkb_keysym_t sym = xkb_state_key_get_one_sym(THIS->xkb_state, *key + 8);
-		xkb_keysym_get_name(sym, buf, sizeof(buf));
-		std::string log = std::format("sym: {:12} ({}), ", static_cast<char *>(buf), sym);
-		xkb_state_key_get_utf8(THIS->xkb_state, *key + 8, buf, sizeof(buf));
-		ALOGD("%s", (log + std::format("utf8: '{}'", static_cast<char *>(buf))).c_str());
+		THIS->update_modifiers(sym, WL_KEYBOARD_KEY_STATE_PRESSED);
 	}
 }
 
 void BWindow::impl::wl_keyboard_leave(void *this_, struct wl_keyboard *wl_keyboard,
 									  uint32_t serial, struct wl_surface *surface)
 {
-	ALOGD("keyboard leave");
+	THIS->modifiers = 0;
 }
 
 void BWindow::impl::wl_keyboard_modifiers(void *this_, struct wl_keyboard *wl_keyboard,
@@ -706,8 +816,7 @@ void BWindow::impl::wl_keyboard_modifiers(void *this_, struct wl_keyboard *wl_ke
 										  uint32_t mods_latched, uint32_t mods_locked,
 										  uint32_t group)
 {
-	xkb_state_update_mask(THIS->xkb_state,
-						  mods_depressed, mods_latched, mods_locked, 0, 0, group);
+	THIS->keyboard_modifiers(mods_depressed, mods_latched, mods_locked, group);
 }
 
 void BWindow::impl::wl_keyboard_repeat_info(void *this_, struct wl_keyboard *wl_keyboard,
