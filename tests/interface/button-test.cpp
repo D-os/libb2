@@ -179,7 +179,8 @@ TApplication::~TApplication()
 
 void TApplication::ReadyToRun()
 {
-	TWindow *win = new TWindow(BRect(100, 100, 500, 500), "Button Test", B_TITLED_WINDOW, 0);
+	TWindow *win = new TWindow(BRect(100, 100, 500, 500),
+							   "Button Test", B_TITLED_WINDOW, B_CLOSE_ON_ESCAPE);
 	win->Show();
 }
 

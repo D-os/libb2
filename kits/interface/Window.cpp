@@ -1116,41 +1116,57 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 				if (message->FindInt32("modifiers", (int32 *)&modifiers) != B_OK)
 					modifiers = 0;
 
+				// Optionally close window when the escape key is pressed
+				if (key == B_ESCAPE && (Flags() & B_CLOSE_ON_ESCAPE) != 0) {
+					BMessage command(B_QUIT_REQUESTED);
+					command.AddBool("shortcut", true);
+					this->PostMessage(&command);
+					break;
+				}
+
 				// intercepts some keys (like menu shortcuts and the Command+W close window sequence)
 				if (modifiers & B_COMMAND_KEY) {
 					if (key == 'w') {
-						this->PostMessage(B_QUIT_REQUESTED);
+						BMessage command(B_QUIT_REQUESTED);
+						command.AddBool("shortcut", true);
+						this->PostMessage(&command);
 						break;
 					}
 					if (key == 'q') {
-						be_app->PostMessage(B_QUIT_REQUESTED);
+						BMessage command(B_QUIT_REQUESTED);
+						command.AddBool("shortcut", true);
+						be_app->PostMessage(&command);
 						break;
 					}
 					target = CurrentFocus();
 					if (target) {
-						BMessage command;
 						if (key == 'a') {
-							command.what = B_SELECT_ALL;
+							BMessage command(B_SELECT_ALL);
+							command.AddBool("shortcut", true);
 							target->MessageReceived(&command);
 							break;
 						}
 						if (key == 'z') {
-							command.what = B_UNDO;
+							BMessage command(B_UNDO);
+							command.AddBool("shortcut", true);
 							target->MessageReceived(&command);
 							break;
 						}
 						if (key == 'x') {
-							command.what = B_CUT;
+							BMessage command(B_CUT);
+							command.AddBool("shortcut", true);
 							target->MessageReceived(&command);
 							break;
 						}
 						if (key == 'c') {
-							command.what = B_COPY;
+							BMessage command(B_COPY);
+							command.AddBool("shortcut", true);
 							target->MessageReceived(&command);
 							break;
 						}
 						if (key == 'v') {
-							command.what = B_PASTE;
+							BMessage command(B_PASTE);
+							command.AddBool("shortcut", true);
 							target->MessageReceived(&command);
 							break;
 						}
