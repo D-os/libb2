@@ -488,6 +488,9 @@ void BLooper::_drain_message_queue()
 		ALOGV_IF(fLastMessage->what != B_MOUSE_MOVED, "fLastMessage: 0x%x: %.4s", fLastMessage->what, (char *)&fLastMessage->what);
 		INFO(*fLastMessage);
 
+		// do we need to break draining to allow for repaint?
+		bool should_break = fLastMessage->what == _UPDATE_IF_NEEDED_;
+
 		BHandler *handler = fLastMessage->_get_handler();
 		if (handler == nullptr) {
 			ALOGV("use preferred target: %p:%s", fPreferred, fPreferred ? fPreferred->Name() : nullptr);
@@ -526,6 +529,9 @@ void BLooper::_drain_message_queue()
 		BMessage *message = fLastMessage;
 		fLastMessage	  = nullptr;
 		delete message;
+
+		if (should_break)
+			break;
 	}
 }
 

@@ -121,7 +121,7 @@ void BButton::KeyDown(const char *bytes, int32 numBytes)
 	if (bytes && numBytes > 0 && (bytes[0] == B_ENTER || bytes[0] == B_SPACE)) {
 		SetValue(B_CONTROL_ON);
 
-		// FIXME: Window()->UpdateIfNeeded();	 // make sure the user saw that
+		Window()->UpdateIfNeeded();	 // make sure the user saw that
 		Invoke();
 	}
 	else

@@ -1041,6 +1041,8 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 				// combine with pending resize notifications
 				BMessage *pendingMessage;
 				while ((pendingMessage = MessageQueue()->FindMessage(B_WINDOW_RESIZED, 0))) {
+					MessageQueue()->RemoveMessage(pendingMessage);
+
 					int32 nextWidth;
 					if (pendingMessage->FindInt32("width", &nextWidth) == B_OK)
 						width = nextWidth;
@@ -1050,7 +1052,6 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 						height = nextHeight;
 					}
 
-					MessageQueue()->RemoveMessage(pendingMessage);
 					delete pendingMessage;
 					// this deletes the first *additional* message
 					// fCurrentMessage is safe
@@ -1312,6 +1313,9 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 
 			handler->MessageReceived(message);
 			break;
+		case _UPDATE_IF_NEEDED_:
+			// _UPDATE_IF_NEEDED_ will exit message draining loop and allow repaint to happen
+			break;
 
 		default:
 			BLooper::DispatchMessage(message, handler);
@@ -1428,18 +1432,27 @@ void BWindow::MenusEnded()
 
 bool BWindow::NeedsUpdate() const
 {
-	// TODO: comb through MessageQueue looking for:
-	// _UPDATE_ messages with "updateRect" Rect
-	debugger(__PRETTY_FUNCTION__);
-	return false;
+	return MessageQueue()->FindMessage(_UPDATE_, 0);
 }
 
 void BWindow::UpdateIfNeeded()
 {
-	// TODO: pull from MessageQueue
-	// _UPDATE_ messages with "updateRect" Rect
-	// and immediately handler->DispatchMessage() them
-	debugger(__PRETTY_FUNCTION__);
+	ALOGV("BWindow::UpdateIfNeeded %d", MessageQueue()->CountMessages());
+	BMessage *pendingMessage;
+	while ((pendingMessage = MessageQueue()->FindMessage(_UPDATE_, 0))) {
+		MessageQueue()->RemoveMessage(pendingMessage);
+
+		BHandler *handler = pendingMessage->_get_handler();
+		if (handler)
+			handler->MessageReceived(pendingMessage);
+		else
+			MessageReceived(pendingMessage);
+
+		delete pendingMessage;
+	}
+
+	// this will break out of message drain loop and trigger repaint
+	PostMessage(_UPDATE_IF_NEEDED_, this);
 }
 
 BView *BWindow::FindView(const char *view_name) const

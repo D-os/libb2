@@ -234,6 +234,7 @@ class BMessage
 	friend class BMessenger;
 	friend class BApplication;
 	friend class BView;
+	friend class BWindow;
 	friend std::ostream &operator<<(std::ostream &, const BMessage &);
 
 	class impl;

@@ -190,12 +190,13 @@ void BView::MessageReceived(BMessage *message)
 						int32	  index = 0;
 						while ((pendingMessage = Looper()->MessageQueue()->FindMessage(_UPDATE_, index))) {
 							if (pendingMessage->_get_handler() == this) {
+								Looper()->MessageQueue()->RemoveMessage(pendingMessage);
+
 								BRect pendingRect;
 								if (message->FindRect("updateRect", &pendingRect) == B_OK && pendingRect.IsValid()) {
 									updateRect = updateRect | pendingRect;
 								}
 
-								Looper()->MessageQueue()->RemoveMessage(pendingMessage);
 								delete pendingMessage;
 							}
 							else {
