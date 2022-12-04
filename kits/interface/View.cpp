@@ -521,12 +521,12 @@ void BView::WindowActivated(bool state)
 
 void BView::KeyDown(const char *bytes, int32 numBytes)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook - default implementation does nothing
 }
 
 void BView::KeyUp(const char *bytes, int32 numBytes)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// Hook - default implementation does nothing
 }
 
 void BView::Pulse()

@@ -484,8 +484,7 @@ status_t BMessage::MakeEmpty()
 
 status_t BMessage::FindData(const char *name, type_code type, const void **data, ssize_t *numBytes) const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	return FindData(name, type, 0, data, numBytes);
 }
 
 status_t BMessage::FindData(const char *name, type_code type, int32 index, const void **data, ssize_t *size) const

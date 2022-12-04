@@ -478,14 +478,72 @@ void BWindow::impl::keyboard_key(uint32_t key, uint32_t state)
 	ALOGV("keyboard_key %d(0x%x): %d(0x%x) -> %d: '%s'", key, key, keycode, keycode, sym, utf8);
 
 	BMessage keyboardKeyMessage(state == WL_KEYBOARD_KEY_STATE_PRESSED ? B_KEY_DOWN : B_KEY_UP);
-	keyboardKeyMessage.AddInt32("key", key);  // FIXME: need to map XKB_KEY to B_KEY
+	keyboardKeyMessage.AddInt32("key", key);
 	// keyboardKeyMessage.AddUInt8("states", 0);
 
 	utf8_size = strlen(utf8);
 	if (utf8_size > 0) {
-		keyboardKeyMessage.AddString("bytes", utf8);
 		if (utf8_size == 1) {
+			switch (utf8[0]) {
+				case 0x0d:
+					utf8[0] = B_ENTER;
+					break;
+			}
 			keyboardKeyMessage.AddInt32("raw_char", utf8[0]);
+		}
+		keyboardKeyMessage.AddString("bytes", utf8);
+	}
+	else if (sym == XKB_KEY_BackSpace || sym == XKB_KEY_Return || sym == XKB_KEY_Tab || sym == XKB_KEY_Escape
+			 || sym == XKB_KEY_Left || sym == XKB_KEY_Right || sym == XKB_KEY_Up || sym == XKB_KEY_Down
+			 || sym == XKB_KEY_Insert || sym == XKB_KEY_Delete || sym == XKB_KEY_Home || sym == XKB_KEY_End
+			 || sym == XKB_KEY_Page_Up || sym == XKB_KEY_Page_Down) {
+		char raw_char = '\0';
+		switch (sym) {
+			case XKB_KEY_BackSpace:
+				raw_char = B_BACKSPACE;
+				break;
+			case XKB_KEY_Return:
+				raw_char = B_ENTER;
+				break;
+			case XKB_KEY_Tab:
+				raw_char = B_TAB;
+				break;
+			case XKB_KEY_Escape:
+				raw_char = B_ESCAPE;
+				break;
+			case XKB_KEY_Left:
+				raw_char = B_LEFT_ARROW;
+				break;
+			case XKB_KEY_Right:
+				raw_char = B_RIGHT_ARROW;
+				break;
+			case XKB_KEY_Up:
+				raw_char = B_UP_ARROW;
+				break;
+			case XKB_KEY_Down:
+				raw_char = B_DOWN_ARROW;
+				break;
+			case XKB_KEY_Insert:
+				raw_char = B_INSERT;
+				break;
+			case XKB_KEY_Delete:
+				raw_char = B_DELETE;
+				break;
+			case XKB_KEY_Home:
+				raw_char = B_HOME;
+				break;
+			case XKB_KEY_End:
+				raw_char = B_END;
+				break;
+			case XKB_KEY_Page_Up:
+				raw_char = B_PAGE_UP;
+				break;
+			case XKB_KEY_Page_Down:
+				raw_char = B_PAGE_DOWN;
+				break;
+		}
+		if (raw_char) {
+			keyboardKeyMessage.AddInt32("raw_char", raw_char);
 		}
 	}
 	else {
@@ -526,7 +584,8 @@ void BWindow::impl::update_modifiers(xkb_keysym_t sym, uint32_t state)
 			SET_MODIFIERS_BIT(B_LEFT_CONTROL_KEY);
 			break;
 		case XKB_KEY_Control_R:
-			SET_MODIFIERS_BIT(B_RIGHT_CONTROL_KEY);
+			// SET_MODIFIERS_BIT(B_RIGHT_CONTROL_KEY);
+			SET_MODIFIERS_BIT(B_OPTION_KEY | B_RIGHT_OPTION_KEY);  // see NOTE below
 			break;
 		case XKB_KEY_Meta_L:
 			SET_MODIFIERS_BIT(B_LEFT_OPTION_KEY);
@@ -546,6 +605,11 @@ void BWindow::impl::keyboard_modifiers(uint32_t mods_depressed,
 															 mods_depressed, mods_latched, mods_locked,
 															 0, 0, group);
 
+	/// NOTE: By default, the keys closest to the space bar function as Command keys,
+	/// no matter what their labels on particular keyboards.
+	/// If a keyboard doesn't have Option keys (for example, a standard 101-key keyboard),
+	/// the key on the right labeled "Control" functions as the right Option key,
+	/// and only the left "Control" key is available to function as a Control modifier.
 	if (changed & XKB_STATE_MODS_EFFECTIVE) {
 		int shift_mod = xkb_state_mod_names_are_active(xkb_state, XKB_STATE_MODS_EFFECTIVE, XKB_STATE_MATCH_NON_EXCLUSIVE,
 													   XKB_MOD_NAME_SHIFT, nullptr);
@@ -982,8 +1046,7 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 						width = nextWidth;
 
 					int32 nextHeight;
-					if (pendingMessage->FindInt32("height", &nextHeight)
-						== B_OK) {
+					if (pendingMessage->FindInt32("height", &nextHeight) == B_OK) {
 						height = nextHeight;
 					}
 
@@ -1004,7 +1067,7 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 
 		case B_WINDOW_MOVED: {
 			// Wayland does not provide window position information
-			ALOGW("Window '%s' received B_WINDOW_MOVED message", Name());
+			ALOGW("Window '%s' received B_WINDOW_MOVED message ¯\\_(ツ)_/¯", Name());
 			break;
 		}
 
@@ -1028,13 +1091,103 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 			break;
 		}
 
-		case B_KEY_DOWN: {
-			debugger("B_KEY_DOWN");
-			break;
-		}
+		case B_KEY_DOWN:
+		case B_KEY_UP:
+		case B_UNMAPPED_KEY_DOWN:
+		case B_UNMAPPED_KEY_UP: {
+			if (handler && handler != this) {
+				// pass on
+				handler->MessageReceived(message);
+				break;
+			}
 
-		case B_UNMAPPED_KEY_DOWN: {
-			debugger("B_UNMAPPED_KEY_DOWN");
+			const char *bytes = nullptr;
+			if (message->FindString("bytes", &bytes) != B_OK || !bytes)
+				break;
+
+			BView *target = nullptr;
+			// B_KEY_UP events are always assigned to the view that's in focus when the user releases the key
+			// even if the previous B_KEY_DOWN message performed a shortcut, forced keyboard navigation, or was assigned to the default button
+			if (message->what == B_KEY_DOWN) {
+				char key = bytes[0];
+
+				uint32 modifiers;
+				if (message->FindInt32("modifiers", (int32 *)&modifiers) != B_OK)
+					modifiers = 0;
+
+				// intercepts some keys (like menu shortcuts and the Command+W close window sequence)
+				if (modifiers & B_COMMAND_KEY) {
+					if (key == 'w') {
+						this->PostMessage(B_QUIT_REQUESTED);
+						break;
+					}
+					if (key == 'q') {
+						be_app->PostMessage(B_QUIT_REQUESTED);
+						break;
+					}
+					target = CurrentFocus();
+					if (target) {
+						BMessage command;
+						if (key == 'a') {
+							command.what = B_SELECT_ALL;
+							target->MessageReceived(&command);
+							break;
+						}
+						if (key == 'z') {
+							command.what = B_UNDO;
+							target->MessageReceived(&command);
+							break;
+						}
+						if (key == 'x') {
+							command.what = B_CUT;
+							target->MessageReceived(&command);
+							break;
+						}
+						if (key == 'c') {
+							command.what = B_COPY;
+							target->MessageReceived(&command);
+							break;
+						}
+						if (key == 'v') {
+							command.what = B_PASTE;
+							target->MessageReceived(&command);
+							break;
+						}
+					}
+				}
+				if (modifiers & B_OPTION_KEY) {
+					if (key == B_TAB) {
+						// Keyboard navigation through views
+						// (B_OPTION_KEY makes BTextViews and friends navigable, even in editing mode)
+						// TODO: _KeyboardNavigation();
+						break;
+					}
+				}
+
+				// if we have a default button, it might want to hear
+				// about pressing the <enter> key
+				target = DefaultButton();
+				if (target) {
+					const int32 kNonLockModifierKeys = B_SHIFT_KEY | B_COMMAND_KEY | B_CONTROL_KEY | B_OPTION_KEY | B_MENU_KEY;
+					int32		rawChar;
+					int32		modifiers;
+					if (message->FindInt32("raw_char", &rawChar) == B_OK
+						&& message->FindInt32("modifiers", &modifiers) == B_OK
+						&& rawChar == B_ENTER
+						&& (modifiers & kNonLockModifierKeys) == 0) {
+						target->MessageReceived(message);
+						break;
+					}
+				}
+			}
+
+			// pass the message along to the currently focused view
+			target = CurrentFocus();
+			if (target) {
+				target->MessageReceived(message);
+				break;
+			}
+
 			break;
 		}
 

@@ -118,7 +118,14 @@ void BButton::MouseMoved(BPoint pt, uint32 transit, const BMessage *dnd)
 
 void BButton::KeyDown(const char *bytes, int32 numBytes)
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (bytes && numBytes > 0 && (bytes[0] == B_ENTER || bytes[0] == B_SPACE)) {
+		SetValue(B_CONTROL_ON);
+
+		// FIXME: Window()->UpdateIfNeeded();	 // make sure the user saw that
+		Invoke();
+	}
+	else
+		BControl::KeyDown(bytes, numBytes);
 }
 
 void BButton::MakeDefault(bool state)
@@ -201,7 +208,9 @@ void BButton::ResizeToPreferred()
 
 status_t BButton::Invoke(BMessage *msg)
 {
-	return BControl::Invoke(msg);
+	status_t err = BControl::Invoke(msg);
+	SetValue(B_CONTROL_OFF);
+	return err;
 }
 
 void BButton::FrameMoved(BPoint new_position)
