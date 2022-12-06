@@ -58,8 +58,39 @@ typedef struct rgb_color
 	{
 		return set_to(other.red, other.green, other.blue, other.alpha);
 	}
+
+	rgb_color& mix(const rgb_color other, uint8 amount);
+	rgb_color  mix_copy(const rgb_color other, uint8 amount) const;
+
+	rgb_color& blend(const rgb_color other, uint8 amount);
+	rgb_color  blend_copy(const rgb_color other, uint8 amount) const;
+
+	rgb_color& tint(float tint);
+	rgb_color  tint_copy(float tint) const;
+
+	rgb_color& disable(const rgb_color background);
+	rgb_color  disable_copy(const rgb_color background) const;
 #endif
 } rgb_color;
+
+#if defined(__cplusplus)
+inline rgb_color make_color(uint8 red, uint8 green, uint8 blue, uint8 alpha = 255)
+{
+	rgb_color c;
+	c.red	= red;
+	c.green = green;
+	c.blue	= blue;
+	c.alpha = alpha;
+	return c;
+}
+
+class BDataIO;
+BDataIO& operator<<(BDataIO& io, rgb_color color);
+#endif
+
+rgb_color mix_color(rgb_color color1, rgb_color color2, uint8 amount);
+rgb_color blend_color(rgb_color color1, rgb_color color2, uint8 amount);
+rgb_color disable_color(rgb_color color, rgb_color background);
 
 extern const rgb_color B_TRANSPARENT_COLOR;
 extern const uint8	   B_TRANSPARENT_MAGIC_CMAP8;

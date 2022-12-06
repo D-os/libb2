@@ -46,6 +46,7 @@ build $BUILDROOT/os/libbe/interface/Button.o: cxx system/os/kits/interface/Butto
 build $BUILDROOT/os/libbe/interface/Control.o: cxx system/os/kits/interface/Control.cpp
 build $BUILDROOT/os/libbe/interface/Font.o: cxx system/os/kits/interface/Font.cpp
 build $BUILDROOT/os/libbe/interface/GraphicsDefs.o: cxx system/os/kits/interface/GraphicsDefs.cpp
+build $BUILDROOT/os/libbe/interface/InterfaceDefs.o: cxx system/os/kits/interface/InterfaceDefs.cpp
 build $BUILDROOT/os/libbe/interface/Point.o: cxx system/os/kits/interface/Point.cpp
 build $BUILDROOT/os/libbe/interface/Polygon.o: cxx system/os/kits/interface/Polygon.cpp
 build $BUILDROOT/os/libbe/interface/Rect.o: cxx system/os/kits/interface/Rect.cpp
@@ -87,6 +88,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/interface/Control.o $
   $BUILDROOT/os/libbe/interface/Font.o $
   $BUILDROOT/os/libbe/interface/GraphicsDefs.o $
+  $BUILDROOT/os/libbe/interface/InterfaceDefs.o $
   $BUILDROOT/os/libbe/interface/Point.o $
   $BUILDROOT/os/libbe/interface/Polygon.o $
   $BUILDROOT/os/libbe/interface/Rect.o $

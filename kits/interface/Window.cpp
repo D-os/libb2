@@ -173,6 +173,7 @@ class BWindow::impl
 			  .repeat_info = wl_keyboard_repeat_info,
 		  }
 	{
+		top_view.SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 	}
 
 	~impl()
