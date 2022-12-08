@@ -56,6 +56,8 @@ alignment BStringView::Alignment() const
 void BStringView::AttachedToWindow()
 {
 	BView::AttachedToWindow();
+
+	// BStringView's low color and its background view color match the background color of its new parent
 	SetLowColor(Parent()->ViewColor());
 	SetViewColor(Parent()->ViewColor());
 }

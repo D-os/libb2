@@ -728,6 +728,11 @@ void BView::SetPenSize(float size)
 	fState->pen_size = size;
 }
 
+float BView::PenSize() const
+{
+	return fState->pen_size;
+}
+
 void BView::SetViewColor(rgb_color color)
 {
 	fState->view_color = color;
@@ -820,6 +825,7 @@ static SkBlendMode blend_modes[] = {
                                                                                          \
 	SkPaint paint;                                                                       \
 	paint.setStrokeWidth(fState->pen_size > 0.0 ? /* scale * */ fState->pen_size : 1.0); \
+	paint.setStrokeCap(SkPaint::kSquare_Cap);                                            \
                                                                                          \
 	if (fState->drawing_mode < (sizeof(blend_modes) / sizeof(blend_modes[0])))           \
 		paint.setBlendMode(blend_modes[fState->drawing_mode]);
@@ -843,24 +849,33 @@ static SkBlendMode blend_modes[] = {
 	paint.setShader(                                                                      \
 		bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, SkSamplingOptions(), nullptr));
 
+#define PX(f) (Flags() & B_SUBPIXEL_PRECISE ? f : roundf(f))
+
 void BView::StrokePoint(BPoint pt, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
-	canvas->drawPoint(pt.x, pt.y, paint);
+	canvas->drawPoint(PX(pt.x), PX(pt.y), paint);
 }
 
 void BView::StrokeLine(BPoint toPt, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
-	canvas->drawLine(fState->pen_location.x(), fState->pen_location.y(), toPt.x, toPt.y, paint);
-	fState->pen_location.set(toPt.x, toPt.y);
+	auto to_x = PX(toPt.x);
+	auto to_y = PX(toPt.y);
+	canvas->drawLine(
+		PX(fState->pen_location.x()), PX(fState->pen_location.y()),
+		to_x, to_y,
+		paint);
+	fState->pen_location.set(to_x, to_y);
 }
 
-void BView::StrokeLine(BPoint pt0, BPoint pt1, pattern p)
+void BView::StrokeLine(BPoint fromPt, BPoint toPt, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
-	canvas->drawLine(pt0.x, pt0.y, pt1.x, pt1.y, paint);
-	fState->pen_location.set(pt1.x, pt1.y);
+	auto to_x = PX(toPt.x);
+	auto to_y = PX(toPt.y);
+	canvas->drawLine(PX(fromPt.x), PX(fromPt.y), to_x, to_y, paint);
+	fState->pen_location.set(to_x, to_y);
 }
 
 void BView::StrokePolygon(const BPolygon *aPolygon, bool closed, pattern p)
@@ -875,10 +890,10 @@ void BView::StrokePolygon(const BPoint *ptArray, int32 numPts, bool closed, patt
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::Style::kStroke_Style);
 	SkPath path;
-	path.moveTo(ptArray->x, ptArray->y);
+	path.moveTo(PX(ptArray->x), PX(ptArray->y));
 	ptArray += 1;
 	for (int32 i = 1; i < numPts; ++i) {
-		path.lineTo(ptArray->x, ptArray->y);
+		path.lineTo(PX(ptArray->x), PX(ptArray->y));
 		ptArray += 1;
 	}
 	if (closed) path.close();
@@ -902,10 +917,10 @@ void BView::FillPolygon(const BPoint *ptArray, int32 numPts, pattern p)
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
 	SkPath path;
-	path.moveTo(ptArray->x, ptArray->y);
+	path.moveTo(PX(ptArray->x), PX(ptArray->y));
 	ptArray += 1;
 	for (int32 i = 1; i < numPts; ++i) {
-		path.lineTo(ptArray->x, ptArray->y);
+		path.lineTo(PX(ptArray->x), PX(ptArray->y));
 		ptArray += 1;
 	}
 	canvas->drawPath(path, paint);
@@ -920,14 +935,14 @@ void BView::StrokeRect(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+	canvas->drawRect(SkRect::MakeLTRB(PX(r.left), PX(r.top), PX(r.right), PX(r.bottom)), paint);
 }
 
 void BView::FillRect(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
-	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+	canvas->drawRect(SkRect::MakeLTRB(PX(r.left), PX(r.top), PX(r.right), PX(r.bottom)), paint);
 }
 
 void BView::FillRegion(BRegion *a_region, pattern p)
@@ -947,14 +962,14 @@ void BView::StrokeRoundRect(BRect r, float xRadius, float yRadius, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), xRadius, yRadius, paint);
+	canvas->drawRoundRect(SkRect::MakeLTRB(PX(r.left), PX(r.top), PX(r.right), PX(r.bottom)), xRadius, yRadius, paint);
 }
 
 void BView::FillRoundRect(BRect r, float xRadius, float yRadius, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
-	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), xRadius, yRadius, paint);
+	canvas->drawRoundRect(SkRect::MakeLTRB(PX(r.left), PX(r.top), PX(r.right), PX(r.bottom)), xRadius, yRadius, paint);
 }
 
 void BView::StrokeEllipse(BPoint center, float xRadius, float yRadius, pattern p)
@@ -966,7 +981,7 @@ void BView::StrokeEllipse(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawOval(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+	canvas->drawOval(SkRect::MakeLTRB(PX(r.left), PX(r.top), PX(r.right), PX(r.bottom)), paint);
 }
 
 void BView::FillEllipse(BPoint center, float xRadius, float yRadius, pattern p)
@@ -978,7 +993,7 @@ void BView::FillEllipse(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
-	canvas->drawOval(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+	canvas->drawOval(SkRect::MakeLTRB(PX(r.left), PX(r.top), PX(r.right), PX(r.bottom)), paint);
 }
 
 void BView::StrokeArc(BPoint center, float xRadius, float yRadius, float start_angle, float arc_angle, pattern p)
@@ -990,7 +1005,7 @@ void BView::StrokeArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawArc(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), -start_angle, -arc_angle, false, paint);
+	canvas->drawArc(SkRect::MakeLTRB(PX(r.left), PX(r.top), PX(r.right), PX(r.bottom)), -start_angle, -arc_angle, false, paint);
 }
 
 void BView::FillArc(BPoint center, float xRadius, float yRadius, float start_angle, float arc_angle, pattern p)
@@ -1002,7 +1017,7 @@ void BView::FillArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kFill_Style);
-	canvas->drawArc(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), -start_angle, -arc_angle, true, paint);
+	canvas->drawArc(SkRect::MakeLTRB(PX(r.left), PX(r.top), PX(r.right), PX(r.bottom)), -start_angle, -arc_angle, true, paint);
 }
 
 void BView::DrawChar(char aChar)
@@ -1037,12 +1052,15 @@ void BView::DrawString(const char *aString, int32 length, BPoint location, escap
 	if (!aString || length <= 0) return;
 	DRAW_PRELUDE_WITH_COLOR
 
+	auto loc_x = PX(location.x);
+	auto loc_y = PX(location.y);
+
 	SkFont font;
 	fState->font._get_font(&font);
 	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(aString, length, font);
-	canvas->drawTextBlob(blob, location.x, location.y, paint);
+	canvas->drawTextBlob(blob, loc_x, loc_y, paint);
 
-	MovePenTo(location.x + blob->bounds().width(), location.y);
+	MovePenTo(loc_x + blob->bounds().width(), loc_y);
 }
 
 #undef DRAW_PRELUDE

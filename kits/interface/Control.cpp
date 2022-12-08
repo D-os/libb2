@@ -43,6 +43,8 @@ void BControl::WindowActivated(bool state)
 void BControl::AttachedToWindow()
 {
 	BView::AttachedToWindow();
+
+	// BControl's low color and view color matches the view color of its new parent
 	SetLowColor(Parent()->ViewColor());
 	SetViewColor(Parent()->ViewColor());
 
