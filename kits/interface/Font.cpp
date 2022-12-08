@@ -303,7 +303,9 @@ void BFont::GetHeight(font_height *height) const
 
 	SkFontMetrics metrics;
 	font.getMetrics(&metrics);
-	*height = font_height{-metrics.fAscent, metrics.fDescent, metrics.fLeading + metrics.fDescent + (-metrics.fAscent)};
+	*height = font_height{-metrics.fAscent, metrics.fDescent,
+						  metrics.fLeading + metrics.fDescent + (-metrics.fAscent),
+						  metrics.fXHeight, metrics.fCapHeight};
 }
 
 void BFont::PrintToStream() const

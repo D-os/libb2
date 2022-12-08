@@ -44,6 +44,7 @@ build $BUILDROOT/os/libbe/app/Messenger.o: cxx system/os/kits/app/Messenger.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
 build $BUILDROOT/os/libbe/interface/Box.o: cxx system/os/kits/interface/Box.cpp
 build $BUILDROOT/os/libbe/interface/Button.o: cxx system/os/kits/interface/Button.cpp
+build $BUILDROOT/os/libbe/interface/CheckBox.o: cxx system/os/kits/interface/CheckBox.cpp
 build $BUILDROOT/os/libbe/interface/Control.o: cxx system/os/kits/interface/Control.cpp
 build $BUILDROOT/os/libbe/interface/Font.o: cxx system/os/kits/interface/Font.cpp
 build $BUILDROOT/os/libbe/interface/GraphicsDefs.o: cxx system/os/kits/interface/GraphicsDefs.cpp
@@ -88,6 +89,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/interface/Box.o $
   $BUILDROOT/os/libbe/interface/Button.o $
   $BUILDROOT/os/libbe/interface/Control.o $
+  $BUILDROOT/os/libbe/interface/CheckBox.o $
   $BUILDROOT/os/libbe/interface/Font.o $
   $BUILDROOT/os/libbe/interface/GraphicsDefs.o $
   $BUILDROOT/os/libbe/interface/InterfaceDefs.o $

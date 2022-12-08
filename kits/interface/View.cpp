@@ -1052,15 +1052,12 @@ void BView::DrawString(const char *aString, int32 length, BPoint location, escap
 	if (!aString || length <= 0) return;
 	DRAW_PRELUDE_WITH_COLOR
 
-	auto loc_x = PX(location.x);
-	auto loc_y = PX(location.y);
-
 	SkFont font;
 	fState->font._get_font(&font);
 	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(aString, length, font);
-	canvas->drawTextBlob(blob, loc_x, loc_y, paint);
+	canvas->drawTextBlob(blob, location.x, location.y, paint);
 
-	MovePenTo(loc_x + blob->bounds().width(), loc_y);
+	MovePenTo(location.x + blob->bounds().width(), location.y);
 }
 
 #undef DRAW_PRELUDE

@@ -70,16 +70,16 @@ void BStringView::Draw(BRect bounds)
 		font_height metrics;
 		font.GetHeight(&metrics);
 
-		auto frame = Frame();
+		auto bounds = Bounds();
 
-		BPoint pos{frame.left, frame.bottom - metrics.descent};
+		BPoint pos{bounds.left, bounds.bottom - metrics.descent};
 
 		if (fAlign & B_ALIGN_RIGHT) {
-			pos.x = frame.right - font.StringWidth(fText);
+			pos.x = bounds.right - font.StringWidth(fText);
 		}
 		else if (fAlign & B_ALIGN_CENTER) {
-			pos.x = frame.right - font.StringWidth(fText);
-			pos.x -= (pos.x - frame.left) / 2;
+			pos.x = bounds.right - font.StringWidth(fText);
+			pos.x -= (pos.x - bounds.left) / 2;
 		}
 
 		PushState();

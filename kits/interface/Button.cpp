@@ -32,7 +32,7 @@ status_t BButton::Archive(BMessage *data, bool deep) const
 /// Otherwise, it's drawn in its ordinary, enabled, unhighlighted state.
 void BButton::Draw(BRect updateRect)
 {
-	BView::Draw(updateRect);
+	BControl::Draw(updateRect);
 
 	const auto label = Label();
 	if (label) {

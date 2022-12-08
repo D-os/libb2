@@ -108,6 +108,8 @@ struct font_height
 	float ascent;
 	float descent;
 	float leading;
+	float x_height;
+	float cap_height;
 };
 
 struct escapement_delta

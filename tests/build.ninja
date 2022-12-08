@@ -81,3 +81,8 @@ build $BUILDROOT/os/tests/interface/minimal-app.o: cxx system/os/tests/interface
 build $BUILDROOT/os/tests/interface_minimal-app: link $
   $BUILDROOT/os/tests/interface/minimal-app.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/CheckBoxTest.o: cxx system/os/tests/interface/CheckBoxTest.cpp
+build $BUILDROOT/os/tests/interface_checkbox: link $
+  $BUILDROOT/os/tests/interface/CheckBoxTest.o $
+| $SYSROOT/lib/libbe.so

@@ -9,6 +9,7 @@ BBox::BBox(BRect bounds, const char *name, uint32 resizeFlags, uint32 flags, bor
 	  fLabelView{nullptr}
 {
 	SetFont(be_bold_font);
+	SetFontSize(11);
 }
 
 BBox::~BBox()
@@ -78,7 +79,7 @@ void BBox::Draw(BRect updateRect)
 	PushState();
 
 	auto  pen_size = PenSize();
-	BRect frame(Bounds());
+	BRect frame	   = Bounds();
 	frame.InsetBy(pen_size / 2, pen_size / 2);
 
 	if (fStyle == B_PLAIN_BORDER) {
@@ -100,10 +101,8 @@ void BBox::Draw(BRect updateRect)
 	}
 
 	if (fLabel) {
-		BFont font;
-		GetFont(&font);
 		font_height metrics;
-		font.GetHeight(&metrics);
+		GetFontHeight(&metrics);
 
 		BPoint pos{frame.left + pen_size + BOX_LABEL_OFFSET, frame.top + metrics.leading - metrics.descent};
 

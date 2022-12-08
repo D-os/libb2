@@ -39,8 +39,11 @@ BApplication::BApplication(const char *signature)
 	font_style	bold_style{"Bold"};
 	ret = const_cast<BFont *>(be_plain_font)->SetFamilyAndStyle(default_family, regular_style);
 	ALOGE_IF(ret != B_OK, "Failed to initialize plain font");
+
 	ret = const_cast<BFont *>(be_bold_font)->SetFamilyAndStyle(default_family, bold_style);
 	ALOGE_IF(ret != B_OK, "Failed to initialize bold font");
+	const_cast<BFont *>(be_bold_font)->SetSize(be_bold_font->Size() + 1.f);
+
 	ret = const_cast<BFont *>(be_fixed_font)->SetFamilyAndStyle(fixed_family, regular_style);
 	ALOGE_IF(ret != B_OK, "Failed to initialize fixed font");
 
