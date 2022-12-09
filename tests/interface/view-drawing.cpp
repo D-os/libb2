@@ -350,7 +350,7 @@ TWindow::TWindow(BRect frame, const char *title, window_type type, uint32 flags,
 	: BWindow(frame, title, type, flags, workspace)
 {
 	BView *view_top = new TView(frame.OffsetToCopy(B_ORIGIN), NULL,
-								B_FOLLOW_ALL, B_WILL_DRAW | B_SUBPIXEL_PRECISE);
+								B_FOLLOW_ALL, B_WILL_DRAW);
 	AddChild(view_top);
 
 #if TEST_VIEW_FOLLOW == 1

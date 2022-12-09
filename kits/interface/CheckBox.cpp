@@ -3,14 +3,12 @@
 #include <Font.h>
 
 #define CHECKBOX_LEFT_PADDING 4.0f
-#define CHECKBOX_BOX_SIZE 13.0f
+#define CHECKBOX_BOX_SIZE 12.0f
 #define CHECKBOX_TEXT_PADDING 5.0f
-
-// Font[2]:(Inter) (Regular[proportional]) (Thin[proportional]) (Thin Italic[proportional]) (Extra Light[proportional]) (Extra Light Italic[proportional]) (Light[proportional]) (Light Italic[proportional]) (Italic[proportional]) (Medium[proportional]) (Medium Italic[proportional]) (Semi Bold[proportional]) (Semi Bold Italic[proportional]) (Bold[proportional]) (Bold Italic[proportional]) (Extra Bold[proportional]) (Extra Bold Italic[proportional]) (Black[proportional]) (Black Italic[proportional])
 
 BCheckBox::BCheckBox(BRect frame, const char *name, const char *label, BMessage *message,
 					 uint32 resizeMask, uint32 flags)
-	: BControl(frame, label, label, message, resizeMask, flags)
+	: BControl(frame, name, label, message, resizeMask, flags)
 {
 	float preferredHeight;
 	GetPreferredSize(nullptr, &preferredHeight);
@@ -37,12 +35,13 @@ void BCheckBox::Draw(BRect updateRect)
 
 	auto pattern = IsEnabled() ? B_SOLID_HIGH : B_MIXED_COLORS;
 
-	BRect box(CHECKBOX_LEFT_PADDING, (bounds.Height() - (CHECKBOX_BOX_SIZE - 1)) / 2,
-			  CHECKBOX_LEFT_PADDING + CHECKBOX_BOX_SIZE - 1, (bounds.Height() + CHECKBOX_BOX_SIZE - 1) / 2);
+	BRect box(CHECKBOX_LEFT_PADDING, (bounds.Height() - (CHECKBOX_BOX_SIZE)) / 2,
+			  CHECKBOX_LEFT_PADDING + CHECKBOX_BOX_SIZE, (bounds.Height() + CHECKBOX_BOX_SIZE) / 2);
 	StrokeRect(box, pattern);
+
 	if (Value()) {
-		StrokeLine(box.LeftTop(), box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE, CHECKBOX_BOX_SIZE});
-		StrokeLine(box.LeftTop() + BPoint{0, CHECKBOX_BOX_SIZE}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE, 0});
+		StrokeLine(box.LeftTop() + BPoint{2, 2}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 1, CHECKBOX_BOX_SIZE - 1});
+		StrokeLine(box.LeftTop() + BPoint{2, CHECKBOX_BOX_SIZE - 1}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 1, 2});
 	}
 
 	const auto label = Label();
@@ -138,7 +137,7 @@ void BCheckBox::GetPreferredSize(float *width, float *height)
 	if (height) {
 		font_height fh;
 		font.GetHeight(&fh);
-		*height = std::max(fh.leading, CHECKBOX_BOX_SIZE - 1);
+		*height = std::max(fh.leading, CHECKBOX_BOX_SIZE);
 	}
 }
 

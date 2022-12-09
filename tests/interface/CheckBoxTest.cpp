@@ -13,13 +13,13 @@
 class DividedBackgroundView : public BView
 {
    public:
-	DividedBackgroundView(BRect rect);
+	DividedBackgroundView(BRect rect, const char *name);
 
 	virtual void Draw(BRect updateRect);
 };
 
-DividedBackgroundView::DividedBackgroundView(BRect rect)
-	: BView(rect, NULL, B_FOLLOW_NONE, B_WILL_DRAW)
+DividedBackgroundView::DividedBackgroundView(BRect rect, const char *name)
+	: BView(rect, name, B_FOLLOW_NONE, B_WILL_DRAW)
 {
 	SetViewColor(80, 120, 80);
 }
@@ -57,86 +57,86 @@ Window::Window()
 			  B_TITLED_WINDOW, B_ASYNCHRONOUS_CONTROLS)
 {
 	BRect		 rect(20, 10, 200, 30);
-	BStringView *stringView = new BStringView(rect, NULL, "Be's BCheckBox");
+	BStringView *stringView = new BStringView(rect, "B Label", "Be's BCheckBox");
 	stringView->SetFont(be_bold_font);
 	AddChild(stringView);
 
 	rect.OffsetBy(0, 40);
-	BView *checkBox = new BCheckBox(rect, NULL, "Test 1", NULL);
+	BView *checkBox = new BCheckBox(rect, "B CheckBox 1", "Test 1", NULL);
 	AddChild(checkBox);
 
 	rect.OffsetBy(0, 60);
-	BView *view = new BView(rect.InsetByCopy(-15, -15), NULL, B_FOLLOW_NONE, B_WILL_DRAW);
+	BView *view = new BView(rect.InsetByCopy(-15, -15), "B View 2", B_FOLLOW_NONE, B_WILL_DRAW);
 	view->SetViewColor(240, 180, 20);
 	AddChild(view);
 
-	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), NULL, "Test 2", NULL);
+	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), "B CheckBox 2", "Test 2", NULL);
 	view->AddChild(checkBox);
 	checkBox->SetViewColor(220, 170, 20);
 
 	rect.OffsetBy(0, 60);
-	BBox *box = new BBox(rect.InsetByCopy(-15, -15), NULL);
+	BBox *box = new BBox(rect.InsetByCopy(-15, -15), "B Box 3");
 	AddChild(box);
 
-	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), NULL, "Test 3", NULL);
+	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), "B CheckBox 3", "Test 3", NULL);
 	checkBox->SetViewColor(220, 170, 20);  // is ignored...
 	box->AddChild(checkBox);
 
 	rect.OffsetBy(0, 60);
-	view = new DividedBackgroundView(rect.InsetByCopy(-15, -15));
+	view = new DividedBackgroundView(rect.InsetByCopy(-15, -15), "B DivView 4");
 	AddChild(view);
 
-	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), NULL, "Test 4", NULL);
+	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), "B CheckBox 4", "Test 4", NULL);
 	view->AddChild(checkBox);
 
 	rect.OffsetBy(0, 60);
-	view = new DividedBackgroundView(rect.InsetByCopy(-15, -15));
+	view = new DividedBackgroundView(rect.InsetByCopy(-15, -15), "B DivView 5");
 	AddChild(view);
 
-	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), NULL, "Test 5", NULL);
+	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), "B CheckBox 5", "Test 5", NULL);
 	checkBox->ResizeToPreferred();
 	view->AddChild(checkBox);
 
 	// Haiku's BCheckBox
 
 	rect.Set(240, 10, 400, 30);
-	stringView = new BStringView(rect, NULL, "Haiku's BCheckBox");
+	stringView = new BStringView(rect, "H Label", "Haiku's BCheckBox");
 	stringView->SetFont(be_bold_font);
 	AddChild(stringView);
 
 	rect.OffsetBy(0, 40);
-	checkBox = new BCheckBox(rect, NULL, "Test 1", NULL);
+	checkBox = new BCheckBox(rect, "H CheckBox 1", "Test 1", NULL);
 	AddChild(checkBox);
 
 	rect.OffsetBy(0, 60);
-	view = new BView(rect.InsetByCopy(-15, -15), NULL, B_FOLLOW_NONE, B_WILL_DRAW);
+	view = new BView(rect.InsetByCopy(-15, -15), "H View 2", B_FOLLOW_NONE, B_WILL_DRAW);
 	view->SetViewColor(240, 180, 20);
 	AddChild(view);
 
-	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), NULL, "Test 2", NULL);
+	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), "H CheckBox 2", "Test 2", NULL);
 	view->AddChild(checkBox);
 	checkBox->SetViewColor(220, 170, 20);
 
 	rect.OffsetBy(0, 60);
-	box = new BBox(rect.InsetByCopy(-15, -15), NULL);
+	box = new BBox(rect.InsetByCopy(-15, -15), "H Box 3");
 	AddChild(box);
 
-	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), NULL, "Test 3", NULL);
+	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), "H CheckBox 3", "Test 3", NULL);
 	checkBox->SetViewColor(220, 170, 20);  // is ignored...
 	box->AddChild(checkBox);
 
 	rect.OffsetBy(0, 60);
-	view = new DividedBackgroundView(rect.InsetByCopy(-15, -15));
+	view = new DividedBackgroundView(rect.InsetByCopy(-15, -15), "H DivView 4");
 	AddChild(view);
 
-	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), NULL, "Test 4", NULL);
+	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), "H CheckBox 4", "Test 4", NULL);
 	view->AddChild(checkBox);
 
 	rect.OffsetBy(0, 60);
-	view = new DividedBackgroundView(rect.InsetByCopy(-15, -15));
+	view = new DividedBackgroundView(rect.InsetByCopy(-15, -15), "H DivView 5");
 	AddChild(view);
 
-	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), NULL, "Test 5", NULL);
+	checkBox = new BCheckBox(rect.OffsetToCopy(15, 15), "H CheckBox 5", "Test 5", NULL);
 	checkBox->ResizeToPreferred();
 	view->AddChild(checkBox);
 }
