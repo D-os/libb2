@@ -262,20 +262,9 @@ class BFont
 	friend class BView;
 	friend std::ostream &operator<<(std::ostream &, const BFont &);
 
-	uint32		fID;
-	float		fSize;
-	float		fShear;
-	float		fRotation;
-	uint8		fSpacing;
-	uint8		fEncoding;
-	uint16		fFace;
-	uint32		fFlags;
-	// font_height fHeight;
-	// int32		fPrivateFlags;
-
 	class impl;
 	impl *m;
-	void  _get_font(SkFont *) const;
+	SkFont &_get_font() const;
 };
 
 /// C++ standard way of providing string conversions

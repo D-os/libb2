@@ -9,6 +9,7 @@
 #include <include/core/SkTextBlob.h>
 #include <include/core/SkTypeface.h>
 #include <log/log.h>
+#include <src/core/SkTypefaceCache.h>
 
 #include <algorithm>
 #include <cstring>
@@ -21,69 +22,30 @@
 class BFont::impl
 {
    public:
-	sk_sp<SkTypeface> typeface;
+	SkFont font;
+
+	float  shear;
+	uint32 flags;
+
+	impl() : font(nullptr, 10.0f), shear{90.0f}, flags{0} {}
 };
-
-static void _get_font_info(uint32 id, font_family *family, font_style *style, sk_sp<SkTypeface> *face, uint32 *flags)
-{
-	auto mgr = SkFontMgr::RefDefault();
-
-	for (auto i = 0; i < mgr->countFamilies(); ++i) {
-		SkString familyName;
-		mgr->getFamilyName(i, &familyName);
-		SkFontStyleSet *styleSet = mgr->matchFamily(familyName.c_str());
-		for (auto j = 0; j < styleSet->count(); ++j) {
-			SkFontStyle fontStyle;
-			SkString	styleName;
-			styleSet->getStyle(j, &fontStyle, &styleName);
-			SkTypeface *typeface = mgr->matchFamilyStyle(familyName.c_str(), fontStyle);
-			if (SkTypeface::UniqueID(typeface) == id) {
-				if (family) {
-					strncpy(reinterpret_cast<char *>(family), familyName.c_str(), B_FONT_FAMILY_LENGTH);
-					(*family)[B_FONT_FAMILY_LENGTH] = '\0';
-				}
-				if (style) {
-					strncpy(reinterpret_cast<char *>(style), styleName.c_str(), B_FONT_STYLE_LENGTH);
-					(*style)[B_FONT_STYLE_LENGTH] = '\0';
-				}
-				if (face) {
-					face->reset(typeface);
-					typeface = nullptr;
-				}
-				if (flags) {
-					*flags = 0;
-					if (typeface && typeface->isFixedPitch()) {
-						*flags |= B_IS_FIXED;
-					}
-				}
-			}
-			if (typeface) {
-				typeface->unref();
-			}
-		}
-		styleSet->unref();
-	}
-}
 
 BFont::BFont() : BFont(be_plain_font) {}
 
 BFont::BFont(const BFont &font) : BFont(&font) {}
 
-BFont::BFont(const BFont *font)
-	: fID{0},
-	  fSize{10.0},
-	  fShear{90.0},
-	  fRotation{0.0},
-	  fSpacing{B_BITMAP_SPACING},
-	  fEncoding{B_UNICODE_UTF8},
-	  fFace{0},
-	  fFlags{0},
-	  m{new BFont::impl()}
+BFont::BFont(const BFont *font) : m{new BFont::impl()}
 {
-	if (font)
-		*this = *font;
-	else
-		*this = *be_plain_font;
+	if (font && this != font) {
+		*this->m = *font->m;
+		return;
+	}
+
+	if (this != be_plain_font) {
+		// copy be_plain_font, which might be modified
+		*this->m = *be_plain_font->m;
+		return;
+	}
 }
 
 BFont::~BFont()
@@ -93,39 +55,30 @@ BFont::~BFont()
 
 BFont &BFont::operator=(const BFont &font)
 {
-	fID		  = font.fID;
-	fSize	  = font.fSize;
-	fShear	  = font.fShear;
-	fRotation = font.fRotation;
-	fSpacing  = font.fSpacing;
-	fEncoding = font.fEncoding;
-	fFace	  = font.fFace;
-	fFlags	  = font.fFlags;
-	// fExtraFlags = font.fExtraFlags;
-
+	*m = *font.m;
 	return *this;
 }
 
 bool BFont::operator==(const BFont &font) const
 {
-	return fID == font.fID
-		   && fSize == font.fSize
-		   && fShear == font.fShear
-		   && fRotation == font.fRotation
-		   && fSpacing == font.fSpacing
-		   && fEncoding == font.fEncoding
-		   && fFace == font.fFace;
+	return FamilyAndStyle() == font.FamilyAndStyle()
+		   && Size() == font.Size()
+		   && Shear() == font.Shear()
+		   && Rotation() == font.Rotation()
+		   && Spacing() == font.Spacing()
+		   && Encoding() == font.Encoding()
+		   && Face() == font.Face();
 }
 
 bool BFont::operator!=(const BFont &font) const
 {
-	return fID != font.fID
-		   || fSize != font.fSize
-		   || fShear != font.fShear
-		   || fRotation != font.fRotation
-		   || fSpacing != font.fSpacing
-		   || fEncoding != font.fEncoding
-		   || fFace != font.fFace;
+	return FamilyAndStyle() != font.FamilyAndStyle()
+		   || Size() != font.Size()
+		   || Shear() != font.Shear()
+		   || Rotation() != font.Rotation()
+		   || Spacing() != font.Spacing()
+		   || Encoding() != font.Encoding()
+		   || Face() != font.Face();
 }
 
 status_t BFont::SetFamilyAndStyle(const font_family family, const font_style style)
@@ -144,8 +97,7 @@ status_t BFont::SetFamilyAndStyle(const font_family family, const font_style sty
 		styleSet->getStyle(i, &fontStyle, &styleName);
 		if (styleName.equals(style ? style : current_style)) {
 			SkTypeface *typeface = mgr->matchFamilyStyle(familyName, fontStyle);
-			SetFamilyAndStyle(SkTypeface::UniqueID(typeface));
-			if (typeface) typeface->unref();
+			m->font.setTypeface(sk_sp<SkTypeface>(typeface));
 			return B_OK;
 		}
 	}
@@ -154,93 +106,167 @@ status_t BFont::SetFamilyAndStyle(const font_family family, const font_style sty
 	return B_BAD_VALUE;
 }
 
+static bool _cmp_face_uniqueId(SkTypeface *face, void *ctx)
+{
+	return face->uniqueID() == *static_cast<uint32 *>(ctx);
+}
+
 void BFont::SetFamilyAndStyle(uint32 code)
 {
-	fID = code;
+	m->font.setTypeface(SkTypefaceCache::FindByProcAndRef(_cmp_face_uniqueId, &code));
 }
 
 void BFont::SetSize(float size)
 {
-	fSize = size;
+	m->font.setSize(size);
 }
 
 void BFont::SetShear(float shear)
 {
-	fShear = shear;
+	m->shear = shear;
+	// SkewX is computed as x' = x + xSkew · y (positive value skews to the left)
+	// BFont Shear is 45.0° (slanted to the right) through 135.0°, with 90.0° default.
+	// We round to 2 decimal places to have straight up as 0.00, not 0.000000000000something.
+	m->font.setSkewX(std::round(((shear - 90.0f) * 100.0f) / 45.0f) / 100.0f);
 }
 
 void BFont::SetRotation(float rotation)
 {
-	fRotation = rotation;
+	// not supported
 }
 
 void BFont::SetSpacing(uint8 spacing)
 {
-	fSpacing = spacing;
+	// not supported
 }
 
 void BFont::SetEncoding(uint8 encoding)
 {
-	fEncoding = encoding;
+	// not supported
 }
 
 void BFont::SetFace(uint16 face)
 {
-	fFace = face;
+	SkTypeface *typeface = m->font.getTypeface();
+	if (typeface) {
+		if (face & B_ITALIC_FACE) {
+			// TODO: find SkTypeface::kBold in current family
+			// and replace typeface
+			debugger(__PRETTY_FUNCTION__);
+		}
+		if (face & B_ITALIC_FACE && face & B_BOLD_FACE) {
+			// TODO: find SkTypeface::kBoldItalic in current family
+			// and replace typeface
+			debugger(__PRETTY_FUNCTION__);
+		}
+		if (face & B_BOLD_FACE) {
+			// TODO: find SkTypeface::kItalic in current family
+			// and replace typeface
+			debugger(__PRETTY_FUNCTION__);
+		}
+		if (face & B_REGULAR_FACE) {
+			// TODO: find SkTypeface::kNormal style in current family
+			// and replace typeface
+			debugger(__PRETTY_FUNCTION__);
+		}
+	}
 }
 
 void BFont::SetFlags(uint32 flags)
 {
-	fFlags = flags;
+	m->flags = flags;
+	m->font.setEdging((flags & B_DISABLE_ANTIALIASING) ? SkFont::Edging::kAlias : SkFont::Edging::kAntiAlias);
 }
 
 void BFont::GetFamilyAndStyle(font_family *family, font_style *style) const
 {
-	if (!family || !style) return;
+	if (!family && !style) return;
 
-	*family[0] = '\0';
-	*style[0]  = '\0';
-	_get_font_info(FamilyAndStyle(), family, style, nullptr, nullptr);
+	if (family) {
+		*family[0] = '\0';
+	}
+	if (style) {
+		*style[0] = '\0';
+	}
+
+	SkTypeface *typeface = m->font.getTypeface();
+	if (typeface) {
+		SkString familyName;
+		typeface->getFamilyName(&familyName);
+
+		if (family) {
+			strncpy(reinterpret_cast<char *>(family), familyName.c_str(), B_FONT_FAMILY_LENGTH);
+			(*family)[B_FONT_FAMILY_LENGTH] = '\0';
+		}
+
+		if (style) {
+			SkString familyName;
+			typeface->getFamilyName(&familyName);
+			SkFontStyle fontStyle = typeface->fontStyle();
+
+			auto			mgr		 = SkFontMgr::RefDefault();
+			SkFontStyleSet *styleSet = mgr->matchFamily(familyName.c_str());
+			for (auto i = 0; i < styleSet->count(); ++i) {
+				SkFontStyle setFontStyle;
+				SkString	setStyleName;
+				styleSet->getStyle(i, &setFontStyle, &setStyleName);
+				if (setFontStyle == fontStyle) {
+					strncpy(reinterpret_cast<char *>(style), setStyleName.c_str(), B_FONT_STYLE_LENGTH);
+					(*style)[B_FONT_STYLE_LENGTH] = '\0';
+					break;
+				}
+			}
+		}
+	}
 }
 
 uint32 BFont::FamilyAndStyle() const
 {
-	return fID;
+	SkTypeface *typeface = m->font.getTypeface();
+	return typeface ? typeface->uniqueID() : 0;
 }
 
 float BFont::Size() const
 {
-	return fSize;
+	return m->font.getSize();
 }
 
 float BFont::Shear() const
 {
-	return fShear;
+	return m->shear;
 }
 
 float BFont::Rotation() const
 {
-	return fRotation;
+	return 0.0f;
 }
 
 uint8 BFont::Spacing() const
 {
-	return fSpacing;
+	return B_BITMAP_SPACING;
 }
 
 uint8 BFont::Encoding() const
 {
-	return fEncoding;
+	return B_UNICODE_UTF8;
 }
 
 uint16 BFont::Face() const
 {
-	return fFace;
+	uint16		face	 = 0;
+	SkTypeface *typeface = m->font.getTypeface();
+	if (typeface) {
+		if (typeface->isItalic()) face |= B_ITALIC_FACE;
+		if (typeface->isBold()) face |= B_BOLD_FACE;
+		if (face == 0) face |= B_REGULAR_FACE;
+	}
+
+	return face;
 }
 
 uint32 BFont::Flags() const
 {
-	return fFlags;
+	return m->flags;
 }
 
 font_direction BFont::Direction() const
@@ -290,19 +316,15 @@ float BFont::StringWidth(const char *string, int32 length) const
 {
 	if (!string) return 0.0f;
 
-	SkFont font;
-	_get_font(&font);
-	return font.measureText(string, length, SkTextEncoding::kUTF8);
+	return m->font.measureText(string, length, SkTextEncoding::kUTF8);
 }
 
 void BFont::GetHeight(font_height *height) const
 {
 	if (!height) return;
-	SkFont font;
-	_get_font(&font);
 
 	SkFontMetrics metrics;
-	font.getMetrics(&metrics);
+	m->font.getMetrics(&metrics);
 	*height = font_height{-metrics.fAscent, metrics.fDescent,
 						  metrics.fLeading + metrics.fDescent + (-metrics.fAscent),
 						  metrics.fXHeight, metrics.fCapHeight};
@@ -313,22 +335,9 @@ void BFont::PrintToStream() const
 	std::cout << *this << std::endl;
 }
 
-void BFont::_get_font(SkFont *font) const
+SkFont &BFont::_get_font() const
 {
-	LOG_FATAL_IF(!font, "_getFont called with nullptr");
-
-	if (!m->typeface) {
-		_get_font_info(FamilyAndStyle(), nullptr, nullptr, &m->typeface, nullptr);
-	}
-
-	font->setTypeface(m->typeface);
-	font->setSize(Size());
-	font->setBaselineSnap(true);
-	font->setEdging((fFlags & B_DISABLE_ANTIALIASING) ? SkFont::Edging::kAlias : SkFont::Edging::kAntiAlias);
-	// SkewX is computed as x' = x + xSkew · y (positive value skews to the left)
-	// BFont Shear is 45.0° (slanted to the right) through 135.0°, with 90.0° default.
-	// We round to 2 decimal places to have straight up as 0.00, not 0.000000000000something.
-	font->setSkewX(std::round(((Shear() - 90.0f) * 100.0f) / 45.0f) / 100.0f);
+	return m->font;
 }
 
 #pragma mark globals
@@ -341,10 +350,10 @@ std::ostream &operator<<(std::ostream &os, const BFont &value)
 	font_height height;
 	value.GetHeight(&height);
 
-	os << std::format("BFont('{}', '{}' ({}) {:#x}/{:#b} {:.1f}deg/{:.1f}deg {:.1f}pt ({:.1f} {:.1f} {:.1f}) {:#x})",
-					  reinterpret_cast<const char *>(family), reinterpret_cast<const char *>(style), value.fID,
-					  value.fFace, value.fFlags, value.fShear, value.fRotation, value.fSize,
-					  height.ascent, height.descent, height.leading, value.fEncoding);
+	os << std::format("BFont('{}', '{}' ({}) {:#x}/{:#b} {:.1f}deg/{:.1f}deg {:.1f}pt ({:.1f} {:.1f} {:.1f}/{:.1f} {:.1f}) {:#x})",
+					  reinterpret_cast<const char *>(family), reinterpret_cast<const char *>(style), value.FamilyAndStyle(),
+					  value.Face(), value.Flags(), value.Shear(), value.Rotation(), value.Size(),
+					  height.ascent, height.descent, height.leading, height.x_height, height.cap_height, value.Encoding());
 	return os;
 }
 

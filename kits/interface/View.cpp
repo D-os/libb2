@@ -1045,9 +1045,7 @@ void BView::DrawString(const char *aString, int32 length, BPoint location, escap
 	if (!aString || length <= 0) return;
 	DRAW_PRELUDE_WITH_COLOR
 
-	SkFont font;
-	fState->font._get_font(&font);
-	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(aString, length, font);
+	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(aString, length, fState->font._get_font());
 	canvas->drawTextBlob(blob, location.x, location.y, paint);
 
 	MovePenTo(location.x + blob->bounds().width(), location.y);
@@ -1060,28 +1058,28 @@ void BView::SetFont(const BFont *font, uint32 mask)
 	if (!font) return;
 
 	if (mask & B_FONT_FAMILY_AND_STYLE) {
-		fState->font.fID = font->fID;
+		fState->font.SetFamilyAndStyle(font->FamilyAndStyle());
 	}
 	if (mask & B_FONT_SIZE) {
-		fState->font.fSize = font->fSize;
+		fState->font.SetSize(font->Size());
 	}
 	if (mask & B_FONT_SHEAR) {
-		fState->font.fShear = font->fShear;
+		fState->font.SetShear(font->Shear());
 	}
 	if (mask & B_FONT_ROTATION) {
-		fState->font.fRotation = font->fRotation;
+		fState->font.SetRotation(font->Rotation());
 	}
 	if (mask & B_FONT_SPACING) {
-		fState->font.fSpacing = font->fSpacing;
+		fState->font.SetSpacing(font->Spacing());
 	}
 	if (mask & B_FONT_ENCODING) {
-		fState->font.fEncoding = font->fEncoding;
+		fState->font.SetEncoding(font->Encoding());
 	}
 	if (mask & B_FONT_FACE) {
-		fState->font.fFace = font->fFace;
+		fState->font.SetFace(font->Face());
 	}
 	if (mask & B_FONT_FLAGS) {
-		fState->font.fFlags = font->fFlags;
+		fState->font.SetFlags(font->Flags());
 	}
 }
 
