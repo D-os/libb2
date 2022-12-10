@@ -86,3 +86,8 @@ build $BUILDROOT/os/tests/interface/CheckBoxTest.o: cxx system/os/tests/interfac
 build $BUILDROOT/os/tests/interface_checkbox: link $
   $BUILDROOT/os/tests/interface/CheckBoxTest.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/ClippingPlusRedraw.o: cxx system/os/tests/interface/ClippingPlusRedraw.cpp
+build $BUILDROOT/os/tests/interface_clipping: link $
+  $BUILDROOT/os/tests/interface/ClippingPlusRedraw.o $
+| $SYSROOT/lib/libbe.so

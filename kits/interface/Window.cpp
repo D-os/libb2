@@ -48,21 +48,22 @@ class BWindow::impl
 	struct xdg_surface	   *xdg_surface;
 	struct xdg_toplevel	*xdg_toplevel;
 	struct wl_pointer	  *wl_pointer;
-	struct wl_surface	  *cursor_surface;
+	struct wl_cursor_theme *wl_cursor_theme;
+	struct wl_surface	   *cursor_surface;
 	struct wl_cursor_image *cursor_image;
 	struct wl_keyboard	   *wl_keyboard;
 
 	/* Backing */
-	size_t				  width;
-	size_t				  height;
-	struct wl_shm_pool   *wl_shm_pool;
-	size_t				  shm_pool_size;
-	int					  pool_fd;
-	uint8_t			  *pool_data;
-	struct wl_buffer	 *wl_buffer;
+	size_t				width;
+	size_t				height;
+	struct wl_shm_pool *wl_shm_pool;
+	size_t				shm_pool_size;
+	int					pool_fd;
+	uint8_t			   *pool_data;
+	struct wl_buffer   *wl_buffer;
 
 	/* XKB */
-	struct xkb_state	 *xkb_state;
+	struct xkb_state   *xkb_state;
 	struct xkb_context *xkb_context;
 	struct xkb_keymap  *xkb_keymap;
 
@@ -74,8 +75,8 @@ class BWindow::impl
 	BView		top_view;
 	const char *title;
 
-	float pointer_x;
-	float pointer_y;
+	float  pointer_x;
+	float  pointer_y;
 	uint32 pointer_buttons;
 
 	uint32 modifiers;
@@ -99,6 +100,7 @@ class BWindow::impl
 		  xdg_surface{nullptr},
 		  xdg_toplevel{nullptr},
 		  wl_pointer{nullptr},
+		  wl_cursor_theme{nullptr},
 		  cursor_surface{nullptr},
 		  cursor_image{nullptr},
 		  wl_keyboard{nullptr},
@@ -178,10 +180,54 @@ class BWindow::impl
 
 	~impl()
 	{
-		// FIXME: _destroy all in proper order
+		if (title)
+			free(const_cast<char *>(title));
+
+		if (cursor_surface)
+			wl_surface_destroy(cursor_surface);
+		if (wl_cursor_theme)
+			wl_cursor_theme_destroy(wl_cursor_theme);
+		if (wl_pointer)
+			wl_pointer_destroy(wl_pointer);
+
+		if (wl_keyboard)
+			wl_keyboard_destroy(wl_keyboard);
+		if (xkb_keymap)
+			xkb_keymap_unref(xkb_keymap);
+		if (xkb_state)
+			xkb_state_unref(xkb_state);
+		if (xkb_context)
+			xkb_context_unref(xkb_context);
+
+		if (wl_buffer)
+			wl_buffer_destroy(wl_buffer);
+		if (wl_shm_pool)
+			wl_shm_pool_destroy(wl_shm_pool);
+		if (pool_data)
+			munmap(pool_data, shm_pool_size);
+
+		if (xdg_toplevel)
+			xdg_toplevel_destroy(xdg_toplevel);
+		if (xdg_surface)
+			xdg_surface_destroy(xdg_surface);
 		if (wl_surface)
 			wl_surface_destroy(wl_surface);
-		// FIXME: _disconnect() gracefully
+
+		if (wl_seat)
+			wl_seat_destroy(wl_seat);
+		if (xdg_wm_base)
+			xdg_wm_base_destroy(xdg_wm_base);
+		if (wl_shm)
+			wl_shm_destroy(wl_shm);
+		if (wl_compositor)
+			wl_compositor_destroy(wl_compositor);
+		if (wl_registry)
+			wl_registry_destroy(wl_registry);
+
+		if (wl_display) {
+			wl_display_roundtrip(wl_display);
+			wl_display_disconnect(wl_display);
+		}
 	}
 
 	void set_size(size_t width, size_t height)
@@ -755,24 +801,27 @@ void BWindow::impl::wl_seat_capabilities_handler(void *this_, struct wl_seat *wl
 			wl_pointer_add_listener(THIS->wl_pointer, &THIS->wl_pointer_listener, this_);
 			ALOGV("got wl_pointer");
 
-			if (!THIS->cursor_image) {
-				struct wl_cursor_theme *cursor_theme = wl_cursor_theme_load(nullptr, DEFAULT_CURSOR_SIZE, THIS->wl_shm);
-				if (!cursor_theme) break;
-				ALOGV("loaded cursor_theme");
+			if (!THIS->wl_cursor_theme)
+				THIS->wl_cursor_theme = wl_cursor_theme_load(nullptr, DEFAULT_CURSOR_SIZE, THIS->wl_shm);
+			if (!THIS->wl_cursor_theme) break;
+			ALOGV("loaded cursor_theme");
 
-				struct wl_cursor *cursor = wl_cursor_theme_get_cursor(cursor_theme, DEFAULT_CURSOR_NAME);
-				if (!cursor) break;
-				ALOGV("got wl_cursor");
+			struct wl_cursor *wl_cursor = wl_cursor_theme_get_cursor(THIS->wl_cursor_theme, DEFAULT_CURSOR_NAME);
+			if (!wl_cursor) break;
+			ALOGV("got wl_cursor");
 
-				if (cursor->image_count == 0) break;
-				THIS->cursor_image = cursor->images[0];
-				ALOGV("have cursor_image");
-			}
+			if (wl_cursor->image_count == 0) break;
+			THIS->cursor_image = wl_cursor->images[0];
+			ALOGV("have cursor_image");
 
 			struct wl_buffer *cursor_buffer = wl_cursor_image_get_buffer(THIS->cursor_image);
+			if (!cursor_buffer) break;
 			ALOGV("got cursor_buffer");
 
+			if (THIS->cursor_surface)
+				wl_surface_destroy(THIS->cursor_surface);
 			THIS->cursor_surface = wl_compositor_create_surface(THIS->wl_compositor);
+			if (!THIS->cursor_surface) break;
 			wl_surface_attach(THIS->cursor_surface, cursor_buffer, 0, 0);
 			wl_surface_commit(THIS->cursor_surface);
 			ALOGV("created cursor_surface");
@@ -799,9 +848,10 @@ void BWindow::impl::wl_pointer_enter_handler(void *this_, struct wl_pointer *poi
 											 struct wl_surface *surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
 	ALOGV("wl_pointer enter %p @%p", pointer, surface);
-	wl_pointer_set_cursor(pointer, serial,
-						  THIS->cursor_surface,
-						  THIS->cursor_image->hotspot_x, THIS->cursor_image->hotspot_y);
+	if (THIS->cursor_surface)
+		wl_pointer_set_cursor(pointer, serial,
+							  THIS->cursor_surface,
+							  THIS->cursor_image->hotspot_x, THIS->cursor_image->hotspot_y);
 
 	THIS->pointer_motion(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
 }
