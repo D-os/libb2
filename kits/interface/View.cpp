@@ -1057,6 +1057,11 @@ void BView::SetFont(const BFont *font, uint32 mask)
 {
 	if (!font) return;
 
+	if (mask & B_FONT_ALL) {
+		fState->font = *font;
+		return;
+	}
+
 	if (mask & B_FONT_FAMILY_AND_STYLE) {
 		fState->font.SetFamilyAndStyle(font->FamilyAndStyle());
 	}
