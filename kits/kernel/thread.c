@@ -401,7 +401,7 @@ status_t send_data(thread_id thread, int32 code, const void *buffer, size_t buff
 		return write_end;
 
 	size_t data_size   = sizeof(thread_id) + sizeof(int32) + bufferSize;
-	void	 *data_buffer = malloc(data_size);
+	void  *data_buffer = malloc(data_size);	 // FIXME: mmap
 	if (!data_buffer)
 		return B_NO_MEMORY;
 
@@ -436,7 +436,7 @@ int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
 
 	size_t head_size   = sizeof(thread_id) + sizeof(int32);
 	size_t data_size   = head_size + bufferSize;
-	void	 *data_buffer = malloc(data_size);
+	void  *data_buffer = malloc(data_size);	 // FIXME: mmap
 	if (!data_buffer)
 		return B_NO_MEMORY;
 
@@ -475,7 +475,7 @@ int32 receive_data(thread_id *sender, void *buffer, size_t bufferSize)
 
 int _get_thread_data_read_fd()
 {
-	return _info->data_pipe[1];
+	return _info->data_pipe[0];
 }
 
 int _get_thread_data_write_fd(thread_id thread)

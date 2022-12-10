@@ -255,7 +255,7 @@ void BLooper::Quit()
 
 			if (!has_data(fThread)) {
 				// wake up the thread to process termination request
-				status_code = send_data(fThread, 'QUIT', NULL, 0);
+				status_code = send_data(fThread, _QUIT_, nullptr, 0);
 			}
 
 			if (status_code != B_BAD_THREAD_ID) {
@@ -420,8 +420,8 @@ status_t BLooper::_PostMessage(BMessage *msg, BHandler *handler, BHandler *reply
 	msg->_set_reply_handler(reply_to);
 	fQueue->AddMessage(msg);
 
-	if (fThread != B_ERROR && !has_data(fThread))
-		return send_data(fThread, '_MSG', nullptr, 0);
+	if (fThread != B_ERROR && fThread != find_thread(NULL) && !has_data(fThread))
+		return send_data(fThread, _EVENTS_PENDING_, nullptr, 0);
 
 	return B_OK;
 }

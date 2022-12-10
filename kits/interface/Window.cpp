@@ -1780,7 +1780,10 @@ void BWindow::task_looper()
 
 	int msg_fd = _get_thread_data_read_fd();
 	ev.events  = EPOLLIN;
-	ev.data.fd = wl_fd;
+	ev.data.fd = msg_fd;
+	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, msg_fd, &ev) == -1) {
+		debugger("epoll_ctl msg_fd");
+	}
 
 #define MAX_EVENTS 4
 	struct epoll_event events[MAX_EVENTS];
