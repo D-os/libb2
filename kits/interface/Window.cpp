@@ -380,7 +380,8 @@ bool BWindow::impl::connect()
 	ALOGV("created xdg_toplevel");
 	xdg_toplevel_add_listener(xdg_toplevel, &xdg_toplevel_listener, this);
 	xdg_toplevel_set_app_id(xdg_toplevel, be_app->Name());
-	xdg_toplevel_set_title(xdg_toplevel, title ? title : "BWindow");
+	if (title)
+		xdg_toplevel_set_title(xdg_toplevel, title);
 	wl_surface_commit(wl_surface);
 
 	return true;
@@ -432,10 +433,8 @@ void BWindow::impl::resize_buffer()
 
 	wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, this);
 
-	wl_surface_attach(wl_surface, wl_buffer, 0, 0);
-	surface_committed = false;
-	wl_surface_damage_buffer(wl_surface, 0, 0, INT32_MAX, INT32_MAX);
-	surface_pending = true;
+	if (hidden)
+		showWindow();
 
 #ifndef NDEBUG
 	/* Draw checkerboxed background to see drawing artifacts */
@@ -458,12 +457,27 @@ void BWindow::impl::resize_buffer()
 
 void BWindow::impl::showWindow()
 {
-	hidden = false;
+	if (hidden && wl_buffer) {
+		hidden = false;
+		wl_surface_attach(wl_surface, wl_buffer, 0, 0);
+		surface_committed = false;
+		wl_surface_damage_buffer(wl_surface, 0, 0, INT32_MAX, INT32_MAX);
+		surface_pending = true;
+
+		xdg_toplevel_set_app_id(xdg_toplevel, be_app->Name());
+		if (title)
+			xdg_toplevel_set_title(xdg_toplevel, title);
+	}
 }
 
 void BWindow::impl::hideWindow()
 {
-	hidden = true;
+	if (!hidden) {
+		hidden = true;
+		wl_surface_attach(wl_surface, nullptr, 0, 0);
+		surface_committed = false;
+		surface_pending	  = true;
+	}
 }
 
 void BWindow::impl::minimize(bool minimized)
