@@ -3,13 +3,13 @@
 #define LOG_TAG "BFont"
 
 #include <Rect.h>
+#include <doctest/doctest.h>
 #include <include/core/SkFont.h>
 #include <include/core/SkFontMetrics.h>
 #include <include/core/SkFontMgr.h>
 #include <include/core/SkTextBlob.h>
 #include <include/core/SkTypeface.h>
 #include <log/log.h>
-#include <src/core/SkTypefaceCache.h>
 
 #include <algorithm>
 #include <cstring>
@@ -83,37 +83,56 @@ bool BFont::operator!=(const BFont &font) const
 
 status_t BFont::SetFamilyAndStyle(const font_family family, const font_style style)
 {
-	font_family current_family;
-	font_style	current_style;
-	GetFamilyAndStyle(&current_family, &current_style);
-
 	auto mgr = SkFontMgr::RefDefault();
+	SkTypeface *typeface = m->font.getTypeface();
 
-	const char	   *familyName = family ? family : current_family;
-	SkFontStyleSet *styleSet   = mgr->matchFamily(familyName);
-	for (auto i = 0; i < styleSet->count(); ++i) {
+	SkString familyName;
+	if (family) {
+		familyName.set(family);
+	}
+	else {
+		if (typeface) typeface->getFamilyName(&familyName);
+	}
+
+	if (!style) {
+		m->font.setTypeface(SkTypeface::MakeFromName(
+			familyName.c_str(),
+			typeface ? typeface->fontStyle() : SkFontStyle::Normal()));
+		return B_OK;
+	}
+
+	SkFontStyleSet *styleSet = mgr->matchFamily(familyName.c_str());
+	for (auto index = 0, count = styleSet->count(); index < count; ++index) {
 		SkFontStyle fontStyle;
 		SkString	styleName;
-		styleSet->getStyle(i, &fontStyle, &styleName);
-		if (styleName.equals(style ? style : current_style)) {
-			SkTypeface *typeface = mgr->matchFamilyStyle(familyName, fontStyle);
+		styleSet->getStyle(index, &fontStyle, &styleName);
+		if (styleName.equals(style)) {
+			SkTypeface *typeface = styleSet->matchStyle(fontStyle);
 			m->font.setTypeface(sk_sp<SkTypeface>(typeface));
+			styleSet->unref();
 			return B_OK;
 		}
 	}
 	styleSet->unref();
-
 	return B_BAD_VALUE;
-}
-
-static bool _cmp_face_uniqueId(SkTypeface *face, void *ctx)
-{
-	return face->uniqueID() == *static_cast<uint32 *>(ctx);
 }
 
 void BFont::SetFamilyAndStyle(uint32 code)
 {
-	m->font.setTypeface(SkTypefaceCache::FindByProcAndRef(_cmp_face_uniqueId, &code));
+	auto	 mgr = SkFontMgr::RefDefault();
+	SkString familyName;
+	for (auto index = 0, count = mgr->countFamilies(); index < count; ++index) {
+		mgr->getFamilyName(index, &familyName);
+		auto styleSet = mgr->matchFamily(familyName.c_str());
+		for (auto index = 0, count = styleSet->count(); index < count; ++index) {
+			auto typeface = styleSet->createTypeface(index);
+			if (typeface->uniqueID() == code) {
+				m->font.setTypeface(sk_sp<SkTypeface>(typeface));
+				break;
+			}
+		}
+		styleSet->unref();
+	}
 }
 
 void BFont::SetSize(float size)
@@ -149,26 +168,18 @@ void BFont::SetFace(uint16 face)
 {
 	SkTypeface *typeface = m->font.getTypeface();
 	if (typeface) {
-		if (face & B_ITALIC_FACE) {
-			// TODO: find SkTypeface::kBold in current family
-			// and replace typeface
-			debugger(__PRETTY_FUNCTION__);
-		}
-		if (face & B_ITALIC_FACE && face & B_BOLD_FACE) {
-			// TODO: find SkTypeface::kBoldItalic in current family
-			// and replace typeface
-			debugger(__PRETTY_FUNCTION__);
-		}
-		if (face & B_BOLD_FACE) {
-			// TODO: find SkTypeface::kItalic in current family
-			// and replace typeface
-			debugger(__PRETTY_FUNCTION__);
-		}
-		if (face & B_REGULAR_FACE) {
-			// TODO: find SkTypeface::kNormal style in current family
-			// and replace typeface
-			debugger(__PRETTY_FUNCTION__);
-		}
+		auto		mgr = SkFontMgr::RefDefault();
+		SkFontStyle faceStyle(
+			face & B_REGULAR_FACE ? SkFontStyle::kNormal_Weight : (face & B_BOLD_FACE ? SkFontStyle::kBold_Weight : SkFontStyle::kNormal_Weight),
+			SkFontStyle::kNormal_Width,
+			face & B_REGULAR_FACE ? SkFontStyle::kUpright_Slant : (face & B_ITALIC_FACE ? SkFontStyle::kItalic_Slant : SkFontStyle::kUpright_Slant));
+
+		SkString familyName;
+		typeface->getFamilyName(&familyName);
+
+		SkFontStyleSet *styleSet	  = mgr->matchFamily(familyName.c_str());
+		SkTypeface	   *styleTypeface = styleSet->matchStyle(faceStyle);
+		m->font.setTypeface(sk_sp<SkTypeface>(styleTypeface));
 	}
 }
 
@@ -204,18 +215,19 @@ void BFont::GetFamilyAndStyle(font_family *family, font_style *style) const
 			typeface->getFamilyName(&familyName);
 			SkFontStyle fontStyle = typeface->fontStyle();
 
-			auto			mgr		 = SkFontMgr::RefDefault();
-			SkFontStyleSet *styleSet = mgr->matchFamily(familyName.c_str());
-			for (auto i = 0; i < styleSet->count(); ++i) {
-				SkFontStyle setFontStyle;
-				SkString	setStyleName;
-				styleSet->getStyle(i, &setFontStyle, &setStyleName);
+			auto		mgr		 = SkFontMgr::RefDefault();
+			auto		styleSet = mgr->matchFamily(familyName.c_str());
+			SkFontStyle setFontStyle;
+			SkString	setStyleName;
+			for (auto index = 0, count = styleSet->count(); index < count; ++index) {
+				styleSet->getStyle(index, &setFontStyle, &setStyleName);
 				if (setFontStyle == fontStyle) {
 					strncpy(reinterpret_cast<char *>(style), setStyleName.c_str(), B_FONT_STYLE_LENGTH);
 					(*style)[B_FONT_STYLE_LENGTH] = '\0';
 					break;
 				}
 			}
+			styleSet->unref();
 		}
 	}
 }
@@ -400,10 +412,10 @@ int32 count_font_styles(font_family name)
 {
 	auto mgr = SkFontMgr::RefDefault();
 
-	SkFontStyleSet *styles = mgr->matchFamily(name);
-	auto			count  = styles->count();
+	auto styleSet = mgr->matchFamily(name);
+	auto count	  = styleSet->count();
+	styleSet->unref();
 
-	styles->unref();
 	return count;
 }
 
@@ -464,4 +476,182 @@ status_t set_font_cache_info(uint32 id, void *set)
 {
 	debugger(__PRETTY_FUNCTION__);
 	return B_ERROR;
+}
+
+TEST_SUITE("BFont")
+{
+	font_family ui_family{"Inter"};
+	font_style	regular_style{"Regular"};
+	font_style	bold_style{"Bold"};
+
+	TEST_CASE("FamilyAndStyle")
+	{
+		BFont		base;
+		font_family family;
+		font_style	style;
+
+		CHECK(base.SetFamilyAndStyle(ui_family, regular_style) == B_OK);
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == std::string(regular_style));
+
+		CHECK(base.SetFamilyAndStyle(ui_family, nullptr) == B_OK);
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == std::string(regular_style));
+
+		CHECK(base.SetFamilyAndStyle(nullptr, bold_style) == B_OK);
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == std::string(bold_style));
+
+		CHECK(base.SetFamilyAndStyle(nullptr, bold_style) == B_OK);
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == std::string(bold_style));
+	}
+
+	TEST_CASE("Face")
+	{
+		BFont base;
+		CHECK(base.SetFamilyAndStyle(ui_family, regular_style) == B_OK);
+
+		font_family family;
+		font_style	style;
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Regular");
+
+		base.SetFace(B_ITALIC_FACE);
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Italic");
+
+		base.SetFace(B_BOLD_FACE);
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Bold");
+
+		base.SetFace(B_REGULAR_FACE);
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Regular");
+
+		base.SetFace(B_ITALIC_FACE | B_BOLD_FACE);
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Bold Italic");
+	}
+
+	TEST_CASE("Assign")
+	{
+		BFont base;
+		CHECK(base.SetFamilyAndStyle(ui_family, regular_style) == B_OK);
+		base.SetSize(123);
+		base.SetShear(11);
+		// base.SetRotation();	 // not supported
+		// base.SetSpacing();	 // not supported
+		// base.SetEncoding();	 // not supported
+		base.SetFace(B_ITALIC_FACE);
+		base.SetFlags(B_DISABLE_ANTIALIASING);
+
+		font_family family;
+		font_style	style;
+		base.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Italic");
+		CHECK(base.Size() == 123.0f);
+		CHECK(base.Shear() == 11.0f);
+		CHECK(base.Rotation() == 0.0f);
+		CHECK(base.Spacing() == B_BITMAP_SPACING);
+		CHECK(base.Encoding() == B_UNICODE_UTF8);
+		CHECK(base.Face() == B_ITALIC_FACE);
+		CHECK(base.Flags() == B_DISABLE_ANTIALIASING);
+
+		BFont copy1;
+		copy1 = base;
+		copy1.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Italic");
+		CHECK(copy1.Size() == 123.0f);
+		CHECK(copy1.Shear() == 11.0f);
+		CHECK(copy1.Rotation() == 0.0f);
+		CHECK(copy1.Spacing() == B_BITMAP_SPACING);
+		CHECK(copy1.Encoding() == B_UNICODE_UTF8);
+		CHECK(copy1.Face() == B_ITALIC_FACE);
+		CHECK(copy1.Flags() == B_DISABLE_ANTIALIASING);
+
+		BFont copy2(base);
+		copy2.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Italic");
+		CHECK(copy2.Size() == 123.0f);
+		CHECK(copy2.Shear() == 11.0f);
+		CHECK(copy2.Rotation() == 0.0f);
+		CHECK(copy2.Spacing() == B_BITMAP_SPACING);
+		CHECK(copy2.Encoding() == B_UNICODE_UTF8);
+		CHECK(copy2.Face() == B_ITALIC_FACE);
+		CHECK(copy2.Flags() == B_DISABLE_ANTIALIASING);
+
+		BFont copy3(&base);
+		copy3.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Italic");
+		CHECK(copy3.Size() == 123.0f);
+		CHECK(copy3.Shear() == 11.0f);
+		CHECK(copy3.Rotation() == 0.0f);
+		CHECK(copy3.Spacing() == B_BITMAP_SPACING);
+		CHECK(copy3.Encoding() == B_UNICODE_UTF8);
+		CHECK(copy3.Face() == B_ITALIC_FACE);
+		CHECK(copy3.Flags() == B_DISABLE_ANTIALIASING);
+
+		BFont copy4 = &base;
+		copy4.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == "Italic");
+		CHECK(copy4.Size() == 123.0f);
+		CHECK(copy4.Shear() == 11.0f);
+		CHECK(copy4.Rotation() == 0.0f);
+		CHECK(copy4.Spacing() == B_BITMAP_SPACING);
+		CHECK(copy4.Encoding() == B_UNICODE_UTF8);
+		CHECK(copy4.Face() == B_ITALIC_FACE);
+		CHECK(copy4.Flags() == B_DISABLE_ANTIALIASING);
+	}
+
+	TEST_CASE("SetFont")
+	{
+		BFont base;
+		CHECK(base.SetFamilyAndStyle(ui_family, bold_style) == B_OK);
+
+		BFont font;
+
+		font.SetFamilyAndStyle(base.FamilyAndStyle());
+		font_family family;
+		font_style	style;
+		font.GetFamilyAndStyle(&family, &style);
+		CHECK(std::string(family) == std::string(ui_family));
+		CHECK(std::string(style) == std::string(bold_style));
+
+		font.SetSize(23);
+		CHECK(font.Size() == 23.0f);
+
+		font.SetShear(11);
+		CHECK(font.Shear() == 11.0f);
+
+		font.SetRotation(0);
+		CHECK(font.Rotation() == 0.0f);
+
+		font.SetSpacing(B_BITMAP_SPACING);
+		CHECK(font.Spacing() == B_BITMAP_SPACING);
+
+		font.SetEncoding(B_UNICODE_UTF8);
+		CHECK(font.Encoding() == B_UNICODE_UTF8);
+
+		font.SetFace(B_BOLD_FACE | B_REGULAR_FACE);
+		CHECK((font.Face() & B_REGULAR_FACE) == B_REGULAR_FACE);
+		CHECK((font.Face() & B_BOLD_FACE) == 0);
+
+		font.SetFlags(B_FORCE_ANTIALIASING);
+		CHECK(font.Flags() == B_FORCE_ANTIALIASING);
+	}
 }
