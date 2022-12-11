@@ -91,3 +91,8 @@ build $BUILDROOT/os/tests/interface/ClippingPlusRedraw.o: cxx system/os/tests/in
 build $BUILDROOT/os/tests/interface_clipping: link $
   $BUILDROOT/os/tests/interface/ClippingPlusRedraw.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/PulseTest.o: cxx system/os/tests/interface/PulseTest.cpp
+build $BUILDROOT/os/tests/interface_pulse: link $
+  $BUILDROOT/os/tests/interface/PulseTest.o $
+| $SYSROOT/lib/libbe.so

@@ -1633,11 +1633,14 @@ bool BWindow::IsMinimized() const
 
 BRect BWindow::Bounds() const
 {
-	BPoint dim(m->width, m->height);
-	if (!m->info.isEmpty())
-		dim.Set(m->info.width(), m->info.height());
+	auto width	= m->width;
+	auto height = m->height;
+	if (!m->info.isEmpty()) {
+		width  = m->info.width();
+		height = m->info.height();
+	}
 
-	return BRect(B_ORIGIN, dim - BPoint{1, 1});
+	return BRect(0, 0, width - 1, height - 1);
 }
 
 BRect BWindow::Frame() const
