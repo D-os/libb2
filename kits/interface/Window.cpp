@@ -450,23 +450,21 @@ void BWindow::impl::resize_buffer()
 #endif
 
 	surface = SkSurface::MakeRasterDirect(info, pool_data, stride);
-
-	if (!hidden)
-		top_view.Invalidate();
 }
 
 void BWindow::impl::showWindow()
 {
 	if (hidden && wl_buffer) {
 		hidden = false;
-		wl_surface_attach(wl_surface, wl_buffer, 0, 0);
-		surface_committed = false;
-		wl_surface_damage_buffer(wl_surface, 0, 0, INT32_MAX, INT32_MAX);
-		surface_pending = true;
 
 		xdg_toplevel_set_app_id(xdg_toplevel, be_app->Name());
 		if (title)
 			xdg_toplevel_set_title(xdg_toplevel, title);
+
+		wl_surface_attach(wl_surface, wl_buffer, 0, 0);
+		surface_committed = false;
+
+		top_view.Invalidate();
 	}
 }
 
@@ -1409,9 +1407,7 @@ void BWindow::MessageReceived(BMessage *message)
 	ALOGV("MessageReceived 0x%x: %.4s", message->what, (char *)&message->what);
 	switch (message->what) {
 		case _UPDATE_: {
-			BMessage message(_UPDATE_);
-			message.AddRect("updateRect", Bounds());
-			PostMessage(&message, &m->top_view);
+			m->top_view.Invalidate();
 			break;
 		}
 

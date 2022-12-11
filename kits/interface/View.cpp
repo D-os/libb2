@@ -179,49 +179,63 @@ void BView::MessageReceived(BMessage *message)
 	if (!message->HasSpecifiers()) {
 		switch (message->what) {
 			case _UPDATE_: {
-				const rgb_color view_color(ViewColor());
+				BRect updateRect;
+				if (message->FindRect("updateRect", &updateRect) == B_OK && updateRect.IsValid()) {
+					// combine with pending updates
+					BMessage *pendingMessage;
+					int32	  index = 0;
+					while ((pendingMessage = Looper()->MessageQueue()->FindMessage(_UPDATE_, index))) {
+						if (pendingMessage->_get_handler() == this) {
+							Looper()->MessageQueue()->RemoveMessage(pendingMessage);
 
-				// The Application Server paints the view with this color before any view-specific drawing functions are called.
-				if (fFlags & B_WILL_DRAW) {
-					BRect updateRect;
-					if (message->FindRect("updateRect", &updateRect) == B_OK && updateRect.IsValid()) {
-						// combine with pending updates
-						BMessage *pendingMessage;
-						int32	  index = 0;
-						while ((pendingMessage = Looper()->MessageQueue()->FindMessage(_UPDATE_, index))) {
-							if (pendingMessage->_get_handler() == this) {
-								Looper()->MessageQueue()->RemoveMessage(pendingMessage);
-
-								BRect pendingRect;
-								if (message->FindRect("updateRect", &pendingRect) == B_OK && pendingRect.IsValid()) {
-									updateRect = updateRect | pendingRect;
-								}
-
-								delete pendingMessage;
+							BRect pendingRect;
+							if (message->FindRect("updateRect", &pendingRect) == B_OK && pendingRect.IsValid()) {
+								updateRect = updateRect | pendingRect;
 							}
-							else {
-								// move to next
-								index += 1;
-							}
-						}
 
-						SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
-						if (!canvas) {
-							// FIXME: now what? ¯\_(ツ)_/¯
-							break;
+							delete pendingMessage;
 						}
+						else {
+							// move to next
+							index += 1;
+						}
+					}
 
+					SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
+					if (!canvas) {
+						// FIXME: now what? ¯\_(ツ)_/¯
+						return;
+					}
+
+					std::function<void(BView *, BRect)> do_draw_view = [&](BView *view, BRect invalRect) {
 						int checkpoint = canvas->save();
 
-						auto bounds = Bounds();
-						ConvertToScreen(&bounds);
+						auto bounds = view->Bounds();
+						view->ConvertToScreen(&bounds);
 						canvas->clipRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1));
-						// If you set the view color to B_TRANSPARENT_COLOR, the Application Server won't erase the view's clipping region before an update.
-						if (view_color != B_TRANSPARENT_COLOR)
-							canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
 
-						// Call hook function to Draw content
-						Draw(updateRect);
+						if (view->fFlags & B_WILL_DRAW) {
+							// The Application Server paints the view with ViewColor before any view-specific drawing functions are called.
+							const rgb_color view_color(view->ViewColor());
+							// If you set the view color to B_TRANSPARENT_COLOR, the Application Server won't erase the view's clipping region before an update.
+							if (view_color != B_TRANSPARENT_COLOR)
+								canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
+
+							// Call hook function to Draw content
+							view->Draw(invalRect);
+						}
+
+						// draw children
+						for (BView *child = view->fFirstChild; child; child = child->fNextSibling) {
+							if (invalRect.Intersects(child->Frame())) {
+								do_draw_view(child, invalRect.OffsetByCopy(-child->fParentOffset) & child->Bounds());
+							}
+						}
+
+						if (view->fFlags & B_WILL_DRAW) {
+							// Call hook function to Draw content after children
+							view->DrawAfterChildren(invalRect);
+						}
 
 						canvas->restoreToCount(checkpoint);
 
@@ -232,9 +246,14 @@ void BView::MessageReceived(BMessage *message)
 						paint.setStyle(SkPaint::kStroke_Style);
 						canvas->drawRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom), paint);
 #endif
+					};
 
-						fOwner->_damage_window(bounds.left, bounds.top, bounds.Width(), bounds.Height());
-					}
+					canvas->restoreToCount(0);
+					canvas->resetMatrix();
+					do_draw_view(this, updateRect);
+
+					ConvertToScreen(&updateRect);
+					fOwner->_damage_window(updateRect.left, updateRect.top, updateRect.Width(), updateRect.Height());
 				}
 				break;
 			}
@@ -495,6 +514,11 @@ BWindow *BView::Window() const
 }
 
 void BView::Draw(BRect updateRect)
+{
+	// Hook - default implementation does nothing
+}
+
+void BView::DrawAfterChildren(BRect updateRect)
 {
 	// Hook - default implementation does nothing
 }
@@ -1139,12 +1163,6 @@ void BView::Invalidate(BRect invalRect)
 		message.AddRect("updateRect", invalRect);
 		if (Looper()) {
 			Looper()->PostMessage(&message, this);
-		}
-	}
-
-	for (BView *child = fFirstChild; child; child = child->fNextSibling) {
-		if (invalRect.Intersects(child->Frame())) {
-			child->Invalidate(invalRect.OffsetByCopy(-child->fParentOffset) & child->Bounds());
 		}
 	}
 }

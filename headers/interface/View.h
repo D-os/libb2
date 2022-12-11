@@ -464,6 +464,8 @@ class BView : public BHandler
 	bool IsPrinting() const;
 	void SetScale(float scale) const;
 
+	virtual void DrawAfterChildren(BRect updateRect);
+
    private:
 	class impl;
 	// friend class BScrollBar;

@@ -77,13 +77,13 @@ class BWindow : public BLooper
 	BWindow(BRect		frame,
 			const char *title,
 			window_type type,
-			uint32		flags,
+			uint32		flags	  = B_ASYNCHRONOUS_CONTROLS,
 			uint32		workspace = B_CURRENT_WORKSPACE);
 	BWindow(BRect		frame,
 			const char *title,
 			window_look look,
 			window_feel feel,
-			uint32		flags,
+			uint32		flags	  = B_ASYNCHRONOUS_CONTROLS,
 			uint32		workspace = B_CURRENT_WORKSPACE);
 	virtual ~BWindow();
 

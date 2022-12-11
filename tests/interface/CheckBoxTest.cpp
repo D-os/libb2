@@ -40,6 +40,8 @@ void DividedBackgroundView::Draw(BRect updateRect)
 
 	SetLowColor(0, 0, 120);
 	FillRect(rect, B_SOLID_LOW);
+
+	PopState();
 }
 
 //	#pragma mark -
