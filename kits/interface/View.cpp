@@ -24,77 +24,128 @@
 #include <log/log.h>
 #include <pimpl.h>
 
+#include <stack>
+
 class BView::impl
 {
    public:
-	rgb_color view_color;
-	rgb_color high_color;
-	rgb_color low_color;
+	struct State
+	{
+		int checkpoint;
 
-	drawing_mode drawing_mode;
-	float		 pen_size;
-	SkPoint		 pen_location;
+		rgb_color view_color;
+		rgb_color high_color;
+		rgb_color low_color;
 
-	BFont font;
-	/// causes subsequent printing to be done without antialiasing printed characters
-	/// does not affect characters or strings drawn to the screen
-	bool font_aliasing;
+		SkPoint origin;
+
+		drawing_mode drawing_mode;
+		float		 pen_size;
+		SkPoint		 pen_location;
+
+		BFont font;
+		/// causes subsequent printing to be done without antialiasing printed characters
+		/// does not affect characters or strings drawn to the screen
+		bool font_aliasing;
+	};
 
 	impl()
-		: view_color{255, 255, 255, 255},
-		  high_color{0, 0, 0, 255},
-		  low_color{255, 255, 255, 255},
-		  drawing_mode{B_OP_COPY},
-		  pen_size{1.0},
-		  pen_location{0.0, 0.0},
-		  font(be_plain_font),
-		  font_aliasing{false}
 	{
+		state_stack.push({.checkpoint	 = 0,
+						  .view_color	 = {255, 255, 255, 255},
+						  .high_color	 = {0, 0, 0, 255},
+						  .low_color	 = {255, 255, 255, 255},
+						  .origin		 = {0.0, 0.0},
+						  .drawing_mode	 = B_OP_COPY,
+						  .pen_size		 = 1.0,
+						  .pen_location	 = {0.0, 0.0},
+						  .font			 = be_plain_font,
+						  .font_aliasing = false});
 	}
 
+	inline State &S() { return state_stack.top(); }
+
+	void push_state(int checkpoint);
+	int	 pop_state();
+	bool state_stack_empty();
+	void clear_state_stack();
+
 	void fill_pattern(rgb_color pixels[8 * 8], pattern &p);
+
+   private:
+	std::stack<State> state_stack;
 };
+
+void BView::impl::push_state(int checkpoint)
+{
+	State new_state		 = state_stack.top();
+	new_state.checkpoint = checkpoint;
+	state_stack.push(new_state);
+}
+
+int BView::impl::pop_state()
+{
+	// There has to be at least one!
+	if (state_stack.size() > 1) {
+		int checkpoint = state_stack.top().checkpoint;
+		state_stack.pop();
+		return checkpoint;
+	}
+
+	ALOGE("Cannot pop from empty state stack");
+	return -1;
+}
+
+bool BView::impl::state_stack_empty()
+{
+	return state_stack.size() <= 1;
+}
+
+void BView::impl::clear_state_stack()
+{
+	while (state_stack.size() > 1) state_stack.pop();
+}
 
 void BView::impl::fill_pattern(rgb_color pixels[8 * 8], pattern &p)
 {
-	const rgb_color low = (drawing_mode == B_OP_OVER
-						   || drawing_mode == B_OP_ERASE
-						   || drawing_mode == B_OP_INVERT
-						   || drawing_mode == B_OP_SELECT)
+	const rgb_color low = (S().drawing_mode == B_OP_OVER
+						   || S().drawing_mode == B_OP_ERASE
+						   || S().drawing_mode == B_OP_INVERT
+						   || S().drawing_mode == B_OP_SELECT)
 							  ? B_TRANSPARENT_COLOR
-							  : low_color;
+							  : S().low_color;
 
 	for (int row = 0; row < 8; ++row) {
 		if (p.data[row] & 0b10000000)
-			pixels[0 + row * 8] = high_color;
+			pixels[0 + row * 8] = S().high_color;
 		else
 			pixels[0 + row * 8] = low;
 		if (p.data[row] & 0b01000000)
-			pixels[1 + row * 8] = high_color;
+			pixels[1 + row * 8] = S().high_color;
 		else
 			pixels[1 + row * 8] = low;
 		if (p.data[row] & 0b00100000)
-			pixels[2 + row * 8] = high_color;
+			pixels[2 + row * 8] = S().high_color;
 		else
 			pixels[2 + row * 8] = low;
 		if (p.data[row] & 0b00010000)
-			pixels[3 + row * 8] = high_color;
+			pixels[3 + row * 8] = S().high_color;
 		else
 			pixels[3 + row * 8] = low;
 		if (p.data[row] & 0b00001000)
-			pixels[4 + row * 8] = high_color;
+			pixels[4 + row * 8] = S().high_color;
 		else
 			pixels[4 + row * 8] = low;
 		if (p.data[row] & 0b00000100)
-			pixels[5 + row * 8] = high_color;
+			pixels[5 + row * 8] = S().high_color;
 		else
 			pixels[5 + row * 8] = low;
 		if (p.data[row] & 0b00000010)
-			pixels[6 + row * 8] = high_color;
+			pixels[6 + row * 8] = S().high_color;
 		else
 			pixels[6 + row * 8] = low;
 		if (p.data[row] & 0b00000001)
-			pixels[7 + row * 8] = high_color;
+			pixels[7 + row * 8] = S().high_color;
 		else
 			pixels[7 + row * 8] = low;
 	}
@@ -237,8 +288,11 @@ void BView::MessageReceived(BMessage *message)
 							view->DrawAfterChildren(invalRect);
 						}
 
+						if (!view->fState->state_stack_empty()) {
+							ALOGE("View '%s' state stack is not empty after Draw(). Did you forget PopState() after PushState()?", view->Name());
+							view->fState->clear_state_stack();
+						}
 						canvas->restoreToCount(checkpoint);
-
 #ifndef NDEBUG
 						// Draw green rectangles around views
 						SkPaint paint;
@@ -743,49 +797,64 @@ void BView::ConstrainClippingRegion(BRegion *region)
 
 void BView::SetDrawingMode(drawing_mode mode)
 {
-	fState->drawing_mode = mode;
+	fState->S().drawing_mode = mode;
 }
 
 void BView::SetPenSize(float size)
 {
 	if (size < 0.0) return;
 
-	fState->pen_size = size;
+	fState->S().pen_size = size;
 }
 
 float BView::PenSize() const
 {
-	return fState->pen_size;
+	return fState->S().pen_size;
 }
 
 void BView::SetViewColor(rgb_color color)
 {
-	fState->view_color = color;
+	fState->S().view_color = color;
 }
 
 rgb_color BView::ViewColor() const
 {
-	return fState->view_color;
+	return fState->S().view_color;
 }
 
 void BView::SetHighColor(rgb_color color)
 {
-	fState->high_color = color;
+	fState->S().high_color = color;
 }
 
 rgb_color BView::HighColor() const
 {
-	return fState->high_color;
+	return fState->S().high_color;
 }
 
 void BView::SetLowColor(rgb_color color)
 {
-	fState->low_color = color;
+	fState->S().low_color = color;
 }
 
 rgb_color BView::LowColor() const
 {
-	return fState->low_color;
+	return fState->S().low_color;
+}
+
+void BView::SetOrigin(BPoint pt)
+{
+	SetOrigin(pt.x, pt.y);
+}
+
+void BView::SetOrigin(float x, float y)
+{
+	fState->S().origin.set(x, y);
+}
+
+BPoint BView::Origin() const
+{
+	return BPoint(fState->S().origin.x(), fState->S().origin.y());
 }
 
 void BView::PushState()
@@ -794,7 +863,14 @@ void BView::PushState()
 	SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
 	if (!canvas) return;
 
-	canvas->save();
+	int checkpoint = canvas->save();
+	fState->push_state(checkpoint);
+
+	// When a state is saved to the stack, a new state context is created,
+	// with a local scale of zero, a local origin at (0,0), and no clipping region.
+	canvas->scale(1.0, 1.0);
+	fState->S().origin.set(0.0, 0.0);
+	// TODO: clear clipping
 }
 
 void BView::PopState()
@@ -803,7 +879,9 @@ void BView::PopState()
 	SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
 	if (!canvas) return;
 
-	canvas->restore();
+	int checkpoint = fState->pop_state();
+	if (checkpoint > 0)
+		canvas->restoreToCount(checkpoint);
 }
 
 void BView::MovePenTo(BPoint pt)
@@ -813,17 +891,17 @@ void BView::MovePenTo(BPoint pt)
 
 void BView::MovePenTo(float x, float y)
 {
-	fState->pen_location.set(x, y);
+	fState->S().pen_location.set(x, y);
 }
 
 void BView::MovePenBy(float x, float y)
 {
-	fState->pen_location.offset(x, y);
+	fState->S().pen_location.offset(x, y);
 }
 
 BPoint BView::PenLocation() const
 {
-	return BPoint(fState->pen_location.x(), fState->pen_location.y());
+	return BPoint(fState->S().pen_location.x(), fState->S().pen_location.y());
 }
 
 static SkBlendMode blend_modes[] = {
@@ -839,29 +917,29 @@ static SkBlendMode blend_modes[] = {
 	[B_OP_SELECT]	= SkBlendMode::kModulate,
 };
 
-#define DRAW_PRELUDE                                                                     \
-	if (!fOwner) return;                                                                 \
-	SkCanvas *canvas = fOwner->_get_canvas();                                            \
-	if (!canvas) return;                                                                 \
-                                                                                         \
-	BPoint translation{LeftTop()};                                                       \
-	ConvertToScreen(&translation);                                                       \
-	canvas->setMatrix(SkMatrix::Translate(translation.x, translation.y));                \
-                                                                                         \
-	SkPaint paint;                                                                       \
-	paint.setStrokeWidth(fState->pen_size > 0.0 ? /* scale * */ fState->pen_size : 1.0); \
-	paint.setStrokeCap(SkPaint::kSquare_Cap);                                            \
-                                                                                         \
-	if (fState->drawing_mode < (sizeof(blend_modes) / sizeof(blend_modes[0])))           \
-		paint.setBlendMode(blend_modes[fState->drawing_mode]);
+#define DRAW_PRELUDE                                                                             \
+	if (!fOwner) return;                                                                         \
+	SkCanvas *canvas = fOwner->_get_canvas();                                                    \
+	if (!canvas) return;                                                                         \
+                                                                                                 \
+	BPoint translation{LeftTop()};                                                               \
+	ConvertToScreen(&translation);                                                               \
+	canvas->setMatrix(SkMatrix::Translate(translation.x, translation.y));                        \
+                                                                                                 \
+	SkPaint paint;                                                                               \
+	paint.setStrokeWidth(fState->S().pen_size > 0.0 ? /* scale * */ fState->S().pen_size : 1.0); \
+	paint.setStrokeCap(SkPaint::kSquare_Cap);                                                    \
+                                                                                                 \
+	if (fState->S().drawing_mode < (sizeof(blend_modes) / sizeof(blend_modes[0])))               \
+		paint.setBlendMode(blend_modes[fState->S().drawing_mode]);
 
-#define DRAW_PRELUDE_WITH_COLOR    \
-	DRAW_PRELUDE                   \
-	paint.setColor(SkColorSetARGB( \
-		fState->high_color.alpha,  \
-		fState->high_color.red,    \
-		fState->high_color.green,  \
-		fState->high_color.blue));
+#define DRAW_PRELUDE_WITH_COLOR       \
+	DRAW_PRELUDE                      \
+	paint.setColor(SkColorSetARGB(    \
+		fState->S().high_color.alpha, \
+		fState->S().high_color.red,   \
+		fState->S().high_color.green, \
+		fState->S().high_color.blue));
 
 #define DRAW_PRELUDE_WITH_PATTERN                                                         \
 	DRAW_PRELUDE                                                                          \
@@ -891,12 +969,12 @@ void BView::StrokeLine(BPoint toPt, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	canvas->drawLine(
-		fState->pen_location.x(), fState->pen_location.y(),
+		fState->S().pen_location.x(), fState->S().pen_location.y(),
 		toPt.x, toPt.y,
 		paint);
-	BRect r(fState->pen_location.x(), fState->pen_location.y(), toPt.x, toPt.y);
+	BRect r(fState->S().pen_location.x(), fState->S().pen_location.y(), toPt.x, toPt.y);
 	DAMAGE_RECT
-	fState->pen_location.set(toPt.x, toPt.y);
+	fState->S().pen_location.set(toPt.x, toPt.y);
 }
 
 void BView::StrokeLine(BPoint fromPt, BPoint toPt, pattern p)
@@ -905,7 +983,7 @@ void BView::StrokeLine(BPoint fromPt, BPoint toPt, pattern p)
 	canvas->drawLine(fromPt.x, fromPt.y, toPt.x, toPt.y, paint);
 	BRect r(fromPt.x, fromPt.y, toPt.x, toPt.y);
 	DAMAGE_RECT
-	fState->pen_location.set(toPt.x, toPt.y);
+	fState->S().pen_location.set(toPt.x, toPt.y);
 }
 
 void BView::StrokePolygon(const BPolygon *aPolygon, bool closed, pattern p)
@@ -1104,7 +1182,7 @@ void BView::DrawString(const char *aString, int32 length, BPoint location, escap
 	if (!aString || length <= 0) return;
 	DRAW_PRELUDE_WITH_COLOR
 
-	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(aString, length, fState->font._get_font());
+	sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(aString, length, fState->S().font._get_font());
 	canvas->drawTextBlob(blob, location.x, location.y, paint);
 
 	auto  bounds = blob->bounds();
@@ -1124,40 +1202,40 @@ void BView::SetFont(const BFont *font, uint32 mask)
 	if (!font) return;
 
 	if (mask & B_FONT_ALL) {
-		fState->font = *font;
+		fState->S().font = *font;
 		return;
 	}
 
 	if (mask & B_FONT_FAMILY_AND_STYLE) {
-		fState->font.SetFamilyAndStyle(font->FamilyAndStyle());
+		fState->S().font.SetFamilyAndStyle(font->FamilyAndStyle());
 	}
 	if (mask & B_FONT_SIZE) {
-		fState->font.SetSize(font->Size());
+		fState->S().font.SetSize(font->Size());
 	}
 	if (mask & B_FONT_SHEAR) {
-		fState->font.SetShear(font->Shear());
+		fState->S().font.SetShear(font->Shear());
 	}
 	if (mask & B_FONT_ROTATION) {
-		fState->font.SetRotation(font->Rotation());
+		fState->S().font.SetRotation(font->Rotation());
 	}
 	if (mask & B_FONT_SPACING) {
-		fState->font.SetSpacing(font->Spacing());
+		fState->S().font.SetSpacing(font->Spacing());
 	}
 	if (mask & B_FONT_ENCODING) {
-		fState->font.SetEncoding(font->Encoding());
+		fState->S().font.SetEncoding(font->Encoding());
 	}
 	if (mask & B_FONT_FACE) {
-		fState->font.SetFace(font->Face());
+		fState->S().font.SetFace(font->Face());
 	}
 	if (mask & B_FONT_FLAGS) {
-		fState->font.SetFlags(font->Flags());
+		fState->S().font.SetFlags(font->Flags());
 	}
 }
 
 void BView::GetFont(BFont *font) const
 {
 	if (!font) return;
-	*font = fState->font;
+	*font = fState->S().font;
 }
 
 void BView::TruncateString(BString *in_out, uint32 mode, float width) const
@@ -1167,14 +1245,14 @@ void BView::TruncateString(BString *in_out, uint32 mode, float width) const
 
 float BView::StringWidth(const char *string) const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0.0;
+	if (!string) return 0.0f;
+	return StringWidth(string, strlen(string));
 }
 
 float BView::StringWidth(const char *string, int32 length) const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return 0.0;
+	if (!string || length <= 0) return 0.0f;
+	return SkTextBlob::MakeFromText(string, length, fState->S().font._get_font())->bounds().width();
 }
 
 void BView::GetStringWidths(char *stringArray[], int32 lengthArray[], int32 numStrings, float widthArray[]) const
@@ -1184,17 +1262,17 @@ void BView::GetStringWidths(char *stringArray[], int32 lengthArray[], int32 numS
 
 void BView::SetFontSize(float size)
 {
-	fState->font.SetSize(size);
+	fState->S().font.SetSize(size);
 }
 
 void BView::ForceFontAliasing(bool enable)
 {
-	fState->font_aliasing = enable;
+	fState->S().font_aliasing = enable;
 }
 
 void BView::GetFontHeight(font_height *height) const
 {
-	fState->font.GetHeight(height);
+	fState->S().font.GetHeight(height);
 }
 
 void BView::Invalidate(BRect invalRect)
@@ -1291,6 +1369,23 @@ uint32 BView::Flags() const
 void BView::SetResizingMode(uint32 mode)
 {
 	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::MoveBy(float dh, float dv)
+{
+	MoveTo(fBounds.left + dh, fBounds.top + dv);
+}
+
+void BView::MoveTo(BPoint where)
+{
+	MoveTo(where.x, where.y);
+}
+
+void BView::MoveTo(float x, float y)
+{
+	fParentOffset.x = floorf(x);
+	fParentOffset.y = floorf(y);
+	if (fParent) fParent->Invalidate();
 }
 
 void BView::ResizeBy(float dh, float dv)
