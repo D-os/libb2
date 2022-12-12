@@ -96,3 +96,8 @@ build $BUILDROOT/os/tests/interface/PulseTest.o: cxx system/os/tests/interface/P
 build $BUILDROOT/os/tests/interface_pulse: link $
   $BUILDROOT/os/tests/interface/PulseTest.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/boxes.o: cxx system/os/tests/interface/boxes.cpp
+build $BUILDROOT/os/tests/interface_boxes: link $
+  $BUILDROOT/os/tests/interface/boxes.o $
+| $SYSROOT/lib/libbe.so

@@ -1,6 +1,6 @@
 #include "Box.h"
 
-#define BOX_LABEL_OFFSET 10
+#define BOX_LABEL_OFFSET 8
 
 BBox::BBox(BRect bounds, const char *name, uint32 resizeFlags, uint32 flags, border_style border)
 	: BView(bounds, name, resizeFlags, flags),
@@ -9,7 +9,6 @@ BBox::BBox(BRect bounds, const char *name, uint32 resizeFlags, uint32 flags, bor
 	  fLabelView{nullptr}
 {
 	SetFont(be_bold_font);
-	SetFontSize(11);
 }
 
 BBox::~BBox()
@@ -58,6 +57,11 @@ status_t BBox::SetLabel(BView *view_label)
 		free(const_cast<char *>(fLabel));
 	fLabel	   = nullptr;
 	fLabelView = view_label;
+
+	auto left = PenSize() * 2 + BOX_LABEL_OFFSET;
+	fLabelView->MoveTo(left, 0.0);
+	AddChild(fLabelView);
+
 	Invalidate();
 	return B_OK;
 }
@@ -76,20 +80,28 @@ void BBox::Draw(BRect updateRect)
 {
 	BView::Draw(updateRect);
 
-	PushState();
-
 	auto  pen_size = PenSize();
 	BRect frame	   = Bounds();
 	frame.InsetBy(pen_size / 2, pen_size / 2);
 
+	font_height metrics;
+	if (fLabel) {
+		GetFontHeight(&metrics);
+		frame.top += metrics.cap_height / 2;
+	}
+	else if (fLabelView) {
+		frame.top += fLabelView->Bounds().Height() / 2;
+	}
+
+	PushState();
 	if (fStyle == B_PLAIN_BORDER) {
 		SetHighColor(ui_color(B_SHADOW_COLOR));
-		MovePenTo(frame.LeftBottom());
-		StrokeLine(frame.RightBottom());
-		StrokeLine(frame.RightTop());
+		MovePenTo(frame.LeftBottom() + BPoint{0, pen_size});
+		StrokeLine(frame.RightBottom() + BPoint{pen_size, pen_size});
+		StrokeLine(frame.RightTop() + BPoint{pen_size, 0});
 		SetHighColor(ui_color(B_SHINE_COLOR));
 		StrokeLine(frame.LeftTop());
-		StrokeLine(frame.LeftBottom());
+		StrokeLine(frame.LeftBottom() + BPoint{0, pen_size});
 	}
 	if (fStyle == B_FANCY_BORDER) {
 		SetHighColor(ui_color(B_SHADOW_COLOR));
@@ -97,18 +109,26 @@ void BBox::Draw(BRect updateRect)
 		StrokeRect(frame);
 		SetPenSize(pen_size);
 		SetHighColor(ui_color(B_SHINE_COLOR));
-		StrokeRect(frame);
+		StrokeRect(frame.OffsetByCopy(pen_size, pen_size));
 	}
+	PopState();
 
+	PushState();
 	if (fLabel) {
-		font_height metrics;
-		GetFontHeight(&metrics);
-
-		BPoint pos{frame.left + pen_size + BOX_LABEL_OFFSET, frame.top + metrics.leading - metrics.descent};
-
+		SetLowColor(ViewColor());
+		auto  bounds = Bounds();
+		float width	 = StringWidth(fLabel);
+		auto  left	 = frame.left + pen_size + BOX_LABEL_OFFSET + pen_size;
+		FillRect(BRect(left, bounds.top, left + width + pen_size * 3, metrics.cap_height + metrics.descent), B_SOLID_LOW);
+		BPoint pos{left, metrics.cap_height};
 		DrawString(fLabel, pos);
 	}
-
+	else if (fLabelView) {
+		SetLowColor(ViewColor());
+		auto bounds = fLabelView->Frame();
+		bounds.InsetBy(-pen_size, -pen_size);
+		FillRect(bounds, B_SOLID_LOW);
+	}
 	PopState();
 }
 
