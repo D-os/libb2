@@ -135,6 +135,7 @@ void BBox::Draw(BRect updateRect)
 void BBox::AttachedToWindow()
 {
 	BView::AttachedToWindow();
+
 	// BBox's background view color and its low color match the background color of its new parent
 	SetViewColor(Parent()->ViewColor());
 	SetLowColor(Parent()->ViewColor());

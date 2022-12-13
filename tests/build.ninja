@@ -101,3 +101,8 @@ build $BUILDROOT/os/tests/interface/boxes.o: cxx system/os/tests/interface/boxes
 build $BUILDROOT/os/tests/interface_boxes: link $
   $BUILDROOT/os/tests/interface/boxes.o $
 | $SYSROOT/lib/libbe.so
+
+build $BUILDROOT/os/tests/interface/radios.o: cxx system/os/tests/interface/radios.cpp
+build $BUILDROOT/os/tests/interface_radios: link $
+  $BUILDROOT/os/tests/interface/radios.o $
+| $SYSROOT/lib/libbe.so

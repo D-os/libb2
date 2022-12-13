@@ -52,6 +52,7 @@ build $BUILDROOT/os/libbe/interface/GraphicsDefs.o: cxx system/os/kits/interface
 build $BUILDROOT/os/libbe/interface/InterfaceDefs.o: cxx system/os/kits/interface/InterfaceDefs.cpp
 build $BUILDROOT/os/libbe/interface/Point.o: cxx system/os/kits/interface/Point.cpp
 build $BUILDROOT/os/libbe/interface/Polygon.o: cxx system/os/kits/interface/Polygon.cpp
+build $BUILDROOT/os/libbe/interface/RadioButton.o: cxx system/os/kits/interface/RadioButton.cpp
 build $BUILDROOT/os/libbe/interface/Rect.o: cxx system/os/kits/interface/Rect.cpp
 build $BUILDROOT/os/libbe/interface/Region.o: cxx system/os/kits/interface/Region.cpp
 build $BUILDROOT/os/libbe/interface/StringView.o: cxx system/os/kits/interface/StringView.cpp
@@ -97,6 +98,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/interface/InterfaceDefs.o $
   $BUILDROOT/os/libbe/interface/Point.o $
   $BUILDROOT/os/libbe/interface/Polygon.o $
+  $BUILDROOT/os/libbe/interface/RadioButton.o $
   $BUILDROOT/os/libbe/interface/Rect.o $
   $BUILDROOT/os/libbe/interface/Region.o $
   $BUILDROOT/os/libbe/interface/StringView.o $

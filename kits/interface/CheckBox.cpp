@@ -2,9 +2,7 @@
 
 #include <Font.h>
 
-#define CHECKBOX_LEFT_PADDING 4.0f
-#define CHECKBOX_BOX_SIZE 12.0f
-#define CHECKBOX_TEXT_PADDING 5.0f
+#include "./theme.h"
 
 BCheckBox::BCheckBox(BRect frame, const char *name, const char *label, BMessage *message,
 					 uint32 resizeMask, uint32 flags)
@@ -30,6 +28,7 @@ void BCheckBox::Draw(BRect updateRect)
 	BControl::Draw(updateRect);
 
 	auto bounds = Bounds();
+	auto high_color = HighColor();
 
 	PushState();
 
@@ -38,10 +37,19 @@ void BCheckBox::Draw(BRect updateRect)
 	BRect box(CHECKBOX_LEFT_PADDING, (bounds.Height() - (CHECKBOX_BOX_SIZE)) / 2,
 			  CHECKBOX_LEFT_PADDING + CHECKBOX_BOX_SIZE, (bounds.Height() + CHECKBOX_BOX_SIZE) / 2);
 	StrokeRect(box, pattern);
+	BRect inset = box.InsetByCopy(1, 1);
+	SetHighColor(tint_color(ViewColor(), B_LIGHTEN_1_TINT));
+	StrokeRect(inset, pattern);
+	SetHighColor(tint_color(ViewColor(), B_DARKEN_1_TINT));
+	MovePenTo(inset.RightTop());
+	StrokeLine(inset.LeftTop());
+	StrokeLine(inset.LeftBottom());
 
+	SetHighColor(high_color);
 	if (Value()) {
-		StrokeLine(box.LeftTop() + BPoint{2, 2}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 1, CHECKBOX_BOX_SIZE - 1});
-		StrokeLine(box.LeftTop() + BPoint{2, CHECKBOX_BOX_SIZE - 1}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 1, 2});
+		SetPenSize(2);
+		StrokeLine(box.LeftTop() + BPoint{4, 4}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 3, CHECKBOX_BOX_SIZE - 3});
+		StrokeLine(box.LeftTop() + BPoint{4, CHECKBOX_BOX_SIZE - 3}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 3, 4});
 	}
 
 	const auto label = Label();
@@ -93,7 +101,7 @@ void BCheckBox::MouseMoved(BPoint pt, uint32 transit, const BMessage *dnd)
 
 void BCheckBox::KeyDown(const char *bytes, int32 numBytes)
 {
-	if (bytes && numBytes > 0 && (bytes[0] == B_SPACE)) {
+	if (bytes && numBytes > 0 && (bytes[0] == B_ENTER || bytes[0] == B_SPACE)) {
 		SetValue(Value() == B_CONTROL_ON ? B_CONTROL_OFF : B_CONTROL_ON);
 		Invoke();
 	}

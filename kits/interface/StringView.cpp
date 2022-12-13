@@ -58,8 +58,8 @@ void BStringView::AttachedToWindow()
 	BView::AttachedToWindow();
 
 	// BStringView's low color and its background view color match the background color of its new parent
-	SetLowColor(Parent()->ViewColor());
 	SetViewColor(Parent()->ViewColor());
+	SetLowColor(Parent()->ViewColor());
 }
 
 void BStringView::Draw(BRect bounds)

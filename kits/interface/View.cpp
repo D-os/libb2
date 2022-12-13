@@ -536,26 +536,40 @@ bool BView::RemoveChild(BView *child)
 
 int32 BView::CountChildren() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return -1;
+	_CheckLock;
+
+	uint32 count = 0;
+	BView *child = fFirstChild;
+
+	while (child) {
+		count++;
+		child = child->fNextSibling;
+	}
+
+	return count;
 }
 
 BView *BView::ChildAt(int32 index) const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return nullptr;
+	_CheckLock;
+
+	BView *child = fFirstChild;
+	while (child && index > 0) {
+		child = child->fNextSibling;
+		index -= 1;
+	}
+
+	return child;
 }
 
 BView *BView::NextSibling() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return nullptr;
+	return fNextSibling;
 }
 
 BView *BView::PreviousSibling() const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return nullptr;
+	return fPrevSibling;
 }
 
 bool BView::RemoveSelf()
@@ -1107,7 +1121,9 @@ void BView::StrokeEllipse(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawOval(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+	canvas->drawOval(SkRect::MakeLTRB(r.left + paint.getStrokeWidth() * 0.3, r.top + paint.getStrokeWidth() * 0.3,
+									  r.right + paint.getStrokeWidth() * 0.7, r.bottom + paint.getStrokeWidth() * 0.7),
+					 paint);
 	DAMAGE_RECT
 }
 
@@ -1120,7 +1136,9 @@ void BView::FillEllipse(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawOval(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+	canvas->drawOval(SkRect::MakeLTRB(r.left + paint.getStrokeWidth() * 0.3, r.top + paint.getStrokeWidth() * 0.3,
+									  r.right + paint.getStrokeWidth() * 0.7, r.bottom + paint.getStrokeWidth() * 0.7),
+					 paint);
 	DAMAGE_RECT
 }
 
@@ -1133,7 +1151,9 @@ void BView::StrokeArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawArc(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), -start_angle, -arc_angle, false, paint);
+	canvas->drawArc(SkRect::MakeLTRB(r.left + paint.getStrokeWidth() * 0.3, r.top + paint.getStrokeWidth() * 0.3,
+									 r.right + paint.getStrokeWidth() * 0.7, r.bottom + paint.getStrokeWidth() * 0.7),
+					-start_angle, -arc_angle, false, paint);
 	DAMAGE_RECT
 }
 
@@ -1146,7 +1166,9 @@ void BView::FillArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawArc(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), -start_angle, -arc_angle, true, paint);
+	canvas->drawArc(SkRect::MakeLTRB(r.left + paint.getStrokeWidth() * 0.3, r.top + paint.getStrokeWidth() * 0.3,
+									 r.right + paint.getStrokeWidth() * 0.7, r.bottom + paint.getStrokeWidth() * 0.7),
+					-start_angle, -arc_angle, true, paint);
 	DAMAGE_RECT
 }
 
@@ -1682,6 +1704,36 @@ TEST_SUITE("BView")
 			BRect rect{90, 90, 100, 100};
 			view4.ConvertFromScreen(&rect);
 			CHECK(rect == BRect{10, 10, 20, 20});
+		}
+
+		SUBCASE("Siblings")
+		{
+			BView parent(BRect(), nullptr, 0, 0);
+			BView child0(BRect(), nullptr, 0, 0);
+			BView child1(BRect(), nullptr, 0, 0);
+			BView child2(BRect(), nullptr, 0, 0);
+			parent.AddChild(&child0);
+			parent.AddChild(&child1);
+			parent.AddChild(&child2);
+
+			CHECK(child0.Parent() == &parent);
+			CHECK(child1.Parent() == &parent);
+			CHECK(child2.Parent() == &parent);
+
+			CHECK(parent.CountChildren() == 3);
+			CHECK(parent.ChildAt(0) == &child0);
+			CHECK(parent.ChildAt(1) == &child1);
+			CHECK(parent.ChildAt(2) == &child2);
+			CHECK(parent.ChildAt(3) == nullptr);
+
+			BView *child = parent.ChildAt(0);
+			CHECK(child == &child0);
+			child = child->NextSibling();
+			CHECK(child == &child1);
+			child = child->NextSibling();
+			CHECK(child == &child2);
+			child = child->NextSibling();
+			CHECK(child == nullptr);
 		}
 	}
 }
