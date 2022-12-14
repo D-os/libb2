@@ -29,11 +29,10 @@ BRegion::BRegion(const BRegion &region) : BRegion()
 
 BRegion::BRegion(const BRect rect) : BRegion()
 {
+	m->set(SkRegion(SkIRect::MakeLTRB(rect.left, rect.top, rect.right, rect.bottom)));
 }
 
-BRegion::~BRegion()
-{
-}
+BRegion::~BRegion() {}
 
 BRegion &BRegion::operator=(const BRegion &from)
 {

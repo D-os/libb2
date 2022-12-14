@@ -303,13 +303,19 @@ void BView::MessageReceived(BMessage *message)
 					};
 
 					canvas->restoreToCount(0);
+					canvas->save();
 					canvas->resetMatrix();
-					do_draw_view(this, updateRect);
-					canvas->restoreToCount(0);
-					canvas->resetMatrix();
+					// By default, the clipping region contains only the visible area of the view
+					// and, during an update, only the area that actually needs to be drawn.
+					BRect  bounds{ConvertToScreen(updateRect)};
+					SkRect clipRect{SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1)};
+					canvas->clipRect(clipRect);
 
-					ConvertToScreen(&updateRect);
-					fOwner->_damage_window(updateRect.left, updateRect.top, updateRect.Width() + 1, updateRect.Height() + 1);
+					do_draw_view(this, updateRect);
+
+					canvas->restoreToCount(0);
+
+					fOwner->_damage_window(clipRect.left(), clipRect.top(), clipRect.width(), clipRect.height());
 				}
 				break;
 			}
@@ -806,7 +812,14 @@ BPoint BView::LeftTop() const
 
 void BView::ConstrainClippingRegion(BRegion *region)
 {
-	debugger(__PRETTY_FUNCTION__);
+	SkCanvas *canvas = static_cast<SkCanvas *>(fOwner->_get_canvas());
+	if (!canvas) {
+		return;
+	}
+	if (region)
+		canvas->clipRegion(*region->_get_region());
+	else
+		canvas->clipRect(SkRect::MakeEmpty(), SkClipOp::kDifference);
 }
 
 void BView::SetDrawingMode(drawing_mode mode)
