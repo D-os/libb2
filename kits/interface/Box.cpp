@@ -87,7 +87,7 @@ void BBox::Draw(BRect updateRect)
 	font_height metrics;
 	if (fLabel) {
 		GetFontHeight(&metrics);
-		frame.top += metrics.cap_height / 2;
+		frame.top += roundf(metrics.cap_height / 2);
 	}
 	else if (fLabelView) {
 		frame.top += fLabelView->Bounds().Height() / 2;

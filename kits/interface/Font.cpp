@@ -27,7 +27,7 @@ class BFont::impl
 	float  shear;
 	uint32 flags;
 
-	impl() : font(nullptr, 10.0f), shear{90.0f}, flags{0} {}
+	impl() : font(nullptr, 12.0f), shear{90.0f}, flags{0} {}
 };
 
 BFont::BFont() : BFont(be_plain_font) {}
