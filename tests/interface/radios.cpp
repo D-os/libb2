@@ -33,7 +33,7 @@ int main()
 	BRadioButton radio_yes(BRect(200, 50, 200, 50), "✔", "Yes", nullptr);
 	radio_yes.ResizeToPreferred();
 	main_window.AddChild(&radio_yes);
-	BRadioButton radio_no(BRect(200, 100, 200, 100), "❌", "No", nullptr);
+	BRadioButton radio_no(BRect(200, 100, 200, 100), "✘", "No", nullptr);
 	radio_no.ResizeToPreferred();
 	main_window.AddChild(&radio_no);
 

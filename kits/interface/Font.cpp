@@ -11,13 +11,8 @@
 #include <include/core/SkTypeface.h>
 #include <log/log.h>
 
-#include <algorithm>
-#include <cstring>
 #include <format>
 #include <iostream>
-#include <string>
-#include <tuple>
-#include <unordered_map>
 
 class BFont::impl
 {

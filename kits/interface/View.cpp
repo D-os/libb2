@@ -1134,8 +1134,8 @@ void BView::StrokeEllipse(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawOval(SkRect::MakeLTRB(r.left + paint.getStrokeWidth() * 0.3, r.top + paint.getStrokeWidth() * 0.3,
-									  r.right + paint.getStrokeWidth() * 0.7, r.bottom + paint.getStrokeWidth() * 0.7),
+	canvas->drawOval(SkRect::MakeLTRB(r.left + 0.3, r.top + 0.3,
+									  r.right + 0.7, r.bottom + 0.7),
 					 paint);
 	DAMAGE_RECT
 }
@@ -1149,8 +1149,8 @@ void BView::FillEllipse(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawOval(SkRect::MakeLTRB(r.left + paint.getStrokeWidth() * 0.3, r.top + paint.getStrokeWidth() * 0.3,
-									  r.right + paint.getStrokeWidth() * 0.7, r.bottom + paint.getStrokeWidth() * 0.7),
+	canvas->drawOval(SkRect::MakeLTRB(r.left + 0.3, r.top + 0.3,
+									  r.right + 0.7, r.bottom + 0.7),
 					 paint);
 	DAMAGE_RECT
 }
@@ -1164,8 +1164,8 @@ void BView::StrokeArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawArc(SkRect::MakeLTRB(r.left + paint.getStrokeWidth() * 0.3, r.top + paint.getStrokeWidth() * 0.3,
-									 r.right + paint.getStrokeWidth() * 0.7, r.bottom + paint.getStrokeWidth() * 0.7),
+	canvas->drawArc(SkRect::MakeLTRB(r.left + 0.3, r.top + 0.3,
+									 r.right + 0.7, r.bottom + 0.7),
 					-start_angle, -arc_angle, false, paint);
 	DAMAGE_RECT
 }
@@ -1179,8 +1179,8 @@ void BView::FillArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawArc(SkRect::MakeLTRB(r.left + paint.getStrokeWidth() * 0.3, r.top + paint.getStrokeWidth() * 0.3,
-									 r.right + paint.getStrokeWidth() * 0.7, r.bottom + paint.getStrokeWidth() * 0.7),
+	canvas->drawArc(SkRect::MakeLTRB(r.left + 0.3, r.top + 0.3,
+									 r.right + 0.7, r.bottom + 0.7),
 					-start_angle, -arc_angle, true, paint);
 	DAMAGE_RECT
 }

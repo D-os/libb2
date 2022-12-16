@@ -41,8 +41,10 @@ void BRadioButton::Draw(BRect updateRect)
 	StrokeEllipse(box, pattern);
 	BRect inset = box.InsetByCopy(1, 1);
 	SetHighColor(tint_color(ViewColor(), B_LIGHTEN_1_TINT));
+	FillEllipse(inset, pattern);
+	SetHighColor(tint_color(ViewColor(), B_LIGHTEN_2_TINT));
 	StrokeArc(inset, -135, 180, pattern);
-	SetHighColor(tint_color(ViewColor(), B_DARKEN_1_TINT));
+	SetHighColor(tint_color(ViewColor(), B_NO_TINT));
 	StrokeArc(inset, 45, 180, pattern);
 
 	SetHighColor(high_color);
