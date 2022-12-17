@@ -22,7 +22,13 @@ class BFont::impl
 	float  shear;
 	uint32 flags;
 
-	impl() : font(nullptr, 12.0f), shear{90.0f}, flags{0} {}
+	impl() : font(nullptr, 12.0f), shear{90.0f}, flags{0}
+	{
+		// TODO: Get from Control Panel settings
+		font.setSubpixel(true);
+		font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
+		font.setHinting(SkFontHinting::kNormal);
+	}
 };
 
 BFont::BFont() : BFont(be_plain_font) {}
@@ -181,7 +187,7 @@ void BFont::SetFace(uint16 face)
 void BFont::SetFlags(uint32 flags)
 {
 	m->flags = flags;
-	m->font.setEdging((flags & B_DISABLE_ANTIALIASING) ? SkFont::Edging::kAlias : SkFont::Edging::kAntiAlias);
+	m->font.setEdging((flags & B_DISABLE_ANTIALIASING) ? SkFont::Edging::kAlias : SkFont::Edging::kSubpixelAntiAlias);
 }
 
 void BFont::GetFamilyAndStyle(font_family *family, font_style *style) const
