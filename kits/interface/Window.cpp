@@ -429,7 +429,8 @@ void BWindow::impl::resize_buffer()
 	const size_t offset = height * stride * index;
 
 	wl_buffer = wl_shm_pool_create_buffer(wl_shm_pool,
-										  offset, width, height, stride, WL_SHM_FORMAT_XRGB8888);
+										  offset, width, height, stride,
+										  WL_SHM_FORMAT_ARGB8888);
 
 	wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, this);
 
@@ -449,7 +450,9 @@ void BWindow::impl::resize_buffer()
 	}
 #endif
 
-	surface = SkSurface::MakeRasterDirect(info, pool_data, stride);
+	// TODO: Get from Control Panel settings
+	SkSurfaceProps props(0, SkPixelGeometry::kRGB_H_SkPixelGeometry);
+	surface = SkSurface::MakeRasterDirect(info, pool_data, stride, &props);
 }
 
 void BWindow::impl::showWindow()
