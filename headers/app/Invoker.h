@@ -43,8 +43,7 @@ class BInvoker
 	// Note that the BInvoker class does not actually implement
 	// any of this behavior -- it is up to subclasses to override
 	// Invoke() and call Notify() with the appropriate change code.
-	status_t InvokeNotify(BMessage *msg,
-						  uint32	kind = B_CONTROL_INVOKED);
+	status_t InvokeNotify(BMessage *msg, uint32 kind = B_CONTROL_INVOKED);
 
 	status_t  SetTimeout(bigtime_t timeout);
 	bigtime_t Timeout() const;

@@ -1662,8 +1662,7 @@ void BWindow::SetTitle(const char *title)
 	if (!title)
 		title = "";
 
-	if (m->title)
-		free(const_cast<char *>(m->title));
+	free(const_cast<char *>(m->title));
 	m->title = strdup(title);
 
 	char name[B_OS_NAME_LENGTH];

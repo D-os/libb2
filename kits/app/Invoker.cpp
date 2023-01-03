@@ -96,3 +96,19 @@ status_t BInvoker::Invoke(BMessage *msg)
 
 	return fMessenger.SendMessage(fMessage, fReplyTo);
 }
+
+status_t BInvoker::InvokeNotify(BMessage *msg, uint32 kind)
+{
+	status_t err = B_BAD_VALUE;
+
+	if (msg)
+		err = Invoke(msg);
+
+	if (fMessenger.IsValid()) {
+		BHandler *handler = fMessenger.Target(nullptr);
+		if (handler && handler->IsWatched())
+			handler->SendNotices(kind, msg);
+	}
+
+	return err;
+}

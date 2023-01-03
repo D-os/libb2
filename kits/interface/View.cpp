@@ -40,9 +40,12 @@ class BView::impl
 
 		SkPoint origin;
 
-		drawing_mode drawing_mode;
-		float		 pen_size;
-		SkPoint		 pen_location;
+		drawing_mode  drawing_mode;
+		float		  pen_size;
+		SkPaint::Cap  cap_mode;
+		SkPaint::Join join_mode;
+		float		  miter_limit;
+		SkPoint		  pen_location;
 
 		BFont font;
 		/// causes subsequent printing to be done without antialiasing printed characters
@@ -60,6 +63,9 @@ class BView::impl
 			.origin		   = {0.0, 0.0},
 			.drawing_mode  = B_OP_COPY,
 			.pen_size	   = 1.0,
+			.cap_mode	   = SkPaint::kButt_Cap,
+			.join_mode	   = SkPaint::kMiter_Join,
+			.miter_limit   = B_DEFAULT_MITER_LIMIT,
 			.pen_location  = {0.0, 0.0},
 			.font		   = be_plain_font,
 			.font_aliasing = false,	 // force font aliasing
@@ -313,6 +319,7 @@ void BView::MessageReceived(BMessage *message)
 						paint.setARGB(48, 0, 200, 0);
 						paint.setStyle(SkPaint::kStroke_Style);
 						canvas->drawRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom), paint);
+						// canvas->drawString(view->Name(), bounds.left + 1, bounds.top + 6, SkFont(sk_sp(fState->S().font._get_font().getTypeface()), 9), {});
 #endif
 					};
 
@@ -890,6 +897,70 @@ rgb_color BView::LowColor() const
 	return fState->S().low_color;
 }
 
+void BView::SetLineMode(cap_mode lineCap, join_mode lineJoin, float miterLimit)
+{
+	SkPaint::Cap cap;
+	switch (lineCap) {
+		case B_ROUND_CAP:
+			cap = SkPaint::kRound_Cap;
+			break;
+		case B_BUTT_CAP:
+			cap = SkPaint::kButt_Cap;
+			break;
+		case B_SQUARE_CAP:
+			cap = SkPaint::kSquare_Cap;
+			break;
+	}
+	fState->S().cap_mode = cap;
+
+	SkPaint::Join join;
+	switch (lineJoin) {
+		case B_ROUND_JOIN:
+			join = SkPaint::kRound_Join;
+			break;
+		case B_MITER_JOIN:
+		case B_BUTT_JOIN:
+		case B_SQUARE_JOIN:
+			join = SkPaint::kMiter_Join;
+			break;
+		case B_BEVEL_JOIN:
+			join = SkPaint::kBevel_Join;
+			break;
+	}
+	fState->S().join_mode = join;
+
+	fState->S().miter_limit = miterLimit;
+}
+
+join_mode BView::LineJoinMode() const
+{
+	switch (fState->S().join_mode) {
+		case SkPaint::kMiter_Join:
+			return B_MITER_JOIN;
+		case SkPaint::kRound_Join:
+			return B_ROUND_JOIN;
+		case SkPaint::kBevel_Join:
+			return B_BEVEL_JOIN;
+	};
+}
+
+cap_mode BView::LineCapMode() const
+{
+	switch (fState->S().cap_mode) {
+		case SkPaint::kButt_Cap:
+			return B_BUTT_CAP;
+		case SkPaint::kRound_Cap:
+			return B_ROUND_CAP;
+		case SkPaint::kSquare_Cap:
+			return B_SQUARE_CAP;
+	};
+}
+
+float BView::LineMiterLimit() const
+{
+	return fState->S().miter_limit;
+}
+
 void BView::SetOrigin(BPoint pt)
 {
 	SetOrigin(pt.x, pt.y);
@@ -976,7 +1047,9 @@ static SkBlendMode blend_modes[] = {
                                                                                                  \
 	SkPaint paint;                                                                               \
 	paint.setStrokeWidth(fState->S().pen_size > 0.0 ? /* scale * */ fState->S().pen_size : 1.0); \
-	paint.setStrokeCap(SkPaint::kSquare_Cap);                                                    \
+	paint.setStrokeMiter(fState->S().miter_limit);                                               \
+	paint.setStrokeCap(fState->S().cap_mode);                                                    \
+	paint.setStrokeJoin(fState->S().join_mode);                                                  \
                                                                                                  \
 	if (fState->S().drawing_mode < (sizeof(blend_modes) / sizeof(blend_modes[0])))               \
 		paint.setBlendMode(blend_modes[fState->S().drawing_mode]);
@@ -1023,8 +1096,8 @@ void BView::StrokeLine(BPoint toPt, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	canvas->drawLine(
-		fState->S().pen_location.x(), fState->S().pen_location.y(),
-		toPt.x, toPt.y,
+		fState->S().pen_location.x() + 0.5, fState->S().pen_location.y() + 0.5,
+		toPt.x + 0.5, toPt.y + 0.5,
 		paint);
 	BRect r(fState->S().pen_location.x(), fState->S().pen_location.y(), toPt.x, toPt.y);
 	DAMAGE_RECT
@@ -1034,7 +1107,7 @@ void BView::StrokeLine(BPoint toPt, pattern p)
 void BView::StrokeLine(BPoint fromPt, BPoint toPt, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
-	canvas->drawLine(fromPt.x, fromPt.y, toPt.x, toPt.y, paint);
+	canvas->drawLine(fromPt.x + 0.5, fromPt.y + 0.5, toPt.x + 0.5, toPt.y + 0.5, paint);
 	BRect r(fromPt.x, fromPt.y, toPt.x, toPt.y);
 	DAMAGE_RECT
 	fState->S().pen_location.set(toPt.x, toPt.y);
@@ -1069,7 +1142,7 @@ void BView::EndLineArray()
 
 	for (auto &fragment : fState->line_array) {
 		paint.setColor(fragment.color);
-		canvas->drawLine(fragment.start.x, fragment.start.y, fragment.end.x, fragment.end.y, paint);
+		canvas->drawLine(fragment.start.x + 0.5, fragment.start.y + 0.5, fragment.end.x + 0.5, fragment.end.y + 0.5, paint);
 	}
 
 	fState->line_array.clear();
@@ -1088,10 +1161,10 @@ void BView::StrokePolygon(const BPoint *ptArray, int32 numPts, bool closed, patt
 	BRect r(ptArray->x, ptArray->y, ptArray->x, ptArray->y);
 	paint.setStyle(SkPaint::Style::kStroke_Style);
 	SkPath path;
-	path.moveTo(ptArray->x, ptArray->y);
+	path.moveTo(ptArray->x + 0.5, ptArray->y + 0.5);
 	ptArray += 1;
 	for (int32 i = 1; i < numPts; ++i) {
-		path.lineTo(ptArray->x, ptArray->y);
+		path.lineTo(ptArray->x + 0.5, ptArray->y + 0.5);
 		if (ptArray->x < r.left) r.left = ptArray->x;
 		if (ptArray->y < r.top) r.top = ptArray->y;
 		if (ptArray->x > r.right) r.right = ptArray->x;
@@ -1140,11 +1213,44 @@ void BView::FillPolygon(const BPoint *ptArray, int32 numPts, BRect bounds, patte
 	debugger(__PRETTY_FUNCTION__);
 }
 
+void BView::StrokeTriangle(BPoint pt1, BPoint pt2, BPoint pt3, BRect bounds, pattern p)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::StrokeTriangle(BPoint pt1, BPoint pt2, BPoint pt3, pattern p)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::FillTriangle(BPoint pt1, BPoint pt2, BPoint pt3, pattern p)
+{
+	DRAW_PRELUDE_WITH_PATTERN
+	paint.setStyle(SkPaint::kStrokeAndFill_Style);
+	SkPath path;
+	path.moveTo(pt1.x + 0.5, pt1.y + 0.5);
+	path.lineTo(pt2.x + 0.5, pt2.y + 0.5);
+	path.lineTo(pt3.x + 0.5, pt3.y + 0.5);
+	path.close();
+	canvas->drawPath(path, paint);
+
+	auto &bounds = path.getBounds();
+	BRect r{bounds.left(), bounds.top(), bounds.right(), bounds.bottom()};
+	DAMAGE_RECT
+}
+
+void BView::FillTriangle(BPoint pt1, BPoint pt2, BPoint pt3, BRect bounds, pattern p)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
 void BView::StrokeRect(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+	canvas->drawRect(SkRect::MakeLTRB(r.left + 0.7, r.top + 0.7,
+									  r.right + 0.3, r.bottom + 0.3),
+					 paint);
 	DAMAGE_RECT
 }
 
@@ -1152,7 +1258,9 @@ void BView::FillRect(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), paint);
+	canvas->drawRect(SkRect::MakeLTRB(r.left + 0.7, r.top + 0.7,
+									  r.right + 0.3, r.bottom + 0.3),
+					 paint);
 	DAMAGE_RECT
 }
 
@@ -1175,7 +1283,9 @@ void BView::StrokeRoundRect(BRect r, float xRadius, float yRadius, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), xRadius, yRadius, paint);
+	canvas->drawRoundRect(SkRect::MakeLTRB(r.left + 0.5, r.top + 0.5,
+										   r.right + 0.6, r.bottom + 0.6),
+						  xRadius, yRadius, paint);
 	DAMAGE_RECT
 }
 
@@ -1183,7 +1293,9 @@ void BView::FillRoundRect(BRect r, float xRadius, float yRadius, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom), xRadius, yRadius, paint);
+	canvas->drawRoundRect(SkRect::MakeLTRB(r.left + 0.5, r.top + 0.5,
+										   r.right + 0.6, r.bottom + 0.6),
+						  xRadius, yRadius, paint);
 	DAMAGE_RECT
 }
 

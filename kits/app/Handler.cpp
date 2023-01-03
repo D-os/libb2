@@ -63,7 +63,7 @@ BLooper *BHandler::Looper() const
 
 void BHandler::SetName(const char *name)
 {
-	if (fName) free(fName);
+	free(fName);
 	fName = name ? strdup(name) : nullptr;
 }
 
@@ -172,4 +172,9 @@ status_t BHandler::GetSupportedSuites(BMessage *data)
 void BHandler::SendNotices(uint32 what, const BMessage *)
 {
 	debugger(__PRETTY_FUNCTION__);
+}
+
+bool BHandler::IsWatched() const
+{
+	return false;  // FIXME: implement
 }

@@ -89,6 +89,7 @@ class BTabView : public BView
 	int32		 FocusTab() const;
 
 	virtual void  Draw(BRect);
+	virtual void  DrawAfterChildren(BRect);
 	virtual BRect DrawTabs();
 	virtual void  DrawBox(BRect selectedTabFrame);
 	virtual BRect TabFrame(int32 tabIndex) const;

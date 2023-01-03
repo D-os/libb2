@@ -13,8 +13,7 @@ BBox::BBox(BRect bounds, const char *name, uint32 resizeFlags, uint32 flags, bor
 
 BBox::~BBox()
 {
-	if (fLabel)
-		free(const_cast<char *>(fLabel));
+	free(const_cast<char *>(fLabel));
 }
 
 BBox::BBox(BMessage *data) : BView(data), fStyle{B_NO_BORDER} {}
@@ -43,8 +42,8 @@ void BBox::SetLabel(const char *label)
 	fLabel	   = label ? strdup(label) : nullptr;
 	fLabelView = nullptr;
 
-	if (current)
-		free(const_cast<char *>(current));
+	free(const_cast<char *>(current));
+
 	Invalidate();
 }
 
@@ -53,8 +52,7 @@ status_t BBox::SetLabel(BView *view_label)
 	if (!view_label)
 		return B_BAD_VALUE;
 
-	if (fLabel)
-		free(const_cast<char *>(fLabel));
+	free(const_cast<char *>(fLabel));
 	fLabel	   = nullptr;
 	fLabelView = view_label;
 

@@ -7,102 +7,151 @@ build $BUILDROOT/os/tests/kits: link $
   $BUILDROOT/os/tests/kits.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/kits: copy $BUILDROOT/os/tests/kits
+
 build $BUILDROOT/os/tests/kernel/thread.o: cxx system/os/tests/kernel/thread.cpp
 build $BUILDROOT/os/tests/kernel_thread: link $
   $BUILDROOT/os/tests/kernel/thread.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/kernel_thread: copy $BUILDROOT/os/tests/kernel_thread
 
 build $BUILDROOT/os/tests/kernel/team.o: cxx system/os/tests/kernel/team.cpp
 build $BUILDROOT/os/tests/kernel_team: link $
   $BUILDROOT/os/tests/kernel/team.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/kernel_team: copy $BUILDROOT/os/tests/kernel_team
+
 build $BUILDROOT/os/tests/kernel/sem.o: cxx system/os/tests/kernel/sem.cpp
 build $BUILDROOT/os/tests/kernel_sem: link $
   $BUILDROOT/os/tests/kernel/sem.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/kernel_sem: copy $BUILDROOT/os/tests/kernel_sem
 
 build $BUILDROOT/os/tests/kernel/area.o: cxx system/os/tests/kernel/area.cpp
 build $BUILDROOT/os/tests/kernel_area: link $
   $BUILDROOT/os/tests/kernel/area.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/kernel_area: copy $BUILDROOT/os/tests/kernel_area
+
 build $BUILDROOT/os/tests/kernel/port.o: cxx system/os/tests/kernel/port.cpp
 build $BUILDROOT/os/tests/kernel_port: link $
   $BUILDROOT/os/tests/kernel/port.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/kernel_port: copy $BUILDROOT/os/tests/kernel_port
 
 build $BUILDROOT/os/tests/kernel/image.o: cxx system/os/tests/kernel/image.cpp
 build $BUILDROOT/os/tests/kernel_image: link $
   $BUILDROOT/os/tests/kernel/image.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/kernel_image: copy $BUILDROOT/os/tests/kernel_image
+
 build $BUILDROOT/os/tests/kernel/debug.o: cxx system/os/tests/kernel/debug.cpp
 build $BUILDROOT/os/tests/kernel_debug: link $
   $BUILDROOT/os/tests/kernel/debug.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/kernel_debug: copy $BUILDROOT/os/tests/kernel_debug
 
 build $BUILDROOT/os/tests/app/app.o: cxx system/os/tests/app/app.cpp
 build $BUILDROOT/os/tests/app_application: link $
   $BUILDROOT/os/tests/app/app.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/app_application: copy $BUILDROOT/os/tests/app_application
+
 build $BUILDROOT/os/tests/app/message.o: cxx system/os/tests/app/message.cpp
 build $BUILDROOT/os/tests/app_message: link $
   $BUILDROOT/os/tests/app/message.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/app_message: copy $BUILDROOT/os/tests/app_message
 
 build $BUILDROOT/os/tests/interface/window.o: cxx system/os/tests/interface/window.cpp
 build $BUILDROOT/os/tests/interface_window: link $
   $BUILDROOT/os/tests/interface/window.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/interface_window: copy $BUILDROOT/os/tests/interface_window
+
 build $BUILDROOT/os/tests/interface/view-drawing.o: cxx system/os/tests/interface/view-drawing.cpp
 build $BUILDROOT/os/tests/interface_drawing: link $
   $BUILDROOT/os/tests/interface/view-drawing.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/interface_drawing: copy $BUILDROOT/os/tests/interface_drawing
 
 build $BUILDROOT/os/tests/interface/hello.o: cxx system/os/tests/interface/hello.cpp
 build $BUILDROOT/os/tests/interface_hello: link $
   $BUILDROOT/os/tests/interface/hello.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/interface_hello: copy $BUILDROOT/os/tests/interface_hello
+
 build $BUILDROOT/os/tests/interface/button-test.o: cxx system/os/tests/interface/button-test.cpp
 build $BUILDROOT/os/tests/interface_button: link $
   $BUILDROOT/os/tests/interface/button-test.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/interface_button: copy $BUILDROOT/os/tests/interface_button
 
 build $BUILDROOT/os/tests/interface/views.o: cxx system/os/tests/interface/views.cpp
 build $BUILDROOT/os/tests/interface_views: link $
   $BUILDROOT/os/tests/interface/views.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/interface_views: copy $BUILDROOT/os/tests/interface_views
+
 build $BUILDROOT/os/tests/interface/minimal-app.o: cxx system/os/tests/interface/minimal-app.cpp
 build $BUILDROOT/os/tests/interface_minimal-app: link $
   $BUILDROOT/os/tests/interface/minimal-app.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/interface_minimal-app: copy $BUILDROOT/os/tests/interface_minimal-app
 
 build $BUILDROOT/os/tests/interface/CheckBoxTest.o: cxx system/os/tests/interface/CheckBoxTest.cpp
 build $BUILDROOT/os/tests/interface_checkbox: link $
   $BUILDROOT/os/tests/interface/CheckBoxTest.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/interface_checkbox: copy $BUILDROOT/os/tests/interface_checkbox
+
 build $BUILDROOT/os/tests/interface/ClippingPlusRedraw.o: cxx system/os/tests/interface/ClippingPlusRedraw.cpp
 build $BUILDROOT/os/tests/interface_clipping: link $
   $BUILDROOT/os/tests/interface/ClippingPlusRedraw.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/interface_clipping: copy $BUILDROOT/os/tests/interface_clipping
 
 build $BUILDROOT/os/tests/interface/PulseTest.o: cxx system/os/tests/interface/PulseTest.cpp
 build $BUILDROOT/os/tests/interface_pulse: link $
   $BUILDROOT/os/tests/interface/PulseTest.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/interface_pulse: copy $BUILDROOT/os/tests/interface_pulse
+
 build $BUILDROOT/os/tests/interface/boxes.o: cxx system/os/tests/interface/boxes.cpp
 build $BUILDROOT/os/tests/interface_boxes: link $
   $BUILDROOT/os/tests/interface/boxes.o $
 | $SYSROOT/lib/libbe.so
 
+build $SYSTEMDIR/tests/interface_boxes: copy $BUILDROOT/os/tests/interface_boxes
+
 build $BUILDROOT/os/tests/interface/radios.o: cxx system/os/tests/interface/radios.cpp
 build $BUILDROOT/os/tests/interface_radios: link $
   $BUILDROOT/os/tests/interface/radios.o $
 | $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/interface_radios: copy $BUILDROOT/os/tests/interface_radios
+
+build $BUILDROOT/os/tests/interface/sliders.o: cxx system/os/tests/interface/sliders.cpp
+build $BUILDROOT/os/tests/interface_sliders: link $
+  $BUILDROOT/os/tests/interface/sliders.o $
+| $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/interface_sliders: copy $BUILDROOT/os/tests/interface_sliders

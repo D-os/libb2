@@ -36,7 +36,7 @@ struct DataItem
 
 	~DataItem()
 	{
-		if (data) free(const_cast<void *>(data));
+		free(const_cast<void *>(data));
 	}
 };
 
@@ -525,7 +525,7 @@ status_t BMessage::ReplaceData(const char *name, type_code type, int32 index, co
 	if (!data_copy) return B_NO_MEMORY;
 	memcpy(data_copy, data, data_size);
 
-	if (data_item->data) free(const_cast<void *>(data_item->data));
+	free(const_cast<void *>(data_item->data));
 	data_item->data = data_copy;
 	data_item->size = data_size;
 	return B_OK;

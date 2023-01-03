@@ -22,7 +22,7 @@ class BFont::impl
 	float  shear;
 	uint32 flags;
 
-	impl() : font(nullptr, 12.0f), shear{90.0f}, flags{0}
+	impl() : font(nullptr, 9.0f), shear{90.0f}, flags{0}
 	{
 		// TODO: Get from Control Panel settings
 		font.setSubpixel(true);

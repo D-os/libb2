@@ -15,8 +15,7 @@ BStringView::BStringView(BRect bounds, const char *name, const char *text, uint3
 
 BStringView::~BStringView()
 {
-	if (fText)
-		free(const_cast<char *>(fText));
+	free(const_cast<char *>(fText));
 }
 
 status_t BStringView::Archive(BMessage *data, bool deep) const
@@ -31,8 +30,8 @@ void BStringView::SetText(const char *text)
 
 	fText = text ? strdup(text) : nullptr;
 
-	if (current)
-		free(const_cast<char *>(current));
+	free(const_cast<char *>(current));
+
 	Invalidate();
 }
 

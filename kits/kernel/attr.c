@@ -33,9 +33,9 @@ DIR *fs_fopen_attr_dir(int fd)
     ssize_t len, read;
     unsigned retries = XATTR_SIZE_READ_RETRIES;
     while (--retries) {
-        if (buf) free(buf);
-        len = flistxattr(fd, NULL, 0);
-        if (len < 0) return NULL;
+		free(buf);
+		len = flistxattr(fd, NULL, 0);
+		if (len < 0) return NULL;
         buf = malloc(len);
         if (!buf) return NULL;
         read = flistxattr(fd, buf, len);
@@ -128,8 +128,8 @@ int fs_stat_attr(int fd, const char *attribute, struct attr_info *attrInfo)
     char *buf = NULL;
     unsigned retries = XATTR_SIZE_READ_RETRIES;
     while (--retries) {
-        if (buf) free(buf);
-        attrInfo->size = fgetxattr(fd, name, NULL, 0);
+		free(buf);
+		attrInfo->size = fgetxattr(fd, name, NULL, 0);
         if (attrInfo->size < 1) {
             errno = B_ENTRY_NOT_FOUND;
             ret = -1;

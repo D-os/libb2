@@ -97,7 +97,7 @@ void BControl::SetLabel(const char *text)
 
 	fLabel = text ? strdup(text) : nullptr;
 
-	if (current_label) free(const_cast<char *>(current_label));
+	free(const_cast<char *>(current_label));
 
 	Invalidate();
 }
@@ -113,6 +113,11 @@ void BControl::SetValue(int32 value)
 
 	fValue = value;
 	Invalidate();
+}
+
+void BControl::SetValueNoUpdate(int32 value)
+{
+	fValue = value;
 }
 
 int32 BControl::Value() const
