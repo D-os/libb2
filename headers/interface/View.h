@@ -473,13 +473,14 @@ class BView : public BHandler
 	// friend class BBitmap;
 	// friend class BPrintJob;
 	// friend class BShelf;
-	// friend class BTabView;
+	friend class BTab;
 
 	BView(const BView &);
 	BView &operator=(const BView &);
 
 	void _attach(BWindow *);
 	void _detach();
+	void _damage_rect(BRect r);
 
 	uint32		fFlags;
 	BPoint		fParentOffset;

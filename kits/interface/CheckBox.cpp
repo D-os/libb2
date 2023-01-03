@@ -41,9 +41,10 @@ void BCheckBox::Draw(BRect updateRect)
 	SetHighColor(tint_color(ViewColor(), B_LIGHTEN_1_TINT));
 	FillRect(inset, pattern);
 	SetHighColor(tint_color(ViewColor(), B_LIGHTEN_2_TINT));
-	StrokeRect(inset, pattern);
+	MovePenTo(inset.LeftBottom());
+	StrokeLine(inset.RightBottom());
+	StrokeLine(inset.RightTop());
 	SetHighColor(tint_color(ViewColor(), B_NO_TINT));
-	MovePenTo(inset.RightTop());
 	StrokeLine(inset.LeftTop());
 	StrokeLine(inset.LeftBottom());
 

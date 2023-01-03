@@ -238,6 +238,7 @@ class BWindow : public BLooper
 	friend class BWindowScreen;
 	friend class BDirectWindow;
 	friend class BFilePanel;
+	friend class BTab;
 
 	BWindow();
 	BWindow(BWindow &);

@@ -1,6 +1,9 @@
 #include "StringView.h"
 
+#define LOG_TAG "BStringView"
+
 #include <View.h>
+#include <log/log.h>
 
 #include <cstdlib>
 #include <cstring>

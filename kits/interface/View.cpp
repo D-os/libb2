@@ -25,6 +25,7 @@
 #include <pimpl.h>
 
 #include <stack>
+#include <vector>
 
 class BView::impl
 {
@@ -51,16 +52,18 @@ class BView::impl
 
 	impl()
 	{
-		state_stack.push({.checkpoint	 = 0,
-						  .view_color	 = {255, 255, 255, 255},
-						  .high_color	 = {0, 0, 0, 255},
-						  .low_color	 = {255, 255, 255, 255},
-						  .origin		 = {0.0, 0.0},
-						  .drawing_mode	 = B_OP_COPY,
-						  .pen_size		 = 1.0,
-						  .pen_location	 = {0.0, 0.0},
-						  .font			 = be_plain_font,
-						  .font_aliasing = false});
+		state_stack.push({
+			.checkpoint	   = 0,
+			.view_color	   = {255, 255, 255, 255},
+			.high_color	   = {0, 0, 0, 255},
+			.low_color	   = {255, 255, 255, 255},
+			.origin		   = {0.0, 0.0},
+			.drawing_mode  = B_OP_COPY,
+			.pen_size	   = 1.0,
+			.pen_location  = {0.0, 0.0},
+			.font		   = be_plain_font,
+			.font_aliasing = false,	 // force font aliasing
+		});
 	}
 
 	inline State &S() { return state_stack.top(); }
@@ -71,6 +74,15 @@ class BView::impl
 	void clear_state_stack();
 
 	void fill_pattern(rgb_color pixels[8 * 8], pattern &p);
+
+	struct LineFragment
+	{
+		BPoint	start;
+		BPoint	end;
+		SkColor color;
+	};
+
+	std::vector<LineFragment> line_array;
 
    private:
 	std::stack<State> state_stack;
@@ -257,9 +269,11 @@ void BView::MessageReceived(BMessage *message)
 						// FIXME: now what? ¯\_(ツ)_/¯
 						return;
 					}
+					canvas->restoreToCount(0);
 
 					std::function<void(BView *, BRect)> do_draw_view = [&](BView *view, BRect invalRect) {
 						int checkpoint = canvas->save();
+						canvas->resetMatrix();
 
 						auto bounds = view->Bounds();
 						view->ConvertToScreen(&bounds);
@@ -270,7 +284,7 @@ void BView::MessageReceived(BMessage *message)
 							const rgb_color view_color(view->ViewColor());
 							// If you set the view color to B_TRANSPARENT_COLOR, the Application Server won't erase the view's clipping region before an update.
 							if (view_color != B_TRANSPARENT_COLOR)
-								canvas->clear(SkColorSetARGB(view_color.alpha, view_color.red, view_color.green, view_color.blue));
+								canvas->clear(SkColorSetARGB(255, view_color.red, view_color.green, view_color.blue));
 
 							// Call hook function to Draw content
 							view->Draw(invalRect);
@@ -302,18 +316,16 @@ void BView::MessageReceived(BMessage *message)
 #endif
 					};
 
-					canvas->restoreToCount(0);
-					canvas->save();
-					canvas->resetMatrix();
 					// By default, the clipping region contains only the visible area of the view
 					// and, during an update, only the area that actually needs to be drawn.
 					BRect  bounds{ConvertToScreen(updateRect)};
 					SkRect clipRect{SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1)};
+					canvas->save();	 // save-point for base clip
 					canvas->clipRect(clipRect);
 
 					do_draw_view(this, updateRect);
 
-					canvas->restoreToCount(0);
+					canvas->restoreToCount(0);	// free memory
 
 					fOwner->_damage_window(clipRect.left(), clipRect.top(), clipRect.width(), clipRect.height());
 				}
@@ -511,31 +523,27 @@ bool BView::RemoveChild(BView *child)
 	ALOGE_IF(child->fOwner != fOwner, "Removing child '%s' of different owner %p than ours ('%s' %p)",
 			 child->Name(), child->fOwner, Name(), fOwner);
 
-	if (fOwner) {
+	_CheckLock;
+
+	if (child->fOwner) {
 		child->_detach();
 	}
 
-	BView *parent = fParent;
-	if (!parent) {
-		if (child->fParent != this)
-			return false;
-
-		if (fFirstChild == child) {
-			// it's the first view in the list
-			fFirstChild = child->fNextSibling;
-		}
-		else {
-			// there must be a previous sibling
-			child->fPrevSibling->fNextSibling = child->fNextSibling;
-		}
-
-		if (child->fNextSibling)
-			child->fNextSibling->fPrevSibling = child->fPrevSibling;
-
-		child->fParent		= nullptr;
-		child->fNextSibling = nullptr;
-		child->fPrevSibling = nullptr;
+	if (fFirstChild == child) {
+		// it's the first view in the list
+		fFirstChild = child->fNextSibling;
 	}
+	else {
+		// there must be a previous sibling
+		child->fPrevSibling->fNextSibling = child->fNextSibling;
+	}
+
+	if (child->fNextSibling)
+		child->fNextSibling->fPrevSibling = child->fPrevSibling;
+
+	child->fParent		= nullptr;
+	child->fNextSibling = nullptr;
+	child->fPrevSibling = nullptr;
 
 	return true;
 }
@@ -580,8 +588,7 @@ BView *BView::PreviousSibling() const
 
 bool BView::RemoveSelf()
 {
-	debugger(__PRETTY_FUNCTION__);
-	return false;
+	return fParent && fParent->RemoveChild(this);
 }
 
 BWindow *BView::Window() const
@@ -672,7 +679,21 @@ void BView::GetMouse(BPoint *location, uint32 *buttons, bool checkMessageQueue)
 
 BView *BView::FindView(const char *name) const
 {
-	debugger(__PRETTY_FUNCTION__);
+	if (!name)
+		return nullptr;
+
+	if (Name() && !strcmp(Name(), name))
+		return const_cast<BView *>(this);
+
+	BView *child = fFirstChild;
+	while (child) {
+		BView *view = child->FindView(name);
+		if (view)
+			return view;
+
+		child = child->fNextSibling;
+	}
+
 	return nullptr;
 }
 
@@ -984,6 +1005,12 @@ static SkBlendMode blend_modes[] = {
 	r.InsetBy(-PenSize(), -PenSize()); \
 	fOwner->_damage_window(r.left, r.top, r.Width() + 1, r.Height() + 1);
 
+void BView::_damage_rect(BRect r)
+{
+	DRAW_PRELUDE
+	DAMAGE_RECT
+}
+
 void BView::StrokePoint(BPoint pt, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
@@ -1011,6 +1038,41 @@ void BView::StrokeLine(BPoint fromPt, BPoint toPt, pattern p)
 	BRect r(fromPt.x, fromPt.y, toPt.x, toPt.y);
 	DAMAGE_RECT
 	fState->S().pen_location.set(toPt.x, toPt.y);
+}
+
+void BView::BeginLineArray(int32 count)
+{
+	if (count <= 0)
+		debugger("Calling BeginLineArray with a count <= 0");
+
+	if (fState->line_array.size() > 0) {
+		debugger("Can't nest BeginLineArray calls");
+		// not fatal, but it helps during development of your app and is in line with R5
+	}
+
+	_CheckLock;
+	fState->line_array.clear();
+	fState->line_array.reserve(count);
+}
+
+void BView::AddLine(BPoint pt0, BPoint pt1, rgb_color col)
+{
+	_CheckLock;
+	fState->line_array.push_back({pt0, pt1, SkColorSetARGB(col.alpha, col.red, col.green, col.blue)});
+}
+
+void BView::EndLineArray()
+{
+	_CheckLock;
+
+	DRAW_PRELUDE
+
+	for (auto &fragment : fState->line_array) {
+		paint.setColor(fragment.color);
+		canvas->drawLine(fragment.start.x, fragment.start.y, fragment.end.x, fragment.end.y, paint);
+	}
+
+	fState->line_array.clear();
 }
 
 void BView::StrokePolygon(const BPolygon *aPolygon, bool closed, pattern p)
@@ -1313,12 +1375,10 @@ void BView::GetFontHeight(font_height *height) const
 void BView::Invalidate(BRect invalRect)
 {
 	ALOGV("Invalidating %p %s", this, Name());
-	if (fFlags & B_WILL_DRAW) {
+	if ((fFlags & B_WILL_DRAW) && Looper()) {
 		BMessage message(_UPDATE_);
 		message.AddRect("updateRect", invalRect);
-		if (Looper()) {
-			Looper()->PostMessage(&message, this);
-		}
+		Looper()->PostMessage(&message, this);
 	}
 }
 
@@ -1481,6 +1541,16 @@ void BView::Hide()
 	debugger(__PRETTY_FUNCTION__);
 }
 
+bool BView::IsHidden() const
+{
+	return false;  // FIXME: implement
+}
+
+bool BView::IsHidden(const BView *looking_from) const
+{
+	return false;  // FIXME: implement
+}
+
 void BView::GetPreferredSize(float *width, float *height)
 {
 	if (width)
@@ -1519,7 +1589,7 @@ void BView::_attach(BWindow *window)
 		debugger("View already has an owner");
 	}
 
-	fOwner		  = window;
+	fOwner = window;
 	fOwner->AddHandler(this);
 	fOwner->fViewsEvents |= fFlags & B_PULSE_NEEDED;
 

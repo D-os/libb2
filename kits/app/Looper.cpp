@@ -519,9 +519,7 @@ void BLooper::_drain_message_queue()
 			if (handler && handler->Looper() == this)
 				DispatchMessage(fLastMessage, handler);
 		}
-		else {
-			ALOGW("Message 0x%x: %.4s did not get dispatched", fLastMessage->what, (char *)&fLastMessage->what);
-		}
+
 		/// NOTE: mind that message might get detached during dispatch
 		/// and fLastMessage is already null.
 
