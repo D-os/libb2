@@ -22,24 +22,24 @@ class TestViewsWin : public BWindow
 	TestViewsWin(BRect frame) : BWindow(frame, "Hello", B_TITLED_WINDOW,
 										B_NOT_RESIZABLE | B_NOT_ZOOMABLE)
 	{
-		auto red1 = new TestView(BRect(10, 10, 90, 90), "Red1", {255, 0, 0, 255});
+		auto red1 = new TestView({10, 10, 90, 90}, "Red1", {255, 0, 0, 255});
 		AddChild(red1);
-		auto red11 = new TestView(BRect(10, 10, 20, 20), "Red11", {255, 0, 0, 255});
-		auto red12 = new TestView(BRect(30, 30, 50, 50), "Red12", {255, 0, 0, 255});
+		auto red11 = new TestView({10, 10, 20, 20}, "Red11", {255, 0, 0, 255});
+		auto red12 = new TestView({30, 30, 50, 50}, "Red12", {255, 0, 0, 255});
 		red1->AddChild(red11);
 		red1->AddChild(red12);
-		auto red121 = new TestView(BRect(10, 10, 30, 30), "Red121", {255, 0, 0, 255});
+		auto red121 = new TestView({10, 10, 30, 30}, "Red121", {255, 0, 0, 255});
 		red12->AddChild(red121);
 
 		auto wrapper = new BView(Bounds().OffsetBySelf({100, 0}), "Wrapper", 0, 0);
 		AddChild(wrapper);
-		auto blue1 = new TestView(BRect(10, 10, 90, 90), "Blue1", {0, 0, 255, 255});
+		auto blue1 = new TestView({10, 10, 90, 90}, "Blue1", {0, 0, 255, 255});
 		wrapper->AddChild(blue1);
-		auto blue11 = new TestView(BRect(10, 10, 20, 20), "Blue11", {0, 0, 255, 255});
-		auto blue12 = new TestView(BRect(30, 30, 50, 50), "Blue12", {0, 0, 255, 255});
+		auto blue11 = new TestView({10, 10, 20, 20}, "Blue11", {0, 0, 255, 255});
+		auto blue12 = new TestView({30, 30, 50, 50}, "Blue12", {0, 0, 255, 255});
 		blue1->AddChild(blue11);
 		blue1->AddChild(blue12);
-		auto blue121 = new TestView(BRect(10, 10, 30, 30), "Blue121", {0, 0, 255, 255});
+		auto blue121 = new TestView({10, 10, 30, 30}, "Blue121", {0, 0, 255, 255});
 		blue12->AddChild(blue121);
 	}
 

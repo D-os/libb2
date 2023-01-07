@@ -314,12 +314,15 @@ void BView::MessageReceived(BMessage *message)
 						}
 						canvas->restoreToCount(checkpoint);
 #ifndef NDEBUG
-						// Draw green rectangles around views
-						SkPaint paint;
-						paint.setARGB(48, 0, 200, 0);
-						paint.setStyle(SkPaint::kStroke_Style);
-						canvas->drawRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom), paint);
-						// canvas->drawString(view->Name(), bounds.left + 1, bounds.top + 6, SkFont(sk_sp(fState->S().font._get_font().getTypeface()), 9), {});
+						{
+							// Draw green rectangles around views
+							SkPaint paint;
+							paint.setARGB(48, 0, 200, 0);
+							paint.setStyle(SkPaint::kStroke_Style);
+							canvas->resetMatrix();
+							canvas->drawRect(SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom), paint);
+							// canvas->drawString(view->Name(), bounds.left + 1, bounds.top + 7, SkFont(sk_sp(fState->S().font._get_font().getTypeface()), 9), {});
+						}
 #endif
 					};
 
@@ -328,7 +331,7 @@ void BView::MessageReceived(BMessage *message)
 					BRect  bounds{ConvertToScreen(updateRect)};
 					SkRect clipRect{SkRect::MakeLTRB(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1)};
 					canvas->save();	 // save-point for base clip
-					canvas->clipRect(clipRect);
+					canvas->clipRect(clipRect);	 // restrict drawing inside invalidation rectangle
 
 					do_draw_view(this, updateRect);
 
