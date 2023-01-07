@@ -1,5 +1,11 @@
 #include "Box.h"
 
+#include "GraphicsDefs.h"
+
+#define LOG_TAG "BBox"
+
+#include <log/log.h>
+
 #define BOX_LABEL_OFFSET 8
 
 BBox::BBox(BRect bounds, const char *name, uint32 resizeFlags, uint32 flags, border_style border)
@@ -20,8 +26,7 @@ BBox::BBox(BMessage *data) : BView(data), fStyle{B_NO_BORDER} {}
 
 status_t BBox::Archive(BMessage *data, bool deep) const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return B_ERROR;
+	return BView::Archive(data, deep);
 }
 
 void BBox::SetBorder(border_style style)
@@ -37,12 +42,13 @@ border_style BBox::Border() const
 
 void BBox::SetLabel(const char *label)
 {
-	const char *current = fLabel;
-
+	free(fLabel);
 	fLabel	   = label ? strdup(label) : nullptr;
-	fLabelView = nullptr;
 
-	free(const_cast<char *>(current));
+	if (fLabelView) {
+		fLabelView->RemoveSelf();
+		fLabelView = nullptr;
+	}
 
 	Invalidate();
 }
@@ -52,10 +58,10 @@ status_t BBox::SetLabel(BView *view_label)
 	if (!view_label)
 		return B_BAD_VALUE;
 
-	free(const_cast<char *>(fLabel));
+	free(fLabel);
 	fLabel	   = nullptr;
-	fLabelView = view_label;
 
+	fLabelView = view_label;
 	auto left = PenSize() * 2 + BOX_LABEL_OFFSET;
 	fLabelView->MoveTo(left, 0.0);
 	AddChild(fLabelView);
@@ -80,30 +86,31 @@ void BBox::Draw(BRect updateRect)
 
 	auto  pen_size = PenSize();
 	BRect frame	   = Bounds();
-	frame.InsetBy(pen_size / 2, pen_size / 2);
 
 	font_height metrics;
 	if (fLabel) {
 		GetFontHeight(&metrics);
-		frame.top += roundf(metrics.ascent / 2);
+		frame.top += ceilf(metrics.ascent) - ceilf(metrics.x_height / 2);
 	}
 	else if (fLabelView) {
-		frame.top += fLabelView->Bounds().Height() / 2;
+		frame.top += floorf(fLabelView->Bounds().Height() / 2);
 	}
 
 	PushState();
 	if (fStyle == B_PLAIN_BORDER) {
 		SetHighColor(ui_color(B_SHADOW_COLOR));
-		MovePenTo(frame.LeftBottom() + BPoint{0, pen_size});
-		StrokeLine(frame.RightBottom() + BPoint{pen_size, pen_size});
-		StrokeLine(frame.RightTop() + BPoint{pen_size, 0});
+		MovePenTo(frame.LeftBottom());
+		StrokeLine(frame.RightBottom());
+		StrokeLine(frame.RightTop());
 		SetHighColor(ui_color(B_SHINE_COLOR));
 		StrokeLine(frame.LeftTop());
-		StrokeLine(frame.LeftBottom() + BPoint{0, pen_size});
+		StrokeLine(frame.LeftBottom());
 	}
 	if (fStyle == B_FANCY_BORDER) {
 		SetHighColor(ui_color(B_SHADOW_COLOR));
 		SetPenSize(pen_size * 2);
+		frame.right -= pen_size;
+		frame.bottom -= pen_size;
 		StrokeRect(frame);
 		SetPenSize(pen_size);
 		SetHighColor(ui_color(B_SHINE_COLOR));
@@ -117,15 +124,13 @@ void BBox::Draw(BRect updateRect)
 		auto  bounds = Bounds();
 		float width	 = StringWidth(fLabel);
 		auto  left	 = frame.left + pen_size + BOX_LABEL_OFFSET + pen_size;
-		FillRect(BRect(left, bounds.top, left + width + pen_size * 3, metrics.ascent + metrics.descent), B_SOLID_LOW);
-		BPoint pos{left, metrics.ascent};
-		DrawString(fLabel, pos);
+		BRect frame	 = BRect(left, bounds.top, left + width + pen_size * 3, ceilf(metrics.ascent) + ceilf(metrics.descent));
+		FillRect(frame.InsetByCopy(-2, 0), B_SOLID_LOW);
+		DrawString(fLabel, {left, ceilf(metrics.ascent) + 1});
 	}
 	else if (fLabelView) {
 		SetLowColor(ViewColor());
-		auto bounds = fLabelView->Frame();
-		bounds.InsetBy(-pen_size, -pen_size);
-		FillRect(bounds, B_SOLID_LOW);
+		FillRect(fLabelView->Frame().InsetByCopy(-2, 0), B_SOLID_LOW);
 	}
 	PopState();
 }

@@ -25,7 +25,7 @@ int main()
 
 	pos.OffsetBy(0, 60);
 	BBox		fancy_view(pos);
-	BStringView fancy_view_label({100, 100, 200, 114}, nullptr, "StringView Label");
+	BStringView fancy_view_label({100, 100, 200, 110}, nullptr, "StringView Label");
 	fancy_view.SetLabel(&fancy_view_label);
 	mainWindow.AddChild(&fancy_view);
 	BStringView fancy_view_content(fancy_view.Bounds().InsetByCopy(10, 14), nullptr, "Fancy Box with StringView Label");
@@ -50,7 +50,7 @@ int main()
 	pos.OffsetBy(0, 60);
 	BBox plain_view(pos);
 	plain_view.SetBorder(B_PLAIN_BORDER);
-	BStringView plain_view_label({100, 100, 200, 114}, nullptr, "StringView Label");
+	BStringView plain_view_label({100, 100, 200, 110}, nullptr, "StringView Label");
 	plain_view.SetLabel(&plain_view_label);
 	mainWindow.AddChild(&plain_view);
 	BStringView plain_view_content(plain_view.Bounds().InsetByCopy(10, 14), nullptr, "Plain Box with StringView Label");
@@ -75,7 +75,7 @@ int main()
 	pos.OffsetBy(0, 60);
 	BBox none_view(pos);
 	none_view.SetBorder(B_NO_BORDER);
-	BStringView none_view_label({100, 100, 200, 114}, nullptr, "StringView Label");
+	BStringView none_view_label({100, 100, 200, 110}, nullptr, "StringView Label");
 	none_view.SetLabel(&none_view_label);
 	mainWindow.AddChild(&none_view);
 	BStringView none_view_content(none_view.Bounds().InsetByCopy(10, 14), nullptr, "NoBorder Box with StringView Label");

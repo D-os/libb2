@@ -34,8 +34,8 @@ void BCheckBox::Draw(BRect updateRect)
 
 	auto pattern = IsEnabled() ? B_SOLID_HIGH : B_MIXED_COLORS;
 
-	BRect box(CHECKBOX_LEFT_PADDING, (bounds.Height() - (CHECKBOX_BOX_SIZE)) / 2,
-			  CHECKBOX_LEFT_PADDING + CHECKBOX_BOX_SIZE, (bounds.Height() + CHECKBOX_BOX_SIZE) / 2);
+	BRect box(CHECKBOX_LEFT_PADDING, ceilf((bounds.Height() - (CHECKBOX_BOX_SIZE)) / 2),
+			  CHECKBOX_LEFT_PADDING + CHECKBOX_BOX_SIZE, ceilf((bounds.Height() + CHECKBOX_BOX_SIZE) / 2));
 	StrokeRect(box, pattern);
 	BRect inset = box.InsetByCopy(1, 1);
 	SetHighColor(tint_color(ViewColor(), B_LIGHTEN_1_TINT));
@@ -48,11 +48,11 @@ void BCheckBox::Draw(BRect updateRect)
 	StrokeLine(inset.LeftTop());
 	StrokeLine(inset.LeftBottom());
 
-	SetHighColor(high_color);
 	if (Value()) {
+		SetHighColor(tint_color(ui_color(B_NAVIGATION_BASE_COLOR), B_DARKEN_1_TINT));
 		SetPenSize(2);
-		StrokeLine(box.LeftTop() + BPoint{4, 4}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 3, CHECKBOX_BOX_SIZE - 3});
-		StrokeLine(box.LeftTop() + BPoint{4, CHECKBOX_BOX_SIZE - 3}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 3, 4});
+		StrokeLine(box.LeftTop() + BPoint{3.5, 3.5}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 3.5, CHECKBOX_BOX_SIZE - 3.5});
+		StrokeLine(box.LeftTop() + BPoint{3.5, CHECKBOX_BOX_SIZE - 3.5}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 3.5, 3.5});
 	}
 
 	const auto label = Label();
@@ -64,6 +64,7 @@ void BCheckBox::Draw(BRect updateRect)
 			box.right + CHECKBOX_TEXT_PADDING,
 			(bounds.Height() + metrics.ascent + PenSize()) / 2};
 
+		SetHighColor(high_color);
 		DrawString(label, pos);
 	}
 

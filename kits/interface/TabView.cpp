@@ -127,10 +127,8 @@ void BTab::DrawFocusMark(BView* owner, BRect tabFrame)
 	owner->SetHighColor(ui_color(B_KEYBOARD_NAVIGATION_COLOR));
 
 	float offset = IsSelected() ? 3 : 2;
-	owner->StrokeLine(BPoint((tabFrame.left + tabFrame.right - width) / 2.0,
-							 tabFrame.bottom - offset),
-					  BPoint((tabFrame.left + tabFrame.right + width) / 2.0,
-							 tabFrame.bottom - offset));
+	owner->StrokeLine(BPoint((tabFrame.left + tabFrame.right - width) / 2.0, tabFrame.bottom - offset),
+					  BPoint((tabFrame.left + tabFrame.right + width) / 2.0, tabFrame.bottom - offset));
 }
 
 void BTab::DrawLabel(BView* owner, BRect tabFrame)
@@ -489,7 +487,6 @@ void BTabView::DrawBox(BRect selectedTabFrame)
 	rect.top = fTabHeight;
 
 	SetHighColor(ui_color(B_SHADOW_COLOR));
-	SetPenSize(1.0f);
 	MovePenTo({selectedTabFrame.left, rect.top});
 	StrokeLine(rect.LeftTop());
 	StrokeLine(rect.LeftBottom());

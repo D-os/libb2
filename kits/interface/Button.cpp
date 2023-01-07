@@ -1,5 +1,7 @@
 #include "Button.h"
 
+#include "InterfaceDefs.h"
+
 #define LOG_TAG "BButton"
 
 #include <Font.h>
@@ -40,6 +42,7 @@ void BButton::Draw(BRect updateRect)
 		GetFont(&font);
 		font_height fh;
 		font.GetHeight(&fh);
+		auto width = font.StringWidth(label);
 
 		auto bounds = Bounds();
 
@@ -56,7 +59,7 @@ void BButton::Draw(BRect updateRect)
 		}
 
 		// TODO: move below code to helper function
-		float X = bounds.right - font.StringWidth(label);
+		float X = bounds.right - width;
 		X -= roundf((X - bounds.left) / 2);
 		float Y = ceilf(fh.ascent);
 		if (bounds.Height() > Y)
@@ -67,8 +70,16 @@ void BButton::Draw(BRect updateRect)
 		DrawString(label, pos);
 		SetHighColor(currentHighColor);
 
-		SetPenSize(IsFocus() ? 2 : (IsDefault() ? 3 : 1));
+		SetPenSize(IsDefault() ? 3 : 1);
 		StrokeRect(bounds);
+
+		if (IsFocus()) {
+			SetHighColor(ui_color(B_KEYBOARD_NAVIGATION_COLOR));
+
+			float offset = IsDefault() ? 2 : 1;
+			StrokeLine(BPoint((bounds.left + bounds.right - width) / 2.0, bounds.bottom - offset),
+					   BPoint((bounds.left + bounds.right + width) / 2.0, bounds.bottom - offset));
+		}
 
 		PopState();
 	}

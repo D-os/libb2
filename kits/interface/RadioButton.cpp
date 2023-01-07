@@ -1,6 +1,7 @@
 #include "RadioButton.h"
 
 #include "./theme.h"
+#include "InterfaceDefs.h"
 
 BRadioButton::BRadioButton(BRect frame, const char *name, const char *label, BMessage *message, uint32 resizeMask, uint32 flags)
 	: BControl(frame, name, label, message, resizeMask, flags) {}
@@ -36,8 +37,9 @@ void BRadioButton::Draw(BRect updateRect)
 
 	auto pattern = IsEnabled() ? B_SOLID_HIGH : B_MIXED_COLORS;
 
-	BRect box(CHECKBOX_LEFT_PADDING, roundf((bounds.Height() - (CHECKBOX_BOX_SIZE)) / 2),
-			  CHECKBOX_LEFT_PADDING + CHECKBOX_BOX_SIZE, roundf((bounds.Height() + CHECKBOX_BOX_SIZE) / 2));
+	BRect box(CHECKBOX_LEFT_PADDING, ceilf((bounds.Height() - (CHECKBOX_BOX_SIZE)) / 2),
+			  CHECKBOX_LEFT_PADDING + CHECKBOX_BOX_SIZE, ceilf((bounds.Height() + CHECKBOX_BOX_SIZE) / 2));
+	box.PrintToStream();
 	StrokeEllipse(box, pattern);
 	BRect inset = box.InsetByCopy(1, 1);
 	SetHighColor(tint_color(ViewColor(), B_LIGHTEN_1_TINT));
@@ -47,9 +49,16 @@ void BRadioButton::Draw(BRect updateRect)
 	SetHighColor(tint_color(ViewColor(), B_NO_TINT));
 	StrokeArc(inset, 45, 180, pattern);
 
-	SetHighColor(high_color);
 	if (Value()) {
+		SetHighColor(tint_color(ui_color(B_NAVIGATION_BASE_COLOR), B_DARKEN_1_TINT));
 		FillEllipse(box.InsetByCopy(3, 3), pattern);
+		auto pen = PenSize();
+		SetHighColor(ui_color(B_SHINE_COLOR));
+		SetPenSize(0.5);
+		StrokeArc(box.InsetByCopy(4, 4), 90, 90);
+		SetHighColor(ui_color(B_SHADOW_COLOR));
+		StrokeArc(box.InsetByCopy(3, 3), 270, 90);
+		SetPenSize(pen);
 	}
 
 	const auto label = Label();
@@ -61,6 +70,7 @@ void BRadioButton::Draw(BRect updateRect)
 			box.right + CHECKBOX_TEXT_PADDING,
 			roundf((bounds.Height() + metrics.ascent + PenSize()) / 2)};
 
+		SetHighColor(high_color);
 		DrawString(label, pos);
 	}
 

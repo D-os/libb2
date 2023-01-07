@@ -63,7 +63,7 @@ class BView::impl
 			.origin		   = {0.0, 0.0},
 			.drawing_mode  = B_OP_COPY,
 			.pen_size	   = 1.0,
-			.cap_mode	   = SkPaint::kButt_Cap,
+			.cap_mode	   = SkPaint::kSquare_Cap,
 			.join_mode	   = SkPaint::kMiter_Join,
 			.miter_limit   = B_DEFAULT_MITER_LIMIT,
 			.pen_location  = {0.0, 0.0},
@@ -1036,51 +1036,62 @@ static SkBlendMode blend_modes[] = {
 	[B_OP_SELECT]	= SkBlendMode::kModulate,
 };
 
-#define DRAW_PRELUDE                                                                             \
-	if (!fOwner) return;                                                                         \
-	SkCanvas *canvas = fOwner->_get_canvas();                                                    \
-	if (!canvas) return;                                                                         \
-                                                                                                 \
-	BPoint translation{LeftTop()};                                                               \
-	ConvertToScreen(&translation);                                                               \
-	canvas->setMatrix(SkMatrix::Translate(translation.x, translation.y));                        \
-                                                                                                 \
-	SkPaint paint;                                                                               \
-	paint.setStrokeWidth(fState->S().pen_size > 0.0 ? /* scale * */ fState->S().pen_size : 1.0); \
-	paint.setStrokeMiter(fState->S().miter_limit);                                               \
-	paint.setStrokeCap(fState->S().cap_mode);                                                    \
-	paint.setStrokeJoin(fState->S().join_mode);                                                  \
-                                                                                                 \
-	if (fState->S().drawing_mode < (sizeof(blend_modes) / sizeof(blend_modes[0])))               \
+#define DRAW_PRELUDE                                                               \
+	if (!fOwner) return;                                                           \
+	SkCanvas *canvas = fOwner->_get_canvas();                                      \
+	if (!canvas) return;                                                           \
+                                                                                   \
+	SkPaint paint;                                                                 \
+	if (fState->S().drawing_mode < (sizeof(blend_modes) / sizeof(blend_modes[0]))) \
 		paint.setBlendMode(blend_modes[fState->S().drawing_mode]);
 
+#define DRAW_PRELUDE_WITH_MATRIX   \
+	DRAW_PRELUDE                   \
+	BPoint translation{LeftTop()}; \
+	ConvertToScreen(&translation); \
+	canvas->setMatrix(SkMatrix::Translate(translation.x, translation.y));
+
 #define DRAW_PRELUDE_WITH_COLOR       \
-	DRAW_PRELUDE                      \
+	DRAW_PRELUDE_WITH_MATRIX          \
 	paint.setColor(SkColorSetARGB(    \
 		fState->S().high_color.alpha, \
 		fState->S().high_color.red,   \
 		fState->S().high_color.green, \
 		fState->S().high_color.blue));
 
-#define DRAW_PRELUDE_WITH_PATTERN                                                         \
-	DRAW_PRELUDE                                                                          \
-	SkBitmap bitmap;                                                                      \
-	bitmap.setInfo(SkImageInfo::Make(8, 8, kRGBA_8888_SkColorType, kOpaque_SkAlphaType)); \
-	rgb_color pixels[8 * 8];                                                              \
-	fState->fill_pattern(pixels, p);                                                      \
-	bitmap.setPixels(pixels);                                                             \
-	bitmap.setImmutable();                                                                \
-	paint.setShader(                                                                      \
-		bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, SkSamplingOptions(), nullptr));
+#define DRAW_PRELUDE_WITH_PATTERN                                                                \
+	DRAW_PRELUDE                                                                                 \
+	BPoint translation{LeftTop()};                                                               \
+	ConvertToScreen(&translation);                                                               \
+	canvas->setMatrix(SkMatrix::Translate(translation.x + 0.5, translation.y + 0.5));            \
+                                                                                                 \
+	paint.setStrokeWidth(fState->S().pen_size > 0.0 ? /* scale * */ fState->S().pen_size : 1.0); \
+	paint.setStrokeMiter(fState->S().miter_limit);                                               \
+	paint.setStrokeCap(fState->S().cap_mode);                                                    \
+	paint.setStrokeJoin(fState->S().join_mode);                                                  \
+	SkBitmap bitmap;                                                                             \
+	bitmap.setInfo(SkImageInfo::Make(8, 8, kRGBA_8888_SkColorType, kOpaque_SkAlphaType));        \
+	rgb_color pixels[8 * 8];                                                                     \
+	fState->fill_pattern(pixels, p);                                                             \
+	bitmap.setPixels(pixels);                                                                    \
+	bitmap.setImmutable();                                                                       \
+	paint.setShader(                                                                             \
+		bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat,                              \
+						  SkSamplingOptions(), SkMatrix::Translate(-0.5, -0.5)));
 
 #define DAMAGE_RECT                    \
 	ConvertToScreen(&r);               \
 	r.InsetBy(-PenSize(), -PenSize()); \
 	fOwner->_damage_window(r.left, r.top, r.Width() + 1, r.Height() + 1);
 
+/**
+ * This function is used to setup canvas for direct drawing
+ * and damage part of canvas that will be painted on.
+ * Damage happens async, so we can queue damage before drawing.
+ */
 void BView::_damage_rect(BRect r)
 {
-	DRAW_PRELUDE
+	DRAW_PRELUDE_WITH_MATRIX
 	DAMAGE_RECT
 }
 
@@ -1096,8 +1107,8 @@ void BView::StrokeLine(BPoint toPt, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	canvas->drawLine(
-		fState->S().pen_location.x() + 0.5, fState->S().pen_location.y() + 0.5,
-		toPt.x + 0.5, toPt.y + 0.5,
+		fState->S().pen_location.x(), fState->S().pen_location.y(),
+		toPt.x, toPt.y,
 		paint);
 	BRect r(fState->S().pen_location.x(), fState->S().pen_location.y(), toPt.x, toPt.y);
 	DAMAGE_RECT
@@ -1107,7 +1118,7 @@ void BView::StrokeLine(BPoint toPt, pattern p)
 void BView::StrokeLine(BPoint fromPt, BPoint toPt, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
-	canvas->drawLine(fromPt.x + 0.5, fromPt.y + 0.5, toPt.x + 0.5, toPt.y + 0.5, paint);
+	canvas->drawLine(fromPt.x, fromPt.y, toPt.x, toPt.y, paint);
 	BRect r(fromPt.x, fromPt.y, toPt.x, toPt.y);
 	DAMAGE_RECT
 	fState->S().pen_location.set(toPt.x, toPt.y);
@@ -1142,7 +1153,7 @@ void BView::EndLineArray()
 
 	for (auto &fragment : fState->line_array) {
 		paint.setColor(fragment.color);
-		canvas->drawLine(fragment.start.x + 0.5, fragment.start.y + 0.5, fragment.end.x + 0.5, fragment.end.y + 0.5, paint);
+		canvas->drawLine(fragment.start.x, fragment.start.y, fragment.end.x, fragment.end.y, paint);
 	}
 
 	fState->line_array.clear();
@@ -1161,10 +1172,10 @@ void BView::StrokePolygon(const BPoint *ptArray, int32 numPts, bool closed, patt
 	BRect r(ptArray->x, ptArray->y, ptArray->x, ptArray->y);
 	paint.setStyle(SkPaint::Style::kStroke_Style);
 	SkPath path;
-	path.moveTo(ptArray->x + 0.5, ptArray->y + 0.5);
+	path.moveTo(ptArray->x, ptArray->y);
 	ptArray += 1;
 	for (int32 i = 1; i < numPts; ++i) {
-		path.lineTo(ptArray->x + 0.5, ptArray->y + 0.5);
+		path.lineTo(ptArray->x, ptArray->y);
 		if (ptArray->x < r.left) r.left = ptArray->x;
 		if (ptArray->y < r.top) r.top = ptArray->y;
 		if (ptArray->x > r.right) r.right = ptArray->x;
@@ -1228,9 +1239,9 @@ void BView::FillTriangle(BPoint pt1, BPoint pt2, BPoint pt3, pattern p)
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
 	SkPath path;
-	path.moveTo(pt1.x + 0.5, pt1.y + 0.5);
-	path.lineTo(pt2.x + 0.5, pt2.y + 0.5);
-	path.lineTo(pt3.x + 0.5, pt3.y + 0.5);
+	path.moveTo(pt1.x, pt1.y);
+	path.lineTo(pt2.x, pt2.y);
+	path.lineTo(pt3.x, pt3.y);
 	path.close();
 	canvas->drawPath(path, paint);
 
@@ -1248,8 +1259,7 @@ void BView::StrokeRect(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawRect(SkRect::MakeLTRB(r.left + 0.7, r.top + 0.7,
-									  r.right + 0.3, r.bottom + 0.3),
+	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom),
 					 paint);
 	DAMAGE_RECT
 }
@@ -1258,8 +1268,7 @@ void BView::FillRect(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawRect(SkRect::MakeLTRB(r.left + 0.7, r.top + 0.7,
-									  r.right + 0.3, r.bottom + 0.3),
+	canvas->drawRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom),
 					 paint);
 	DAMAGE_RECT
 }
@@ -1283,8 +1292,7 @@ void BView::StrokeRoundRect(BRect r, float xRadius, float yRadius, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawRoundRect(SkRect::MakeLTRB(r.left + 0.5, r.top + 0.5,
-										   r.right + 0.6, r.bottom + 0.6),
+	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom),
 						  xRadius, yRadius, paint);
 	DAMAGE_RECT
 }
@@ -1293,8 +1301,7 @@ void BView::FillRoundRect(BRect r, float xRadius, float yRadius, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawRoundRect(SkRect::MakeLTRB(r.left + 0.5, r.top + 0.5,
-										   r.right + 0.6, r.bottom + 0.6),
+	canvas->drawRoundRect(SkRect::MakeLTRB(r.left, r.top, r.right, r.bottom),
 						  xRadius, yRadius, paint);
 	DAMAGE_RECT
 }
@@ -1308,8 +1315,7 @@ void BView::StrokeEllipse(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawOval(SkRect::MakeLTRB(r.left + 0.3, r.top + 0.3,
-									  r.right + 0.7, r.bottom + 0.7),
+	canvas->drawOval(SkRect::MakeLTRB(r.left - 0.25, r.top - 0.25, r.right + 0.25, r.bottom + 0.25),
 					 paint);
 	DAMAGE_RECT
 }
@@ -1323,8 +1329,7 @@ void BView::FillEllipse(BRect r, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawOval(SkRect::MakeLTRB(r.left + 0.3, r.top + 0.3,
-									  r.right + 0.7, r.bottom + 0.7),
+	canvas->drawOval(SkRect::MakeLTRB(r.left - 0.25, r.top - 0.25, r.right + 0.25, r.bottom + 0.25),
 					 paint);
 	DAMAGE_RECT
 }
@@ -1338,8 +1343,7 @@ void BView::StrokeArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStroke_Style);
-	canvas->drawArc(SkRect::MakeLTRB(r.left + 0.3, r.top + 0.3,
-									 r.right + 0.7, r.bottom + 0.7),
+	canvas->drawArc(SkRect::MakeLTRB(r.left - 0.25, r.top - 0.25, r.right + 0.25, r.bottom + 0.25),
 					-start_angle, -arc_angle, false, paint);
 	DAMAGE_RECT
 }
@@ -1353,8 +1357,7 @@ void BView::FillArc(BRect r, float start_angle, float arc_angle, pattern p)
 {
 	DRAW_PRELUDE_WITH_PATTERN
 	paint.setStyle(SkPaint::kStrokeAndFill_Style);
-	canvas->drawArc(SkRect::MakeLTRB(r.left + 0.3, r.top + 0.3,
-									 r.right + 0.7, r.bottom + 0.7),
+	canvas->drawArc(SkRect::MakeLTRB(r.left - 0.25, r.top - 0.25, r.right + 0.25, r.bottom + 0.25),
 					-start_angle, -arc_angle, true, paint);
 	DAMAGE_RECT
 }
@@ -1404,6 +1407,7 @@ void BView::DrawString(const char *aString, int32 length, BPoint location, escap
 #undef DAMAGE_RECT
 #undef DRAW_PRELUDE_WITH_PATTERN
 #undef DRAW_PRELUDE_WITH_COLOR
+#undef DRAW_PRELUDE_WITH_MATRIX
 #undef DRAW_PRELUDE
 
 void BView::SetFont(const BFont *font, uint32 mask)
