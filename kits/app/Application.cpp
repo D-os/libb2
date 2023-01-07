@@ -36,7 +36,7 @@ BApplication::BApplication(const char *signature)
 	font_family default_family{DEFAULT_FONT_FAMILY};
 	font_family fixed_family{FIXED_FONT_FAMILY};
 	font_style	regular_style{"Semi Bold"};
-	font_style	bold_style{"Bold"};
+	font_style	bold_style{"Extra Bold"};
 	ret = const_cast<BFont *>(be_plain_font)->SetFamilyAndStyle(default_family, regular_style);
 	ALOGE_IF(ret != B_OK, "Failed to initialize plain font");
 

@@ -2,6 +2,7 @@
 
 #define LOG_TAG "BLooper"
 
+#include <Font.h>
 #include <List.h>
 #include <Region.h>
 #include <Window.h>
@@ -238,9 +239,10 @@ BTabView::BTabView(BRect frame, const char* name, button_width width, uint32 res
 	fContainerView->SetLowColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 	AddChild(fContainerView);
 
+	SetFont(be_bold_font);
 	font_height fh;
 	GetFontHeight(&fh);
-	SetTabHeight(ceilf(fh.ascent + 2.0 * TABVIEW_DEFAULT_TAB_PADDING));
+	SetTabHeight(ceilf(fh.descent + fh.ascent + fh.descent + 2 * TABVIEW_DEFAULT_TAB_PADDING));
 }
 
 BTabView::~BTabView()
