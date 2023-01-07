@@ -38,8 +38,8 @@ void BButton::Draw(BRect updateRect)
 	if (label) {
 		BFont font;
 		GetFont(&font);
-		font_height metrics;
-		font.GetHeight(&metrics);
+		font_height fh;
+		font.GetHeight(&fh);
 
 		auto bounds = Bounds();
 
@@ -55,11 +55,12 @@ void BButton::Draw(BRect updateRect)
 			negate = true;
 		}
 
+		// TODO: move below code to helper function
 		float X = bounds.right - font.StringWidth(label);
-		X -= (X - bounds.left) / 2;
-		float Y = bounds.bottom - metrics.descent;
-		if (bounds.Height() > metrics.leading)
-			Y -= (bounds.Height() - metrics.leading) / 2;
+		X -= roundf((X - bounds.left) / 2);
+		float Y = ceilf(fh.ascent);
+		if (bounds.Height() > Y)
+			Y = ceilf((bounds.bottom - bounds.top + Y) / 2);
 		BPoint pos{X, Y};
 
 		if (negate) SetHighColor(LowColor());  // negate color
@@ -197,7 +198,7 @@ void BButton::GetPreferredSize(float *width, float *height)
 	if (height) {
 		font_height fh;
 		font.GetHeight(&fh);
-		*height = fh.leading;
+		*height = ceilf(fh.descent + fh.ascent) + ceilf(fh.descent);
 	}
 }
 

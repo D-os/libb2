@@ -138,14 +138,15 @@ void BTab::DrawLabel(BView* owner, BRect tabFrame)
 	if (label) {
 		BFont font;
 		owner->GetFont(&font);
-		font_height metrics;
-		font.GetHeight(&metrics);
+		font_height fh;
+		font.GetHeight(&fh);
 
+		// TODO: move below code to helper function
 		float X = tabFrame.right - font.StringWidth(label);
-		X -= (X - tabFrame.left) / 2;
-		float Y = tabFrame.bottom - metrics.descent;
-		if (tabFrame.Height() > metrics.leading)
-			Y -= (tabFrame.Height() - metrics.leading) / 2;
+		X -= roundf((X - tabFrame.left) / 2);
+		float Y = ceilf(fh.ascent);
+		if (tabFrame.Height() > Y)
+			Y = ceilf((tabFrame.bottom - tabFrame.top + Y) / 2);
 		BPoint pos{X, Y};
 
 		owner->DrawString(label, pos);
@@ -239,7 +240,7 @@ BTabView::BTabView(BRect frame, const char* name, button_width width, uint32 res
 
 	font_height fh;
 	GetFontHeight(&fh);
-	SetTabHeight(ceilf(fh.leading + 2.0 * TABVIEW_DEFAULT_TAB_PADDING));
+	SetTabHeight(ceilf(fh.ascent + 2.0 * TABVIEW_DEFAULT_TAB_PADDING));
 }
 
 BTabView::~BTabView()
@@ -438,10 +439,15 @@ int32 BTabView::FocusTab() const
 
 void BTabView::Draw(BRect)
 {
-	DrawBox(DrawTabs());
+	DrawTabs();
 
 	if (IsFocus() && fFocus != -1)
 		TabAt(fFocus)->DrawFocusMark(this, TabFrame(fFocus));
+}
+
+void BTabView::DrawAfterChildren(BRect)
+{
+	DrawBox(TabFrame(fSelection));
 }
 
 BRect BTabView::DrawTabs()
@@ -482,7 +488,12 @@ void BTabView::DrawBox(BRect selectedTabFrame)
 
 	SetHighColor(ui_color(B_SHADOW_COLOR));
 	SetPenSize(1.0f);
-	StrokeRect(rect);
+	MovePenTo({selectedTabFrame.left, rect.top});
+	StrokeLine(rect.LeftTop());
+	StrokeLine(rect.LeftBottom());
+	StrokeLine(rect.RightBottom());
+	StrokeLine(rect.RightTop());
+	StrokeLine({selectedTabFrame.right + 1, rect.top});
 
 	BRect inset = rect.InsetByCopy(1, 1);
 	SetHighColor(tint_color(fContainerView->ViewColor(), B_DARKEN_3_TINT));
@@ -490,6 +501,8 @@ void BTabView::DrawBox(BRect selectedTabFrame)
 	StrokeLine(inset.RightBottom());
 	StrokeLine(inset.RightTop());
 	SetHighColor(tint_color(fContainerView->ViewColor(), B_DARKEN_1_TINT));
+	StrokeLine({selectedTabFrame.right + 1, inset.top});
+	MovePenTo({selectedTabFrame.left, inset.top});
 	StrokeLine(inset.LeftTop());
 	StrokeLine(inset.LeftBottom());
 
@@ -499,20 +512,11 @@ void BTabView::DrawBox(BRect selectedTabFrame)
 	StrokeLine(inset.RightBottom());
 	StrokeLine(inset.RightTop());
 	SetHighColor(ui_color(B_SHINE_COLOR));
+	StrokeLine({selectedTabFrame.right + 1, inset.top});
+	MovePenTo({selectedTabFrame.left, rect.top});
+	StrokeLine({selectedTabFrame.left, inset.top});
 	StrokeLine(inset.LeftTop());
 	StrokeLine(inset.LeftBottom());
-
-	// cut hole in frame to connect to selected tab
-	selectedTabFrame.top	= rect.top;
-	selectedTabFrame.bottom = selectedTabFrame.top + TABVIEW_BORDER_WIDTH + 1;
-	SetHighColor(fContainerView->ViewColor());
-	FillRect(selectedTabFrame);
-
-	SetHighColor(ui_color(B_SHINE_COLOR));
-	StrokeLine(selectedTabFrame.LeftTop(), selectedTabFrame.LeftTop() + BPoint(0, 2));
-	selectedTabFrame.right += 1.0;
-	SetHighColor(tint_color(fContainerView->ViewColor(), B_DARKEN_1_TINT));
-	StrokeLine(selectedTabFrame.RightTop(), selectedTabFrame.RightTop() + BPoint(0, 1));
 
 	SetHighColor(hi);
 }
@@ -595,7 +599,7 @@ void BTabView::AddTab(BView* tabContents, BTab* tab)
 
 	// When we haven't had a any tabs before, but are already attached to the
 	// window, select this one.
-	if (CountTabs() == 1 && Window() != NULL)
+	if (CountTabs() == 1 && Window())
 		Select(0);
 }
 
@@ -658,8 +662,6 @@ void BTabView::SetTabHeight(float height)
 	// and decreasing the heights of the tabs increases the height of the container view.
 	BRect bounds = Bounds();
 	bounds.top += TabHeight();
-	bounds.InsetBy(TABVIEW_BORDER_WIDTH, TABVIEW_BORDER_WIDTH);
-
 	fContainerView->MoveTo(bounds.left, bounds.top);
 	fContainerView->ResizeTo(bounds.Width(), bounds.Height());
 

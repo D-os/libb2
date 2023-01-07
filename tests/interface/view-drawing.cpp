@@ -324,7 +324,7 @@ void TView::Draw(BRect updateRect)
 		font.GetHeight(&fontHeight);
 		float strWidth	= font.StringWidth(TEST_FONT_STRING);
 
-		pt += BPoint(0, fontHeight.leading);
+		pt += BPoint(0, fontHeight.ascent + fontHeight.descent + fontHeight.leading);
 
 		SetPenSize(0);
 		// draw bounding rectangle
@@ -335,8 +335,8 @@ void TView::Draw(BRect updateRect)
 		StrokeLine(pt, pt + BPoint(strWidth, 0));
 		// draw leading
 		SetHighColor(40, 255, 40);
-		StrokeLine(pt + BPoint(0, -fontHeight.ascent + fontHeight.leading),
-				   pt + BPoint(strWidth, -fontHeight.ascent + fontHeight.leading));
+		StrokeLine(pt + BPoint(0, fontHeight.descent + fontHeight.leading),
+				   pt + BPoint(strWidth, fontHeight.descent + fontHeight.leading));
 
 		SetHighColor(0, 0, 0);
 		DrawString(TEST_FONT_STRING, pt);

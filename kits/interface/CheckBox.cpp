@@ -62,7 +62,7 @@ void BCheckBox::Draw(BRect updateRect)
 
 		BPoint pos{
 			box.right + CHECKBOX_TEXT_PADDING,
-			(bounds.Height() + metrics.cap_height + PenSize()) / 2};
+			(bounds.Height() + metrics.ascent + PenSize()) / 2};
 
 		DrawString(label, pos);
 	}
@@ -148,7 +148,7 @@ void BCheckBox::GetPreferredSize(float *width, float *height)
 	if (height) {
 		font_height fh;
 		font.GetHeight(&fh);
-		*height = std::max(fh.cap_height, CHECKBOX_BOX_SIZE);
+		*height = std::max(fh.ascent, CHECKBOX_BOX_SIZE);
 	}
 }
 

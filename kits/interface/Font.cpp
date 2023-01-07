@@ -338,9 +338,7 @@ void BFont::GetHeight(font_height *height) const
 
 	SkFontMetrics metrics;
 	m->font.getMetrics(&metrics);
-	*height = font_height{-metrics.fAscent, metrics.fDescent,
-						  metrics.fLeading + metrics.fDescent + (-metrics.fAscent),
-						  metrics.fXHeight, metrics.fCapHeight};
+	*height = font_height{metrics.fCapHeight, metrics.fDescent, metrics.fLeading, metrics.fXHeight};
 }
 
 void BFont::PrintToStream() const
@@ -363,10 +361,10 @@ std::ostream &operator<<(std::ostream &os, const BFont &value)
 	font_height height;
 	value.GetHeight(&height);
 
-	os << std::format("BFont('{}', '{}' ({}) {:#x}/{:#b} {:.1f}deg/{:.1f}deg {:.1f}pt ({:.1f} {:.1f} {:.1f}/{:.1f} {:.1f}) {:#x})",
+	os << std::format("BFont('{}', '{}' ({}) {:#x}/{:#b} {:.1f}deg/{:.1f}deg {:.1f}pt ({:.1f} {:.1f} {:.1f}/{:.1f}) {:#x})",
 					  reinterpret_cast<const char *>(family), reinterpret_cast<const char *>(style), value.FamilyAndStyle(),
 					  value.Face(), value.Flags(), value.Shear(), value.Rotation(), value.Size(),
-					  height.ascent, height.descent, height.leading, height.x_height, height.cap_height, value.Encoding());
+					  height.ascent, height.descent, height.leading, height.x_height, value.Encoding());
 	return os;
 }
 

@@ -576,8 +576,7 @@ void BSlider::DrawText()
 		break;
 
 		case B_VERTICAL: {
-		float lineHeight = ceilf(fontHeight.ascent) + ceilf(fontHeight.descent)
-						   + ceilf(fontHeight.leading);
+		float lineHeight = ceilf(fontHeight.ascent) + ceilf(fontHeight.descent) + ceilf(fontHeight.leading);
 		float baseLine = ceilf(fontHeight.ascent);
 
 		if (Label()) {
@@ -757,8 +756,7 @@ void BSlider::GetPreferredSize(float *_width, float *_height)
 
 	font_height fontHeight;
 	GetFontHeight(&fontHeight);
-	float lineHeightNoLeading = ceilf(fontHeight.ascent)
-								+ ceilf(fontHeight.descent);
+	float lineHeightNoLeading = ceilf(fontHeight.ascent) + ceilf(fontHeight.descent);
 	float lineHeight = lineHeightNoLeading + ceilf(fontHeight.leading);
 
 	float width	 = 0.0f;

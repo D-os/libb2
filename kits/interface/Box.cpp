@@ -85,7 +85,7 @@ void BBox::Draw(BRect updateRect)
 	font_height metrics;
 	if (fLabel) {
 		GetFontHeight(&metrics);
-		frame.top += roundf(metrics.cap_height / 2);
+		frame.top += roundf(metrics.ascent / 2);
 	}
 	else if (fLabelView) {
 		frame.top += fLabelView->Bounds().Height() / 2;
@@ -117,8 +117,8 @@ void BBox::Draw(BRect updateRect)
 		auto  bounds = Bounds();
 		float width	 = StringWidth(fLabel);
 		auto  left	 = frame.left + pen_size + BOX_LABEL_OFFSET + pen_size;
-		FillRect(BRect(left, bounds.top, left + width + pen_size * 3, metrics.cap_height + metrics.descent), B_SOLID_LOW);
-		BPoint pos{left, metrics.cap_height};
+		FillRect(BRect(left, bounds.top, left + width + pen_size * 3, metrics.ascent + metrics.descent), B_SOLID_LOW);
+		BPoint pos{left, metrics.ascent};
 		DrawString(fLabel, pos);
 	}
 	else if (fLabelView) {

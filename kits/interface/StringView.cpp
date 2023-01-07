@@ -146,7 +146,7 @@ void BStringView::GetPreferredSize(float *width, float *height)
 	if (height) {
 		font_height metrics;
 		font.GetHeight(&metrics);
-		*height = metrics.leading;
+		*height = ceilf(metrics.ascent) + ceilf(metrics.descent + metrics.leading);
 	}
 }
 

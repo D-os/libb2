@@ -59,7 +59,7 @@ void BRadioButton::Draw(BRect updateRect)
 
 		BPoint pos{
 			box.right + CHECKBOX_TEXT_PADDING,
-			roundf((bounds.Height() + metrics.cap_height + PenSize()) / 2)};
+			roundf((bounds.Height() + metrics.ascent + PenSize()) / 2)};
 
 		DrawString(label, pos);
 	}
@@ -138,7 +138,7 @@ void BRadioButton::GetPreferredSize(float *width, float *height)
 	if (height) {
 		font_height fh;
 		font.GetHeight(&fh);
-		*height = std::max(fh.cap_height, CHECKBOX_BOX_SIZE);
+		*height = std::max(fh.ascent, CHECKBOX_BOX_SIZE);
 	}
 }
 
