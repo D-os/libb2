@@ -34,8 +34,8 @@ void BCheckBox::Draw(BRect updateRect)
 
 	auto pattern = IsEnabled() ? B_SOLID_HIGH : B_MIXED_COLORS;
 
-	BRect box(CHECKBOX_LEFT_PADDING, ceilf((bounds.Height() - (CHECKBOX_BOX_SIZE)) / 2),
-			  CHECKBOX_LEFT_PADDING + CHECKBOX_BOX_SIZE, ceilf((bounds.Height() + CHECKBOX_BOX_SIZE) / 2));
+	BRect box(0, ceilf((bounds.Height() - (CHECKBOX_BOX_SIZE)) / 2),
+			  CHECKBOX_BOX_SIZE, ceilf((bounds.Height() + CHECKBOX_BOX_SIZE) / 2));
 	StrokeRect(box, pattern);
 	BRect inset = box.InsetByCopy(1, 1);
 	SetHighColor(tint_color(ViewColor(), B_LIGHTEN_1_TINT));
@@ -143,8 +143,7 @@ void BCheckBox::GetPreferredSize(float *width, float *height)
 	BFont font;
 	GetFont(&font);
 	if (width) {
-		*width = CHECKBOX_LEFT_PADDING + CHECKBOX_BOX_SIZE + CHECKBOX_TEXT_PADDING
-				 + font.StringWidth(Label());
+		*width = CHECKBOX_BOX_SIZE + CHECKBOX_TEXT_PADDING + font.StringWidth(Label());
 	}
 	if (height) {
 		font_height fh;

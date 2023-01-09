@@ -706,7 +706,7 @@ BRect BSlider::ThumbFrame() const
 		switch (fOrientation) {
 				case B_HORIZONTAL:
 					frame.left	 = floorf(Position() * (_MaxPosition() - _MinPosition()) + _MinPosition()) - 8;
-					frame.top	 = 3 + (Label() || UpdateText() ? textHeight - ceilf(fontHeight.descent) + SLIDER_TEXT_PADDING : 0);
+					frame.top	 = 2 + (Label() || UpdateText() ? textHeight - ceilf(fontHeight.descent) + SLIDER_TEXT_PADDING : 0);
 					frame.right	 = frame.left + 17;
 					frame.bottom = frame.top + fBarThickness + 7;
 					break;
