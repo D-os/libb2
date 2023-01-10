@@ -337,7 +337,7 @@ void BView::MessageReceived(BMessage *message)
 
 					canvas->restoreToCount(0);	// free memory
 
-					fOwner->_damage_window(clipRect.left(), clipRect.top(), clipRect.width(), clipRect.height());
+					fOwner->_damage_window({clipRect.left(), clipRect.top()}, {clipRect.right(), clipRect.bottom()});
 				}
 				break;
 			}
@@ -1083,9 +1083,19 @@ static SkBlendMode blend_modes[] = {
 						  SkSamplingOptions(), SkMatrix::Translate(-0.5, -0.5)));
 
 #define DAMAGE_RECT                    \
+	if (r.right < r.left) {            \
+		auto l	= r.left;              \
+		r.left	= r.right;             \
+		r.right = l;                   \
+	}                                  \
+	if (r.bottom < r.top) {            \
+		auto t	 = r.top;              \
+		r.top	 = r.bottom;           \
+		r.bottom = t;                  \
+	}                                  \
 	ConvertToScreen(&r);               \
 	r.InsetBy(-PenSize(), -PenSize()); \
-	fOwner->_damage_window(r.left, r.top, r.Width() + 1, r.Height() + 1);
+	fOwner->_damage_window(r.LeftTop(), r.RightBottom() + BPoint{1, 1});
 
 /**
  * This function is used to setup canvas for direct drawing

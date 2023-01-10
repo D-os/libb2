@@ -262,7 +262,7 @@ class BWindow : public BLooper
 	class impl;
 	pimpl<impl> m;
 	SkCanvas	 *_get_canvas() const;
-	void		  _damage_window(int32 x, int32 y, int32 width, int32 height);
+	void		  _damage_window(BPoint p1, BPoint p2);
 	void		  _try_pulse();
 };
 

@@ -88,6 +88,10 @@ class BWindow::impl
 
 	bool surface_pending;	 /// surface has pending changes needing commit
 	bool surface_committed;	 /// surface is comitted, pending a reattach
+	int	 damage_x1;
+	int	 damage_x2;
+	int	 damage_y1;
+	int	 damage_y2;
 
 	impl()
 		: wl_display{nullptr},
@@ -130,6 +134,10 @@ class BWindow::impl
 
 		  surface_pending{false},
 		  surface_committed{false},
+		  damage_x1{INT_MAX},
+		  damage_x2{INT_MIN},
+		  damage_y1{INT_MAX},
+		  damage_y2{INT_MIN},
 
 		  wl_registry_listener{
 			  .global		 = wl_registry_global_handler,
@@ -255,7 +263,7 @@ class BWindow::impl
 							uint32_t mods_latched, uint32_t mods_locked,
 							uint32_t group);
 
-	void damage(int32 x, int32 y, int32 width, int32 height);
+	void damage(int32 x1, int32 y1, int32 x2, int32 y2);
 
    private:
 	std::mutex pool_mutex;
@@ -465,6 +473,10 @@ void BWindow::impl::showWindow()
 			xdg_toplevel_set_title(xdg_toplevel, title);
 
 		wl_surface_attach(wl_surface, wl_buffer, 0, 0);
+		damage_x1		  = INT_MAX;
+		damage_x2		  = INT_MIN;
+		damage_y1		  = INT_MAX;
+		damage_y2		  = INT_MIN;
 		surface_committed = false;
 
 		top_view.Invalidate();
@@ -704,9 +716,15 @@ void BWindow::impl::keyboard_modifiers(uint32_t mods_depressed,
 	}
 }
 
-void BWindow::impl::damage(int32 x, int32 y, int32 width, int32 height)
+void BWindow::impl::damage(int32 x1, int32 y1, int32 x2, int32 y2)
 {
-	wl_surface_damage_buffer(wl_surface, x, y, width, height);
+	if (x2 - x1 < 0 || y2 - y1 < 0)
+		debugger("invalid damage area");
+
+	if (x1 < damage_x1) damage_x1 = x1;
+	if (x2 > damage_x2) damage_x2 = x2;
+	if (y1 < damage_y1) damage_y1 = y1;
+	if (y2 > damage_y2) damage_y2 = y2;
 	surface_pending = true;
 }
 
@@ -962,9 +980,9 @@ SkCanvas *BWindow::_get_canvas() const
 	return m->surface ? m->surface->getCanvas() : nullptr;
 }
 
-void BWindow::_damage_window(int32 x, int32 y, int32 width, int32 height)
+void BWindow::_damage_window(BPoint p1, BPoint p2)
 {
-	m->damage(x, y, width, height);
+	m->damage(p1.x, p1.y, p2.x, p2.y);
 }
 
 void BWindow::_try_pulse()
@@ -1865,6 +1883,17 @@ void BWindow::task_looper()
 
 			if (m->surface_pending) {
 				m->surface_pending = false;
+
+				int width  = m->damage_x2 - m->damage_x1;
+				int height = m->damage_y2 - m->damage_y1;
+				if (width > 0 || height > 0) {
+					wl_surface_damage_buffer(m->wl_surface, m->damage_x1, m->damage_y1, width, height);
+					m->damage_x1 = INT_MAX;
+					m->damage_x2 = INT_MIN;
+					m->damage_y1 = INT_MAX;
+					m->damage_y2 = INT_MIN;
+				}
+
 				wl_surface_commit(m->wl_surface);
 				m->surface_committed = true;
 			}
