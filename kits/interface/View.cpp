@@ -258,8 +258,11 @@ void BView::MessageReceived(BMessage *message)
 							Looper()->MessageQueue()->RemoveMessage(pendingMessage);
 
 							BRect pendingRect;
-							if (message->FindRect("updateRect", &pendingRect) == B_OK && pendingRect.IsValid()) {
+							if (pendingMessage->FindRect("updateRect", &pendingRect) == B_OK && pendingRect.IsValid()) {
 								updateRect = updateRect | pendingRect;
+							}
+							else {
+								LOG_FATAL("Merging _UPDATE_ with invalid updateRect");
 							}
 
 							delete pendingMessage;
@@ -338,6 +341,9 @@ void BView::MessageReceived(BMessage *message)
 					canvas->restoreToCount(0);	// free memory
 
 					fOwner->_damage_window({clipRect.left(), clipRect.top()}, {clipRect.right(), clipRect.bottom()});
+				}
+				else {
+					LOG_FATAL("_UPDATE_ with invalid updateRect");
 				}
 				break;
 			}
@@ -1503,7 +1509,7 @@ void BView::GetFontHeight(font_height *height) const
 
 void BView::Invalidate(BRect invalRect)
 {
-	ALOGV("Invalidating %p %s", this, Name());
+	LOG_FATAL_IF(!invalRect.IsValid(), "Invalidating %p %s using invalid rectangle", this, Name());
 	if ((fFlags & B_WILL_DRAW) && Looper()) {
 		BMessage message(_UPDATE_);
 		message.AddRect("updateRect", invalRect);
