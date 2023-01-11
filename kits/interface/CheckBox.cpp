@@ -49,7 +49,7 @@ void BCheckBox::Draw(BRect updateRect)
 	StrokeLine(inset.LeftBottom());
 
 	if (Value()) {
-		SetHighColor(tint_color(ui_color(B_NAVIGATION_BASE_COLOR), B_DARKEN_1_TINT));
+		SetHighColor(ui_color(B_NAVIGATION_BASE_COLOR));
 		SetPenSize(2);
 		StrokeLine(box.LeftTop() + BPoint{3.5, 3.5}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 3.5, CHECKBOX_BOX_SIZE - 3.5});
 		StrokeLine(box.LeftTop() + BPoint{3.5, CHECKBOX_BOX_SIZE - 3.5}, box.LeftTop() + BPoint{CHECKBOX_BOX_SIZE - 3.5, 3.5});

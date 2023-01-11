@@ -50,7 +50,7 @@ void BRadioButton::Draw(BRect updateRect)
 	StrokeArc(inset, 45, 180, pattern);
 
 	if (Value()) {
-		SetHighColor(tint_color(ui_color(B_NAVIGATION_BASE_COLOR), B_DARKEN_1_TINT));
+		SetHighColor(ui_color(B_NAVIGATION_BASE_COLOR));
 		FillEllipse(box.InsetByCopy(3, 3), pattern);
 		auto pen = PenSize();
 		SetHighColor(ui_color(B_SHINE_COLOR));

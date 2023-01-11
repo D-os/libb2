@@ -177,8 +177,7 @@ void BSlider::MouseDown(BPoint pt)
 		InvokeNotify(ModificationMessage(), B_CONTROL_MODIFIED);
 
 	SetTracking(true);
-	SetMouseEventMask(B_POINTER_EVENTS,
-					  B_LOCK_WINDOW_FOCUS | B_NO_POINTER_HISTORY);
+	SetMouseEventMask(B_POINTER_EVENTS, B_LOCK_WINDOW_FOCUS | B_NO_POINTER_HISTORY);
 }
 void BSlider::MouseUp(BPoint pt)
 {
