@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-typedef int32 image_id;
+typedef intptr_t image_id;
 
 #ifdef __cplusplus
 }

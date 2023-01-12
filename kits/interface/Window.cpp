@@ -1835,7 +1835,14 @@ void BWindow::task_looper()
 		// wait until something happens
 		nfds = epoll_wait(epollfd, events, MAX_EVENTS, fPulseRate > 0 ? fPulseRate / 1000 : -1);
 		if (nfds == -1) {
-			debugger("epoll_wait");
+			if (errno == EINTR) {
+				// continue like nothing happened
+				nfds = 0;
+			}
+			else {
+				perror("Failed waiting for events");
+				abort();
+			}
 		}
 
 		for (auto n = 0; n < nfds; ++n) {
@@ -1853,7 +1860,7 @@ void BWindow::task_looper()
 
 			if (events[n].data.fd == msg_fd) {
 				if (events[n].events & EPOLLERR) {
-					debugger("failed waiting for data");
+					debugger("Failed waiting for data");
 				}
 
 				if (events[n].events & EPOLLIN) {

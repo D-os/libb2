@@ -79,9 +79,7 @@ static void _crash_handler(int sig, siginfo_t *siginfo, void *ctx)
 
 static void _register_crash_handlers(void)
 {
-	struct sigaction handler;
-
-	memset(&handler, 0, sizeof(handler));
+	struct sigaction handler = {};
 	handler.sa_flags	 = SA_SIGINFO;
 	handler.sa_sigaction = &_crash_handler;
 	if (sigfillset(&handler.sa_mask) != 0) {

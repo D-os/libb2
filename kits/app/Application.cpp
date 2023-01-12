@@ -10,6 +10,7 @@
 #include <Roster.h>
 #include <binder/IPCThreadState.h>
 #include <log/log.h>
+#include <signal.h>
 
 #include <cstdio>
 
@@ -26,6 +27,9 @@ BApplication::BApplication(const char *signature)
 		debugger("BApplication already created. Only one is allowed.");
 
 	be_app = this;
+
+	// Application cannot be suspended
+	signal(SIGTSTP, SIG_IGN);
 
 	// default delivery via looper using preferred handler
 	be_app_messenger = BMessenger(nullptr, this);

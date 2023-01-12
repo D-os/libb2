@@ -92,8 +92,8 @@ static void* _thread_wrapper(void *arg)
 {
     _info = arg;
 
-    struct sigaction sa;
-    sigfillset(&sa.sa_mask);
+	struct sigaction sa = {0};
+	sigfillset(&sa.sa_mask);
     sa.sa_flags = 0;
     sa.sa_handler = _sigaction_handler;
     sigaction(SIGCONT, &sa, NULL);
