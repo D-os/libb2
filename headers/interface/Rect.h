@@ -2,6 +2,7 @@
 #define _RECT_H
 
 #include <Point.h>
+#include <Size.h>
 #include <SupportDefs.h>
 
 class BRect
@@ -16,6 +17,7 @@ class BRect
 	BRect(const BRect &);
 	BRect(float l, float t, float r, float b);
 	BRect(BPoint leftTop, BPoint rightBottom);
+	BRect(BPoint leftTop, BSize size);
 
 	BRect &operator=(const BRect &from);
 	void   Set(float l, float t, float r, float b);
@@ -71,6 +73,7 @@ class BRect
 	int32 IntegerWidth() const;
 	float Height() const;
 	int32 IntegerHeight() const;
+	BSize Size() const;
 	bool  Contains(BPoint) const;
 	bool  Contains(BRect) const;
 };
@@ -128,6 +131,14 @@ inline BRect::BRect(BPoint leftTop, BPoint rightBottom)
 	bottom = rightBottom.y;
 }
 
+inline BRect::BRect(BPoint leftTop, BSize size)
+	: left(leftTop.x),
+	  top(leftTop.y),
+	  right(leftTop.x + size.width),
+	  bottom(leftTop.y + size.height)
+{
+}
+
 inline BRect &BRect::operator=(const BRect &from)
 {
 	left   = from.left;
@@ -171,6 +182,11 @@ inline int32 BRect::IntegerHeight() const
 inline float BRect::Height() const
 {
 	return (bottom - top);
+}
+
+inline BSize BRect::Size() const
+{
+	return BSize(right - left, bottom - top);
 }
 
 #endif /* _RECT_H */

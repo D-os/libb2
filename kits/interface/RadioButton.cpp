@@ -1,7 +1,6 @@
 #include "RadioButton.h"
 
-#include "./theme.h"
-#include "InterfaceDefs.h"
+#include "./DosControlLook.h"
 
 BRadioButton::BRadioButton(BRect frame, const char *name, const char *label, BMessage *message, uint32 resizeMask, uint32 flags)
 	: BControl(frame, name, label, message, resizeMask, flags) {}

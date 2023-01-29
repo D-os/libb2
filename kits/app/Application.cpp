@@ -15,6 +15,8 @@
 
 #include <cstdio>
 
+#include "../interface/DosControlLook.h"
+
 BApplication *be_app = nullptr;
 BMessenger	   be_app_messenger;
 const BRoster *be_roster = nullptr;
@@ -38,6 +40,23 @@ BApplication::BApplication(const char *signature)
 	be_roster = new BRoster();
 
 	be_clipboard = new BClipboard(nullptr);
+
+	// BString path;
+	// if (get_control_look(path) && path.Length() > 0) {
+	// 	BControlLook *(*instantiate)(image_id);
+
+	// 	sControlLookAddon = load_add_on(path.String());
+	// 	if (sControlLookAddon >= 0
+	// 		&& get_image_symbol(sControlLookAddon, "instantiate_control_look", B_SYMBOL_TYPE_TEXT, (void **)&instantiate) == B_OK) {
+	// 		be_control_look = instantiate(sControlLookAddon);
+	// 		if (!be_control_look) {
+	// 			unload_add_on(sControlLookAddon);
+	// 			sControlLookAddon = -1;
+	// 		}
+	// 	}
+	// }
+	if (!be_control_look)
+		be_control_look = new BPrivate::DosControlLook();
 
 	status_t	ret;
 	font_family default_family{DEFAULT_FONT_FAMILY};
