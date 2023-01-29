@@ -22,7 +22,7 @@ class BRoster::impl
 
 BRoster::BRoster()
 {
-#ifndef RUN_WITHOUT_APP_SERVER
+#ifndef RUN_WITHOUT_REGISTRAR
 	sp<android::IServiceManager> sm = android::defaultServiceManager();
 	if (sm == nullptr) {
 		throw std::system_error(std::error_code(ENOENT, std::system_category()), "Unable to reach service manager");

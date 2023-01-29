@@ -5,6 +5,7 @@
 #define DEFAULT_FONT_FAMILY "Inter"
 #define FIXED_FONT_FAMILY "Cascadia Mono"
 
+#include <Clipboard.h>
 #include <Font.h>
 #include <Message.h>
 #include <Roster.h>
@@ -35,6 +36,8 @@ BApplication::BApplication(const char *signature)
 	be_app_messenger = BMessenger(nullptr, this);
 
 	be_roster = new BRoster();
+
+	be_clipboard = new BClipboard(nullptr);
 
 	status_t	ret;
 	font_family default_family{DEFAULT_FONT_FAMILY};
@@ -87,7 +90,7 @@ thread_id BApplication::Run()
 	fThread	   = find_thread(NULL);
 	fRunCalled = true;
 
-#ifndef RUN_WITHOUT_APP_SERVER
+#ifndef RUN_WITHOUT_REGISTRAR
 	// start the thread pool
 	android::sp<android::ProcessState> ps(android::ProcessState::self());
 	ps->setThreadPoolMaxThreadCount(1);

@@ -35,6 +35,7 @@ libs = -lc++ -lunwind $
   -lbinder -lutils -lcutils -llog -lwayland-client
 
 build $BUILDROOT/os/libbe/app/Application.o: cxx system/os/kits/app/Application.cpp
+build $BUILDROOT/os/libbe/app/Clipboard.o: cxx system/os/kits/app/Clipboard.cpp
 build $BUILDROOT/os/libbe/app/Handler.o: cxx system/os/kits/app/Handler.cpp
 build $BUILDROOT/os/libbe/app/Invoker.o: cxx system/os/kits/app/Invoker.cpp
 build $BUILDROOT/os/libbe/app/Looper.o: cxx system/os/kits/app/Looper.cpp
@@ -83,6 +84,7 @@ build $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.o: cc $BUILDROOT/os/libbe/
 
 build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/Application.o $
+  $BUILDROOT/os/libbe/app/Clipboard.o $
   $BUILDROOT/os/libbe/app/Handler.o $
   $BUILDROOT/os/libbe/app/Invoker.o $
   $BUILDROOT/os/libbe/app/Looper.o $
