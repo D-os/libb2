@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <sys/param.h>
 #include <sys/types.h>
 
 // fixed-size integer types
@@ -48,7 +49,7 @@ typedef uint32 perform_code;
 
 /// Empty string ("")
 #ifdef __cplusplus
-extern const char *B_EMPTY_STRING;
+extern const char* B_EMPTY_STRING;
 #endif
 
 /// min and max comparisons

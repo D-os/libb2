@@ -59,12 +59,18 @@ class BString
 	BString &Append(const char *, int32 length);
 	BString &Append(char, int32 count);
 
+	BString &AppendChars(const BString &string, int32 charCount);
+	BString &AppendChars(const char *string, int32 charCount);
+
 	/// Prepending
 	BString &Prepend(const char *);
 	BString &Prepend(const BString &);
 	BString &Prepend(const char *, int32);
 	BString &Prepend(const BString &, int32);
 	BString &Prepend(char, int32 count);
+
+	BString &PrependChars(const char *string, int32 charCount);
+	BString &PrependChars(const BString &string, int32 charCount);
 
 	/// Inserting
 	BString &Insert(const char *, int32 pos);
@@ -76,12 +82,21 @@ class BString
 	BString &Insert(const BString &, int32 fromOffset, int32 length, int32 pos);
 	BString &Insert(char, int32 count, int32 pos);
 
+	BString &InsertChars(const char *string, int32 charPosition);
+	BString &InsertChars(const char *string, int32 charCount, int32 charPosition);
+	BString &InsertChars(const char *string, int32 fromCharOffset, int32 charCount, int32 charPosition);
+	BString &InsertChars(const BString &string, int32 charPosition);
+	BString &InsertChars(const BString &string, int32 charCount, int32 charPosition);
+	BString &InsertChars(const BString &string, int32 fromCharOffset, int32 charCount, int32 charPosition);
+
 	/// Removing
 
 	/// pass false in <lazy> to ensure freeing up the truncated memory
 	BString &Truncate(int32 newLength, bool lazy = true);
+	BString &TruncateChars(int32 newCharCount, bool lazy = true);
 
 	BString &Remove(int32 from, int32 length);
+	BString &RemoveChars(int32 fromCharOffset, int32 charCount);
 
 	BString &RemoveFirst(const BString &);
 	BString &RemoveLast(const BString &);
@@ -92,9 +107,13 @@ class BString
 	BString &RemoveAll(const char *);
 
 	BString &RemoveSet(const char *setOfCharsToRemove);
+	BString &RemoveCharsSet(const char *setOfCharsToRemove);
 
 	BString &MoveInto(BString &into, int32 from, int32 length);
 	void	 MoveInto(char *into, int32 from, int32 length);  /// caller guarantees that <into> is large enough
+
+	BString &MoveCharsInto(BString &into, int32 fromCharOffset, int32 charCount);
+	bool	 MoveCharsInto(char *into, int32 *intoLength, int32 fromCharOffset, int32 charCount);
 
 	/// Compare functions
 	bool operator<(const BString &) const;

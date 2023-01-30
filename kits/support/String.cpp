@@ -5,6 +5,26 @@
 #include <sstream>
 #include <string>
 
+#include "./utf8_functions.h"
+
+const char *B_EMPTY_STRING = "";
+
+// helper function, returns minimum of two given values (but clamps to 0):
+static inline int32 min_clamp0(int32 num1, int32 num2)
+{
+	if (num1 < num2)
+		return num1 > 0 ? num1 : 0;
+
+	return num2 > 0 ? num2 : 0;
+}
+
+//! Returns length of given string (but clamps to given maximum).
+static inline int32 strlen_clamp(const char *string, int32 max)
+{
+	// this should yield 0 for max<0:
+	return max <= 0 ? 0 : strnlen(string, max);
+}
+
 #define DATA_PTR(data) reinterpret_cast<std::string *>(data)
 #define DATA DATA_PTR(this->data)
 
@@ -116,11 +136,226 @@ BString &BString::Adopt(BString &from, int32 length)
 	return *this;
 }
 
+//      #pragma mark - Appending
+
+BString &BString::operator+=(const char *string)
+{
+	if (string) {
+		*DATA += string;
+	}
+	return *this;
+}
+
+BString &BString::operator+=(char c)
+{
+	*DATA += c;
+	return *this;
+}
+
+BString &BString::Append(const BString &string, int32 length)
+{
+	if (&string != this) {
+		length = min_clamp0(length, string.Length());
+		if (length > 0)
+			DATA->append(DATA_PTR(string.data)->c_str(), length);
+	}
+	return *this;
+}
+
+BString &BString::Append(const char *string, int32 length)
+{
+	if (string) {
+		length = strlen_clamp(string, length);
+		if (length > 0)
+			DATA->append(string, length);
+	}
+	return *this;
+}
+
+BString &BString::Append(char c, int32 count)
+{
+	if (count > 0)
+		DATA->append(count, c);
+	return *this;
+}
+
+BString &BString::AppendChars(const BString &string, int32 charCount)
+{
+	return Append(string, UTF8CountBytes(string.String(), charCount));
+}
+
+BString &BString::AppendChars(const char *string, int32 charCount)
+{
+	return Append(string, UTF8CountBytes(string, charCount));
+}
+
+//      #pragma mark - Prepending
+
+BString &BString::Prepend(const char *string)
+{
+	if (string)
+		DATA->insert(0, string);
+	return *this;
+}
+
+BString &BString::Prepend(const BString &string)
+{
+	if (&string != this)
+		DATA->insert(0, DATA_PTR(string.data)->c_str());
+	return *this;
+}
+
+BString &BString::Prepend(const char *string, int32 length)
+{
+	if (string)
+		DATA->insert(0, string, strlen_clamp(string, length));
+	return *this;
+}
+
+BString &BString::Prepend(const BString &string, int32 length)
+{
+	if (&string != this)
+		DATA->insert(0, DATA_PTR(string.data)->c_str(), min_clamp0(length, string.Length()));
+	return *this;
+}
+
+BString &BString::Prepend(char c, int32 count)
+{
+	if (count > 0)
+		DATA->insert(0, count, c);
+	return *this;
+}
+
+BString &BString::PrependChars(const char *string, int32 charCount)
+{
+	return Prepend(string, UTF8CountBytes(string, charCount));
+}
+
+BString &BString::PrependChars(const BString &string, int32 charCount)
+{
+	return Prepend(string, UTF8CountBytes(string.String(), charCount));
+}
+
+//      #pragma mark - Inserting
+
+BString &BString::Insert(const char *string, int32 position)
+{
+	if (string && position <= Length()) {
+		DATA->insert(position, string);
+	}
+	return *this;
+}
+
+BString &BString::Insert(const char *string, int32 length, int32 position)
+{
+	if (string && position <= Length()) {
+		DATA->insert(position, string, length);
+	}
+	return *this;
+}
+
+BString &BString::Insert(const char *string, int32 fromOffset, int32 length, int32 position)
+{
+	if (string)
+		Insert(string + fromOffset, length, position);
+	return *this;
+}
+
+BString &BString::Insert(const BString &string, int32 position)
+{
+	if (&string != this && string.Length() > 0)
+		Insert(DATA_PTR(string.data)->c_str(), position);
+	return *this;
+}
+
+BString &BString::Insert(const BString &string, int32 length, int32 position)
+{
+	if (&string != this && string.Length() > 0)
+		Insert(string.String(), length, position);
+	return *this;
+}
+
+BString &BString::Insert(const BString &string, int32 fromOffset, int32 length, int32 position)
+{
+	if (&string != this && string.Length() > 0)
+		Insert(string.String() + fromOffset, length, position);
+	return *this;
+}
+
+BString &BString::Insert(char c, int32 count, int32 position)
+{
+	if (position < 0) {
+		count	 = MAX(count + position, 0);
+		position = 0;
+	}
+	else
+		position = min_clamp0(position, Length());
+
+	if (count > 0)
+		DATA->insert(position, count, c);
+
+	return *this;
+}
+
+BString &BString::InsertChars(const char *string, int32 charPosition)
+{
+	return Insert(string, UTF8CountBytes(DATA->c_str(), charPosition));
+}
+
+BString &BString::InsertChars(const char *string, int32 charCount, int32 charPosition)
+{
+	return Insert(string, UTF8CountBytes(string, charCount),
+				  UTF8CountBytes(DATA->c_str(), charPosition));
+}
+
+BString &BString::InsertChars(const char *string, int32 fromCharOffset, int32 charCount, int32 charPosition)
+{
+	int32 fromOffset = UTF8CountBytes(string, fromCharOffset);
+	return Insert(string, fromOffset,
+				  UTF8CountBytes(string + fromOffset, charCount),
+				  UTF8CountBytes(DATA->c_str(), charPosition));
+}
+
+BString &BString::InsertChars(const BString &string, int32 charPosition)
+{
+	return Insert(string, UTF8CountBytes(DATA->c_str(), charPosition));
+}
+
+BString &BString::InsertChars(const BString &string, int32 charCount, int32 charPosition)
+{
+	return Insert(string, UTF8CountBytes(string.String(), charCount),
+				  UTF8CountBytes(DATA->c_str(), charPosition));
+}
+
+BString &BString::InsertChars(const BString &string, int32 fromCharOffset, int32 charCount, int32 charPosition)
+{
+	int32 fromOffset = UTF8CountBytes(string.String(), fromCharOffset);
+	return Insert(string, fromOffset,
+				  UTF8CountBytes(string.String() + fromOffset, charCount),
+				  UTF8CountBytes(DATA->c_str(), charPosition));
+}
+
+//      #pragma mark - Removing
+
 BString &BString::Truncate(int32 charCount, bool lazy)
 {
 	if (charCount < DATA->size()) DATA->resize(charCount);
 	if (!lazy) DATA->shrink_to_fit();
 	return *this;
+}
+
+BString &BString::Remove(int32 from, int32 length)
+{
+	if (length > 0 && from < Length())
+		DATA->erase(from, length);
+	return *this;
+}
+
+BString &BString::RemoveChars(int32 fromCharOffset, int32 charCount)
+{
+	auto  str		 = DATA->c_str();
+	int32 fromOffset = UTF8CountBytes(str, fromCharOffset);
+	return Remove(fromOffset, UTF8CountBytes(str + fromOffset, charCount));
 }
 
 bool BString::operator<(const BString &value) const
