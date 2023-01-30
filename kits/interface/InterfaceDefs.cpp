@@ -1,6 +1,8 @@
 #include "InterfaceDefs.h"
 
+#include <Font.h>
 #include <GraphicsDefs.h>
+#include <String.h>
 #include <log/log.h>
 
 static const rgb_color _kDefaultColors[] = {
@@ -68,4 +70,133 @@ tint_color(rgb_color color, float tint)
 #undef DARKEN
 
 	return result;
+}
+
+//	#pragma mark - truncate string
+
+void truncate_string(BString& string, uint32 mode, float width,
+					 const float* escapementArray, float fontSize, float ellipsisWidth,
+					 int32 charCount)
+{
+	// add a tiny amount to the width to make floating point inaccuracy
+	// not drop chars that would actually fit exactly
+	width += 1.f / 128;
+
+	switch (mode) {
+		case B_TRUNCATE_BEGINNING: {
+			float totalWidth = 0;
+			for (int32 i = charCount - 1; i >= 0; i--) {
+				float charWidth = escapementArray[i] * fontSize;
+				if (totalWidth + charWidth > width) {
+					// we need to truncate
+					while (totalWidth + ellipsisWidth > width) {
+						// remove chars until there's enough space for the
+						// ellipsis
+						if (++i == charCount) {
+							// we've reached the end of the string and still
+							// no space, so return an empty string
+							string.Truncate(0);
+							return;
+						}
+
+						totalWidth -= escapementArray[i] * fontSize;
+					}
+
+					string.RemoveChars(0, i + 1);
+					string.PrependChars(B_UTF8_ELLIPSIS, 1);
+					return;
+				}
+
+				totalWidth += charWidth;
+			}
+
+			break;
+		}
+
+		case B_TRUNCATE_END: {
+			float totalWidth = 0;
+			for (int32 i = 0; i < charCount; i++) {
+				float charWidth = escapementArray[i] * fontSize;
+				if (totalWidth + charWidth > width) {
+					// we need to truncate
+					while (totalWidth + ellipsisWidth > width) {
+						// remove chars until there's enough space for the
+						// ellipsis
+						if (i-- == 0) {
+							// we've reached the start of the string and still
+							// no space, so return an empty string
+							string.Truncate(0);
+							return;
+						}
+
+						totalWidth -= escapementArray[i] * fontSize;
+					}
+
+					string.RemoveChars(i, charCount - i);
+					string.AppendChars(B_UTF8_ELLIPSIS, 1);
+					return;
+				}
+
+				totalWidth += charWidth;
+			}
+
+			break;
+		}
+
+		case B_TRUNCATE_MIDDLE:
+		case B_TRUNCATE_SMART: {
+			float leftWidth	 = 0;
+			float rightWidth = 0;
+			int32 leftIndex	 = 0;
+			int32 rightIndex = charCount - 1;
+			bool  left		 = true;
+
+			for (int32 i = 0; i < charCount; i++) {
+				float charWidth
+					= escapementArray[left ? leftIndex : rightIndex] * fontSize;
+
+				if (leftWidth + rightWidth + charWidth > width) {
+					// we need to truncate
+					while (leftWidth + rightWidth + ellipsisWidth > width) {
+						// remove chars until there's enough space for the
+						// ellipsis
+						if (leftIndex == 0 && rightIndex == charCount - 1) {
+							// we've reached both ends of the string and still
+							// no space, so return an empty string
+							string.Truncate(0);
+							return;
+						}
+
+						if (leftIndex > 0 && (rightIndex == charCount - 1 || leftWidth > rightWidth)) {
+							// remove char on the left
+							leftWidth -= escapementArray[--leftIndex] * fontSize;
+						}
+						else {
+							// remove char on the right
+							rightWidth -= escapementArray[++rightIndex] * fontSize;
+						}
+					}
+
+					string.RemoveChars(leftIndex, rightIndex + 1 - leftIndex);
+					string.InsertChars(B_UTF8_ELLIPSIS, 1, leftIndex);
+					return;
+				}
+
+				if (left) {
+					leftIndex++;
+					leftWidth += charWidth;
+				}
+				else {
+					rightIndex--;
+					rightWidth += charWidth;
+				}
+
+				left = rightWidth > leftWidth;
+			}
+
+			break;
+		}
+	}
+
+	// we've run through without the need to truncate, leave the string as it is
 }

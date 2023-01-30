@@ -27,6 +27,7 @@ enum {
 };
 
 enum {
+	B_NO_TRUNCATION		 = ~0U,
 	B_TRUNCATE_END		 = 0,
 	B_TRUNCATE_BEGINNING = 1,
 	B_TRUNCATE_MIDDLE	 = 2,

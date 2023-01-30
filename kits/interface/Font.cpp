@@ -3,6 +3,7 @@
 #define LOG_TAG "BFont"
 
 #include <Rect.h>
+#include <String.h>
 #include <doctest/doctest.h>
 #include <include/core/SkFont.h>
 #include <include/core/SkFontMetrics.h>
@@ -13,6 +14,8 @@
 
 #include <format>
 #include <iostream>
+
+#include "./truncate_string.h"
 
 class BFont::impl
 {
@@ -318,6 +321,57 @@ font_file_format BFont::FileFormat() const
 	return B_TRUETYPE_WINDOWS;
 }
 
+void BFont::TruncateString(BString *inOut, uint32 mode, float width) const
+{
+	if (mode == B_NO_TRUNCATION)
+		return;
+
+	// NOTE: Careful, we cannot directly use "inOut->String()" as result
+	// array, because the string length increases by 3 bytes in the worst
+	// case scenario.
+	const char *string = inOut->String();
+	GetTruncatedStrings(&string, 1, mode, width, inOut);
+}
+
+void BFont::GetTruncatedStrings(const char *stringArray[], int32 numStrings,
+								uint32 mode, float width, BString resultArray[]) const
+{
+	if (stringArray && numStrings > 0) {
+		// the width of the "…" glyph
+		float ellipsisWidth = StringWidth(B_UTF8_ELLIPSIS);
+
+		for (int32 i = 0; i < numStrings; i++) {
+			resultArray[i] = stringArray[i];
+			int32 numChars = resultArray[i].CountChars();
+
+			// get the escapement of each glyph in font units
+			float *escapementArray = new float[numChars];
+			GetEscapements(stringArray[i], numChars, nullptr, escapementArray);
+
+			truncate_string(resultArray[i], mode, width, escapementArray,
+							Size(), ellipsisWidth, numChars);
+
+			delete[] escapementArray;
+		}
+	}
+}
+
+void BFont::GetTruncatedStrings(const char *stringArray[], int32 numStrings,
+								uint32 mode, float width, char *resultArray[]) const
+{
+	if (stringArray && numStrings > 0) {
+		for (int32 i = 0; i < numStrings; i++) {
+			BString *strings = new BString[numStrings];
+			GetTruncatedStrings(stringArray, numStrings, mode, width, strings);
+
+			for (int32 i = 0; i < numStrings; i++)
+				strcpy(resultArray[i], strings[i].String());
+
+			delete[] strings;
+		}
+	}
+}
+
 float BFont::StringWidth(const char *string) const
 {
 	if (!string) return 0.0f;
@@ -330,6 +384,60 @@ float BFont::StringWidth(const char *string, int32 length) const
 	if (!string) return 0.0f;
 
 	return m->font.measureText(string, length, SkTextEncoding::kUTF8);
+}
+
+void BFont::GetStringWidths(const char *stringArray[], const int32 lengthArray[], int32 numStrings, float widthArray[]) const
+{
+	if (!stringArray || !lengthArray || numStrings < 1 || !widthArray) {
+		return;
+	}
+
+	for (int32 i = 0; i < numStrings; i++)
+		widthArray[i] = StringWidth(stringArray[i], lengthArray[i]);
+}
+
+void BFont::GetEscapements(const char charArray[], int32 numChars, float escapementArray[]) const
+{
+	GetEscapements(charArray, numChars, nullptr, escapementArray);
+}
+
+void BFont::GetEscapements(const char charArray[], int32 numChars, escapement_delta *delta, float escapementArray[]) const
+{
+	if (delta) {
+		debugger(__PRETTY_FUNCTION__);
+	}
+
+	SkGlyphID glyphs[numChars];
+	int		  count = m->font.textToGlyphs(charArray, numChars, SkTextEncoding::kUTF8, glyphs, numChars);
+
+	SkScalar widths[count];
+	m->font.getWidths(glyphs, count, widths);
+	for (int32 i = 0; i < count; i++)
+		escapementArray[i] = SkScalarToFloat(widths[i]);
+}
+
+void BFont::GetEscapements(const char charArray[], int32 numChars, escapement_delta *delta, BPoint escapementArray[]) const
+{
+	GetEscapements(charArray, numChars, delta, escapementArray, nullptr);
+}
+
+void BFont::GetEscapements(const char charArray[], int32 numChars, escapement_delta *delta, BPoint escapementArray[], BPoint offsetArray[]) const
+{
+	if (delta) {
+		debugger(__PRETTY_FUNCTION__);
+	}
+	if (offsetArray) {
+		debugger(__PRETTY_FUNCTION__);
+	}
+
+	SkGlyphID glyphs[numChars];
+	int		  count = m->font.textToGlyphs(charArray, numChars, SkTextEncoding::kUTF8, glyphs, numChars);
+
+	SkPoint pos[count];
+	m->font.getPos(glyphs, count, pos);
+	for (int32 i = 0; i < count; i++) {
+		escapementArray->Set(pos[i].x(), pos[i].y());
+	};
 }
 
 void BFont::GetHeight(font_height *height) const
