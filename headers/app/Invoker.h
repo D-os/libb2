@@ -4,32 +4,28 @@
 #include <AppDefs.h>
 #include <Messenger.h>
 
-// class BHandler;
-// class BLooper;
-// class BMessage;
-
 class BInvoker
 {
    public:
 	BInvoker();
-	BInvoker(BMessage		  *message,
+	BInvoker(BMessage		*message,
 			 const BHandler *handler,
-			 const BLooper  *looper = nullptr);
+			 const BLooper	*looper = nullptr);
 	BInvoker(BMessage *message, BMessenger target);
 	virtual ~BInvoker();
 
 	virtual status_t SetMessage(BMessage *message);
-	BMessage		 *Message() const;
+	BMessage		*Message() const;
 	uint32			 Command() const;
 
 	virtual status_t SetTarget(const BHandler *h, const BLooper *loop = nullptr);
 	virtual status_t SetTarget(BMessenger messenger);
 	bool			 IsTargetLocal() const;
-	BHandler		 *Target(BLooper **looper = nullptr) const;
+	BHandler		*Target(BLooper **looper = nullptr) const;
 	BMessenger		 Messenger() const;
 
 	virtual status_t SetHandlerForReply(BHandler *handler);
-	BHandler		 *HandlerForReply() const;
+	BHandler		*HandlerForReply() const;
 
 	virtual status_t Invoke(BMessage *msg = nullptr);
 
@@ -65,11 +61,11 @@ class BInvoker
 	BInvoker(const BInvoker &);
 	BInvoker &operator=(const BInvoker &);
 
-	BMessage	 *fMessage;
+	BMessage  *fMessage;
 	BMessenger fMessenger;
-	BHandler	 *fReplyTo;
-	// uint32		fTimeout;
-	// uint32		fNotifyKind;
+	BHandler  *fReplyTo;
+	bigtime_t  fTimeout;
+	uint32	   fNotifyKind;
 };
 
 #endif /* _INVOKER_H */

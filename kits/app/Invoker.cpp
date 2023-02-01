@@ -4,24 +4,35 @@
 #include <Message.h>
 
 BInvoker::BInvoker()
-	: fMessage(nullptr), fMessenger(), fReplyTo{nullptr}
+	: fMessage(nullptr),
+	  fMessenger(),
+	  fReplyTo{nullptr},
+	  fTimeout{B_INFINITE_TIMEOUT},
+	  fNotifyKind{0}
 {
 }
 
 BInvoker::BInvoker(BMessage *message, const BHandler *handler, const BLooper *looper)
-	: fMessage{message}, fMessenger(handler, looper), fReplyTo{nullptr}
+	: fMessage{message},
+	  fMessenger(handler, looper),
+	  fReplyTo{nullptr},
+	  fTimeout{B_INFINITE_TIMEOUT},
+	  fNotifyKind{0}
 {
 }
 
 BInvoker::BInvoker(BMessage *message, BMessenger target)
-	: fMessage{message}, fMessenger{target}, fReplyTo{nullptr}
+	: fMessage{message},
+	  fMessenger{target},
+	  fReplyTo{nullptr},
+	  fTimeout{B_INFINITE_TIMEOUT},
+	  fNotifyKind{0}
 {
 }
 
 BInvoker::~BInvoker()
 {
-	if (fMessage)
-		delete fMessage;
+	delete fMessage;
 }
 
 status_t BInvoker::SetMessage(BMessage *message)
@@ -94,12 +105,17 @@ status_t BInvoker::Invoke(BMessage *msg)
 	if (!msg) msg = fMessage;
 	if (!msg) return B_BAD_VALUE;
 
-	return fMessenger.SendMessage(fMessage, fReplyTo);
+	return fMessenger.SendMessage(fMessage, fReplyTo, fTimeout);
 }
 
 status_t BInvoker::InvokeNotify(BMessage *msg, uint32 kind)
 {
+	if (fNotifyKind != 0)
+		return B_WOULD_BLOCK;
+
 	status_t err = B_BAD_VALUE;
+
+	BeginInvokeNotify(kind);
 
 	if (msg)
 		err = Invoke(msg);
@@ -110,5 +126,39 @@ status_t BInvoker::InvokeNotify(BMessage *msg, uint32 kind)
 			handler->SendNotices(kind, msg);
 	}
 
+	EndInvokeNotify();
+
 	return err;
+}
+
+status_t BInvoker::SetTimeout(bigtime_t timeout)
+{
+	fTimeout = timeout;
+	return B_OK;
+}
+
+bigtime_t BInvoker::Timeout() const
+{
+	return fTimeout;
+}
+
+uint32 BInvoker::InvokeKind(bool *notify)
+{
+	if (notify)
+		*notify = fNotifyKind != 0;
+
+	if (fNotifyKind != 0)
+		return fNotifyKind;
+
+	return B_CONTROL_INVOKED;
+}
+
+void BInvoker::BeginInvokeNotify(uint32 kind)
+{
+	fNotifyKind = kind;
+}
+
+void BInvoker::EndInvokeNotify()
+{
+	fNotifyKind = 0;
 }
