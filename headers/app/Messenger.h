@@ -1,6 +1,7 @@
 #ifndef _MESSENGER_H
 #define _MESSENGER_H
 
+#include <Message.h>  // For convenience
 #include <OS.h>
 
 class BMessage;

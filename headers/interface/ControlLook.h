@@ -12,6 +12,7 @@
 #include <Size.h>
 
 class BBitmap;
+class BControl;
 class BView;
 
 // WARNING! This is experimental API and may change!
@@ -94,7 +95,7 @@ class BControlLook
 	static float ComposeSpacing(float spacing);
 	static BSize ComposeIconSize(int32 size);
 
-	// virtual uint32 Flags(BControl* control) const = 0;
+	virtual uint32 Flags(BControl* control) const = 0;
 
 	// virtual void DrawButtonFrame(BView* view, BRect& rect,
 	// 							 const BRect&	  updateRect,
@@ -215,11 +216,11 @@ class BControlLook
 									uint32 borders = B_ALL_BORDERS)
 		= 0;
 
-	// virtual void DrawMenuItemBackground(BView* view,
-	// 									BRect& rect, const BRect& updateRect,
-	// 									const rgb_color& base, uint32 flags = 0,
-	// 									uint32 borders = B_ALL_BORDERS)
-	// 	= 0;
+	virtual void DrawMenuItemBackground(BView* view,
+										BRect& rect, const BRect& updateRect,
+										const rgb_color& base, uint32 flags = 0,
+										uint32 borders = B_ALL_BORDERS)
+		= 0;
 
 	// virtual void DrawStatusBar(BView* view, BRect& rect,
 	// 						   const BRect&		updateRect,
@@ -262,12 +263,12 @@ class BControlLook
 	// 								 uint32			  borders = B_ALL_BORDERS)
 	// 	= 0;
 
-	// virtual void DrawArrowShape(BView* view,
-	// 							BRect& rect, const BRect& updateRect,
-	// 							const rgb_color& base, uint32 direction,
-	// 							uint32 flags = 0,
-	// 							float  tint	 = B_DARKEN_MAX_TINT)
-	// 	= 0;
+	virtual void DrawArrowShape(BView* view,
+								BRect& rect, const BRect& updateRect,
+								const rgb_color& base, uint32 direction,
+								uint32 flags = 0,
+								float  tint	 = B_DARKEN_MAX_TINT)
+		= 0;
 
 	// virtual rgb_color SliderBarColor(const rgb_color& base) = 0;
 
@@ -364,22 +365,22 @@ class BControlLook
 
 	// // aligned labels
 
-	// virtual void DrawLabel(BView* view, const char* label,
-	// 					   BRect rect, const BRect& updateRect,
-	// 					   const rgb_color& base, uint32 flags,
-	// 					   const rgb_color* textColor = NULL)
-	// 	= 0;
-	// virtual void DrawLabel(BView* view, const char* label,
-	// 					   BRect rect, const BRect& updateRect,
-	// 					   const rgb_color& base, uint32 flags,
-	// 					   const BAlignment& alignment,
-	// 					   const rgb_color*	 textColor = NULL)
-	// 	= 0;
-	// virtual void DrawLabel(BView* view, const char* label,
-	// 					   const rgb_color& base, uint32 flags,
-	// 					   const BPoint&	where,
-	// 					   const rgb_color* textColor = NULL)
-	// 	= 0;
+	virtual void DrawLabel(BView* view, const char* label,
+						   BRect rect, const BRect& updateRect,
+						   const rgb_color& base, uint32 flags,
+						   const rgb_color* textColor = NULL)
+		= 0;
+	virtual void DrawLabel(BView* view, const char* label,
+						   BRect rect, const BRect& updateRect,
+						   const rgb_color& base, uint32 flags,
+						   const BAlignment& alignment,
+						   const rgb_color*	 textColor = NULL)
+		= 0;
+	virtual void DrawLabel(BView* view, const char* label,
+						   const rgb_color& base, uint32 flags,
+						   const BPoint&	where,
+						   const rgb_color* textColor = NULL)
+		= 0;
 
 	void		 DrawLabel(BView* view, const char* label,
 						   const BBitmap* icon, BRect rect,

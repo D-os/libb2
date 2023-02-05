@@ -1,18 +1,23 @@
 #include "Window.h"
 
+#include "Errors.h"
+#include "OS.h"
+
 #define LOG_TAG "BWindow"
 
 #include <Application.h>
 #include <Autolock.h>
 #include <Button.h>
 #include <Debug.h>
+#include <MenuBar.h>
+#include <MenuItem.h>
 #include <Message.h>
 #include <MessageQueue.h>
 #include <Point.h>
 #include <Rect.h>
 #include <Screen.h>
+#include <SkSurface.h>
 #include <View.h>
-#include <include/core/SkSurface.h>
 #include <log/log.h>
 #include <pimpl.h>
 #include <sys/epoll.h>
@@ -32,6 +37,42 @@
 #include "PrivateScreen.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
+
+#define B_HIDE_APPLICATION '_AHD'
+// if we ever move this to a public namespace, we should also move the
+// handling of this message into BApplication
+
+#define _MINIMIZE_ '_WMZ'
+#define _ZOOM_ '_WZO'
+#define _SEND_BEHIND_ '_WSB'
+#define _SEND_TO_FRONT_ '_WSF'
+
+class BWindow::Shortcut
+{
+   public:
+	Shortcut(char key, uint32 modifiers, BMenuItem *item);
+	Shortcut(char key, uint32 modifiers, BMessage *message, BHandler *target);
+	~Shortcut();
+
+	bool Matches(char key, uint32 modifiers) const;
+
+	void Invoke(BWindow *window) const;
+
+	BMenuItem *MenuItem() const { return fMenuItem; }
+	BMessage  *Message() const { return fMessage; }
+	BHandler  *Target() const { return fTarget; }
+
+	static uint32 AllowedModifiers();
+	static uint32 PrepareKey(char key);
+	static uint32 PrepareModifiers(uint32 modifiers);
+
+   private:
+	char	   fKey;
+	uint32	   fModifiers;
+	BMenuItem *fMenuItem;
+	BMessage  *fMessage;
+	BHandler  *fTarget;
+};
 
 #define DEFAULT_CURSOR_SIZE 24
 #define DEFAULT_CURSOR_NAME "left_ptr"
@@ -1379,6 +1420,78 @@ void BWindow::_try_pulse()
 	}
 }
 
+#pragma mark - BWindow::Shortcut
+
+BWindow::Shortcut::Shortcut(char key, uint32 modifiers, BMenuItem *item)
+	: fKey(PrepareKey(key)),
+	  fModifiers(PrepareModifiers(modifiers)),
+	  fMenuItem{item},
+	  fMessage{nullptr},
+	  fTarget{nullptr}
+{
+}
+
+BWindow::Shortcut::Shortcut(char key, uint32 modifiers, BMessage *message, BHandler *target)
+	: fKey(PrepareKey(key)),
+	  fModifiers(PrepareModifiers(modifiers)),
+	  fMenuItem{nullptr},
+	  fMessage{message},
+	  fTarget{target}
+{
+}
+
+BWindow::Shortcut::~Shortcut()
+{
+	// we own the message, if any
+	delete fMessage;
+}
+
+bool BWindow::Shortcut::Matches(char key, uint32 modifiers) const
+{
+	return fKey == key && fModifiers == modifiers;
+}
+
+void BWindow::Shortcut::Invoke(BWindow *window) const
+{
+	LOG_ALWAYS_FATAL_IF(!window, "window cannot be null");
+
+	BMenuItem *item = MenuItem();
+	if (item) {
+		item->Invoke();
+	}
+	else {
+		BHandler *target = Target();
+		if (!target)
+			target = window->CurrentFocus();
+
+		if (Message()) {
+			BMessage message(*Message());
+
+			if (message.ReplaceInt64("when", system_time()) != B_OK)
+				message.AddInt64("when", system_time());
+			if (message.ReplaceBool("shortcut", true) != B_OK)
+				message.AddBool("shortcut", true);
+
+			window->PostMessage(&message, target);
+		}
+	}
+}
+
+uint32 BWindow::Shortcut::AllowedModifiers()
+{
+	return B_COMMAND_KEY | B_OPTION_KEY | B_SHIFT_KEY | B_CONTROL_KEY | B_MENU_KEY;
+}
+
+uint32 BWindow::Shortcut::PrepareModifiers(uint32 modifiers)
+{
+	return (modifiers & AllowedModifiers()) | B_COMMAND_KEY;
+}
+
+uint32 BWindow::Shortcut::PrepareKey(char key)
+{
+	return tolower(key);
+}
+
 #pragma mark - BWindow
 
 BWindow::BWindow(BRect frame, const char *title, window_type type, uint32 flags, uint32 workspace)
@@ -1392,6 +1505,7 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 	  fFlags{flags},
 	  fFocus{nullptr},
 	  fLastMouseMovedView{nullptr},
+	  fKeyMenuBar{nullptr},
 	  fDefaultButton{nullptr},
 	  fPulseRate{500000},
 	  fMaxZoomHeight{INT16_MAX},
@@ -1412,6 +1526,31 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 
 	SetTitle(title);
 
+	// Shortcut 'Q' is handled in _HandleKeyDown() directly, as its message
+	// get sent to the application, and not one of our handlers.
+	// It is only installed for non-modal windows, though.
+	fNoQuitShortcut = IsModal();
+
+	if ((fFlags & B_NOT_CLOSABLE) == 0 && !IsModal()) {
+		// Modal windows default to non-closable, but you can add the
+		// shortcut manually, if a different behaviour is wanted
+		AddShortcut('W', B_COMMAND_KEY, new BMessage(B_QUIT_REQUESTED));
+	}
+
+	// Edit modifier keys
+	AddShortcut('X', B_COMMAND_KEY, new BMessage(B_CUT), nullptr);
+	AddShortcut('C', B_COMMAND_KEY, new BMessage(B_COPY), nullptr);
+	AddShortcut('V', B_COMMAND_KEY, new BMessage(B_PASTE), nullptr);
+	AddShortcut('A', B_COMMAND_KEY, new BMessage(B_SELECT_ALL), nullptr);
+
+	// Window modifier keys
+	AddShortcut('M', B_COMMAND_KEY | B_CONTROL_KEY, new BMessage(_MINIMIZE_), nullptr);
+	AddShortcut('Z', B_COMMAND_KEY | B_CONTROL_KEY, new BMessage(_ZOOM_), nullptr);
+	AddShortcut('Z', B_SHIFT_KEY | B_COMMAND_KEY | B_CONTROL_KEY, new BMessage(_ZOOM_), nullptr);
+	AddShortcut('H', B_COMMAND_KEY | B_CONTROL_KEY, new BMessage(B_HIDE_APPLICATION), nullptr);
+	AddShortcut('F', B_COMMAND_KEY | B_CONTROL_KEY, new BMessage(_SEND_TO_FRONT_), nullptr);
+	AddShortcut('B', B_COMMAND_KEY | B_CONTROL_KEY, new BMessage(_SEND_BEHIND_), nullptr);
+
 	if (!m->connect()) {
 		throw std::system_error(std::error_code(errno, std::system_category()), "Cannot connect display");
 		abort();
@@ -1420,7 +1559,19 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 	m->top_view._attach(this);
 }
 
-BWindow::~BWindow() = default;
+BWindow::~BWindow()
+{
+	Lock();
+
+	// remove all remaining shortcuts
+	int32 shortCutCount = fShortcuts.CountItems();
+	for (int32 i = 0; i < shortCutCount; i++) {
+		delete (Shortcut *)fShortcuts.ItemAt(i);
+	}
+
+	// disable pulsing
+	SetPulseRate(0);
+}
 
 status_t BWindow::Archive(BMessage *data, bool deep) const
 {
@@ -1480,7 +1631,7 @@ BView *BWindow::ChildAt(int32 index) const
 {
 	BAutolock locker(const_cast<BWindow *>(this));
 	if (!locker.IsLocked())
-		return NULL;
+		return nullptr;
 
 	return m->top_view.ChildAt(index);
 }
@@ -1495,10 +1646,47 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 			Zoom();
 			break;
 
+		case _MINIMIZE_:
+			// Used by the minimize shortcut
+			if ((Flags() & B_NOT_MINIMIZABLE) == 0)
+				Minimize(true);
+			break;
+
+		case _ZOOM_:
+			// Used by the zoom shortcut
+			if ((Flags() & B_NOT_ZOOMABLE) == 0)
+				Zoom();
+			break;
+
+		case _SEND_BEHIND_:
+			SendBehind(nullptr);
+			break;
+
+		case _SEND_TO_FRONT_:
+			Activate();
+			break;
+
 		case B_MINIMIZE: {
 			bool minimize;
 			if (message->FindBool("minimize", &minimize) == B_OK)
 				Minimize(minimize);
+			break;
+		}
+
+		case B_HIDE_APPLICATION: {
+			// // Hide all applications with the same signature
+			// // (ie. those that are part of the same group to be consistent
+			// // to what the Deskbar shows you).
+			// app_info info;
+			// be_app->GetAppInfo(&info);
+
+			// BList list;
+			// be_roster->GetAppList(info.signature, &list);
+
+			// for (int32 i = 0; i < list.CountItems(); i++) {
+			// 	do_minimize_team(BRect(), (team_id)(addr_t)list.ItemAt(i),
+			// 					 false);
+			// }
 			break;
 		}
 
@@ -1594,18 +1782,37 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 
 				// intercepts some keys (like menu shortcuts and the Command+W close window sequence)
 				if (modifiers & B_COMMAND_KEY) {
+					if (key == B_ESCAPE && fKeyMenuBar) {
+						fKeyMenuBar->Show();
+						break;
+					}
+
 					if (key == 'w') {
 						BMessage command(B_QUIT_REQUESTED);
 						command.AddBool("shortcut", true);
 						this->PostMessage(&command);
 						break;
 					}
-					if (key == 'q') {
+					if (!fNoQuitShortcut && (key == 'Q' || key == 'q')) {
 						BMessage command(B_QUIT_REQUESTED);
 						command.AddBool("shortcut", true);
 						be_app->PostMessage(&command);
 						break;
 					}
+
+					// Pretend that the user opened a menu, to give the subclass a
+					// chance to update it's menus. This may install new shortcuts,
+					// which is why we have to call it here, before trying to find
+					// a shortcut for the given key.
+					MenusBeginning();
+
+					Shortcut *shortcut = _FindShortcut(key, modifiers);
+					if (shortcut) {
+						shortcut->Invoke(this);
+					}
+
+					MenusEnded();
+
 					target = CurrentFocus();
 					if (target) {
 						if (key == 'a') {
@@ -1639,6 +1846,9 @@ void BWindow::DispatchMessage(BMessage *message, BHandler *handler)
 							break;
 						}
 					}
+
+					// we always eat the event if the command key was pressed
+					break;
 				}
 				if (modifiers & B_OPTION_KEY) {
 					if (key == B_TAB) {
@@ -1930,6 +2140,52 @@ bigtime_t BWindow::PulseRate() const
 	return fPulseRate;
 }
 
+void BWindow::AddShortcut(uint32 key, uint32 modifiers, BMenuItem *item)
+{
+	Shortcut *shortcut = new (std::nothrow) Shortcut(key, modifiers, item);
+	if (!shortcut)
+		return;
+
+	// removes the shortcut if it already exists!
+	RemoveShortcut(key, modifiers);
+
+	fShortcuts.AddItem(shortcut);
+}
+
+void BWindow::AddShortcut(uint32 key, uint32 modifiers, BMessage *message)
+{
+	AddShortcut(key, modifiers, message, this);
+}
+
+void BWindow::AddShortcut(uint32 key, uint32 modifiers, BMessage *message,
+						  BHandler *target)
+{
+	if (!message)
+		return;
+
+	Shortcut *shortcut = new (std::nothrow) Shortcut(key, modifiers, message, target);
+	if (!shortcut)
+		return;
+
+	// removes the shortcut if it already exists!
+	RemoveShortcut(key, modifiers);
+
+	fShortcuts.AddItem(shortcut);
+}
+
+void BWindow::RemoveShortcut(uint32 key, uint32 modifiers)
+{
+	Shortcut *shortcut = _FindShortcut(key, modifiers);
+	if (shortcut) {
+		fShortcuts.RemoveItem(shortcut);
+		delete shortcut;
+	}
+	else if ((key == 'q' || key == 'Q') && modifiers == B_COMMAND_KEY) {
+		// the quit shortcut is a fake shortcut
+		fNoQuitShortcut = true;
+	}
+}
+
 void BWindow::SetDefaultButton(BButton *button)
 {
 	if (fDefaultButton == button) return;
@@ -2008,6 +2264,11 @@ BView *BWindow::CurrentFocus() const
 	return fFocus;
 }
 
+void BWindow::Activate(bool state)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
 void BWindow::WindowActivated(bool state)
 {
 	// the default implementation does nothing
@@ -2016,27 +2277,34 @@ void BWindow::WindowActivated(bool state)
 void BWindow::ConvertToScreen(BPoint *pt) const
 {
 }
+
 BPoint BWindow::ConvertToScreen(BPoint pt) const
 {
 	return pt;
 }
+
 void BWindow::ConvertFromScreen(BPoint *pt) const
 {
 }
+
 BPoint BWindow::ConvertFromScreen(BPoint pt) const
 {
 	return pt;
 }
+
 void BWindow::ConvertToScreen(BRect *rect) const
 {
 }
+
 BRect BWindow::ConvertToScreen(BRect rect) const
 {
 	return rect;
 }
+
 void BWindow::ConvertFromScreen(BRect *rect) const
 {
 }
+
 BRect BWindow::ConvertFromScreen(BRect rect) const
 {
 	return rect;
@@ -2044,14 +2312,17 @@ BRect BWindow::ConvertFromScreen(BRect rect) const
 
 void BWindow::MoveBy(float dx, float dy)
 {
+	ALOGW("%s - cannot move window", __PRETTY_FUNCTION__);
 }
 
 void BWindow::MoveTo(BPoint)
 {
+	ALOGW("%s - cannot move window", __PRETTY_FUNCTION__);
 }
 
 void BWindow::MoveTo(float x, float y)
 {
+	ALOGW("%s - cannot move window", __PRETTY_FUNCTION__);
 }
 
 void BWindow::ResizeBy(float dx, float dy)
@@ -2138,6 +2409,12 @@ bool BWindow::IsMinimized() const
 	return m->minimized;
 }
 
+status_t BWindow::SendBehind(const BWindow *window)
+{
+	debugger(__PRETTY_FUNCTION__);
+	return B_ERROR;
+}
+
 BRect BWindow::Bounds() const
 {
 	return m->Frame().OffsetToSelf({0, 0});
@@ -2183,6 +2460,16 @@ bool BWindow::IsActive() const
 {
 	debugger(__PRETTY_FUNCTION__);
 	return false;
+}
+
+void BWindow::SetKeyMenuBar(BMenuBar *bar)
+{
+	fKeyMenuBar = bar;
+}
+
+BMenuBar *BWindow::KeyMenuBar() const
+{
+	return fKeyMenuBar;
 }
 
 void BWindow::SetSizeLimits(float minWidth, float maxWidth, float minHeight, float maxHeight)
@@ -2447,4 +2734,21 @@ void BWindow::set_focus(BView *focusView, bool notifyInputServer)
 
 	fFocus = focusView;
 	SetPreferredHandler(focusView);
+}
+
+BWindow::Shortcut *BWindow::_FindShortcut(uint32 key, uint32 modifiers)
+{
+	int32 count = fShortcuts.CountItems();
+
+	key		  = Shortcut::PrepareKey(key);
+	modifiers = Shortcut::PrepareModifiers(modifiers);
+
+	for (int32 index = 0; index < count; index++) {
+		Shortcut *shortcut = (Shortcut *)fShortcuts.ItemAt(index);
+
+		if (shortcut->Matches(key, modifiers))
+			return shortcut;
+	}
+
+	return nullptr;
 }

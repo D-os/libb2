@@ -2,7 +2,7 @@
 
 #include <Font.h>
 
-#include "./DosControlLook.h"
+#include "DosControlLook.h"
 
 BCheckBox::BCheckBox(BRect frame, const char *name, const char *label, BMessage *message,
 					 uint32 resizeMask, uint32 flags)

@@ -138,7 +138,7 @@ thread_id spawn_thread(thread_func func, const char *name, int32 priority, void 
     pthread_attr_t attr;
     _thread_info *info = calloc(1, sizeof(_thread_info));
 
-    if (info == NULL) {
+    if (!info) {
         return B_NO_MORE_THREADS;
     }
 
@@ -233,14 +233,14 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value)
     void *exit = 0;
     _task_state state;
 
-    if (info == NULL || info->task_state != TASK_RUNNING) {
+    if (!info || info->task_state != TASK_RUNNING) {
         status = resume_thread(thread);
         if (status != B_OK) {
             goto exit;
         }
     }
 
-    if (info == NULL) {
+    if (!info) {
         /* have to assume that thread is the main thread of team */
         int wstatus;
         if (waitpid(thread, &wstatus, 0) < 0) {
@@ -289,7 +289,7 @@ exit:
 
 thread_id find_thread(const char* name)
 {
-    if (name == NULL) {
+    if (!name) {
         return _info->tid;
     }
 
@@ -310,7 +310,7 @@ status_t kill_thread(thread_id thread)
 {
     _threads_rlock();
     _thread_info *info = _find_thread_info(thread);
-    if (info == NULL || info->task_state == TASK_EXITED) {
+    if (!info || info->task_state == TASK_EXITED) {
         _threads_unlock();
         return B_BAD_THREAD_ID;
     }
@@ -324,7 +324,7 @@ status_t resume_thread(thread_id thread)
 {
     _threads_rlock();
     _thread_info *info = _find_thread_info(thread);
-    if (info == NULL) {
+    if (!info) {
         _threads_unlock();
         /* soo... it is not is this team... just SIG it... */
         if (syscall(SYS_tkill, thread, SIGCONT) != 0) {
@@ -371,7 +371,7 @@ status_t rename_thread(thread_id thread, const char *new_name)
 {
 	_threads_rlock();
 	_thread_info *info = _find_thread_info(thread);
-	if (info == NULL || info->task_state == TASK_EXITED) {
+	if (!info || info->task_state == TASK_EXITED) {
 		_threads_unlock();
 		return B_BAD_THREAD_ID;
 	}

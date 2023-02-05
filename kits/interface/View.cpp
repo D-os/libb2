@@ -8,19 +8,19 @@
 #include <MessageQueue.h>
 #include <Polygon.h>
 #include <Region.h>
+#include <SkBitmap.h>
+#include <SkCanvas.h>
+#include <SkColor.h>
+#include <SkData.h>
+#include <SkFontMetrics.h>
+#include <SkImage.h>
+#include <SkPaint.h>
+#include <SkPath.h>
+#include <SkPoint.h>
+#include <SkRegion.h>
+#include <SkTextBlob.h>
 #include <Window.h>
 #include <doctest/doctest.h>
-#include <include/core/SkBitmap.h>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkColor.h>
-#include <include/core/SkData.h>
-#include <include/core/SkFontMetrics.h>
-#include <include/core/SkImage.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkPoint.h>
-#include <include/core/SkRegion.h>
-#include <include/core/SkTextBlob.h>
 #include <log/log.h>
 #include <pimpl.h>
 
@@ -126,46 +126,23 @@ void BView::impl::clear_state_stack()
 
 void BView::impl::fill_pattern(rgb_color pixels[8 * 8], pattern &p)
 {
-	const rgb_color low = (S().drawing_mode == B_OP_OVER
-						   || S().drawing_mode == B_OP_ERASE
-						   || S().drawing_mode == B_OP_INVERT
-						   || S().drawing_mode == B_OP_SELECT)
-							  ? B_TRANSPARENT_COLOR
-							  : S().low_color;
+	const rgb_color &low  = (S().drawing_mode == B_OP_OVER
+							 || S().drawing_mode == B_OP_ERASE
+							 || S().drawing_mode == B_OP_INVERT
+							 || S().drawing_mode == B_OP_SELECT)
+								? B_TRANSPARENT_COLOR
+								: S().low_color;
+	const rgb_color &high = S().high_color;
 
 	for (int row = 0; row < 8; ++row) {
-		if (p.data[row] & 0b10000000)
-			pixels[0 + row * 8] = S().high_color;
-		else
-			pixels[0 + row * 8] = low;
-		if (p.data[row] & 0b01000000)
-			pixels[1 + row * 8] = S().high_color;
-		else
-			pixels[1 + row * 8] = low;
-		if (p.data[row] & 0b00100000)
-			pixels[2 + row * 8] = S().high_color;
-		else
-			pixels[2 + row * 8] = low;
-		if (p.data[row] & 0b00010000)
-			pixels[3 + row * 8] = S().high_color;
-		else
-			pixels[3 + row * 8] = low;
-		if (p.data[row] & 0b00001000)
-			pixels[4 + row * 8] = S().high_color;
-		else
-			pixels[4 + row * 8] = low;
-		if (p.data[row] & 0b00000100)
-			pixels[5 + row * 8] = S().high_color;
-		else
-			pixels[5 + row * 8] = low;
-		if (p.data[row] & 0b00000010)
-			pixels[6 + row * 8] = S().high_color;
-		else
-			pixels[6 + row * 8] = low;
-		if (p.data[row] & 0b00000001)
-			pixels[7 + row * 8] = S().high_color;
-		else
-			pixels[7 + row * 8] = low;
+		pixels[0 + row * 8] = (p.data[row] & 0b10000000) ? high : low;
+		pixels[1 + row * 8] = (p.data[row] & 0b01000000) ? high : low;
+		pixels[2 + row * 8] = (p.data[row] & 0b00100000) ? high : low;
+		pixels[3 + row * 8] = (p.data[row] & 0b00010000) ? high : low;
+		pixels[4 + row * 8] = (p.data[row] & 0b00001000) ? high : low;
+		pixels[5 + row * 8] = (p.data[row] & 0b00000100) ? high : low;
+		pixels[6 + row * 8] = (p.data[row] & 0b00000010) ? high : low;
+		pixels[7 + row * 8] = (p.data[row] & 0b00000001) ? high : low;
 	}
 }
 
@@ -864,6 +841,11 @@ void BView::SetDrawingMode(drawing_mode mode)
 	fState->S().drawing_mode = mode;
 }
 
+drawing_mode BView::DrawingMode() const
+{
+	return fState->S().drawing_mode;
+}
+
 void BView::SetPenSize(float size)
 {
 	if (size < 0.0) return;
@@ -1078,15 +1060,24 @@ static SkBlendMode blend_modes[] = {
 	paint.setStrokeMiter(fState->S().miter_limit);                                               \
 	paint.setStrokeCap(fState->S().cap_mode);                                                    \
 	paint.setStrokeJoin(fState->S().join_mode);                                                  \
-	SkBitmap bitmap;                                                                             \
-	bitmap.setInfo(SkImageInfo::Make(8, 8, kRGBA_8888_SkColorType, kOpaque_SkAlphaType));        \
-	rgb_color pixels[8 * 8];                                                                     \
-	fState->fill_pattern(pixels, p);                                                             \
-	bitmap.setPixels(pixels);                                                                    \
-	bitmap.setImmutable();                                                                       \
-	paint.setShader(                                                                             \
-		bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat,                              \
-						  SkSamplingOptions(), SkMatrix::Translate(-0.5, -0.5)));
+	if (p == B_SOLID_HIGH) {                                                                     \
+		paint.setColor(SkColorSetARGB(                                                           \
+			fState->S().high_color.alpha,                                                        \
+			fState->S().high_color.red,                                                          \
+			fState->S().high_color.green,                                                        \
+			fState->S().high_color.blue));                                                       \
+	}                                                                                            \
+	else {                                                                                       \
+		SkBitmap bitmap;                                                                         \
+		bitmap.setInfo(SkImageInfo::Make(8, 8, kRGBA_8888_SkColorType, kOpaque_SkAlphaType));    \
+		rgb_color pixels[8 * 8];                                                                 \
+		fState->fill_pattern(pixels, p);                                                         \
+		bitmap.setPixels(pixels);                                                                \
+		bitmap.setImmutable();                                                                   \
+		paint.setShader(                                                                         \
+			bitmap.makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat,                          \
+							  SkSamplingOptions(), SkMatrix::Translate(-0.5, -0.5)));            \
+	}
 
 #define DAMAGE_RECT                    \
 	if (r.right < r.left) {            \
@@ -1381,6 +1372,34 @@ void BView::FillArc(BRect r, float start_angle, float arc_angle, pattern p)
 	DAMAGE_RECT
 }
 
+// NOTE: StrokeShape() offsets the shape by the current pen position,
+// it is not documented in the BeBook, but it is true!
+void BView::StrokeShape(BShape *shape, pattern p)
+{
+	DRAW_PRELUDE_WITH_PATTERN
+	debugger(__PRETTY_FUNCTION__);
+	BRect r;
+	DAMAGE_RECT
+}
+
+void BView::FillShape(BShape *shape, pattern p)
+{
+	DRAW_PRELUDE_WITH_PATTERN
+	debugger(__PRETTY_FUNCTION__);
+	BRect r;
+	DAMAGE_RECT
+}
+
+void BView::DrawBitmap(const BBitmap *aBitmap)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
+void BView::DrawBitmap(const BBitmap *aBitmap, BPoint where)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
+
 void BView::DrawChar(char aChar)
 {
 	debugger(__PRETTY_FUNCTION__);
@@ -1598,7 +1617,13 @@ uint32 BView::Flags() const
 
 void BView::SetResizingMode(uint32 mode)
 {
-	debugger(__PRETTY_FUNCTION__);
+	// look at SetFlags() for more info on the below line
+	fFlags = (fFlags & ~_RESIZE_MASK_) | (mode & _RESIZE_MASK_);
+}
+
+uint32 BView::ResizingMode() const
+{
+	return fFlags & _RESIZE_MASK_;
 }
 
 void BView::MoveBy(float dh, float dv)
@@ -1630,6 +1655,11 @@ void BView::ResizeTo(float width, float height)
 
 	fBounds.Set(fBounds.left, fBounds.top, floorf(fBounds.left + width), floorf(fBounds.top + height));
 	if (fParent) fParent->Invalidate();
+}
+
+void BView::ScrollBy(float dh, float dv)
+{
+	debugger(__PRETTY_FUNCTION__);
 }
 
 void BView::ScrollTo(BPoint where)

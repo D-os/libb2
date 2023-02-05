@@ -15,7 +15,9 @@ includes = $
   -I system/os/headers/interface $
   -I system/os/headers/kernel $
   -I system/os/headers/storage $
+  -I system/os/headers/private/app $
   -I system/os/headers/private/interface $
+  -I system/os/headers/private/system $
   -I $BUILDROOT/os/libbe/protocol $
   -isystem $BUILDROOT/os/aidl/include $
   -isystem frameworks/native/libs/binder/include $
@@ -29,6 +31,7 @@ includes = $
   -isystem external/wayland/cursor $
   -isystem external/libxkbcommon/include $
   -isystem external/skia $
+  -I external/skia/include/core $
   -isystem external/fontconfig $
   -isystem external/doctest $
 
@@ -36,12 +39,15 @@ libs = -lc++ -lunwind $
   -lbinder -lutils -lcutils -llog -lwayland-client
 
 build $BUILDROOT/os/libbe/app/Application.o: cxx system/os/kits/app/Application.cpp
+build $BUILDROOT/os/libbe/app/AppMisc.o: cxx system/os/kits/app/AppMisc.cpp
 build $BUILDROOT/os/libbe/app/Clipboard.o: cxx system/os/kits/app/Clipboard.cpp
+build $BUILDROOT/os/libbe/app/Cursor.o: cxx system/os/kits/app/Cursor.cpp
 build $BUILDROOT/os/libbe/app/Handler.o: cxx system/os/kits/app/Handler.cpp
 build $BUILDROOT/os/libbe/app/Invoker.o: cxx system/os/kits/app/Invoker.cpp
 build $BUILDROOT/os/libbe/app/Looper.o: cxx system/os/kits/app/Looper.cpp
 build $BUILDROOT/os/libbe/app/Message.o: cxx system/os/kits/app/Message.cpp
 build $BUILDROOT/os/libbe/app/MessageQueue.o: cxx system/os/kits/app/MessageQueue.cpp
+build $BUILDROOT/os/libbe/app/MessageRunner.o: cxx system/os/kits/app/MessageRunner.cpp
 build $BUILDROOT/os/libbe/app/Messenger.o: cxx system/os/kits/app/Messenger.cpp
 build $BUILDROOT/os/libbe/app/Roster.o: cxx system/os/kits/app/Roster.cpp
 build $BUILDROOT/os/libbe/interface/Alignment.o: cxx system/os/kits/interface/Alignment.cpp
@@ -55,18 +61,37 @@ build $BUILDROOT/os/libbe/interface/DosControlLook.o: cxx system/os/kits/interfa
 build $BUILDROOT/os/libbe/interface/Font.o: cxx system/os/kits/interface/Font.cpp
 build $BUILDROOT/os/libbe/interface/GraphicsDefs.o: cxx system/os/kits/interface/GraphicsDefs.cpp
 build $BUILDROOT/os/libbe/interface/InterfaceDefs.o: cxx system/os/kits/interface/InterfaceDefs.cpp
+build $BUILDROOT/os/libbe/interface/Menu.o: cxx system/os/kits/interface/Menu.cpp
+build $BUILDROOT/os/libbe/interface/MenuBar.o: cxx system/os/kits/interface/MenuBar.cpp
+build $BUILDROOT/os/libbe/interface/MenuField.o: cxx system/os/kits/interface/MenuField.cpp
+build $BUILDROOT/os/libbe/interface/MenuItem.o: cxx system/os/kits/interface/MenuItem.cpp
+build $BUILDROOT/os/libbe/interface/MenuWindow.o: cxx system/os/kits/interface/MenuWindow.cpp
 build $BUILDROOT/os/libbe/interface/Point.o: cxx system/os/kits/interface/Point.cpp
 build $BUILDROOT/os/libbe/interface/Polygon.o: cxx system/os/kits/interface/Polygon.cpp
+build $BUILDROOT/os/libbe/interface/PopUpMenu.o: cxx system/os/kits/interface/PopUpMenu.cpp
 build $BUILDROOT/os/libbe/interface/RadioButton.o: cxx system/os/kits/interface/RadioButton.cpp
 build $BUILDROOT/os/libbe/interface/Rect.o: cxx system/os/kits/interface/Rect.cpp
 build $BUILDROOT/os/libbe/interface/Region.o: cxx system/os/kits/interface/Region.cpp
 build $BUILDROOT/os/libbe/interface/Screen.o: cxx system/os/kits/interface/Screen.cpp
+build $BUILDROOT/os/libbe/interface/SeparatorItem.o: cxx system/os/kits/interface/SeparatorItem.cpp
 build $BUILDROOT/os/libbe/interface/Slider.o: cxx system/os/kits/interface/Slider.cpp
 build $BUILDROOT/os/libbe/interface/StringView.o: cxx system/os/kits/interface/StringView.cpp
 build $BUILDROOT/os/libbe/interface/TabView.o: cxx system/os/kits/interface/TabView.cpp
 build $BUILDROOT/os/libbe/interface/View.o: cxx system/os/kits/interface/View.cpp
 build $BUILDROOT/os/libbe/interface/Window.o: cxx system/os/kits/interface/Window.cpp | $BUILDROOT/os/libbe/protocol/xdg-shell-client-protocol.h
+build $BUILDROOT/os/libbe/storage/AppFileInfo.o: cxx system/os/kits/storage/AppFileInfo.cpp
+build $BUILDROOT/os/libbe/storage/Directory.o: cxx system/os/kits/storage/Directory.cpp
+build $BUILDROOT/os/libbe/storage/Entry.o: cxx system/os/kits/storage/Entry.cpp
+build $BUILDROOT/os/libbe/storage/EntryList.o: cxx system/os/kits/storage/EntryList.cpp
+build $BUILDROOT/os/libbe/storage/File.o: cxx system/os/kits/storage/File.cpp
+build $BUILDROOT/os/libbe/storage/Mime.o: cxx system/os/kits/storage/Mime.cpp
+build $BUILDROOT/os/libbe/storage/Node.o: cxx system/os/kits/storage/Node.cpp
+build $BUILDROOT/os/libbe/storage/NodeInfo.o: cxx system/os/kits/storage/NodeInfo.cpp
+build $BUILDROOT/os/libbe/storage/Path.o: cxx system/os/kits/storage/Path.cpp
+build $BUILDROOT/os/libbe/storage/Statable.o: cxx system/os/kits/storage/Statable.cpp
 build $BUILDROOT/os/libbe/support/Archivable.o: cxx system/os/kits/support/Archivable.cpp
+build $BUILDROOT/os/libbe/support/DataIO.o: cxx system/os/kits/support/DataIO.cpp
+build $BUILDROOT/os/libbe/support/Flattenable.o: cxx system/os/kits/support/Flattenable.cpp
 build $BUILDROOT/os/libbe/support/List.o: cxx system/os/kits/support/List.cpp
 build $BUILDROOT/os/libbe/support/Locker.o: cxx system/os/kits/support/Locker.cpp
 build $BUILDROOT/os/libbe/support/String.o: cxx system/os/kits/support/String.cpp
@@ -74,6 +99,7 @@ build $BUILDROOT/os/libbe/kernel/area.o: cc system/os/kits/kernel/area.c
 build $BUILDROOT/os/libbe/kernel/debug.o: cxx system/os/kits/kernel/debug.cpp
 build $BUILDROOT/os/libbe/kernel/rwlock.o: cc system/os/kits/kernel/rwlock.c
 build $BUILDROOT/os/libbe/kernel/sem.o: cc system/os/kits/kernel/sem.c
+build $BUILDROOT/os/libbe/kernel/syscalls.o: cc system/os/kits/kernel/syscalls.c
 build $BUILDROOT/os/libbe/kernel/team.o: cc system/os/kits/kernel/team.c
 build $BUILDROOT/os/libbe/kernel/thread.o: cc system/os/kits/kernel/thread.c
 build $BUILDROOT/os/libbe/kernel/time.o: cc system/os/kits/kernel/time.c
@@ -96,12 +122,15 @@ build $BUILDROOT/os/libbe/protocol/xdg-output-protocol.o: cc $BUILDROOT/os/libbe
 
 build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/Application.o $
+  $BUILDROOT/os/libbe/app/AppMisc.o $
   $BUILDROOT/os/libbe/app/Clipboard.o $
+  $BUILDROOT/os/libbe/app/Cursor.o $
   $BUILDROOT/os/libbe/app/Handler.o $
   $BUILDROOT/os/libbe/app/Invoker.o $
   $BUILDROOT/os/libbe/app/Looper.o $
   $BUILDROOT/os/libbe/app/Message.o $
   $BUILDROOT/os/libbe/app/MessageQueue.o $
+  $BUILDROOT/os/libbe/app/MessageRunner.o $
   $BUILDROOT/os/libbe/app/Messenger.o $
   $BUILDROOT/os/libbe/app/Roster.o $
   $BUILDROOT/os/libbe/interface/Alignment.o $
@@ -115,18 +144,37 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/interface/Font.o $
   $BUILDROOT/os/libbe/interface/GraphicsDefs.o $
   $BUILDROOT/os/libbe/interface/InterfaceDefs.o $
+  $BUILDROOT/os/libbe/interface/Menu.o $
+  $BUILDROOT/os/libbe/interface/MenuBar.o $
+  $BUILDROOT/os/libbe/interface/MenuField.o $
+  $BUILDROOT/os/libbe/interface/MenuItem.o $
+  $BUILDROOT/os/libbe/interface/MenuWindow.o $
   $BUILDROOT/os/libbe/interface/Point.o $
   $BUILDROOT/os/libbe/interface/Polygon.o $
+  $BUILDROOT/os/libbe/interface/PopUpMenu.o $
   $BUILDROOT/os/libbe/interface/RadioButton.o $
   $BUILDROOT/os/libbe/interface/Rect.o $
   $BUILDROOT/os/libbe/interface/Region.o $
   $BUILDROOT/os/libbe/interface/Screen.o $
+  $BUILDROOT/os/libbe/interface/SeparatorItem.o $
   $BUILDROOT/os/libbe/interface/Slider.o $
   $BUILDROOT/os/libbe/interface/StringView.o $
   $BUILDROOT/os/libbe/interface/TabView.o $
   $BUILDROOT/os/libbe/interface/View.o $
   $BUILDROOT/os/libbe/interface/Window.o $
+  $BUILDROOT/os/libbe/storage/AppFileInfo.o $
+  $BUILDROOT/os/libbe/storage/Directory.o $
+  $BUILDROOT/os/libbe/storage/Entry.o $
+  $BUILDROOT/os/libbe/storage/EntryList.o $
+  $BUILDROOT/os/libbe/storage/File.o $
+  $BUILDROOT/os/libbe/storage/Mime.o $
+  $BUILDROOT/os/libbe/storage/Node.o $
+  $BUILDROOT/os/libbe/storage/NodeInfo.o $
+  $BUILDROOT/os/libbe/storage/Path.o $
+  $BUILDROOT/os/libbe/storage/Statable.o $
   $BUILDROOT/os/libbe/support/Archivable.o $
+  $BUILDROOT/os/libbe/support/DataIO.o $
+  $BUILDROOT/os/libbe/support/Flattenable.o $
   $BUILDROOT/os/libbe/support/List.o $
   $BUILDROOT/os/libbe/support/Locker.o $
   $BUILDROOT/os/libbe/support/String.o $
@@ -134,6 +182,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/kernel/debug.o $
   $BUILDROOT/os/libbe/kernel/rwlock.o $
   $BUILDROOT/os/libbe/kernel/sem.o $
+  $BUILDROOT/os/libbe/kernel/syscalls.o $
   $BUILDROOT/os/libbe/kernel/team.o $
   $BUILDROOT/os/libbe/kernel/thread.o $
   $BUILDROOT/os/libbe/kernel/time.o $

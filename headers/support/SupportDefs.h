@@ -8,6 +8,9 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
+// address types
+typedef uintptr_t addr_t;
+
 // fixed-size integer types
 typedef int8_t	  int8;
 typedef u_int8_t  uint8;

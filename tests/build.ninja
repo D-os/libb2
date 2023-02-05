@@ -72,6 +72,13 @@ build $BUILDROOT/os/tests/app_message: link $
 
 build $SYSTEMDIR/tests/app_message: copy $BUILDROOT/os/tests/app_message
 
+build $BUILDROOT/os/tests/app/message_runner.o: cxx system/os/tests/app/message_runner.cpp
+build $BUILDROOT/os/tests/app_message_runner: link $
+  $BUILDROOT/os/tests/app/message_runner.o $
+| $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/app_message_runner: copy $BUILDROOT/os/tests/app_message_runner
+
 build $BUILDROOT/os/tests/interface/window.o: cxx system/os/tests/interface/window.cpp
 build $BUILDROOT/os/tests/interface_window: link $
   $BUILDROOT/os/tests/interface/window.o $
@@ -155,3 +162,17 @@ build $BUILDROOT/os/tests/interface_sliders: link $
 | $SYSROOT/lib/libbe.so
 
 build $SYSTEMDIR/tests/interface_sliders: copy $BUILDROOT/os/tests/interface_sliders
+
+build $BUILDROOT/os/tests/interface/MenuBeginningTest.o: cxx system/os/tests/interface/MenuBeginningTest.cpp
+build $BUILDROOT/os/tests/interface_menu: link $
+  $BUILDROOT/os/tests/interface/MenuBeginningTest.o $
+| $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/interface_menu: copy $BUILDROOT/os/tests/interface_menu
+
+build $BUILDROOT/os/tests/interface/MenuTriggerTest.o: cxx system/os/tests/interface/MenuTriggerTest.cpp
+build $BUILDROOT/os/tests/interface_menu-trigger: link $
+  $BUILDROOT/os/tests/interface/MenuTriggerTest.o $
+| $SYSROOT/lib/libbe.so
+
+build $SYSTEMDIR/tests/interface_menu-trigger: copy $BUILDROOT/os/tests/interface_menu-trigger

@@ -345,7 +345,7 @@ team_id BLooper::Team() const
 {
 	thread_id	tid = fThread >= 0 ? fThread : find_thread(NULL);
 	thread_info tinfo;
-	status_t	ret = _get_thread_info(tid, &tinfo, sizeof(tinfo));
+	status_t	ret = get_thread_info(tid, &tinfo);
 	return ret == B_OK ? tinfo.team : ret;
 }
 

@@ -3,13 +3,13 @@
 #define LOG_TAG "BFont"
 
 #include <Rect.h>
+#include <SkFont.h>
+#include <SkFontMetrics.h>
+#include <SkFontMgr.h>
+#include <SkTextBlob.h>
+#include <SkTypeface.h>
 #include <String.h>
 #include <doctest/doctest.h>
-#include <include/core/SkFont.h>
-#include <include/core/SkFontMetrics.h>
-#include <include/core/SkFontMgr.h>
-#include <include/core/SkTextBlob.h>
-#include <include/core/SkTypeface.h>
 #include <log/log.h>
 
 #include <format>

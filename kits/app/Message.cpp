@@ -16,8 +16,6 @@
 #include <list>
 #include <vector>
 
-#include "Errors.h"
-
 struct DataItem
 {
 	ssize_t		size;

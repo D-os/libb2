@@ -6,11 +6,15 @@
 #include <Handler.h>
 #include <Looper.h>
 #include <Message.h>
-#include <OS.h>
 #include <log/log.h>
 
 BMessenger::BMessenger()
 	: fHandler{nullptr}, fLooper{nullptr} {}
+
+BMessenger::BMessenger(const char *mime_sig, team_id team, status_t *perr)
+{
+	debugger(__PRETTY_FUNCTION__);
+}
 
 BMessenger::BMessenger(const BHandler *handler, const BLooper *looper, status_t *err)
 	: fStatus{B_NO_INIT}, fHandler{handler}, fLooper{looper}, fTeam{-1}

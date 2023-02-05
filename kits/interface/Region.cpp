@@ -1,7 +1,7 @@
 #include "Region.h"
 
 #include <OS.h>
-#include <include/core/SkRegion.h>
+#include <SkRegion.h>
 #include <pimpl.h>
 
 #include <iostream>

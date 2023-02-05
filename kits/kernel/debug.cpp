@@ -14,7 +14,7 @@ _Noreturn void debugger(const char *message)
 	// FIXME: launch real debugger:
 	// FIXME: open terminal window, attach stdin/out/err and drop to gdb there
 
-	dprintf(2, "🚧 %s\n", message);
+	dprintf(2, "🚧 debugger: %s\n", message);
 
 	android::CallStack::CallStackUPtr stack(new android::CallStack());
 	stack->update(1);

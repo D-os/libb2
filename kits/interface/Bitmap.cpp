@@ -31,6 +31,12 @@ status_t BBitmap::Archive(BMessage *data, bool deep) const
 	return B_ERROR;
 }
 
+BRect BBitmap::Bounds() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return BRect();
+}
+
 void BBitmap::AddChild(BView *view)
 {
 	debugger(__PRETTY_FUNCTION__);

@@ -72,7 +72,7 @@ tint_color(rgb_color color, float tint)
 	return result;
 }
 
-//	#pragma mark - truncate string
+#pragma mark - truncate string
 
 void truncate_string(BString& string, uint32 mode, float width,
 					 const float* escapementArray, float fontSize, float ellipsisWidth,

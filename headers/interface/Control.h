@@ -6,8 +6,9 @@
 #include <View.h>
 
 enum {
-	B_CONTROL_OFF = 0,
-	B_CONTROL_ON  = 1
+	B_CONTROL_OFF		   = 0,
+	B_CONTROL_ON		   = 1,
+	B_CONTROL_PARTIALLY_ON = 2,
 };
 
 class BControl : public BView, public BInvoker
@@ -16,7 +17,7 @@ class BControl : public BView, public BInvoker
 	BControl(BRect		 frame,
 			 const char *name,
 			 const char *label,
-			 BMessage	  *message,
+			 BMessage	*message,
 			 uint32		 resizeMask,
 			 uint32		 flags);
 	virtual ~BControl();
@@ -36,7 +37,7 @@ class BControl : public BView, public BInvoker
 	virtual void DetachedFromWindow();
 
 	virtual void SetLabel(const char *text);
-	const char  *Label() const;
+	const char	*Label() const;
 
 	virtual void SetValue(int32 value);
 	int32		 Value() const;
@@ -48,9 +49,9 @@ class BControl : public BView, public BInvoker
 	virtual void ResizeToPreferred();
 
 	virtual status_t  Invoke(BMessage *msg = nullptr);
-	virtual BHandler *ResolveSpecifier(BMessage	*msg,
+	virtual BHandler *ResolveSpecifier(BMessage	  *msg,
 									   int32	   index,
-									   BMessage	*specifier,
+									   BMessage	  *specifier,
 									   int32	   form,
 									   const char *property);
 	virtual status_t  GetSupportedSuites(BMessage *data);

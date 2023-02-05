@@ -5,10 +5,11 @@
 #ifndef TRUNCATE_STRING_H
 #define TRUNCATE_STRING_H
 
+#include <String.h>
 #include <SupportDefs.h>
 
 void truncate_string(BString& string, uint32 mode, float width,
-	const float* escapementArray, float fontSize, float ellipsisWidth,
-	int32 numChars);
+					 const float* escapementArray, float fontSize, float ellipsisWidth,
+					 int32 numChars);
 
-#endif // TRUNCATE_STRING_H
+#endif	// TRUNCATE_STRING_H

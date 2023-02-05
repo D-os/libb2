@@ -339,7 +339,7 @@ void BSlider::GetLimits(int32 *minimum, int32 *maximum)
 		*maximum = fMaxValue;
 }
 
-// #pragma mark - drawing
+#pragma mark - drawing
 
 void BSlider::Draw(BRect)
 {
@@ -605,7 +605,7 @@ void BSlider::DrawText()
 	}
 }
 
-// #pragma mark -
+#pragma mark -
 
 char *BSlider::UpdateText() const
 {
@@ -1012,7 +1012,7 @@ void BSlider::SetFont(const BFont *font, uint32 properties)
 	BControl::SetFont(font, properties);
 }
 
-// #pragma mark - private
+#pragma mark - private
 
 void BSlider::_DrawBlockThumb()
 {

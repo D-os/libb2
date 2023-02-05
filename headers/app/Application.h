@@ -41,9 +41,9 @@ class BApplication : public BLooper
 	virtual void	  AboutRequested();
 
 	/// Scripting
-	virtual BHandler *ResolveSpecifier(BMessage	*msg,
+	virtual BHandler *ResolveSpecifier(BMessage	  *msg,
 									   int32	   index,
-									   BMessage	*specifier,
+									   BMessage	  *specifier,
 									   int32	   form,
 									   const char *property) override;
 
@@ -52,12 +52,12 @@ class BApplication : public BLooper
 	void			   HideCursor();
 	void			   ObscureCursor();
 	bool			   IsCursorHidden() const;
-	void			   SetCursor(const void *cursor);
+	void			   SetCursor(const void *cursorData);
 	void			   SetCursor(const BCursor *cursor, bool sync = true);
 	int32			   CountWindows() const;
-	BWindow			*WindowAt(int32 index) const;
+	BWindow			  *WindowAt(int32 index) const;
 	int32			   CountLoopers() const;
-	BLooper			*LooperAt(int32 index) const;
+	BLooper			  *LooperAt(int32 index) const;
 	bool			   IsLaunching() const;
 	status_t		   GetAppInfo(app_info *info) const;
 	static BResources *AppResources();
@@ -73,8 +73,14 @@ class BApplication : public BLooper
 	BApplication(const BApplication &);
 	BApplication &operator=(const BApplication &);
 
-	status_t fInitError;
-	bool	 fReadyToRunCalled;
+	void		   *fCursorData;
+	bool			fCursorHidden;
+	bool			fCursorObscured;
+	bigtime_t		fPulseRate;
+	BMessageRunner *fPulseRunner;
+	status_t		fInitError;
+
+	bool fReadyToRunCalled;
 };
 
 /// Global Objects

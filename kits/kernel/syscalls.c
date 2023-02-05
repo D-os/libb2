@@ -1,31 +1,24 @@
-#include <OS.h>
-#include <syscalls.h>
+/**
+ * Haiku syscalls emulation. Provided only to ease direct porting of
+ * code from Haiku's implementation of libbe.
+ * WARNING: Should not be used by newly written code and application code.
+ */
+#include "syscalls.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <dirent.h>
+#include <StorageDefs.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <stddef.h>
+#include <sys/file.h>
 #include <sys/syscall.h>
-
-mode_t __gUmask = 022;
+#include <unistd.h>
 
 struct linux_dirent {
-    unsigned long  d_ino;     /* Inode number */
-    unsigned long  d_off;     /* Offset to next linux_dirent */
-    unsigned short d_reclen;  /* Length of this linux_dirent */
-    char           d_name[];  /* Filename (null-terminated) */
-                      /* length is actually (d_reclen - 2 -
-                         offsetof(struct linux_dirent, d_name)) */
-    /*
-    char           pad;       // Zero padding byte
-    char           d_type;    // File type (only since Linux
-                              // 2.6.4); offset is (d_reclen - 1)
-    */
+	unsigned long  d_ino;	 /* Inode number */
+	unsigned long  d_off;	 /* Offset to next linux_dirent */
+	unsigned short d_reclen; /* Length of this linux_dirent */
+	char		   d_name[]; /* Filename (null-terminated) */
 };
 
 #define WRAP_POSIX_CHECK(...) \
@@ -42,7 +35,6 @@ struct linux_dirent {
 
 #define CHECK_BAD_LEAF(path) \
     (path == NULL || path[0] == '\0' || strchr(path, '/') != NULL)
-
 
 int _kern_dup(int fd)
 {
@@ -77,6 +69,13 @@ status_t _kern_read_stat(int fd, const char *path, bool traverseLink,
     WRAP_POSIX_CALL(fstatat(fd, path, stat, flags));
 }
 
+extern status_t _kern_write_stat(int fd, const char *path,
+								 bool traverseLink, const struct stat *stat,
+								 size_t statSize, int statMask)
+{
+	abort();
+}
+
 status_t _kern_read_link(int fd, const char *path,
                          char *buffer, size_t *_bufferSize)
 {
@@ -90,8 +89,11 @@ status_t _kern_read_link(int fd, const char *path,
     return B_OK;
 }
 
-ssize_t _kern_read_dir(int fd, struct dirent *buffer,
-                       size_t bufferSize, uint32 maxCount)
+/*
+	Using SYS_getdents syscall directly, as this allows opening a directory
+	using its file descriptor.
+*/
+ssize_t _kern_read_dir(int fd, struct dirent *buffer, size_t bufferSize, uint32 maxCount)
 {
     intptr_t buf[(2 * sizeof(struct linux_dirent) + B_FILE_NAME_LENGTH + 2 * sizeof(char)) / sizeof(intptr_t) + 1];
     struct linux_dirent *dirent = (struct linux_dirent *)buf;
@@ -145,7 +147,7 @@ int _kern_open_entry_ref(int reffd, const char *leaf, int openMode, int perms)
 int _kern_open_dir(int fd, const char *path)
 {
     if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
-    WRAP_POSIX_RETURN(int, openat(fd, path, O_DIRECTORY | O_CLOEXEC));
+	WRAP_POSIX_RETURN(int, openat(fd, path, O_DIRECTORY | O_PATH | O_CLOEXEC));
 }
 int _kern_open_dir_entry_ref(int reffd, const char *name)
 {
@@ -282,12 +284,4 @@ status_t _kern_unlock_node(int fd)
         }
     }
     return B_OK;
-}
-
-status_t _kern_write_stat(int fd, const char *path,
-                          bool traverseLink, const struct stat *stat,
-                          size_t statSize, int statMask)
-{
-    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
-    STUB;return 0;
 }

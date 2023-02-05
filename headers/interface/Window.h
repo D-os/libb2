@@ -67,6 +67,7 @@ enum {
 
 class BButton;
 class BMenuBar;
+class BMenuItem;
 class BView;
 
 class BPrivateScreen;
@@ -108,21 +109,14 @@ class BWindow : public BLooper
 	virtual void WorkspaceActivated(int32 ws, bool state);
 	virtual void FrameResized(float new_width, float new_height);
 	virtual void Minimize(bool minimize);
-	virtual void Zoom(BPoint rec_position,
-					  float	 rec_width,
-					  float	 rec_height);
+	virtual void Zoom(BPoint rec_position, float rec_width, float rec_height);
 	void		 Zoom();
 	void		 SetZoomLimits(float max_h, float max_v);
 	virtual void ScreenChanged(BRect screen_size, color_space depth);
 	void		 SetPulseRate(bigtime_t rate);
 	bigtime_t	 PulseRate() const;
-	void		 AddShortcut(uint32	   key,
-							 uint32	   modifiers,
-							 BMessage *msg);
-	void		 AddShortcut(uint32	   key,
-							 uint32	   modifiers,
-							 BMessage *msg,
-							 BHandler *target);
+	void		 AddShortcut(uint32 key, uint32 modifiers, BMessage *msg);
+	void		 AddShortcut(uint32 key, uint32 modifiers, BMessage *msg, BHandler *target);
 	void		 RemoveShortcut(uint32 key, uint32 modifiers);
 	void		 SetDefaultButton(BButton *button);
 	BButton		*DefaultButton() const;
@@ -232,6 +226,8 @@ class BWindow : public BLooper
 	virtual thread_id Run();
 
    private:
+	class Shortcut;
+
 	friend class BApplication;
 	friend class BBitmap;
 	friend class BScrollBar;
@@ -249,16 +245,24 @@ class BWindow : public BLooper
 	BWindow &operator=(BWindow &);
 
 	virtual void task_looper();
-	void		 set_focus(BView *focus, bool notify_input_server);
 
-	short		fShowLevel;
-	uint32		fFlags;
+	Shortcut *_FindShortcut(uint32 key, uint32 modifiers);
+	void	  AddShortcut(uint32 key, uint32 modifiers, BMenuItem *item);
+
+	void set_focus(BView *focus, bool notify_input_server);
+
+	short  fShowLevel;
+	uint32 fFlags;
+
 	BView	   *fFocus;
 	BView	   *fLastMouseMovedView;
+	BMenuBar   *fKeyMenuBar;
 	BButton	   *fDefaultButton;
+	BList		fShortcuts;
 	bigtime_t	fPulseRate;
 	float		fMaxZoomHeight;
 	float		fMaxZoomWidth;
+	bool		fNoQuitShortcut;
 	window_look fLook;
 	window_feel fFeel;
 	BRect		fPreviousFrame;

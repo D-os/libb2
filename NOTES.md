@@ -16,3 +16,8 @@ and use the exposed pointer directly.
 
 Private non-virtual accessor functions do not change class ABI, so we are free
 to add/remove these as needed.
+
+## Code style
+
+- Private methods are prefixed with `_`
+- Method out-parameters are prefixed with `_` in implementation

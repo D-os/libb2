@@ -5,9 +5,9 @@
 #include <Font.h>
 #include <List.h>
 #include <Region.h>
+#include <SkCanvas.h>
+#include <SkPath.h>
 #include <Window.h>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPath.h>
 #include <log/log.h>
 
 #define TABVIEW_BORDER_WIDTH 3.0f

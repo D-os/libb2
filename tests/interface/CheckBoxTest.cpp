@@ -44,7 +44,7 @@ void DividedBackgroundView::Draw(BRect updateRect)
 	PopState();
 }
 
-//	#pragma mark -
+#pragma mark -
 
 class Window : public BWindow
 {
@@ -149,7 +149,7 @@ bool Window::QuitRequested()
 	return true;
 }
 
-//	#pragma mark -
+#pragma mark -
 
 class Application : public BApplication
 {
@@ -170,7 +170,7 @@ void Application::ReadyToRun(void)
 	window->Show();
 }
 
-//	#pragma mark -
+#pragma mark -
 
 int main(int argc, char **argv)
 {

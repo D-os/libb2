@@ -122,6 +122,21 @@ BString &BString::SetTo(char ch, int32 count)
 	return *this;
 }
 
+BString &BString::CopyInto(BString &into, int32 fromOffset, int32 length) const
+{
+	if (this != &into)
+		into.SetTo(DATA->c_str() + fromOffset, length);
+	return into;
+}
+
+void BString::CopyInto(char *into, int32 fromOffset, int32 length) const
+{
+	if (into) {
+		length = min_clamp0(length, Length() - fromOffset);
+		memcpy(into, DATA->c_str() + fromOffset, length);
+	}
+}
+
 BString &BString::Adopt(BString &from)
 {
 	data	  = from.data;
@@ -136,7 +151,7 @@ BString &BString::Adopt(BString &from, int32 length)
 	return *this;
 }
 
-//      #pragma mark - Appending
+#pragma mark - Appending
 
 BString &BString::operator+=(const char *string)
 {
@@ -189,7 +204,7 @@ BString &BString::AppendChars(const char *string, int32 charCount)
 	return Append(string, UTF8CountBytes(string, charCount));
 }
 
-//      #pragma mark - Prepending
+#pragma mark - Prepending
 
 BString &BString::Prepend(const char *string)
 {
@@ -236,7 +251,7 @@ BString &BString::PrependChars(const BString &string, int32 charCount)
 	return Prepend(string, UTF8CountBytes(string.String(), charCount));
 }
 
-//      #pragma mark - Inserting
+#pragma mark - Inserting
 
 BString &BString::Insert(const char *string, int32 position)
 {
@@ -335,7 +350,7 @@ BString &BString::InsertChars(const BString &string, int32 fromCharOffset, int32
 				  UTF8CountBytes(DATA->c_str(), charPosition));
 }
 
-//      #pragma mark - Removing
+#pragma mark - Removing
 
 BString &BString::Truncate(int32 charCount, bool lazy)
 {
