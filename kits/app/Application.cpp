@@ -60,17 +60,18 @@ BApplication::BApplication(const char *signature)
 
 	status_t	ret;
 	font_family default_family{DEFAULT_FONT_FAMILY};
-	font_family fixed_family{FIXED_FONT_FAMILY};
-	font_style	regular_style{"Semi Bold"};
-	font_style	bold_style{"Extra Bold"};
-	ret = const_cast<BFont *>(be_plain_font)->SetFamilyAndStyle(default_family, regular_style);
+	font_style	plain_style{"Semi Bold"};
+	ret = const_cast<BFont *>(be_plain_font)->SetFamilyAndStyle(default_family, plain_style);
 	ALOGE_IF(ret != B_OK, "Failed to initialize plain font");
 
+	font_style bold_style{"Extra Bold"};
 	ret = const_cast<BFont *>(be_bold_font)->SetFamilyAndStyle(default_family, bold_style);
 	ALOGE_IF(ret != B_OK, "Failed to initialize bold font");
 	const_cast<BFont *>(be_bold_font)->SetSize(be_bold_font->Size() + 1.f);
 
-	ret = const_cast<BFont *>(be_fixed_font)->SetFamilyAndStyle(fixed_family, regular_style);
+	font_family fixed_family{FIXED_FONT_FAMILY};
+	font_style	fixed_style{"Regular"};
+	ret = const_cast<BFont *>(be_fixed_font)->SetFamilyAndStyle(fixed_family, fixed_style);
 	ALOGE_IF(ret != B_OK, "Failed to initialize fixed font");
 
 	PostMessage(B_READY_TO_RUN, this);
