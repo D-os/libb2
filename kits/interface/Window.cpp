@@ -37,22 +37,23 @@ class BWindow::impl
 {
    public:
 	/* Globals */
-	struct wl_display	  *wl_display;
-	struct wl_registry   *wl_registry;
+	struct wl_display	 *wl_display;
+	struct wl_registry	 *wl_registry;
 	struct wl_compositor *wl_compositor;
-	struct wl_shm		  *wl_shm;
-	struct xdg_wm_base	   *xdg_wm_base;
-	struct wl_seat		   *wl_seat;
+	struct wl_shm		 *wl_shm;
+	struct xdg_wm_base	 *xdg_wm_base;
+	struct wl_seat		 *wl_seat;
 	/* Objects */
-	struct wl_surface	  *wl_surface;
+	struct wl_surface	   *wl_surface;
 	struct xdg_surface	   *xdg_surface;
-	struct xdg_toplevel	*xdg_toplevel;
-	struct wl_pointer	  *wl_pointer;
+	struct xdg_toplevel	   *xdg_toplevel;
+	struct wl_pointer	   *wl_pointer;
 	struct wl_cursor_theme *wl_cursor_theme;
 	struct wl_surface	   *cursor_surface;
 	struct wl_cursor_image *cursor_image;
 	struct wl_keyboard	   *wl_keyboard;
 
+   private:
 	/* Backing */
 	size_t				width;
 	size_t				height;
@@ -61,7 +62,12 @@ class BWindow::impl
 	int					pool_fd;
 	uint8_t			   *pool_data;
 	struct wl_buffer   *wl_buffer;
+	int32_t				min_width;
+	int32_t				min_height;
+	int32_t				max_width;
+	int32_t				max_height;
 
+   public:
 	/* XKB */
 	struct xkb_state   *xkb_state;
 	struct xkb_context *xkb_context;
@@ -116,6 +122,10 @@ class BWindow::impl
 		  pool_fd{-1},
 		  pool_data{nullptr},
 		  wl_buffer{nullptr},
+		  min_width{-1},
+		  min_height{-1},
+		  max_width{-1},
+		  max_height{-1},
 
 		  xkb_state{nullptr},
 		  xkb_context{nullptr},
@@ -248,11 +258,38 @@ class BWindow::impl
 		top_view.ResizeTo(width, height);
 	}
 
+	BRect Frame()
+	{
+		auto w = width;
+		auto h = height;
+		if (!info.isEmpty()) {
+			w = info.width();
+			h = info.height();
+		}
+
+		// On Wayland we do not know the position of the window on screen,
+		// thus origin is always 0,0
+		return BRect(0, 0, w - 1, h - 1);
+	}
+
 	bool connect();
 	void resize(size_t width, size_t height);
-	void showWindow();
-	void hideWindow();
+	void show_window();
+	void hide_window();
 	void minimize(bool minimized);
+	void set_min_size(BSize size);
+	void set_max_size(BSize size);
+
+	inline BSize MinSize()
+	{
+		return BSize(min_width > 0 ? min_width - 1 : 0,
+					 min_height > 0 ? min_height - 1 : 0);
+	}
+	inline BSize MaxSize()
+	{
+		return BSize(max_width > 0 ? max_width - 1 : INT16_MAX,
+					 max_height > 0 ? max_height - 1 : INT16_MAX);
+	}
 
 	void pointer_motion(float x, float y);
 	void pointer_button(uint32_t button, uint32_t state);
@@ -390,6 +427,7 @@ bool BWindow::impl::connect()
 	xdg_toplevel_set_app_id(xdg_toplevel, be_app->Name());
 	if (title)
 		xdg_toplevel_set_title(xdg_toplevel, title);
+
 	wl_surface_commit(wl_surface);
 
 	return true;
@@ -397,6 +435,11 @@ bool BWindow::impl::connect()
 
 void BWindow::impl::resize_buffer()
 {
+	size_t width  = max_c(this->width, min_width);
+	width		  = min_c(width, max_width);
+	size_t height = max_c(this->height, min_height);
+	height		  = min_c(height, max_height);
+
 	info			= SkImageInfo::MakeN32Premul(width, height);
 	size_t stride	= info.minRowBytes();
 	size_t new_size = info.computeByteSize(stride);
@@ -443,7 +486,7 @@ void BWindow::impl::resize_buffer()
 	wl_buffer_add_listener(wl_buffer, &wl_buffer_listener, this);
 
 	if (hidden)
-		showWindow();
+		show_window();
 
 #ifndef NDEBUG
 	/* Draw checkerboxed background to see drawing artifacts */
@@ -463,7 +506,7 @@ void BWindow::impl::resize_buffer()
 	surface = SkSurface::MakeRasterDirect(info, pool_data, stride, &props);
 }
 
-void BWindow::impl::showWindow()
+void BWindow::impl::show_window()
 {
 	if (hidden && wl_buffer) {
 		hidden = false;
@@ -483,7 +526,7 @@ void BWindow::impl::showWindow()
 	}
 }
 
-void BWindow::impl::hideWindow()
+void BWindow::impl::hide_window()
 {
 	if (!hidden) {
 		hidden = true;
@@ -497,6 +540,30 @@ void BWindow::impl::minimize(bool minimized)
 {
 	debugger(__PRETTY_FUNCTION__);
 	this->minimized = minimized;
+}
+
+void BWindow::impl::set_min_size(BSize size)
+{
+	int32_t width  = size.IntegerWidth() + 1;
+	int32_t height = size.IntegerWidth() + 1;
+
+	if (xdg_toplevel) {
+		xdg_toplevel_set_min_size(xdg_toplevel, width, height);
+	}
+	min_width  = width;
+	min_height = height;
+}
+
+void BWindow::impl::set_max_size(BSize size)
+{
+	int32_t width  = size.IntegerWidth() + 1;
+	int32_t height = size.IntegerWidth() + 1;
+
+	if (xdg_toplevel) {
+		xdg_toplevel_set_max_size(xdg_toplevel, width, height);
+	}
+	max_width  = width;
+	max_height = height;
 }
 
 void BWindow::impl::resize(size_t width, size_t height)
@@ -1012,6 +1079,8 @@ BWindow::BWindow(BRect frame, const char *title, window_look look, window_feel f
 	  fLastMouseMovedView{nullptr},
 	  fDefaultButton{nullptr},
 	  fPulseRate{500000},
+	  fMaxZoomHeight{INT16_MAX},
+	  fMaxZoomWidth{INT16_MAX},
 	  fLook{look},
 	  fFeel{feel},
 	  fViewsEvents{0},
@@ -1474,7 +1543,10 @@ void BWindow::Zoom(BPoint rec_position, float rec_width, float rec_height)
 
 void BWindow::Zoom()
 {
-	debugger(__PRETTY_FUNCTION__);
+void BWindow::SetZoomLimits(float maxWidth, float maxHeight)
+{
+	fMaxZoomWidth  = maxWidth;
+	fMaxZoomHeight = maxHeight;
 }
 
 void BWindow::ScreenChanged(BRect screen_size, color_space depth)
@@ -1615,7 +1687,7 @@ void BWindow::Show()
 
 		fShowLevel -= 1;
 		if (fShowLevel <= 0) {
-			m->showWindow();
+			m->show_window();
 		}
 
 		Unlock();
@@ -1636,7 +1708,7 @@ void BWindow::Hide()
 
 		fShowLevel += 1;
 		if (fShowLevel > 0)
-			m->hideWindow();
+			m->hide_window();
 
 		Unlock();
 	}
@@ -1654,20 +1726,12 @@ bool BWindow::IsMinimized() const
 
 BRect BWindow::Bounds() const
 {
-	auto width	= m->width;
-	auto height = m->height;
-	if (!m->info.isEmpty()) {
-		width  = m->info.width();
-		height = m->info.height();
-	}
-
-	return BRect(0, 0, width - 1, height - 1);
+	return m->Frame().OffsetToSelf({0, 0});
 }
 
 BRect BWindow::Frame() const
 {
-	// On Wayland we do not know the position ow the window on screen
-	return Bounds();
+	return m->Frame();
 }
 
 const char *BWindow::Title() const
@@ -1693,6 +1757,54 @@ void BWindow::SetTitle(const char *title)
 	if (fRunCalled && fThread != B_ERROR) {
 		rename_thread(fThread, name);
 	}
+}
+
+bool BWindow::IsFront() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return false;
+}
+
+bool BWindow::IsActive() const
+{
+	debugger(__PRETTY_FUNCTION__);
+	return false;
+}
+
+void BWindow::SetSizeLimits(float minWidth, float maxWidth, float minHeight, float maxHeight)
+{
+	if (minWidth > maxWidth || minHeight > maxHeight)
+		return;
+
+	if (!Lock())
+		return;
+
+	BSize min = m->MinSize();
+	if (minWidth != min.width || minHeight != min.height) {
+		m->set_min_size(BSize(ceilf(minWidth), ceilf(minHeight)));
+	}
+
+	BSize max = m->MaxSize();
+	if (maxWidth != max.width || maxHeight != max.height) {
+		m->set_max_size(BSize(ceilf(maxWidth), ceilf(maxHeight)));
+	}
+
+	Unlock();
+}
+
+void BWindow::GetSizeLimits(float *_minWidth, float *_maxWidth, float *_minHeight, float *_maxHeight)
+{
+	BSize min = m->MinSize();
+	if (_minHeight)
+		*_minHeight = min.height;
+	if (_minWidth)
+		*_minWidth = min.width;
+
+	BSize max = m->MaxSize();
+	if (_maxHeight)
+		*_maxHeight = max.height;
+	if (_maxWidth)
+		*_maxWidth = max.width;
 }
 
 BView *BWindow::LastMouseMovedView() const

@@ -94,7 +94,7 @@ class BWindow : public BLooper
 	virtual void Quit();
 	void		 Close(); /* Synonym of Quit() */
 
-	void   AddChild(BView *child, BView *before = NULL);
+	void   AddChild(BView *child, BView *before = nullptr);
 	bool   RemoveChild(BView *child);
 	int32  CountChildren() const;
 	BView *ChildAt(int32 index) const;
@@ -128,9 +128,9 @@ class BWindow : public BLooper
 	virtual void MenusEnded();
 	bool		 NeedsUpdate() const;
 	void		 UpdateIfNeeded();
-	BView		  *FindView(const char *view_name) const;
-	BView		  *FindView(BPoint) const;
-	BView		  *CurrentFocus() const;
+	BView		*FindView(const char *view_name) const;
+	BView		*FindView(BPoint) const;
+	BView		*CurrentFocus() const;
 	void		 Activate(bool = true);
 	virtual void WindowActivated(bool state);
 	void		 ConvertToScreen(BPoint *pt) const;
@@ -169,7 +169,7 @@ class BWindow : public BLooper
 	bool		IsFront() const;
 	bool		IsActive() const;
 	void		SetKeyMenuBar(BMenuBar *bar);
-	BMenuBar	 *KeyMenuBar() const;
+	BMenuBar   *KeyMenuBar() const;
 	void		SetSizeLimits(float min_h,
 							  float max_h,
 							  float min_v,
@@ -180,11 +180,11 @@ class BWindow : public BLooper
 							  float *max_v);
 	uint32		Workspaces() const;
 	void		SetWorkspaces(uint32);
-	BView	  *LastMouseMovedView() const;
+	BView	   *LastMouseMovedView() const;
 
-	virtual BHandler *ResolveSpecifier(BMessage	*msg,
+	virtual BHandler *ResolveSpecifier(BMessage	  *msg,
 									   int32	   index,
-									   BMessage	*specifier,
+									   BMessage	  *specifier,
 									   int32	   form,
 									   const char *property);
 	virtual status_t  GetSupportedSuites(BMessage *data);
@@ -216,15 +216,15 @@ class BWindow : public BLooper
 								int32			 vOffset	  = 0,
 								int32			 height		  = 0,
 								int32			 heightOffset = 0);
-	status_t GetWindowAlignment(window_alignment *mode		   = NULL,
-								int32			  *h			   = NULL,
-								int32			  *hOffset	   = NULL,
-								int32			  *width		   = NULL,
-								int32			  *widthOffset  = NULL,
-								int32			  *v			   = NULL,
-								int32			  *vOffset	   = NULL,
-								int32			  *height	   = NULL,
-								int32			  *heightOffset = NULL) const;
+	status_t GetWindowAlignment(window_alignment *mode		   = nullptr,
+								int32			 *h			   = nullptr,
+								int32			 *hOffset	   = nullptr,
+								int32			 *width		   = nullptr,
+								int32			 *widthOffset  = nullptr,
+								int32			 *v			   = nullptr,
+								int32			 *vOffset	   = nullptr,
+								int32			 *height	   = nullptr,
+								int32			 *heightOffset = nullptr) const;
 
 	virtual bool	  QuitRequested();
 	virtual thread_id Run();
@@ -249,21 +249,24 @@ class BWindow : public BLooper
 
 	short		fShowLevel;
 	uint32		fFlags;
-	BView	  *fFocus;
-	BView	  *fLastMouseMovedView;
-	BButton	*fDefaultButton;
+	BView	   *fFocus;
+	BView	   *fLastMouseMovedView;
+	BButton	   *fDefaultButton;
 	bigtime_t	fPulseRate;
+	float		fMaxZoomHeight;
+	float		fMaxZoomWidth;
 	window_look fLook;
 	window_feel fFeel;
+	BRect		fPreviousFrame;
 
 	uint32	  fViewsEvents;
 	bigtime_t fPulsedTime;
 
 	class impl;
 	pimpl<impl> m;
-	SkCanvas	 *_get_canvas() const;
-	void		  _damage_window(BPoint p1, BPoint p2);
-	void		  _try_pulse();
+	SkCanvas   *_get_canvas() const;
+	void		_damage_window(BPoint p1, BPoint p2);
+	void		_try_pulse();
 };
 
 inline void BWindow::Close()

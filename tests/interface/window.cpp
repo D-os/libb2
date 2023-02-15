@@ -20,6 +20,8 @@ WindowApplication::WindowApplication()
 	// after exiting constructor, while still in use by the application.
 	auto myWindow = new BWindow(BRect(10, 10, 210, 110), "Some Title", B_TITLED_WINDOW, 0);
 
+	myWindow->SetSizeLimits(50, 500, 50, 500);
+
 	// make window visible
 	myWindow->Show();
 }
