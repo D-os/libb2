@@ -260,9 +260,9 @@ class BWindow : public BLooper
 	BButton	   *fDefaultButton;
 	BList		fShortcuts;
 	bigtime_t	fPulseRate;
+	bool		fNoQuitShortcut;
 	float		fMaxZoomHeight;
 	float		fMaxZoomWidth;
-	bool		fNoQuitShortcut;
 	window_look fLook;
 	window_feel fFeel;
 	BRect		fPreviousFrame;
