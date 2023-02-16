@@ -10,6 +10,7 @@
 #include <MessageQueue.h>
 #include <Point.h>
 #include <Rect.h>
+#include <Screen.h>
 #include <View.h>
 #include <include/core/SkSurface.h>
 #include <log/log.h>
@@ -28,6 +29,8 @@
 #include <format>
 #include <system_error>
 
+#include "PrivateScreen.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
 #define DEFAULT_CURSOR_SIZE 24
@@ -37,13 +40,16 @@ class BWindow::impl
 {
    public:
 	/* Globals */
-	struct wl_display	 *wl_display;
-	struct wl_registry	 *wl_registry;
-	struct wl_compositor *wl_compositor;
-	struct wl_shm		 *wl_shm;
-	struct xdg_wm_base	 *xdg_wm_base;
-	struct wl_seat		 *wl_seat;
+	struct wl_display			  *wl_display;
+	struct wl_registry			  *wl_registry;
+	struct wl_compositor		  *wl_compositor;
+	struct wl_shm				  *wl_shm;
+	struct xdg_wm_base			  *xdg_wm_base;
+	struct wl_seat				  *wl_seat;
+	struct wl_output			  *wl_output;
+	struct zxdg_output_manager_v1 *xdg_output_manager;
 	/* Objects */
+	struct zxdg_output_v1  *xdg_output;
 	struct wl_surface	   *wl_surface;
 	struct xdg_surface	   *xdg_surface;
 	struct xdg_toplevel	   *xdg_toplevel;
@@ -87,6 +93,27 @@ class BWindow::impl
 
 	uint32 modifiers;
 
+	const char		   *seat_name;
+	int32_t				output_logical_x;
+	int32_t				output_logical_y;
+	int32_t				output_logical_width;
+	int32_t				output_logical_height;
+	int32_t				output_compositor_x;
+	int32_t				output_compositor_y;
+	int32_t				output_physical_width;	 //! mm
+	int32_t				output_physical_height;	 //! mm
+	wl_output_subpixel	output_subpixel_orientation;
+	const char		   *output_make;
+	const char		   *output_model;
+	const char		   *output_name;
+	const char		   *output_description;
+	wl_output_transform output_transform_type;
+	uint32_t			output_mode_flags;	  //! bitfield enum wl_output_mode
+	int32_t				output_mode_width;	  //! hardware units
+	int32_t				output_mode_height;	  //! hardware units
+	int32_t				output_mode_refresh;  //! mHz
+	int32_t				output_scale_factor;  //! scale factor
+
 	bool hidden;
 	bool minimized;
 	bool maximized;
@@ -106,6 +133,9 @@ class BWindow::impl
 		  wl_shm{nullptr},
 		  xdg_wm_base{nullptr},
 		  wl_seat{nullptr},
+		  wl_output{nullptr},
+		  xdg_output_manager{nullptr},
+		  xdg_output{nullptr},
 		  wl_surface{nullptr},
 		  xdg_surface{nullptr},
 		  xdg_toplevel{nullptr},
@@ -122,10 +152,10 @@ class BWindow::impl
 		  pool_fd{-1},
 		  pool_data{nullptr},
 		  wl_buffer{nullptr},
-		  min_width{-1},
-		  min_height{-1},
-		  max_width{-1},
-		  max_height{-1},
+		  min_width{1},
+		  min_height{1},
+		  max_width{INT16_MAX},
+		  max_height{INT16_MAX},
 
 		  xkb_state{nullptr},
 		  xkb_context{nullptr},
@@ -137,6 +167,26 @@ class BWindow::impl
 		  pointer_y{-1.0},
 		  pointer_buttons{0},
 		  modifiers{0},
+		  seat_name{nullptr},
+		  output_logical_x{0},
+		  output_logical_y{0},
+		  output_logical_width{-1},
+		  output_logical_height{-1},
+		  output_compositor_x{0},
+		  output_compositor_y{0},
+		  output_physical_width{-1},
+		  output_physical_height{-1},
+		  output_subpixel_orientation{WL_OUTPUT_SUBPIXEL_UNKNOWN},
+		  output_make{nullptr},
+		  output_model{nullptr},
+		  output_name{nullptr},
+		  output_description{nullptr},
+		  output_transform_type{WL_OUTPUT_TRANSFORM_NORMAL},
+		  output_mode_flags{0},
+		  output_mode_width{-1},
+		  output_mode_height{-1},
+		  output_mode_refresh{-1},
+		  output_scale_factor{1},
 		  hidden{true},
 		  minimized{false},
 		  maximized{false},
@@ -177,6 +227,21 @@ class BWindow::impl
 			  .capabilities = wl_seat_capabilities_handler,
 			  .name			= wl_seat_name_handler,
 		  },
+		  wl_output_listener{
+			  .geometry	   = wl_output_geometry_handler,
+			  .mode		   = wl_output_mode_handler,
+			  .done		   = wl_output_done_handler,
+			  .scale	   = wl_output_scale_handler,
+			  .name		   = wl_output_name_handler,
+			  .description = wl_output_description_handler,
+		  },
+		  xdg_output_listener{
+			  .logical_position = xdg_output_logical_position_handler,
+			  .logical_size		= xdg_output_logical_size_handler,
+			  .done				= xdg_output_done_handler,
+			  .name				= xdg_output_name_handler,
+			  .description		= xdg_output_description_handler,
+		  },
 		  wl_pointer_listener{
 			  .enter  = wl_pointer_enter_handler,
 			  .leave  = wl_pointer_leave_handler,
@@ -198,8 +263,12 @@ class BWindow::impl
 
 	~impl()
 	{
-		if (title)
-			free(const_cast<char *>(title));
+		free(const_cast<char *>(title));
+		free(const_cast<char *>(seat_name));
+		free(const_cast<char *>(output_make));
+		free(const_cast<char *>(output_model));
+		free(const_cast<char *>(output_name));
+		free(const_cast<char *>(output_description));
 
 		if (cursor_surface)
 			wl_surface_destroy(cursor_surface);
@@ -231,12 +300,18 @@ class BWindow::impl
 		if (wl_surface)
 			wl_surface_destroy(wl_surface);
 
+		if (xdg_output)
+			zxdg_output_v1_destroy(xdg_output);
+		if (wl_output)
+			wl_output_destroy(wl_output);
 		if (wl_seat)
 			wl_seat_destroy(wl_seat);
 		if (xdg_wm_base)
 			xdg_wm_base_destroy(xdg_wm_base);
 		if (wl_shm)
 			wl_shm_destroy(wl_shm);
+		if (xdg_output_manager)
+			zxdg_output_manager_v1_destroy(xdg_output_manager);
 		if (wl_compositor)
 			wl_compositor_destroy(wl_compositor);
 		if (wl_registry)
@@ -282,13 +357,11 @@ class BWindow::impl
 
 	inline BSize MinSize()
 	{
-		return BSize(min_width > 0 ? min_width - 1 : 0,
-					 min_height > 0 ? min_height - 1 : 0);
+		return BSize(min_width - 1, min_height);
 	}
 	inline BSize MaxSize()
 	{
-		return BSize(max_width > 0 ? max_width - 1 : INT16_MAX,
-					 max_height > 0 ? max_height - 1 : INT16_MAX);
+		return BSize(max_width - 1, max_height - 1);
 	}
 
 	void pointer_motion(float x, float y);
@@ -306,16 +379,18 @@ class BWindow::impl
 	std::mutex pool_mutex;
 	void	   resize_buffer();
 
-	const struct wl_registry_listener  wl_registry_listener;
-	const struct wl_shm_listener	   wl_shm_listener;
-	const struct wl_surface_listener   wl_surface_listener;
-	const struct wl_buffer_listener	   wl_buffer_listener;
-	const struct xdg_surface_listener  xdg_surface_listener;
-	const struct xdg_wm_base_listener  xdg_wm_base_listener;
-	const struct xdg_toplevel_listener xdg_toplevel_listener;
-	const struct wl_seat_listener	   wl_seat_listener;
-	const struct wl_pointer_listener   wl_pointer_listener;
-	const struct wl_keyboard_listener  wl_keyboard_listener;
+	const struct wl_registry_listener	 wl_registry_listener;
+	const struct wl_shm_listener		 wl_shm_listener;
+	const struct wl_surface_listener	 wl_surface_listener;
+	const struct wl_buffer_listener		 wl_buffer_listener;
+	const struct xdg_surface_listener	 xdg_surface_listener;
+	const struct xdg_wm_base_listener	 xdg_wm_base_listener;
+	const struct xdg_toplevel_listener	 xdg_toplevel_listener;
+	const struct wl_seat_listener		 wl_seat_listener;
+	const struct wl_output_listener		 wl_output_listener;
+	const struct zxdg_output_v1_listener xdg_output_listener;
+	const struct wl_pointer_listener	 wl_pointer_listener;
+	const struct wl_keyboard_listener	 wl_keyboard_listener;
 
 	static void wl_registry_global_handler(void *this_, struct wl_registry *registry, uint32_t name,
 										   const char *interface, uint32_t version);
@@ -331,6 +406,33 @@ class BWindow::impl
 	static void xdg_toplevel_close_handler(void *this_, struct xdg_toplevel *toplevel);
 	static void wl_seat_capabilities_handler(void *this_, struct wl_seat *wl_seat, uint32_t capabilities);
 	static void wl_seat_name_handler(void *this_, struct wl_seat *wl_seat, const char *name);
+	static void wl_output_geometry_handler(void *this_, struct wl_output *wl_output,
+										   int32_t	   x,
+										   int32_t	   y,
+										   int32_t	   physical_width,
+										   int32_t	   physical_height,
+										   int32_t	   subpixel,
+										   const char *make,
+										   const char *model,
+										   int32_t	   transform);
+	static void wl_output_mode_handler(void *this_, struct wl_output *wl_output,
+									   uint32_t flags,
+									   int32_t	width,
+									   int32_t	height,
+									   int32_t	refresh);
+	static void wl_output_done_handler(void *this_, struct wl_output *wl_output);
+	static void wl_output_scale_handler(void *this_, struct wl_output *wl_output, int32_t factor);
+	static void wl_output_name_handler(void				*this_,
+									   struct wl_output *wl_output,
+									   const char		*name);
+	static void wl_output_description_handler(void *this_, struct wl_output *wl_output, const char *description);
+	static void xdg_output_logical_position_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1,
+													int32_t x, int32_t y);
+	static void xdg_output_logical_size_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1,
+												int32_t width, int32_t height);
+	static void xdg_output_done_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1);
+	static void xdg_output_name_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1, const char *name);
+	static void xdg_output_description_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1, const char *description);
 	static void wl_pointer_enter_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
 										 struct wl_surface *surface, wl_fixed_t surface_x, wl_fixed_t surface_y);
 	static void wl_pointer_leave_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
@@ -388,6 +490,28 @@ inline window_feel type2feel(window_type type)
 }
 }  // namespace
 
+#pragma mark - BPrivateScreenWindow
+
+class BPrivateScreenWindow : public BPrivateScreen
+{
+	const BWindow *window;
+
+   public:
+	BPrivateScreenWindow(const BWindow *win) : window{win}
+	{
+	}
+
+	~BPrivateScreenWindow() {}
+
+	BRect Frame()
+	{
+		return BRect(window->m->output_logical_x,
+					 window->m->output_logical_y,
+					 window->m->output_logical_x + window->m->output_logical_width,
+					 window->m->output_logical_y + window->m->output_logical_height);
+	}
+};
+
 #pragma mark - BWindow::impl
 
 bool BWindow::impl::connect()
@@ -407,13 +531,15 @@ bool BWindow::impl::connect()
 
 	// wait for the "initial" set of globals to appear
 	wl_display_roundtrip(wl_display);
-	ALOGV("wl_compositor %p, wl_shm %p, xdg_wm_base %p, wl_seat %p", wl_compositor, wl_shm, xdg_wm_base, wl_seat);
-	if (!wl_compositor || !wl_shm || !xdg_wm_base || !wl_seat) return false;
+	ALOGV("wl_compositor %p, wl_shm %p, xdg_wm_base %p, wl_seat %p, wl_output %p, xdg_output_manager %p",
+		  wl_compositor, wl_shm, xdg_wm_base, wl_seat, wl_output, xdg_output_manager);
+	if (!wl_compositor || !wl_shm || !xdg_wm_base || !wl_seat || !wl_output || !xdg_output_manager) return false;
 
 	wl_surface = wl_compositor_create_surface(wl_compositor);
 	if (!wl_surface) return false;
 	ALOGV("created surface");
 	wl_surface_add_listener(wl_surface, &wl_surface_listener, this);
+	wl_surface_set_buffer_scale(wl_surface, output_scale_factor);
 
 	xdg_surface = xdg_wm_base_get_xdg_surface(xdg_wm_base, wl_surface);
 	xdg_surface_add_listener(xdg_surface, &xdg_surface_listener, this);
@@ -501,8 +627,26 @@ void BWindow::impl::resize_buffer()
 	}
 #endif
 
-	// TODO: Get from Control Panel settings
-	SkSurfaceProps props(0, SkPixelGeometry::kRGB_H_SkPixelGeometry);
+	SkPixelGeometry pixel_geometry = SkPixelGeometry::kUnknown_SkPixelGeometry;
+	switch (output_subpixel_orientation) {
+		case WL_OUTPUT_SUBPIXEL_UNKNOWN:
+		case WL_OUTPUT_SUBPIXEL_NONE:
+			pixel_geometry = SkPixelGeometry::kUnknown_SkPixelGeometry;
+			break;
+		case WL_OUTPUT_SUBPIXEL_HORIZONTAL_RGB:
+			pixel_geometry = SkPixelGeometry::kRGB_H_SkPixelGeometry;
+			break;
+		case WL_OUTPUT_SUBPIXEL_HORIZONTAL_BGR:
+			pixel_geometry = SkPixelGeometry::kBGR_H_SkPixelGeometry;
+			break;
+		case WL_OUTPUT_SUBPIXEL_VERTICAL_RGB:
+			pixel_geometry = SkPixelGeometry::kRGB_V_SkPixelGeometry;
+			break;
+		case WL_OUTPUT_SUBPIXEL_VERTICAL_BGR:
+			pixel_geometry = SkPixelGeometry::kBGR_V_SkPixelGeometry;
+			break;
+	}
+	SkSurfaceProps props(0, pixel_geometry);
 	surface = SkSurface::MakeRasterDirect(info, pool_data, stride, &props);
 }
 
@@ -797,12 +941,10 @@ void BWindow::impl::damage(int32 x1, int32 y1, int32 x2, int32 y2)
 
 #define THIS static_cast<BWindow::impl *>(this_)
 
-void BWindow::impl::wl_registry_global_handler(
-	void			   *this_,
-	struct wl_registry *registry,
-	uint32_t			name,
-	const char		   *interface,
-	uint32_t			version)
+void BWindow::impl::wl_registry_global_handler(void *this_, struct wl_registry *registry,
+											   uint32_t	   name,
+											   const char *interface,
+											   uint32_t	   version)
 {
 	ALOGV("%u: %s (v.%u)", name, interface, version);
 
@@ -821,13 +963,19 @@ void BWindow::impl::wl_registry_global_handler(
 		THIS->wl_seat = (struct wl_seat *)wl_registry_bind(registry, name, &wl_seat_interface, 4);
 		wl_seat_add_listener(THIS->wl_seat, &THIS->wl_seat_listener, this_);
 	}
+	else if (strcmp(interface, wl_output_interface.name) == 0) {
+		THIS->wl_output = (struct wl_output *)wl_registry_bind(registry, name, &wl_output_interface, 3);
+		wl_output_add_listener(THIS->wl_output, &THIS->wl_output_listener, this_);
+	}
+	else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+		THIS->xdg_output_manager = (struct zxdg_output_manager_v1 *)wl_registry_bind(registry, name, &zxdg_output_manager_v1_interface, 2);
+	}
 }
-void BWindow::impl::wl_registry_global_remove_handler(
-	void			   *this_,
-	struct wl_registry *registry,
-	uint32_t			name) {}
+void BWindow::impl::wl_registry_global_remove_handler(void *this_, struct wl_registry *registry,
+													  uint32_t name) {}
 
-void BWindow::impl::wl_shm_format_handler(void *this_, struct wl_shm *wl_shm, uint32_t format)
+void BWindow::impl::wl_shm_format_handler(void *this_, struct wl_shm *wl_shm,
+										  uint32_t format)
 {
 	ALOGV("SHM format: 0x%x: %.4s", format,
 		  format == 0 ? "ARG8"
@@ -835,11 +983,13 @@ void BWindow::impl::wl_shm_format_handler(void *this_, struct wl_shm *wl_shm, ui
 									 : (char *)&format));
 }
 
-void BWindow::impl::wl_surface_enter_handler(void *this_, struct wl_surface *surface, struct wl_output *output)
+void BWindow::impl::wl_surface_enter_handler(void *this_, struct wl_surface *surface,
+											 struct wl_output *output)
 {
 	ALOGV("%p surface enter %p", surface, output);
 }
-void BWindow::impl::wl_surface_leave_handler(void *this_, struct wl_surface *surface, struct wl_output *output)
+void BWindow::impl::wl_surface_leave_handler(void *this_, struct wl_surface *surface,
+											 struct wl_output *output)
 {
 	ALOGV("%p surface leave %p", surface, output);
 }
@@ -857,13 +1007,15 @@ void BWindow::impl::wl_buffer_release_handler(void *this_, struct wl_buffer *wl_
 	}
 }
 
-void BWindow::impl::xdg_surface_configure_handler(void *this_, struct xdg_surface *xdg_surface, uint32_t serial)
+void BWindow::impl::xdg_surface_configure_handler(void *this_, struct xdg_surface *xdg_surface,
+												  uint32_t serial)
 {
 	xdg_surface_ack_configure(xdg_surface, serial);
 	THIS->resize_buffer();
 }
 
-void BWindow::impl::xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xdg_wm_base, uint32_t serial)
+void BWindow::impl::xdg_wm_base_ping_handler(void *this_, struct xdg_wm_base *xdg_wm_base,
+											 uint32_t serial)
 {
 	ALOGV("xdg_wm_base responding to PING");
 	xdg_wm_base_pong(xdg_wm_base, serial);
@@ -886,12 +1038,150 @@ void BWindow::impl::xdg_toplevel_close_handler(void *this_, struct xdg_toplevel 
 	THIS->closed = true;
 }
 
-void BWindow::impl::wl_seat_name_handler(void *this_, struct wl_seat *wl_seat, const char *name)
+void BWindow::impl::wl_seat_name_handler(void *this_, struct wl_seat *wl_seat,
+										 const char *name)
 {
 	ALOGD("seat name: %s", name);
+	if (wl_seat == THIS->wl_seat) {
+		free(const_cast<char *>(THIS->seat_name));
+		THIS->seat_name = name && name[0] ? strdup(name) : nullptr;
+	}
 }
 
-void BWindow::impl::wl_seat_capabilities_handler(void *this_, struct wl_seat *wl_seat, uint32_t capabilities)
+void BWindow::impl::wl_output_geometry_handler(void *this_, struct wl_output *wl_output,
+											   int32_t	   x,
+											   int32_t	   y,
+											   int32_t	   physical_width,
+											   int32_t	   physical_height,
+											   int32_t	   subpixel,
+											   const char *make,
+											   const char *model,
+											   int32_t	   transform)
+{
+	ALOGD("output_geometry: (%d,%d) %dmm x %dmm, subpixel_orientation: %d, '%s' '%s', transform: %d",
+		  x, y, physical_width, physical_height, subpixel, make, model, transform);
+	if (wl_output == THIS->wl_output) {
+		THIS->output_compositor_x		  = x;
+		THIS->output_compositor_y		  = y;
+		THIS->output_physical_width		  = physical_width;
+		THIS->output_physical_height	  = physical_height;
+		THIS->output_subpixel_orientation = static_cast<wl_output_subpixel>(subpixel);
+		THIS->output_transform_type		  = static_cast<wl_output_transform>(transform);
+		free(const_cast<char *>(THIS->output_make));
+		THIS->output_make = make && make[0] ? strdup(make) : nullptr;
+		free(const_cast<char *>(THIS->output_model));
+		THIS->output_model = model && model[0] ? strdup(model) : nullptr;
+	}
+}
+
+void BWindow::impl::wl_output_mode_handler(void *this_, struct wl_output *wl_output,
+										   uint32_t flags,
+										   int32_t	width,
+										   int32_t	height,
+										   int32_t	refresh)
+{
+	ALOGD("output_mode: [%x] %d x %d @%d", flags, width, height, refresh);
+	if (wl_output == THIS->wl_output) {
+		THIS->output_mode_flags	  = flags;
+		THIS->output_mode_width	  = width;
+		THIS->output_mode_height  = height;
+		THIS->output_mode_refresh = refresh;
+	}
+}
+
+void BWindow::impl::wl_output_done_handler(void *this_, struct wl_output *wl_output)
+{
+	if (wl_output == THIS->wl_output) {
+		THIS->xdg_output = zxdg_output_manager_v1_get_xdg_output(THIS->xdg_output_manager, wl_output);
+		zxdg_output_v1_add_listener(THIS->xdg_output, &THIS->xdg_output_listener, this_);
+		ALOGV("got xdg_output");
+	}
+}
+
+void BWindow::impl::wl_output_scale_handler(void *this_, struct wl_output *wl_output,
+											int32_t factor)
+{
+	ALOGD("output_scale: %d", factor);
+	if (wl_output == THIS->wl_output) {
+		THIS->output_scale_factor = factor;
+
+		if (THIS->wl_surface)
+			wl_surface_set_buffer_scale(THIS->wl_surface, factor);
+	}
+}
+
+void BWindow::impl::wl_output_name_handler(void *this_, struct wl_output *wl_output,
+										   const char *name)
+{
+	ALOGD("output_name: %s", name);
+	if (wl_output == THIS->wl_output) {
+		free(const_cast<char *>(THIS->output_name));
+		THIS->output_name = name && name[0] ? strdup(name) : nullptr;
+	}
+}
+
+void BWindow::impl::wl_output_description_handler(void *this_, struct wl_output *wl_output,
+												  const char *description)
+{
+	ALOGD("output_description: %s", description);
+	if (wl_output == THIS->wl_output) {
+		free(const_cast<char *>(THIS->output_description));
+		THIS->output_description = description && description[0] ? strdup(description) : nullptr;
+	}
+}
+
+void BWindow::impl::xdg_output_logical_position_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1,
+														int32_t x,
+														int32_t y)
+{
+	ALOGD("xdg_output_logical_position: (%d,%d)", x, y);
+	if (zxdg_output_v1 == THIS->xdg_output) {
+		THIS->output_logical_x = x;
+		THIS->output_logical_y = y;
+	}
+}
+
+void BWindow::impl::xdg_output_logical_size_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1,
+													int32_t width,
+													int32_t height)
+{
+	ALOGD("xdg_output_logical_size: %d x %d", width, height);
+	if (zxdg_output_v1 == THIS->xdg_output) {
+		THIS->output_logical_width	= width;
+		THIS->output_logical_height = height;
+	}
+}
+
+void BWindow::impl::xdg_output_done_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1)
+{
+}
+
+void BWindow::impl::xdg_output_name_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1,
+											const char *name)
+{
+	ALOGD("xdg_output_name: %s", name);
+	if (zxdg_output_v1 == THIS->xdg_output
+		// don't overwrite existing one with null
+		&& name && name[0]) {
+		free(const_cast<char *>(THIS->output_name));
+		THIS->output_name = strdup(name);
+	}
+}
+
+void BWindow::impl::xdg_output_description_handler(void *this_, struct zxdg_output_v1 *zxdg_output_v1,
+												   const char *description)
+{
+	ALOGD("xdg_output_description: %s", description);
+	if (zxdg_output_v1 == THIS->xdg_output
+		// don't overwrite existing one with null
+		&& description && description[0]) {
+		free(const_cast<char *>(THIS->output_description));
+		THIS->output_description = strdup(description);
+	}
+}
+
+void BWindow::impl::wl_seat_capabilities_handler(void *this_, struct wl_seat *wl_seat,
+												 uint32_t capabilities)
 {
 	bool have_pointer = capabilities & WL_SEAT_CAPABILITY_POINTER;
 
@@ -944,8 +1234,11 @@ void BWindow::impl::wl_seat_capabilities_handler(void *this_, struct wl_seat *wl
 	}
 }
 
-void BWindow::impl::wl_pointer_enter_handler(void *this_, struct wl_pointer *pointer, uint32_t serial,
-											 struct wl_surface *surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
+void BWindow::impl::wl_pointer_enter_handler(void *this_, struct wl_pointer *pointer,
+											 uint32_t			serial,
+											 struct wl_surface *surface,
+											 wl_fixed_t			surface_x,
+											 wl_fixed_t			surface_y)
 {
 	ALOGV("wl_pointer enter %p @%p", pointer, surface);
 	if (THIS->cursor_surface)
@@ -963,25 +1256,34 @@ void BWindow::impl::wl_pointer_leave_handler(void *this_, struct wl_pointer *poi
 }
 
 void BWindow::impl::wl_pointer_motion_handler(void *this_, struct wl_pointer *wl_pointer,
-											  uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y)
+											  uint32_t	 time,
+											  wl_fixed_t surface_x,
+											  wl_fixed_t surface_y)
 {
 	THIS->pointer_motion(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
 }
 
-void BWindow::impl::wl_pointer_button_handler(void *this_, struct wl_pointer *wl_pointer, uint32_t serial,
-											  uint32_t time, uint32_t button, uint32_t state)
+void BWindow::impl::wl_pointer_button_handler(void *this_, struct wl_pointer *wl_pointer,
+											  uint32_t serial,
+											  uint32_t time,
+											  uint32_t button,
+											  uint32_t state)
 {
 	THIS->pointer_button(button, state);
 }
 
 void BWindow::impl::wl_pointer_axis_handler(void *this_, struct wl_pointer *wl_pointer,
-											uint32_t time, uint32_t axis, wl_fixed_t value)
+											uint32_t   time,
+											uint32_t   axis,
+											wl_fixed_t value)
 {
 	ALOGD("pointer axis event; axis: %x, value: %f", axis, wl_fixed_to_double(value));
 }
 
 void BWindow::impl::wl_keyboard_keymap(void *this_, struct wl_keyboard *wl_keyboard,
-									   uint32_t format, int32_t fd, uint32_t size)
+									   uint32_t format,
+									   int32_t	fd,
+									   uint32_t size)
 {
 	ASSERT(format == WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1);
 
@@ -1003,14 +1305,18 @@ void BWindow::impl::wl_keyboard_keymap(void *this_, struct wl_keyboard *wl_keybo
 }
 
 void BWindow::impl::wl_keyboard_key(void *this_, struct wl_keyboard *wl_keyboard,
-									uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
+									uint32_t serial,
+									uint32_t time,
+									uint32_t key,
+									uint32_t state)
 {
 	THIS->keyboard_key(key, state);
 }
 
 void BWindow::impl::wl_keyboard_enter(void *this_, struct wl_keyboard *wl_keyboard,
-									  uint32_t serial, struct wl_surface *surface,
-									  struct wl_array *keys)
+									  uint32_t			 serial,
+									  struct wl_surface *surface,
+									  struct wl_array	*keys)
 {
 	for (uint32_t *key = static_cast<uint32_t *>((keys)->data);	 // wl_array_for_each() converted to C++ compatible
 		 (const char *)key < ((const char *)static_cast<uint32_t *>((keys)->data) + (keys)->size);
@@ -1021,21 +1327,25 @@ void BWindow::impl::wl_keyboard_enter(void *this_, struct wl_keyboard *wl_keyboa
 }
 
 void BWindow::impl::wl_keyboard_leave(void *this_, struct wl_keyboard *wl_keyboard,
-									  uint32_t serial, struct wl_surface *surface)
+									  uint32_t			 serial,
+									  struct wl_surface *surface)
 {
 	THIS->modifiers = 0;
 }
 
 void BWindow::impl::wl_keyboard_modifiers(void *this_, struct wl_keyboard *wl_keyboard,
-										  uint32_t serial, uint32_t mods_depressed,
-										  uint32_t mods_latched, uint32_t mods_locked,
+										  uint32_t serial,
+										  uint32_t mods_depressed,
+										  uint32_t mods_latched,
+										  uint32_t mods_locked,
 										  uint32_t group)
 {
 	THIS->keyboard_modifiers(mods_depressed, mods_latched, mods_locked, group);
 }
 
 void BWindow::impl::wl_keyboard_repeat_info(void *this_, struct wl_keyboard *wl_keyboard,
-											int32_t rate, int32_t delay)
+											int32_t rate,
+											int32_t delay)
 {
 	ALOGD("keyboard repeat; rate: %d, delay: %d", rate, delay);
 }
@@ -1045,6 +1355,11 @@ void BWindow::impl::wl_keyboard_repeat_info(void *this_, struct wl_keyboard *wl_
 SkCanvas *BWindow::_get_canvas() const
 {
 	return m->surface ? m->surface->getCanvas() : nullptr;
+}
+
+BPrivateScreen *BWindow::_get_private_screen() const
+{
+	return new BPrivateScreenWindow(this);
 }
 
 void BWindow::_damage_window(BPoint p1, BPoint p2)
@@ -1536,13 +1851,61 @@ void BWindow::Minimize(bool minimize)
 	Unlock();
 }
 
-void BWindow::Zoom(BPoint rec_position, float rec_width, float rec_height)
+void BWindow::Zoom(BPoint position, float width, float height)
 {
-	debugger(__PRETTY_FUNCTION__);
+	MoveTo(position);
+	ResizeTo(width, height);
 }
 
 void BWindow::Zoom()
 {
+	// From BeBook:
+	// The dimensions that non-virtual Zoom() passes to hook Zoom() are deduced
+	// from the smallest of three rectangles:
+
+	// 1) the rectangle defined by SetZoomLimits() and,
+	// 2) the rectangle defined by SetSizeLimits()
+	BSize max			= m->MaxSize();
+	float maxZoomWidth	= std::min(fMaxZoomWidth, float(max.width));
+	float maxZoomHeight = std::min(fMaxZoomHeight, float(max.height));
+
+	// 3) the screen rectangle
+	BRect screenFrame = (BScreen(this)).Frame();
+	maxZoomWidth	  = std::min(maxZoomWidth, screenFrame.Width());
+	maxZoomHeight	  = std::min(maxZoomHeight, screenFrame.Height());
+
+	BRect zoomArea = screenFrame;  // starts at screen size
+
+	// inset towards center vertically first to see if there will be room
+	// above or below Deskbar
+	if (zoomArea.Height() > maxZoomHeight)
+		zoomArea.InsetBy(0, ceilf((zoomArea.Height() - maxZoomHeight) / 2));
+
+	// inset towards center
+	if (zoomArea.Width() > maxZoomWidth)
+		zoomArea.InsetBy(ceilf((zoomArea.Width() - maxZoomWidth) / 2), 0);
+
+	// Un-Zoom
+	const BRect frame = m->Frame();
+
+	if (fPreviousFrame.IsValid()
+		// NOTE: don't check for fFrame.LeftTop() == zoomArea.LeftTop()
+		// -> makes it easier on the user to get a window back into place
+		&& frame.Width() == zoomArea.Width()
+		&& frame.Height() == zoomArea.Height()) {
+		// already zoomed!
+		Zoom(fPreviousFrame.LeftTop(), fPreviousFrame.Width(), fPreviousFrame.Height());
+		return;
+	}
+
+	// Zoom
+
+	// remember fFrame for later "unzooming"
+	fPreviousFrame = frame;
+
+	Zoom(zoomArea.LeftTop(), zoomArea.Width(), zoomArea.Height());
+}
+
 void BWindow::SetZoomLimits(float maxWidth, float maxHeight)
 {
 	fMaxZoomWidth  = maxWidth;
@@ -1677,6 +2040,57 @@ void BWindow::ConvertFromScreen(BRect *rect) const
 BRect BWindow::ConvertFromScreen(BRect rect) const
 {
 	return rect;
+}
+
+void BWindow::MoveBy(float dx, float dy)
+{
+}
+
+void BWindow::MoveTo(BPoint)
+{
+}
+
+void BWindow::MoveTo(float x, float y)
+{
+}
+
+void BWindow::ResizeBy(float dx, float dy)
+{
+	if (Lock()) {
+		auto frame = m->Frame();
+		ResizeTo(frame.Width() + dx, frame.Height() + dy);
+		Unlock();
+	}
+}
+
+void BWindow::ResizeTo(float width, float height)
+{
+	if (!Lock())
+		return;
+
+	width  = roundf(width);
+	height = roundf(height);
+
+	BSize min = m->MinSize();
+	BSize max = m->MaxSize();
+
+	// stay in minimum & maximum frame limits
+	if (width < min.width)
+		width = min.width;
+	else if (width > max.width)
+		width = max.width;
+
+	if (height < min.height)
+		height = min.height;
+	else if (height > max.height)
+		height = max.height;
+
+	auto frame = m->Frame();
+	if (width != frame.Width() || height != frame.Height()) {
+		m->resize(width, height);
+	}
+
+	Unlock();
 }
 
 void BWindow::Show()

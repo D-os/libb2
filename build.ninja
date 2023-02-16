@@ -15,6 +15,7 @@ includes = $
   -I system/os/headers/interface $
   -I system/os/headers/kernel $
   -I system/os/headers/storage $
+  -I system/os/headers/private/interface $
   -I $BUILDROOT/os/libbe/protocol $
   -isystem $BUILDROOT/os/aidl/include $
   -isystem frameworks/native/libs/binder/include $
@@ -59,6 +60,7 @@ build $BUILDROOT/os/libbe/interface/Polygon.o: cxx system/os/kits/interface/Poly
 build $BUILDROOT/os/libbe/interface/RadioButton.o: cxx system/os/kits/interface/RadioButton.cpp
 build $BUILDROOT/os/libbe/interface/Rect.o: cxx system/os/kits/interface/Rect.cpp
 build $BUILDROOT/os/libbe/interface/Region.o: cxx system/os/kits/interface/Region.cpp
+build $BUILDROOT/os/libbe/interface/Screen.o: cxx system/os/kits/interface/Screen.cpp
 build $BUILDROOT/os/libbe/interface/Slider.o: cxx system/os/kits/interface/Slider.cpp
 build $BUILDROOT/os/libbe/interface/StringView.o: cxx system/os/kits/interface/StringView.cpp
 build $BUILDROOT/os/libbe/interface/TabView.o: cxx system/os/kits/interface/TabView.cpp
@@ -84,6 +86,13 @@ build $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.c: wayland-scanner externa
   type = private-code
 
 build $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.o: cc $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.c | $BUILDROOT/os/libbe/protocol/xdg-shell-client-protocol.h
+
+build $BUILDROOT/os/libbe/protocol/xdg-output-unstable-v1-client-protocol.h: wayland-scanner external/wayland-protocols/unstable/xdg-output/xdg-output-unstable-v1.xml | out/host/bin/wayland-scanner
+  type = client-header
+build $BUILDROOT/os/libbe/protocol/xdg-output-unstable-v1-protocol.c: wayland-scanner external/wayland-protocols/unstable/xdg-output/xdg-output-unstable-v1.xml | out/host/bin/wayland-scanner
+  type = private-code
+
+build $BUILDROOT/os/libbe/protocol/xdg-output-protocol.o: cc $BUILDROOT/os/libbe/protocol/xdg-output-unstable-v1-protocol.c | $BUILDROOT/os/libbe/protocol/xdg-output-unstable-v1-client-protocol.h
 
 build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/app/Application.o $
@@ -111,6 +120,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/libbe/interface/RadioButton.o $
   $BUILDROOT/os/libbe/interface/Rect.o $
   $BUILDROOT/os/libbe/interface/Region.o $
+  $BUILDROOT/os/libbe/interface/Screen.o $
   $BUILDROOT/os/libbe/interface/Slider.o $
   $BUILDROOT/os/libbe/interface/StringView.o $
   $BUILDROOT/os/libbe/interface/TabView.o $
@@ -130,6 +140,7 @@ build $BUILDROOT/os/libbe.so: so $
   $BUILDROOT/os/tests/doctest.o $
   $BUILDROOT/os/aidl/${TARGET}/os/services/app/IRegistrarService.o $
   $BUILDROOT/os/libbe/protocol/xdg-shell-protocol.o $
+  $BUILDROOT/os/libbe/protocol/xdg-output-protocol.o $
 | $SYSROOT/lib/libbinder.so $
   $SYSROOT/lib/libskia.so $
   $SYSROOT/lib/libwayland-client.so $

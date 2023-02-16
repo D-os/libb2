@@ -69,6 +69,8 @@ class BButton;
 class BMenuBar;
 class BView;
 
+class BPrivateScreen;
+
 class SkCanvas;
 
 class BWindow : public BLooper
@@ -237,6 +239,8 @@ class BWindow : public BLooper
 	friend class BMenuItem;
 	friend class BWindowScreen;
 	friend class BDirectWindow;
+	friend class BPrivateScreenWindow;
+	friend class BScreen;
 	friend class BFilePanel;
 	friend class BTab;
 
@@ -263,10 +267,11 @@ class BWindow : public BLooper
 	bigtime_t fPulsedTime;
 
 	class impl;
-	pimpl<impl> m;
-	SkCanvas   *_get_canvas() const;
-	void		_damage_window(BPoint p1, BPoint p2);
-	void		_try_pulse();
+	pimpl<impl>		m;
+	SkCanvas	   *_get_canvas() const;
+	BPrivateScreen *_get_private_screen() const;
+	void			_damage_window(BPoint p1, BPoint p2);
+	void			_try_pulse();
 };
 
 inline void BWindow::Close()
