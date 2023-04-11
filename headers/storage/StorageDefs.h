@@ -30,4 +30,11 @@ enum node_flavor {
 	B_ANY_NODE		 = 0x07
 };
 
+#ifdef __cplusplus
+namespace os::storage {
+struct entry_ref;
+}
+using entry_ref = os::storage::entry_ref;
+#endif
+
 #endif

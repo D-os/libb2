@@ -2,16 +2,18 @@
 #define _ENTRY_H
 
 #include <Statable.h>
+#include <StorageDefs.h>
 #include <SupportDefs.h>
+#include <binder/Parcelable.h>
 
 class BDirectory;
 class BPath;
-struct entry_ref;
 
 status_t get_ref_for_path(const char *path, entry_ref *ref);
 bool	 operator<(const entry_ref &a, const entry_ref &b);
 
-struct entry_ref
+namespace os::storage {
+struct entry_ref final : android::Parcelable
 {
 	entry_ref();
 	entry_ref(int dirfd, const char *name);
@@ -26,7 +28,12 @@ struct entry_ref
 
 	int	  dirfd;
 	char *name;
+
+   private:
+	android::status_t writeToParcel(android::Parcel *parcel) const override;
+	android::status_t readFromParcel(const android::Parcel *parcel) override;
 };
+}  // namespace os::storage
 
 class BEntry : public BStatable
 {

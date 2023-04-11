@@ -16,7 +16,6 @@ class BMessenger;
 class BPoint;
 class BRect;
 class BString;
-struct entry_ref;
 
 /// Name lengths and Scripting specifiers
 #define B_FIELD_NAME_LENGTH 255

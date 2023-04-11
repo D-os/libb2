@@ -9,6 +9,7 @@
 
 #include <Directory.h>
 #include <Path.h>
+#include <binder/Parcel.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <syscalls.h>
@@ -67,9 +68,9 @@ static status_t parse_path(const char* fullPath, char* dirPath, char* leafName)
 	}
 	// copy the result strings
 	if (dirPath)
-		strlcpy(dirPath, dir.c_str(), dir.length());
+		strlcpy(dirPath, dir.c_str(), B_PATH_NAME_LENGTH);
 	if (leafName)
-		strlcpy(leafName, leaf.c_str(), leaf.length());
+		strlcpy(leafName, leaf.c_str(), B_FILE_NAME_LENGTH);
 	return B_OK;
 }
 
@@ -131,7 +132,7 @@ status_t entry_ref::set_name(const char* name)
 {
 	free(this->name);
 
-	if (name) {
+	if (name && name[0]) {
 		this->name = strdup(name);
 		if (!this->name)
 			return B_NO_MEMORY;
@@ -141,6 +142,31 @@ status_t entry_ref::set_name(const char* name)
 	}
 
 	return B_OK;
+}
+
+android::status_t entry_ref::writeToParcel(android::Parcel* parcel) const
+{
+	android::status_t status = parcel->writeFileDescriptor(dirfd);
+	if (status != android::OK) return status;
+
+	status = parcel->writeCString(name ? name : "");
+	return status;
+}
+
+android::status_t entry_ref::readFromParcel(const android::Parcel* parcel)
+{
+	close(dirfd);
+	dirfd = -1;
+	free(name);
+	name = nullptr;
+
+	dirfd = parcel->readFileDescriptor();
+	if (dirfd < 0) return dirfd;
+
+	auto name = parcel->readCString();
+	set_name(name);
+
+	return android::OK;
 }
 
 bool entry_ref::operator==(const entry_ref& other) const
@@ -585,7 +611,6 @@ status_t BEntry::_SetTo(int dirFD, const char* path, bool traverse)
 					return error;
 				strcpy(leafName, dirPath);
 				// if no directory was given, we need to open the current dir
-				// now
 				if (dirFD < 0) {
 					char* cwd = getcwd(tmpPath, B_PATH_NAME_LENGTH);
 					if (!cwd)

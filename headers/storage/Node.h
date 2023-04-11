@@ -2,6 +2,7 @@
 #define _NODE_H
 
 #include <Statable.h>
+#include <StorageDefs.h>
 #include <SupportDefs.h>
 
 struct node_ref
@@ -21,7 +22,6 @@ struct node_ref
 class BString;
 class BEntry;
 class BDirectory;
-struct entry_ref;
 
 class BNode : public BStatable
 {
@@ -75,7 +75,7 @@ class BNode : public BStatable
    private:
 	// friend class BEntry;
 	// friend class BVolume;
-	// friend class BFile;
+	friend class BFile;
 	friend class BDirectory;
 	// friend class BSymLink;
 

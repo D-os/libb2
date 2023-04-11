@@ -8,8 +8,6 @@
 #include <OS.h>
 #include <SupportDefs.h>
 
-struct entry_ref;
-
 namespace BPrivate {
 
 /*!	\brief Returns the path to an application's executable.

@@ -1,10 +1,10 @@
 #ifndef _ENTRY_LIST_H
 #define _ENTRY_LIST_H
 
+#include <StorageDefs.h>
 #include <SupportDefs.h>
 
 class BEntry;
-struct entry_ref;
 
 class BEntryList
 {

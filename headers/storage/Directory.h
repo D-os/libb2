@@ -9,7 +9,6 @@
 class BEntry;
 class BFile;
 class BSymLink;
-struct entry_ref;
 struct node_ref;
 
 status_t create_directory(const char *path, mode_t mode);

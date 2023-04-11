@@ -35,7 +35,6 @@ enum icon_size {
 class BBitmap;
 class BMessage;
 class BString;
-struct entry_ref;
 
 enum app_verb {
 	B_OPEN

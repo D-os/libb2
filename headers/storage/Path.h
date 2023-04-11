@@ -2,11 +2,11 @@
 #define _PATH_H
 
 #include <Flattenable.h>
+#include <StorageDefs.h>
 #include <SupportDefs.h>
 
 class BDirectory;
 class BEntry;
-struct entry_ref;
 
 class BPath : public BFlattenable
 {

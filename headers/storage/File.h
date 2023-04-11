@@ -7,7 +7,6 @@
 
 class BEntry;
 class BDirectory;
-struct entry_ref;
 
 class BFile : public BNode, public BPositionIO
 {
