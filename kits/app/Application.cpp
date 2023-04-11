@@ -87,8 +87,11 @@ BApplication::BApplication(const char *signature)
 		ALOGE(
 			"bad signature (%s), must begin with \"application/\" and "
 			"can't conflict with existing registered mime types inside "
-			"the \"application\" media type.\n",
+			"the \"application\" media type.",
 			signature);
+	}
+	else {
+		fInitError = B_OK;
 	}
 
 	// default delivery via looper using preferred handler
@@ -154,14 +157,12 @@ BApplication::BApplication(const char *signature)
 		__argv = reinterpret_cast<char **>(__arg_ptr.data());
 	}
 
-#ifndef RUN_WITHOUT_REGISTRAR
-
 	// get app executable ref
 	entry_ref ref;
 	if (fInitError == B_OK) {
 		fInitError = BPrivate::get_app_ref(&ref);
 		if (fInitError != B_OK) {
-			ALOGE("Failed to get app ref: %s\n", strerror(fInitError));
+			ALOGE("Failed to get app ref: %s", strerror(B_TO_POSIX_ERROR(fInitError)));
 		}
 	}
 
@@ -177,71 +178,80 @@ BApplication::BApplication(const char *signature)
 			// compare the file signature and the supplied signature
 			if (fileInfo.GetSignature(appFileSignature) == B_OK
 				&& strcasecmp(appFileSignature, signature) != 0) {
-				printf("Signature in rsrc doesn't match constructor arg. (%s, %s)\n",
-					   signature, appFileSignature);
+				ALOGE("Signature in rsrc doesn't match constructor arg. (%s, %s)",
+					  signature, appFileSignature);
 			}
 		}
 		else {
-			ALOGE("Failed to get info from: BAppFileInfo: %s\n", strerror(fInitError));
+			ALOGE("Failed to get info from: BAppFileInfo: %s", strerror(B_TO_POSIX_ERROR(fInitError)));
 		}
 	}
 
-	// not pre-registered -- try to register the application
-	team_id otherTeam = -1;
-	fInitError		  = be_roster->_AddApplication(signature, &ref, 0, Team(), Thread(), -1, true);
-	if (fInitError != B_OK) {
-		ALOGE("Failed to add app to registry: %s\n", strerror(fInitError));
+#ifndef RUN_WITHOUT_REGISTRAR
+	// check whether be_roster is valid
+	if (fInitError == B_OK && !be_roster) {
+		ALOGE("FATAL: be_roster is not valid. Is the registrar running?");
+		fInitError = B_NO_INIT;
 	}
-	if (fInitError == B_ALREADY_RUNNING) {
-		// An instance is already running and we asked for
-		// single/exclusive launch. Send our argv to the running app.
-		// Do that only, if the app is NOT B_ARGV_ONLY.
-		if (otherTeam >= 0) {
-			BMessenger otherApp(NULL, otherTeam);
-			app_info   otherAppInfo;
-			bool	   argvOnly = be_roster->GetRunningAppInfo(otherTeam,
-															   &otherAppInfo)
-								== B_OK
-							&& (otherAppInfo.flags & B_ARGV_ONLY) != 0;
 
-			if (__argc > 1 && !argvOnly) {
-				// create an B_ARGV_RECEIVED message
+	if (fInitError == B_OK) {
+		// not pre-registered -- try to register the application
+		team_id otherTeam = -1;
+		fInitError		  = be_roster->_AddApplication(signature, &ref, 0, Team(), Thread(), -1, true);
+		if (fInitError != B_OK) {
+			ALOGE("Failed to add app to registry: %s", strerror(B_TO_POSIX_ERROR(fInitError)));
+		}
+		if (fInitError == B_ALREADY_RUNNING) {
+			// An instance is already running and we asked for
+			// single/exclusive launch. Send our argv to the running app.
+			// Do that only, if the app is NOT B_ARGV_ONLY.
+			if (otherTeam >= 0) {
+				BMessenger otherApp(NULL, otherTeam);
+				app_info   otherAppInfo;
+				bool	   argvOnly = be_roster->GetRunningAppInfo(otherTeam,
+																   &otherAppInfo)
+									== B_OK
+								&& (otherAppInfo.flags & B_ARGV_ONLY) != 0;
+
+				if (__argc > 1 && !argvOnly) {
+					// create an B_ARGV_RECEIVED message
+					BMessage argvMessage(B_ARGV_RECEIVED);
+					fill_argv_message(argvMessage);
+
+					// replace the first argv string with the path of the
+					// other application
+					BPath path;
+					if (path.SetTo(&otherAppInfo.ref) == B_OK)
+						argvMessage.ReplaceString("argv", 0, path.Path());
+
+					// send the message
+					otherApp.SendMessage(&argvMessage);
+				}
+				else if (!argvOnly)
+					otherApp.SendMessage(B_SILENT_RELAUNCH);
+			}
+		}
+		else if (fInitError == B_OK) {
+			// the registrations was successful
+			// Create a B_ARGV_RECEIVED message and send it to ourselves.
+			// Do that even, if we are B_ARGV_ONLY.
+			// TODO: When BLooper::AddMessage() is done, use that instead of
+			// PostMessage().
+
+			ALOGI("BApplication successfully registered.");
+
+			if (__argc > 1) {
 				BMessage argvMessage(B_ARGV_RECEIVED);
 				fill_argv_message(argvMessage);
-
-				// replace the first argv string with the path of the
-				// other application
-				BPath path;
-				if (path.SetTo(&otherAppInfo.ref) == B_OK)
-					argvMessage.ReplaceString("argv", 0, path.Path());
-
-				// send the message
-				otherApp.SendMessage(&argvMessage);
+				PostMessage(&argvMessage, this);
 			}
-			else if (!argvOnly)
-				otherApp.SendMessage(B_SILENT_RELAUNCH);
+			// send a B_READY_TO_RUN message as well
+			fInitError = PostMessage(B_READY_TO_RUN, this);
 		}
-	}
-	else if (fInitError == B_OK) {
-		// the registrations was successful
-		// Create a B_ARGV_RECEIVED message and send it to ourselves.
-		// Do that even, if we are B_ARGV_ONLY.
-		// TODO: When BLooper::AddMessage() is done, use that instead of
-		// PostMessage().
-
-		ALOGI("BApplication successfully registered.\n");
-
-		if (__argc > 1) {
-			BMessage argvMessage(B_ARGV_RECEIVED);
-			fill_argv_message(argvMessage);
-			PostMessage(&argvMessage, this);
+		else if (fInitError > B_ERRORS_END) {
+			// Registrar internal errors shouldn't fall into the user's hands.
+			fInitError = B_ERROR;
 		}
-		// send a B_READY_TO_RUN message as well
-		fInitError = PostMessage(B_READY_TO_RUN, this);
-	}
-	else if (fInitError > B_ERRORS_END) {
-		// Registrar internal errors shouldn't fall into the user's hands.
-		fInitError = B_ERROR;
 	}
 #else
 	// We need to have ReadyToRun called even when we're not using the registrar

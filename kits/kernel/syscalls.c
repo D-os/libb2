@@ -146,8 +146,8 @@ int _kern_open_entry_ref(int reffd, const char *leaf, int openMode, int perms)
 
 int _kern_open_dir(int fd, const char *path)
 {
-    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
-	WRAP_POSIX_RETURN(int, openat(fd, path, O_DIRECTORY | O_PATH | O_CLOEXEC));
+	if (fd >= 0 && CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
+	WRAP_POSIX_RETURN(int, openat(fd, path, O_DIRECTORY | O_CLOEXEC));
 }
 int _kern_open_dir_entry_ref(int reffd, const char *name)
 {
@@ -183,8 +183,8 @@ int _kern_open_parent_dir(int fd, char *name, size_t nameLength)
 
 status_t _kern_create_dir(int fd, const char *path, int perms)
 {
-    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
-    WRAP_POSIX_CALL(mkdirat(fd, path, (mode_t)perms));
+	if (fd >= 0 && CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
+	WRAP_POSIX_CALL(mkdirat(fd, path, (mode_t)perms));
 }
 status_t _kern_create_dir_entry_ref(int reffd, const char *leaf, int perms)
 {
@@ -193,8 +193,8 @@ status_t _kern_create_dir_entry_ref(int reffd, const char *leaf, int perms)
 
 status_t _kern_remove_dir(int fd, const char *path)
 {
-    if(CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
-    WRAP_POSIX_CALL(unlinkat(fd, path, AT_REMOVEDIR));
+	if (fd >= 0 && CHECK_BAD_LEAF(path)) return B_BAD_VALUE;
+	WRAP_POSIX_CALL(unlinkat(fd, path, AT_REMOVEDIR));
 }
 
 status_t _kern_fsync(int fd)

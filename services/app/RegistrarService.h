@@ -16,7 +16,12 @@ class RegistrarService : public BnRegistrarService
 	RegistrarService() ANDROID_API;
 
    protected:
-	virtual binder::Status addApplication() override;
+	virtual binder::Status addApplication(const ::std::string&			  mime_sig,
+										  const ::os::storage::entry_ref& ref,
+										  int32_t						  flags,
+										  int32_t						  team,
+										  int32_t						  thread,
+										  int32_t*						  _aidl_return) override;
 	virtual binder::Status listApplications() override;
 	virtual binder::Status getApplication() override;
 

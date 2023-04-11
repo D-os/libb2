@@ -1,6 +1,7 @@
 headerDir = $BUILDROOT/os/aidl/include
 lang = cpp
-optionalFlags = -Weverything -Wno-missing-permission-annotation
+optionalFlags = -Weverything -Wno-missing-permission-annotation $
+  -I system/os/aidl
 outDir = $BUILDROOT/os/aidl/src
 
 includes = $
@@ -10,9 +11,12 @@ includes = $
   -isystem system/core/libutils/include $
   -isystem system/libbase/include $
   -isystem system/logging/liblog/include $
+  -I system/os/headers $
+  -I system/os/headers/storage $
+  -I system/os/headers/support $
 
 libs = -lc++ -lunwind $
-  -lbinder -lutils -lcutils -llog
+  -lbinder -lutils -lcutils -llog -lbe
 
 build $BUILDROOT/os/aidl/src/os/services/IRegistrarService.cpp $
 | $BUILDROOT/os/aidl/include/os/services/IRegistrarService.h $

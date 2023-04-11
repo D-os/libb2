@@ -34,7 +34,7 @@ class BNodeInfo
 								   icon_size		k = B_LARGE_ICON);
 
    private:
-	// friend class BAppFileInfo;
+	friend class BAppFileInfo;
 
 	BNodeInfo &operator=(const BNodeInfo &);
 	BNodeInfo(const BNodeInfo &);

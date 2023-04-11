@@ -141,6 +141,21 @@ uint32 BRoster::_AddApplication(const char* mime_sig,
 								port_id		port,
 								bool		full_reg) const
 {
-	debugger(__PRETTY_FUNCTION__);
-	return -1;
+#ifndef RUN_WITHOUT_REGISTRAR
+	if (!mime_sig || !ref)
+		return B_BAD_VALUE;
+
+	ALOGV("_AddApplication: '%s' %d/%s 0x%x %d:%d", mime_sig, ref->dirfd, ref->name, flags, team, thread);
+
+	status_t ret;
+	auto	 status = m->registrar_service->addApplication(mime_sig, *ref, flags, team, thread, &ret);
+	if (status.isOk()) {
+		return ret;
+	}
+
+	ALOGE("addApplication failed: %s", status.toString8().c_str());
+	return B_IO_ERROR;
+#else
+	return B_BAD_ADDRESS;
+#endif
 }

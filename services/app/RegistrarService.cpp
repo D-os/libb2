@@ -16,8 +16,20 @@ RegistrarService::RegistrarService()
 {
 }
 
-binder::Status RegistrarService::addApplication()
+binder::Status RegistrarService::addApplication(const ::std::string&			mime_sig,
+												const ::os::storage::entry_ref& ref,
+												int32_t							flags,
+												int32_t							team,
+												int32_t							thread,
+												int32_t*						_aidl_return)
 {
+	ATRACE_CALL();
+	ALOGV("RegistrarService::addApplication: '%s' %d/%s 0x%x %d:%d", mime_sig.c_str(), ref.dirfd, ref.name, flags, team, thread);
+
+	if (!_aidl_return)
+		return binder::Status::fromExceptionCode(binder::Status::EX_ILLEGAL_ARGUMENT);
+
+	*_aidl_return = B_OK;
 	return binder::Status::ok();
 }
 

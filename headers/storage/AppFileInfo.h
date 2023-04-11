@@ -88,8 +88,13 @@ class BAppFileInfo : public BNodeInfo
 	// bool	 IsApp();
 	// status_t GetMetaMime(BMimeType *meta) const;
 
+	status_t _ReadData(const char *name, int32 id,
+					   type_code type, void *buffer,
+					   size_t bufferSize, size_t &bytesRead,
+					   void **allocatedBuffer = nullptr) const;
+
 	// BResources	 *fResources;
-	// info_location fWhere;
+	info_location fWhere;
 };
 
 #endif
