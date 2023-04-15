@@ -1,5 +1,7 @@
 #include "List.h"
 
+#include <doctest/doctest.h>
+
 #include <algorithm>
 #include <vector>
 
@@ -33,16 +35,19 @@ bool BList::AddItem(void *item)
 
 bool BList::AddItem(void *item, int32 atIndex)
 {
+	if (atIndex == DATA->size())
+		return AddItem(item);
+
 	auto pos = DATA->begin() + atIndex;
 	return !(pos == DATA->end() || DATA->insert(pos, item) == DATA->end());
 }
 
 bool BList::AddList(BList *newItems)
 {
-	auto newSize = DATA->size() + DATA_PTR(newItems)->size();
+	auto newSize = DATA->size() + DATA_PTR(newItems->data)->size();
 	DATA->resize(newSize);
 	for (size_t source = 0, dest = DATA->size(); dest < newSize; source++, dest++) {
-		(*DATA)[dest] = (*DATA_PTR(newItems))[source];
+		(*DATA)[dest] = (*DATA_PTR(newItems->data))[source];
 	}
 	return true;
 }
@@ -50,23 +55,25 @@ bool BList::AddList(BList *newItems)
 bool BList::AddList(BList *newItems, int32 atIndex)
 {
 	auto destSize	= DATA->size();
-	auto sourceSize = DATA_PTR(newItems)->size();
+	auto sourceSize = DATA_PTR(newItems->data)->size();
 	if (sourceSize == 0) return true;  // nothing to copy
 
 	if (atIndex > destSize) return false;
 
-	auto newSize = destSize + sourceSize;
+	decltype(destSize) newSize = destSize + sourceSize;
 	DATA->resize(newSize);
 
 	if (atIndex < destSize) {
 		// move existing items to make place
-		for (size_t source = sourceSize - 1, dest = newSize - 1; source >= 0; source--, dest--) {
+		decltype(destSize) source = sourceSize - 1, dest = newSize - 1;
+		do {
 			(*DATA)[dest] = (*DATA)[source];
-		}
+			source--, dest--;
+		} while (source > 0);
 	}
 
-	for (size_t source = 0, dest = destSize; dest < newSize; source++, dest++) {
-		(*DATA)[dest] = (*DATA_PTR(newItems))[source];
+	for (decltype(destSize) source = 0, dest = destSize; dest < newSize; source++, dest++) {
+		(*DATA)[dest] = (*DATA_PTR(newItems->data))[source];
 	}
 	return true;
 }
@@ -167,5 +174,80 @@ void BList::DoForEach(bool (*func)(void *, void *), void *arg)
 {
 	for (auto item : *DATA) {
 		func(item, arg);
+	}
+}
+
+TEST_SUITE("BList")
+{
+	int ELEMS[] = {1, 2, 3, 4};
+
+	TEST_CASE("Constructing")
+	{
+		BList empty;
+		CHECK(empty.CountItems() == 0);
+		CHECK(empty.IsEmpty());
+		CHECK(empty.FirstItem() == nullptr);
+		CHECK(empty.LastItem() == nullptr);
+		CHECK(empty.ItemAt(0) == nullptr);
+		CHECK(empty.RemoveItem(0) == nullptr);
+		CHECK(empty.IndexOf(nullptr) == -1);
+
+		empty.MakeEmpty();
+		CHECK(empty.IsEmpty());
+	}
+	TEST_CASE("Assigning")
+	{
+		BList first;
+		first.AddItem(&ELEMS[0]);
+		first.AddItem(&ELEMS[1]);
+		first.AddItem(&ELEMS[2]);
+		first.AddItem(&ELEMS[3]);
+		CHECK(first.CountItems() == 4);
+
+		BList second(first);
+		CHECK(first.CountItems() == 4);
+		CHECK(second.CountItems() == 4);
+
+		BList third;
+		third.AddList(&first);
+		CHECK(first.CountItems() == 4);
+		CHECK(third.CountItems() == 4);
+
+		third.AddList(&first, 1);
+		CHECK(first.CountItems() == 4);
+		CHECK(third.CountItems() == 8);
+		CHECK(third.ItemAt(0) == third.ItemAt(1));
+		CHECK(third.ItemAt(7) == first.ItemAt(3));
+	}
+	TEST_CASE("Adding")
+	{
+		BList list;
+		CHECK(list.CountItems() == 0);
+		list.AddItem(&ELEMS[0]);
+		CHECK(list.CountItems() == 1);
+		CHECK(list.ItemAt(0) == &ELEMS[0]);
+		list.AddItem(&ELEMS[1]);
+		CHECK(list.CountItems() == 2);
+		CHECK(list.ItemAt(1) == &ELEMS[1]);
+		list.AddItem(&ELEMS[2]);
+		CHECK(list.CountItems() == 3);
+		CHECK(list.ItemAt(2) == &ELEMS[2]);
+		list.AddItem(&ELEMS[3]);
+		CHECK(list.CountItems() == 4);
+		CHECK(list.ItemAt(0) == &ELEMS[0]);
+		CHECK(list.ItemAt(1) == &ELEMS[1]);
+		CHECK(list.ItemAt(2) == &ELEMS[2]);
+		CHECK(list.ItemAt(3) == &ELEMS[3]);
+
+		list.AddItem(&ELEMS[3], 1);
+		CHECK(list.CountItems() == 5);
+		CHECK(list.ItemAt(0) == &ELEMS[0]);
+		CHECK(list.ItemAt(1) == &ELEMS[3]);
+		CHECK(list.ItemAt(2) == &ELEMS[1]);
+
+		list.AddItem(&ELEMS[0], list.CountItems());
+		CHECK(list.CountItems() == 6);
+		CHECK(list.ItemAt(5) == &ELEMS[0]);
+		CHECK(list.ItemAt(4) == &ELEMS[3]);
 	}
 }
