@@ -7,6 +7,9 @@ cflags = -O0 -ggdb -Wall -Werror $
 cxxflags = $cflags $
   -fexceptions $
   -DANDROID_UTILS_REF_BASE_DISABLE_IMPLICIT_CONSTRUCTION $
+  -DBACKWARD_SYSTEM_LINUX $
+  -DBACKWARD_HAS_LIBUNWIND=1 $
+  -DBACKWARD_HAS_DW=1 $
 
 includes = $
   -I system/os/headers $
@@ -34,6 +37,10 @@ includes = $
   -I external/skia/include/core $
   -isystem external/fontconfig $
   -isystem external/doctest $
+  -isystem $BUILDROOT/elfutils/include $
+  -isystem external/elfutils/libelf $
+  -isystem external/elfutils/libdw $
+  -isystem external/backward-cpp $
 
 libs = -lc++ -lunwind $
   -lbinder -lutils -lcutils -llog -lwayland-client
@@ -96,7 +103,7 @@ build $BUILDROOT/os/libbe/support/List.o: cxx system/os/kits/support/List.cpp
 build $BUILDROOT/os/libbe/support/Locker.o: cxx system/os/kits/support/Locker.cpp
 build $BUILDROOT/os/libbe/support/String.o: cxx system/os/kits/support/String.cpp
 build $BUILDROOT/os/libbe/kernel/area.o: cc system/os/kits/kernel/area.c
-build $BUILDROOT/os/libbe/kernel/debug.o: cxx system/os/kits/kernel/debug.cpp
+build $BUILDROOT/os/libbe/kernel/debug.o: cxx system/os/kits/kernel/debug.cpp | $BUILDROOT/elfutils/include/elfutils/libdw.h $BUILDROOT/elfutils/include/elfutils/libdwfl.h
 build $BUILDROOT/os/libbe/kernel/rwlock.o: cc system/os/kits/kernel/rwlock.c
 build $BUILDROOT/os/libbe/kernel/sem.o: cc system/os/kits/kernel/sem.c
 build $BUILDROOT/os/libbe/kernel/syscalls.o: cc system/os/kits/kernel/syscalls.c
@@ -194,8 +201,9 @@ build $BUILDROOT/os/libbe.so: so $
   $SYSROOT/lib/libskia.so $
   $SYSROOT/lib/libwayland-client.so $
   $SYSROOT/lib/libwayland-cursor.so $
-  $SYSROOT/lib/libxkbcommon.so
-  libs = $libs -lskia -lwayland-cursor -lxkbcommon
+  $SYSROOT/lib/libxkbcommon.so $
+  $SYSROOT/lib/libdw.so
+  libs = $libs -lskia -lwayland-cursor -lxkbcommon -ldw
 
 
 subninja system/os/services/build.ninja

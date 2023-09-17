@@ -1,12 +1,14 @@
 #include <OS.h>
 #include <utils/CallStack.h>
 
+#include <backward.hpp>
 #include <cinttypes>
 #include <csignal>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 
 extern "C" {
 _Noreturn void debugger(const char *message)
@@ -70,11 +72,13 @@ static void _crash_handler(int sig, siginfo_t *siginfo, void *ctx)
 			siginfo->si_pid, siginfo->si_uid,
 			((ucontext_t *)ctx)->uc_stack.ss_sp, siginfo->si_lower, siginfo->si_upper);
 
-	// TODO: print backtrace
+	backward::SignalHandling::handleSignal(sig, siginfo, ctx);
 
 	// restore original handler and raise again
 	sigaction(sig, &old_sa[sig], NULL);
 	raise(sig);
+
+	std::__libcpp_unreachable();
 }
 
 static void _register_crash_handlers(void)
