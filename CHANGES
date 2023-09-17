@@ -2,5 +2,3 @@ Implementation of SupportKit and ApplicationKit based on
 Haiku 8f5fd0d35d673002a9b8acac7772b196573dc82d
 
 KernelKit implemented from scratch for Linux 2.6+
-
-Source tree layout and cmake build system based on BeFree.
