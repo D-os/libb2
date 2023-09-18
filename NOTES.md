@@ -5,6 +5,7 @@
 In BeOS BView::Invalidate() sends message to app_server requesting region update.
 We are doing drawing in-process, so we send _UPDATE_ message to BView instead.
 It is handled as a BView::Draw() call in a clipped Skia Canvas rectangle.
+There is one Skia Canvas per window, exposed by private accessor function.
 
 ## Private Implementation
 
