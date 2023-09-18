@@ -579,7 +579,9 @@ TEST_SUITE("BLooper")
 		CHECK(count_running_threads() == 2);
 
 		loop->PostMessage(B_QUIT_REQUESTED);
-		snooze(1000);
+		for (int count = 100; count > 0 && count_running_threads() != 1; --count) {
+			snooze(100);
+		}
 		CHECK(count_running_threads() == 1);
 	}
 
