@@ -320,7 +320,7 @@ void BMenuItem::Draw()
 		if (fShortcutChar)
 			_DrawShortcutSymbol(fSuper->fHasSubmenus);
 
-		if (Submenu() != NULL)
+		if (Submenu())
 			_DrawSubmenuSymbol();
 	}
 
@@ -438,7 +438,7 @@ status_t BMenuItem::Invoke(BMessage *msg)
 
 bool BMenuItem::_IsActivated()
 {
-	return IsSelected() && (IsEnabled() || fSubmenu != NULL);
+	return IsSelected() && (IsEnabled() || fSubmenu);
 }
 
 rgb_color

@@ -1617,8 +1617,7 @@ bool BMenu::_AddDynamicItems(bool keyDown)
 		BMenuItem *superItem = Superitem();
 		BMenu	  *superMenu = Supermenu();
 		do {
-			if (superMenu
-				&& !superMenu->_OkToProceed(superItem, keyDown)) {
+			if (superMenu && !superMenu->_OkToProceed(superItem, keyDown)) {
 				AddDynamicItem(B_ABORT);
 				addAborted = true;
 				break;
